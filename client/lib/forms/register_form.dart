@@ -1,11 +1,10 @@
 import 'package:client/pages/login_page.dart';
-import 'package:client/pages/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:client/widgets/text_input.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
 
-class LoginForm extends StatelessWidget {
-  const LoginForm({ super.key });
+class RegisterForm extends StatelessWidget {
+  const RegisterForm({ super.key });
 
   @override
   Widget build(BuildContext context) {
@@ -19,23 +18,19 @@ class LoginForm extends StatelessWidget {
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                  "Sign in",
-                  style: TextStyle(
-                      fontSize: 24
-                  )
+                "Sign up",
+                style: TextStyle(
+                  fontSize: 24
+                )
               ),
             ),
             const SizedBox(height: 16),
             const TextInput(labelText: "Email address"),
             const SizedBox(height: 24),
             const TextInput(labelText: "Password"),
-            Align(
-              child: TextButton(
-                onPressed: () {},
-                child: Text("Forgot your password?"),
-              ),
-              alignment: Alignment.centerRight,
-            ),
+            const SizedBox(height: 24),
+            const TextInput(labelText: "Repeat password"),
+            const SizedBox(height: 24,),
             ElevatedButton(
               onPressed: () {},
               style: ButtonStyle(
@@ -68,34 +63,34 @@ class LoginForm extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: Text(
-                              "Or continue with",
-                              style: TextStyle(color: Colors.grey[700])
+                            "Or continue with",
+                            style: TextStyle(color: Colors.grey[700])
                           )
                         ),
                         Expanded(
                           child: Divider(
-                              thickness: 1.5,
-                              color: Colors.grey[400]
+                            thickness: 1.5,
+                            color: Colors.grey[400]
                           )
                         )
                       ],
                     ),
                   ),
                   GoogleSignInButton(
-                    title: "Sign in with Google",
+                    title: "Sign up with Google",
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account?"),
+                      const Text("Already have an account?"),
                       TextButton(
                         onPressed: () {
                           Navigator.pushReplacementNamed(
                             context,
-                            "/register"
+                            "/"
                           );
                         },
-                        child: const Text("Sign up")
+                        child: const Text("Sign in")
                       )
                     ],
                   ),

@@ -1,3 +1,5 @@
+import 'package:client/pages/register_page.dart';
+
 import 'pages/login_page.dart';
 import 'package:flutter/material.dart';
 
@@ -11,8 +13,12 @@ class Papyrus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const LoginPage(),
-      theme: ThemeData.light(useMaterial3: true)
+      theme: ThemeData.light(useMaterial3: true),
+      initialRoute: "/",
+      routes: {
+        "/": (context) => const LoginPage(),
+        "/register": (context) => const RegisterPage(),
+      },
     );
   }
 }

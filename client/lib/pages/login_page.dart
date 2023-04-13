@@ -9,17 +9,23 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Center(
-          child: Column(
-            children: [
-              Container(
-                child: Heading(subtitle: "All your books in one place",),
-                padding: EdgeInsets.all(24.0),
-              ),
-              Expanded(child: LoginForm())
-            ]
+          child: CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(24.0),
+                      child: const Heading(subtitle: "All your books in one place",),
+                    ),
+                    Expanded(child: LoginForm())
+                  ]
+                ),
+              )
+            ],
           ),
         )
       ),

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 class GoogleSignInButton extends StatefulWidget {
+  final String title;
+
+  GoogleSignInButton({ super.key, required this.title });
+
   @override
   _GoogleSignInButtonState createState() => _GoogleSignInButtonState();
 }
@@ -48,7 +52,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
               Padding(
                 padding: const EdgeInsets.only(left: 10),
                 child: Text(
-                  'Sign in with Google',
+                  widget.title,
                   style: TextStyle(
                     fontSize: 20,
                     color: Colors.black54,
