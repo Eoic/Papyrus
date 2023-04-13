@@ -1,5 +1,6 @@
 import 'package:client/pages/login_page.dart';
 import 'package:client/pages/register_page.dart';
+import 'package:client/types/input_type.dart';
 import 'package:flutter/material.dart';
 import 'package:client/widgets/text_input.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
@@ -26,9 +27,9 @@ class LoginForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const TextInput(labelText: "Email address"),
+            const TextInput(labelText: "Email address", type: InputType.email,),
             const SizedBox(height: 24),
-            const TextInput(labelText: "Password"),
+            const TextInput(labelText: "Password", type: InputType.password),
             Align(
               child: TextButton(
                 onPressed: () {},
