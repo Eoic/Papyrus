@@ -1,7 +1,6 @@
-import 'package:client/pages/login_page.dart';
-import 'package:client/pages/register_page.dart';
-import 'package:client/types/input_type.dart';
+import 'package:client/widgets/titled_divider.dart';
 import 'package:flutter/material.dart';
+import 'package:client/types/input_type.dart';
 import 'package:client/widgets/text_input.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
 
@@ -12,76 +11,50 @@ class LoginForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Form(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                  "Sign in",
-                  style: TextStyle(
-                      fontSize: 24
-                  )
+                "Sign in",
+                style: Theme.of(context).textTheme.headlineMedium
               ),
             ),
             const SizedBox(height: 16),
-            const TextInput(labelText: "Email address", type: InputType.email,),
+            TextInput(labelText: "Email address", type: InputType.email,),
             const SizedBox(height: 24),
-            const TextInput(labelText: "Password", type: InputType.password),
+            TextInput(labelText: "Password", type: InputType.password),
             Align(
+              alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {},
-                child: Text("Forgot your password?"),
+                child: const Text("Forgot your password?"),
               ),
-              alignment: Alignment.centerRight,
             ),
             ElevatedButton(
               onPressed: () {},
-              style: ButtonStyle(
-                minimumSize: const MaterialStatePropertyAll<Size>(Size.fromHeight(46)),
-                backgroundColor: const MaterialStatePropertyAll<Color>(Colors.blueAccent),
-                foregroundColor: const MaterialStatePropertyAll<Color>(Colors.white),
-                shape: MaterialStatePropertyAll<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0)
-                  )
-                )
+              style: const ButtonStyle(
+                minimumSize: MaterialStatePropertyAll<Size>(Size.fromHeight(50)),
+                elevation: MaterialStatePropertyAll<double>(2.0),
               ),
-              child: const Text("Continue"),
+              child: Row(
+                children: const [
+                  Spacer(),
+                  Text("Continue"),
+                  Spacer(),
+                  Icon(Icons.arrow_right)
+                ],
+              ),
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 0.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            thickness: 1.5,
-                            color: Colors.grey[400]
-                          )
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: Text(
-                              "Or continue with",
-                              style: TextStyle(color: Colors.grey[700])
-                          )
-                        ),
-                        Expanded(
-                          child: Divider(
-                              thickness: 1.5,
-                              color: Colors.grey[400]
-                          )
-                        )
-                      ],
-                    ),
-                  ),
+                  const TitledDivider(title: "Or continue with"),
                   GoogleSignInButton(
                     title: "Sign in with Google",
                   ),

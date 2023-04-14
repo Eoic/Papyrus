@@ -16,11 +16,8 @@ class RegisterPage extends StatelessWidget {
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24.0),
-                        child: const Heading(subtitle: "All your books in one place",),
-                      ),
+                    children: const [
+                      Heading(subtitle: "All your books in one place",),
                       Expanded(child: RegisterForm())
                     ]
                   ),

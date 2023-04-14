@@ -10,36 +10,38 @@ class Heading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.book_outlined,
-              size: 64.0,
-            ),
-            Text(
-              "Papyrus",
-              style: TextStyle(
-                fontSize: 36,
-                color: Colors.black87
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Image(
+                image: AssetImage("assets/images/logo.png"),
+                height: 64.0,
               ),
-            )
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 16
+              const SizedBox(width: 12.0,),
+              Text(
+                "Papyrus",
+                style: Theme.of(context).textTheme.displayMedium,
+              )
+            ],
+          ),
+          const SizedBox(height: 6.0,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 16
+                ),
               ),
-            ),
-          ],
-        )
-      ],
+            ],
+          )
+        ],
+      ),
     );
   }
 }
