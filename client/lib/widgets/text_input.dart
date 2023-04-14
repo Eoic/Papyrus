@@ -4,9 +4,15 @@ import 'package:flutter/material.dart';
 class TextInput extends StatefulWidget {
   final String labelText;
   final InputType type;
+  final TextEditingController? controller;
   bool isTextHidden = true;
 
-  TextInput({ super.key, required this.labelText, required this.type });
+  TextInput({
+    super.key,
+    required this.labelText,
+    required this.type,
+    this.controller
+  });
 
   @override
   _TextInput createState() => _TextInput();
@@ -36,8 +42,10 @@ class _TextInput extends State<TextInput> {
           obscureText: widget.isTextHidden,
           enableSuggestions: false,
           autocorrect: false,
-          onSaved: (value) => { }
+          onSaved: (value) => { },
+          controller: widget.controller,
         );
+
       case InputType.email:
         return TextFormField(
           decoration: InputDecoration(
@@ -48,15 +56,18 @@ class _TextInput extends State<TextInput> {
               color: Colors.grey.shade600,
             )
           ),
-          onSaved: (value) => { }
+          onSaved: (value) => { },
+          controller: widget.controller,
         );
+
       default:
         return TextFormField(
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             labelText: widget.labelText
           ),
-          onSaved: (value) => { }
+          onSaved: (value) => { },
+          controller: widget.controller,
         );
     }
   }

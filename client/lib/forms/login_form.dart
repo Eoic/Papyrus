@@ -1,15 +1,31 @@
 import 'package:client/widgets/titled_divider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:client/types/input_type.dart';
 import 'package:client/widgets/text_input.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
 
-class LoginForm extends StatelessWidget {
-  const LoginForm({ super.key });
+class LoginForm extends StatefulWidget {
+  @override
+  _LoginForm createState() => _LoginForm();
+}
+
+class _LoginForm extends State<LoginForm> {
+  final formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  Future signIn() async {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim()
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Form(
+      key: formKey,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 16.0),
         child: Column(
@@ -24,9 +40,17 @@ class LoginForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            TextInput(labelText: "Email address", type: InputType.email,),
+            TextInput(
+              type: InputType.email,
+              labelText: "Email address",
+              controller: emailController,
+            ),
             const SizedBox(height: 24),
-            TextInput(labelText: "Password", type: InputType.password),
+            TextInput(
+              type: InputType.password,
+              labelText: "Password",
+              controller: passwordController,
+            ),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -35,7 +59,12 @@ class LoginForm extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  print("Signing in...");
+                  signIn();
+                }
+              },
               style: const ButtonStyle(
                 minimumSize: MaterialStatePropertyAll<Size>(Size.fromHeight(50)),
                 elevation: MaterialStatePropertyAll<double>(2.0),
@@ -80,5 +109,12 @@ class LoginForm extends StatelessWidget {
         )
       )
     );
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 }

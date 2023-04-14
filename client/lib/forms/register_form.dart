@@ -62,7 +62,7 @@ class RegisterForm extends StatelessWidget {
                         onPressed: () {
                           Navigator.pushReplacementNamed(
                             context,
-                            "/"
+                            "/login"
                           );
                         },
                         child: const Text("Sign in")

@@ -3,7 +3,7 @@ import 'package:client/widgets/heading.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({ super.key });
+  LoginPage({ super.key });
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +15,8 @@ class LoginPage extends StatelessWidget {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Column(
-                  children: const [
-                    Heading(subtitle: "All your books in one place",),
+                  children: [
+                    const Heading(subtitle: "All your books in one place",),
                     Expanded(child: LoginForm())
                   ]
                 ),

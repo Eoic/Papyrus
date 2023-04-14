@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "946926764317",
+    "project_id": "papyrus-e8441",
+    "storage_bucket": "papyrus-e8441.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:946926764317:android:5b00a16972ccf8dc56a1f4",
+        "android_client_info": {
+          "package_name": "com.badlogic.papyrus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "946926764317-bh068d544vqucn1lh9r95qcbheefh1qn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqjVDdndJwg6H-jPLXzhn7ARNezfOnuaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "946926764317-bh068d544vqucn1lh9r95qcbheefh1qn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

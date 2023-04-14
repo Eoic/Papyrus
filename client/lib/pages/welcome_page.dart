@@ -60,7 +60,7 @@ class WelcomePage extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushNamed(
                           context,
-                          '/'
+                          '/login'
                         );
                       },
                       child: const Text("Sign in")
