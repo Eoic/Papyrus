@@ -27,10 +27,18 @@ class _RegisterForm extends State<RegisterForm> {
     ).then((UserCredential user) {
       return user;
     }).catchError((error) async {
-      SnackBar(
-        duration: const Duration(seconds: 5),
-        content: const Text("Account creation failed."),
-        backgroundColor: Theme.of(context).colorScheme.error,
+      var errorMessage = "Account creation failed.";
+
+      if (error.code == "email-already-in-use") {
+        errorMessage = "Account with this email already exists.";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 5),
+          content: Text(errorMessage),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        )
       );
 
       return error;
@@ -102,7 +110,6 @@ class _RegisterForm extends State<RegisterForm> {
                   }).catchError((error) async {
                     setState(() => isRegisterDisabled = false);
                     Navigator.of(context).pop();
-                    return error;
                   });
                 }
               },
