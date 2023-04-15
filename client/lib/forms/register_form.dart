@@ -1,15 +1,46 @@
-import 'package:client/types/input_type.dart';
+import 'package:client/widgets/input/email_input.dart';
+import 'package:client/widgets/input/password_input.dart';
 import 'package:client/widgets/titled_divider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:client/widgets/text_input.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
 
-class RegisterForm extends StatelessWidget {
+class RegisterForm extends StatefulWidget {
   const RegisterForm({ super.key });
+
+  @override
+  State<RegisterForm> createState() => _RegisterForm();
+}
+
+class _RegisterForm extends State<RegisterForm> {
+  bool isRegisterDisabled = false;
+
+  final formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final repeatPasswordController = TextEditingController();
+
+  Future<UserCredential> signUp() async {
+    return FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text
+    ).then((UserCredential user) {
+      return user;
+    }).catchError((error) async {
+      SnackBar(
+        duration: const Duration(seconds: 5),
+        content: const Text("Account creation failed."),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+
+      return error;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Form(
+      key: formKey,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -24,14 +55,57 @@ class RegisterForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            TextInput(labelText: "Email address", type: InputType.email),
+            EmailInput(
+              labelText: "Email address",
+              controller: emailController,
+            ),
             const SizedBox(height: 24),
-            TextInput(labelText: "Password", type: InputType.password),
+            PasswordInput(
+              labelText: "Password",
+              controller: passwordController,
+            ),
             const SizedBox(height: 24),
-            TextInput(labelText: "Repeat password", type: InputType.password),
+            PasswordInput(
+              labelText: "Repeat password",
+              controller: repeatPasswordController,
+              extraValidator: (repeatedPassword) {
+                if (passwordController.text != repeatedPassword) {
+                  return "Passwords do not match";
+                }
+              },
+            ),
             const SizedBox(height: 24,),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: isRegisterDisabled ? null : () {
+                if (formKey.currentState!.validate()) {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  setState(() => isRegisterDisabled = true);
+
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 8,
+                        )
+                      ),
+                    )
+                  );
+
+                  signUp().then((value) {
+                    setState(() => isRegisterDisabled = false);
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(context, "/library");
+                  }).catchError((error) async {
+                    setState(() => isRegisterDisabled = false);
+                    Navigator.of(context).pop();
+                    return error;
+                  });
+                }
+              },
               style: const ButtonStyle(
                 minimumSize: MaterialStatePropertyAll<Size>(Size.fromHeight(46)),
                 elevation: MaterialStatePropertyAll<double>(2.0),

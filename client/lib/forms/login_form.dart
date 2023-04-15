@@ -1,25 +1,41 @@
+import 'package:client/widgets/input/email_input.dart';
+import 'package:client/widgets/input/password_input.dart';
 import 'package:client/widgets/titled_divider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:client/types/input_type.dart';
-import 'package:client/widgets/text_input.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
 
 class LoginForm extends StatefulWidget {
+  const LoginForm({ super.key });
+
   @override
-  _LoginForm createState() => _LoginForm();
+  State<LoginForm> createState() => _LoginForm();
 }
 
 class _LoginForm extends State<LoginForm> {
+  bool isLoginDisabled = false;
+
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  Future signIn() async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
+  Future<UserCredential> signIn() async {
+    return FirebaseAuth.instance.signInWithEmailAndPassword(
       email: emailController.text.trim(),
       password: passwordController.text.trim()
-    );
+    ).then((UserCredential user) {
+      return user;
+    }).catchError((error) async {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 5),
+          content: const Text("Incorrect username or password."),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        )
+      );
+
+      return error;
+    });
   }
 
   @override
@@ -40,14 +56,12 @@ class _LoginForm extends State<LoginForm> {
               ),
             ),
             const SizedBox(height: 16),
-            TextInput(
-              type: InputType.email,
+            EmailInput(
               labelText: "Email address",
               controller: emailController,
             ),
             const SizedBox(height: 24),
-            TextInput(
-              type: InputType.password,
+            PasswordInput(
               labelText: "Password",
               controller: passwordController,
             ),
@@ -59,10 +73,34 @@ class _LoginForm extends State<LoginForm> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: isLoginDisabled ? null : () async {
                 if (formKey.currentState!.validate()) {
-                  print("Signing in...");
-                  signIn();
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  setState(() => isLoginDisabled = true);
+
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 8,
+                        )
+                      ),
+                    )
+                  );
+
+                  signIn().then((value) {
+                    setState(() => isLoginDisabled = false);
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(context, "/library");
+                  }).catchError((error) async {
+                    setState(() => isLoginDisabled = false);
+                    Navigator.of(context).pop();
+                    return error;
+                  });
                 }
               },
               style: const ButtonStyle(
