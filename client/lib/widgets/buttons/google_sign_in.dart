@@ -1,5 +1,6 @@
 import 'package:client/providers/google_sign_in_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class GoogleSignInButton extends StatefulWidget {
@@ -38,7 +39,8 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
           final provider = Provider.of<GoogleSignInProvider>(context, listen: false);
 
           provider.signInWithGoogle().then((value) {
-            Navigator.pushNamed(context, "/library");
+            // Navigator.pushNamed(context, "/library");
+            context.go("/library");
           });
 
           setState(() => isSigningIn = false);

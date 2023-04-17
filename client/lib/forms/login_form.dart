@@ -4,6 +4,7 @@ import 'package:client/widgets/titled_divider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:client/widgets/buttons/google_sign_in.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({ super.key });
@@ -16,8 +17,8 @@ class _LoginForm extends State<LoginForm> {
   bool isLoginDisabled = false;
 
   final formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final emailController = TextEditingController(text: "karolis.strazdas@pm.me");
+  final passwordController = TextEditingController(text: "kaunas123");
 
   Future<UserCredential> signIn() async {
     return FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -95,7 +96,8 @@ class _LoginForm extends State<LoginForm> {
                   signIn().then((value) {
                     setState(() => isLoginDisabled = false);
                     Navigator.of(context).pop();
-                    Navigator.pushNamed(context, "/library");
+                    context.go("/library");
+                    // Navigator.pushNamed(context, "/library");
                   }).catchError((error) async {
                     setState(() => isLoginDisabled = false);
                     Navigator.of(context).pop();
@@ -131,10 +133,11 @@ class _LoginForm extends State<LoginForm> {
                       const Text("Don't have an account?"),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            "/register"
-                          );
+                          context.go("/register");
+                          // Navigator.pushReplacementNamed(
+                          //   context,
+                          //   "/register"
+                          // );
                         },
                         child: const Text("Sign up")
                       )

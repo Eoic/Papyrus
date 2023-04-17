@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:client/pages/welcome_page.dart';
 import 'package:provider/provider.dart';
 
+import 'config/app_router.dart';
 import 'pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:client/themes/color_schemes.g.dart';
@@ -23,18 +24,19 @@ class Papyrus extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => GoogleSignInProvider(),
-      child: MaterialApp(
-        theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
-        // theme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
+      child: MaterialApp.router(
+        // theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
+        theme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
         darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
-        initialRoute: "/",
-        routes: {
-          "/": (context) => const SplashScreenPage(),
-          "/login": (context) => LoginPage(),
-          "/welcome": (context) => const WelcomePage(),
-          "/register": (context) => RegisterPage(),
-          "/library": (context) => const LibraryPage(),
-        },
+        routerConfig: AppRouter().router,
+        // initialRoute: "/",
+        // routes: {
+        //   "/": (context) => const SplashScreenPage(),
+        //   "/login": (context) => LoginPage(),
+        //   "/welcome": (context) => const WelcomePage(),
+        //   "/register": (context) => RegisterPage(),
+        //   "/library": (context) => const LibraryPage(),
+        // },
       ),
     );
   }

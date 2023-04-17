@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({ super.key });
@@ -44,10 +45,11 @@ class WelcomePage extends StatelessWidget {
                         foregroundColor: MaterialStatePropertyAll<Color>(Theme.of(context).colorScheme.onPrimary),
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/register'
-                        );
+                        context.go('/register');
+                        // Navigator.pushNamed(
+                        //   context,
+                        //   '/register'
+                        // );
                       },
                       child: const Text("Get started")
                     ),
@@ -58,16 +60,20 @@ class WelcomePage extends StatelessWidget {
                         elevation: MaterialStatePropertyAll<double>(2.0),
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/login'
-                        );
+                        // Navigator.pushNamed(
+                        //   context,
+                        //   '/login'
+                        // );
+                        context.go('/login');
                       },
                       child: const Text("Sign in")
                     ),
                     const SizedBox(height: 16.0),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        context.go('/library');
+                        // Navigator.pushNamed(context, "/library");
+                      },
                       child: const Text("Use offline mode"),
                     )
                   ],
