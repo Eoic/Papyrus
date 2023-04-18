@@ -22,6 +22,7 @@ class LibraryPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
+      appBar: AppBar(title: const Text("Library")),
       body: SafeArea(
         child: Row(
           children: [
