@@ -45,24 +45,24 @@ class AppRouter {
     navigatorKey: rootNavigatorKey,
     routes: [
       GoRoute(
-          path: "/",
-          builder: (BuildContext context, GoRouterState state) {
-            return const WelcomePage();
-          },
-          routes: [
-            GoRoute(
-                path: "login",
-                builder: (BuildContext context, GoRouterState state) {
-                  return LoginPage();
-                }
-            ),
-            GoRoute(
-                path: "register",
-                builder: (BuildContext context, GoRouterState state) {
-                  return RegisterPage();
-                }
-            )
-          ]
+        path: "/",
+        builder: (BuildContext context, GoRouterState state) {
+          return const WelcomePage();
+        },
+        routes: [
+          GoRoute(
+            path: "login",
+            builder: (BuildContext context, GoRouterState state) {
+              return LoginPage();
+            },
+          ),
+          GoRoute(
+            path: "register",
+            builder: (BuildContext context, GoRouterState state) {
+              return RegisterPage();
+            }
+          )
+        ],
       ),
       ShellRoute(
         navigatorKey: shellNavigatorKey,
@@ -111,15 +111,19 @@ class AppRouter {
       )
     ],
     redirect: (BuildContext context, GoRouterState state) {
-      // if (FirebaseAuth.instance.currentUser == null) {
-      //   if (state.subloc.contains("login") || state.subloc.contains("register")) {
-      //     return null;
-      //   }
-      //
-      //   return "/";
-      // }
-      //
-      // return null;
+      if (FirebaseAuth.instance.currentUser == null) {
+        if (state.subloc.contains("/login") || state.subloc.contains("/register")) {
+          return null;
+        }
+
+        return "/";
+      }
+
+      if (state.subloc == "/") {
+        return "/library";
+      }
+
+      return null;
     },
   );
 }

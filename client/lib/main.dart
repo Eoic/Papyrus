@@ -20,8 +20,8 @@ class Papyrus extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => GoogleSignInProvider(),
       child: MaterialApp.router(
-        // theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
-        theme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
+        theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
+        // theme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
         darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
         routerConfig: AppRouter().router,
       ),
