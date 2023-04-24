@@ -46,10 +46,6 @@ class WelcomePage extends StatelessWidget {
                       ),
                       onPressed: () {
                         context.go('/register');
-                        // Navigator.pushNamed(
-                        //   context,
-                        //   '/register'
-                        // );
                       },
                       child: const Text("Get started")
                     ),
@@ -60,10 +56,6 @@ class WelcomePage extends StatelessWidget {
                         elevation: MaterialStatePropertyAll<double>(2.0),
                       ),
                       onPressed: () {
-                        // Navigator.pushNamed(
-                        //   context,
-                        //   '/login'
-                        // );
                         context.go('/login');
                       },
                       child: const Text("Sign in")
@@ -72,7 +64,6 @@ class WelcomePage extends StatelessWidget {
                     TextButton(
                       onPressed: () {
                         context.go('/library');
-                        // Navigator.pushNamed(context, "/library");
                       },
                       child: const Text("Use offline mode"),
                     )

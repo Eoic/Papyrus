@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TextInput extends StatelessWidget {
+  final bool? isDense;
   final bool isRequired;
   final String labelText;
   final TextEditingController? controller;
@@ -9,6 +10,7 @@ class TextInput extends StatelessWidget {
     super.key,
     this.controller,
     this.isRequired = false,
+    this.isDense = false,
     required this.labelText,
   });
 
@@ -17,8 +19,9 @@ class TextInput extends StatelessWidget {
     return TextFormField(
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
-        labelText: labelText
-      ),
+        labelText: labelText,
+        isDense: isDense,
+    ),
       onSaved: (value) => { },
       controller: controller,
     );

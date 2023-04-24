@@ -3,6 +3,7 @@ import 'package:client/pages/dashboard_page.dart';
 import 'package:client/pages/goals_page.dart';
 import 'package:client/pages/library_page.dart';
 import 'package:client/pages/login_page.dart';
+import 'package:client/pages/profile_page.dart';
 import 'package:client/pages/register_page.dart';
 import 'package:client/pages/statistics_page.dart';
 import 'package:client/pages/welcome_page.dart';
@@ -38,6 +39,11 @@ class AppRouter {
       icon: const Icon(Icons.stacked_line_chart),
       label: "Statistics"
     ),
+    ScaffoldWithNavBarTabItem(
+      initialLocation: '/profile',
+      icon: const Icon(Icons.person),
+      label: "Profile"
+    )
   ];
 
   late final GoRouter router = GoRouter(
@@ -103,8 +109,15 @@ class AppRouter {
           GoRoute(
             path: "/statistics",
             pageBuilder: (context, state) => NoTransitionPage(
-                key: state.pageKey,
-                child: const StatisticsPage()
+              key: state.pageKey,
+              child: const StatisticsPage()
+            )
+          ),
+          GoRoute(
+            path: "/profile",
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ProfilePage()
             )
           )
         ]
