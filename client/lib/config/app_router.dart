@@ -96,7 +96,7 @@ class AppRouter {
             path: "/library",
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const LibraryPage()
+              child: LibraryPage()
             )
           ),
           GoRoute(

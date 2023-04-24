@@ -21,7 +21,6 @@ class Papyrus extends StatelessWidget {
       create: (context) => GoogleSignInProvider(),
       child: MaterialApp.router(
         theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
-        // theme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
         darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
         routerConfig: AppRouter().router,
       ),
