@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 class StatisticsPage extends StatelessWidget {
-  const StatisticsPage({Key? key});
+  const StatisticsPage({ super.key });
 
   @override
   Widget build(BuildContext context) {
-    return const Text("Statistics");
+    return Scaffold(
+      appBar: AppBar(title: const Text("Statistics")),
+      body: const SafeArea(child: Placeholder()), // body: ,
+    );
   }
 }

@@ -1,4 +1,5 @@
-import 'package:client/pages/dashboard_details_page.dart';
+
+import 'package:client/pages/book_details_page.dart';
 import 'package:client/pages/dashboard_page.dart';
 import 'package:client/pages/goals_page.dart';
 import 'package:client/pages/library_page.dart';
@@ -85,19 +86,23 @@ class AppRouter {
               key: state.pageKey,
               child: const DashboardPage()
             ),
-            routes: [
-              GoRoute(
-                path: 'details',
-                builder: (context, state) => const DashboardDetailsPage()
-              )
-            ]
           ),
           GoRoute(
             path: "/library",
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: LibraryPage()
-            )
+            ),
+            routes: [
+              GoRoute(
+                name: 'BOOK_DETAILS',
+                path: 'details/:bookId',
+                builder: (context, state) {
+                  var bookId = state.params["bookId"];
+                  return BookDetailsPage(id: bookId);
+                }
+              )
+            ]
           ),
           GoRoute(
             path: "/goals",
@@ -133,7 +138,7 @@ class AppRouter {
       }
 
       if (state.subloc == "/") {
-        return "/library";
+        return "/profile";
       }
 
       return null;

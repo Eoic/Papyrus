@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../models/book_data.dart';
+import 'package:go_router/go_router.dart';
+import 'package:client/models/book_data.dart';
 
 class Book extends StatelessWidget {
+  final String id;
   final BookData data;
 
   const Book({
     super.key,
+    required this.id,
     required this.data,
   });
 
@@ -14,7 +17,9 @@ class Book extends StatelessWidget {
     return GridTile(
       child: InkWell(
         borderRadius: BorderRadius.circular(8.0),
-        onTap: () {},
+        onTap: () {
+          context.pushNamed('BOOK_DETAILS', params: {"bookId": id });
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -26,17 +31,16 @@ class Book extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-
             ),
+            const SizedBox(height: 2,),
             Text(data.title, overflow: TextOverflow.ellipsis,),
-            Text(data.author, overflow: TextOverflow.ellipsis,),
+            Text(data.author,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
           ],
         ),
       ),
-      // title: Text(data.title),
-      // subtitle: Text(data.author),
-      // onTap: () {},
-      // dense: true,
     );
   }
 }

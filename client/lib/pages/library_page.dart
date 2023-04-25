@@ -1,4 +1,4 @@
-import 'package:client/widgets/book.dart';
+import 'package:client/widgets/book/book.dart';
 import 'package:client/widgets/search.dart';
 import 'package:flutter/material.dart';
 
@@ -18,12 +18,91 @@ class LibraryPage extends StatelessWidget {
       author: "Ken Follet",
       coverURL: "assets/images/book_placeholder_2.jpg"
     ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
+    BookData(
+        title: "The Lord of the Rings",
+        author: "J. R. R. Tolkien",
+        coverURL: "assets/images/book_placeholder.jpg"
+    ),
+    BookData(
+        title: "The Pillars of The Earth",
+        author: "Ken Follet",
+        coverURL: "assets/images/book_placeholder_2.jpg"
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Library")),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         child: const Icon(Icons.upload_file_outlined),
@@ -38,14 +117,18 @@ class LibraryPage extends StatelessWidget {
               Expanded(child: GridView.count(
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
-                children: books.map((data) => Book(data: data)).toList(),
                 crossAxisCount: 3,
                 childAspectRatio: 0.5,
-                // itemCount: books.length,
-                // itemBuilder: (context, index) {
-                //   return Book(data: books[index]);
-                // }
-              ))
+                children: [
+                  ...books
+                    .asMap()
+                    .map((index, data) => MapEntry(
+                      index,
+                      Book(id: index.toString(), data: data)
+                    )
+                  ).values.toList(),
+                ],
+              )),
             ],
           ),
         ),
