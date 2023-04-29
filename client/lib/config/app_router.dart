@@ -138,7 +138,7 @@ class AppRouter {
       }
 
       if (state.subloc == "/") {
-        return "/profile";
+        return "/library";
       }
 
       return null;

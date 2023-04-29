@@ -11,92 +11,68 @@ class LibraryPage extends StatelessWidget {
     BookData(
       title: "The Lord of the Rings",
       author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg"
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: true
     ),
     BookData(
       title: "The Pillars of The Earth",
       author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg"
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: false
     ),
     BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: false
     ),
     BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
+      title: "The Pillars of The Earth",
+      author: "Ken Follet",
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: true
     ),
     BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: true,
     ),
     BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
+      title: "The Pillars of The Earth",
+      author: "Ken Follet",
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: false
     ),
     BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: false,
     ),
     BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
+      title: "The Pillars of The Earth",
+      author: "Ken Follet",
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: false
     ),
     BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: false,
     ),
     BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
+      title: "The Pillars of The Earth",
+      author: "Ken Follet",
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: false,
     ),
     BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
-    ),
-    BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
-    ),
-    BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
-    ),
-    BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
-    ),
-    BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
-    ),
-    BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
-    ),
-    BookData(
-        title: "The Lord of the Rings",
-        author: "J. R. R. Tolkien",
-        coverURL: "assets/images/book_placeholder.jpg"
-    ),
-    BookData(
-        title: "The Pillars of The Earth",
-        author: "Ken Follet",
-        coverURL: "assets/images/book_placeholder_2.jpg"
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: false,
     ),
   ];
 
@@ -105,7 +81,7 @@ class LibraryPage extends StatelessWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        child: const Icon(Icons.upload_file_outlined),
+        child: const Icon(Icons.upload_file_outlined, size: 32,),
       ),
       body: SafeArea(
         child: Padding(
