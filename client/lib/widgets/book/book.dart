@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:client/models/book_data.dart';
 
-class Book extends StatelessWidget {
+class Book extends StatefulWidget {
   final String id;
   final BookData data;
 
@@ -13,12 +13,25 @@ class Book extends StatelessWidget {
   });
 
   @override
+  State<Book> createState() => _BookState();
+}
+
+class _BookState extends State<Book> {
+  bool isFinished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isFinished = widget.data.isFinished;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GridTile(
       child: InkWell(
         borderRadius: BorderRadius.circular(8.0),
         onTap: () {
-          context.pushNamed('BOOK_DETAILS', params: {"bookId": id });
+          context.pushNamed('BOOK_DETAILS', params: {"bookId": widget.id });
         },
         onLongPress: () {
           showModalBottomSheet(
@@ -47,12 +60,17 @@ class Book extends StatelessWidget {
                       )
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        setState(() {
+                          isFinished = !isFinished;
+                          context.pop();
+                        });
+                      },
                       child: Row(
-                        children: const [
-                          Icon(Icons.check_box_rounded),
+                        children: [
+                          Icon(!isFinished ? Icons.check_box_outline_blank_rounded : Icons.check_box_rounded),
                           SizedBox(width: 8,),
-                          Text("Mark as finished")
+                          Text(isFinished ? "Mark as unfinished" : "Mark as finished")
                         ],
                       )
                     ),
@@ -62,7 +80,7 @@ class Book extends StatelessWidget {
                         children: const [
                           Icon(Icons.download),
                           SizedBox(width: 8,),
-                          Text("Download as file")
+                          Text("Export")
                         ],
                       )
                     ),
@@ -96,7 +114,7 @@ class Book extends StatelessWidget {
                       right: 0,
                       bottom: 0,
                       child: Image(
-                        image: AssetImage(data.coverURL),
+                        image: AssetImage(widget.data.coverURL),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -105,7 +123,7 @@ class Book extends StatelessWidget {
                       top: 6,
                       child: Icon(
                         Icons.check_circle,
-                        color: data.isFinished ? Colors.green[500] : Colors.transparent,
+                        color: isFinished ? Colors.green[500] : Colors.transparent,
                       ),
                     )
                   ],
@@ -113,8 +131,8 @@ class Book extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2,),
-            Text(data.title, overflow: TextOverflow.ellipsis,),
-            Text(data.author,
+            Text(widget.data.title, overflow: TextOverflow.ellipsis,),
+            Text(widget.data.author,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall,
             ),
