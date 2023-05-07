@@ -46,8 +46,7 @@ coverage.xml
 
 # Developers
 *.sw*
-manage.py
 .DS_Store
 
-# example database
-drf_example
+# Databases
+db.sqlite3
