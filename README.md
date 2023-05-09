@@ -2,9 +2,9 @@
 
 # Papyrus
 #### Main features
-* E-book uploading and management (shelves, topics, etc).
-* Management and progress tracking of physical books.
-* Annotations.
-* Reading goals.
-* Statistics.
-* Reading progress synchronization.
+* E-book uploading and management (shelves, topics, etc)
+* Management and progress tracking of physical books
+* Annotations
+* Reading goals
+* Statistics
+* Reading progress synchronization
