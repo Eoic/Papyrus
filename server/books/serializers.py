@@ -8,7 +8,8 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'title',
             'author',
-            'isbn',
+            'isbn_10',
+            'isbn_13',
             'publisher',
             'language',
             'genre',
@@ -18,6 +19,8 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
             'format',
             'owner',
             'file_url',
+            'shelf',
+            'topics',
             'published_at',
             'created_at',
             'updated_at'

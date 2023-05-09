@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'users',
     'books',
+    'shelves',
+    'topics',
 ]
 
 MIDDLEWARE = [

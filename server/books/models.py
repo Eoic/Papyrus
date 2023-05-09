@@ -5,7 +5,8 @@ from django.utils.timezone import now
 class Book(models.Model):
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=512, null=True, blank=True)
-    isbn = models.CharField(max_length=13, null=True, blank=True)
+    isbn_10 = models.CharField(max_length=10, null=True, blank=True)
+    isbn_13 = models.CharField(max_length=13, null=True, blank=True)
     publisher = models.CharField(max_length=100, null=True, blank=True)
     language = models.CharField(max_length=50, null=True, blank=True)
     genre = models.CharField(max_length=100, null=True, blank=True)
@@ -18,6 +19,8 @@ class Book(models.Model):
     published_at = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, blank=True, editable=False)
     updated_at = models.DateTimeField(null=True, blank=True, editable=False)
+    shelf = models.ForeignKey(to='shelves.Shelf', on_delete=models.SET_NULL, blank=True, null=True)
+    topics = models.ManyToManyField(to='topics.Topic', blank=True, null=True)
 
     class Meta:
         ordering = ['created_at']
