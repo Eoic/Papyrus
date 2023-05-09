@@ -4,8 +4,9 @@
 The primary objective of this project is to provide a comprehensive solution for managing both electronic and physical books across a diverse range of devices. The ultimate aim is to enhance the joy of reading by enabling users to track their reading statistics, set customized reading goals, and more.
 
 #### Main features
-* E-book uploading and management (shelves, topics, etc)
+* E-book uploading, converting and management (shelves, topics, etc)
 * Management and progress tracking of physical books
+* Full-text search
 * Annotations
 * Reading goals
 * Statistics
