@@ -18,7 +18,7 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
             'pages',
             'format',
             'owner',
-            'file_url',
+            'file',
             'shelf',
             'topics',
             'published_at',
