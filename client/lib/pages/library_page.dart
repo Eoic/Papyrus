@@ -81,7 +81,8 @@ class LibraryPage extends StatelessWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        child: const Icon(Icons.upload_file_outlined, size: 32,),
+        child: const Icon(Icons.cloud_upload_rounded, size: 32,),
+        shape: CircleBorder(),
       ),
       body: SafeArea(
         child: Padding(

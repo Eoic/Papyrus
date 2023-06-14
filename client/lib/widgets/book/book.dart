@@ -38,7 +38,7 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
 
     backgroundAnimation = ColorTween(
       begin: Colors.transparent,
-      end: Colors.white
+      end: Colors.green[100]
     ).animate(animationController)..addListener(() => setState(() {}));
   }
 
@@ -98,10 +98,20 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
                       )
                     ),
                     TextButton(
+                        onPressed: () {},
+                        child: Row(
+                          children: const [
+                            Icon(Icons.add_to_photos_rounded),
+                            SizedBox(width: 8,),
+                            Text("Add to shelf")
+                          ],
+                        )
+                    ),
+                    TextButton(
                       onPressed: () {},
                       child: Row(
                         children: const [
-                          Icon(Icons.download),
+                          Icon(Icons.download_rounded),
                           SizedBox(width: 8,),
                           Text("Export")
                         ],

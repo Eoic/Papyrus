@@ -13,6 +13,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
+import '../pages/search_options_page.dart';
+
 // https://github.com/bizz84/nested_navigation_examples/blob/d0b5dc691c4620cd54fe6864aed01b76dbf77091/examples/gorouter/lib/main.dart#L94
 
 class AppRouter {
@@ -95,20 +97,27 @@ class AppRouter {
             ),
             routes: [
               GoRoute(
+                name: 'SEARCH_OPTIONS',
+                path: 'search/options',
+                builder: (context, state) {
+                  return SearchOptionsPage();
+                },
+              ),
+              GoRoute(
                 name: 'BOOK_DETAILS',
                 path: 'details/:bookId',
                 builder: (context, state) {
                   var bookId = state.params["bookId"];
                   return BookDetailsPage(id: bookId);
                 }
-              )
+              ),
             ]
           ),
           GoRoute(
             path: "/goals",
             pageBuilder: (context, state) => NoTransitionPage(
-                key: state.pageKey,
-                child: const GoalsPage()
+              key: state.pageKey,
+              child: const GoalsPage()
             )
           ),
           GoRoute(

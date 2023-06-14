@@ -1,5 +1,6 @@
 import 'package:client/widgets/search_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class Search extends StatefulWidget {
   const Search({ super.key });
@@ -25,17 +26,13 @@ class _SearchState extends State<Search> {
               suffixIcon: IconButton(
                 icon: const Icon(Icons.tune_rounded),
                 onPressed: () {
-                  setState(() {
-                    isExpanded = !isExpanded;
-                  });
+                  context.pushNamed('SEARCH_OPTIONS');
                 },
               )
             ),
             onSaved: (value) => { },
             // controller: controller,
           ),
-          if (isExpanded)
-            const SearchSettings(),
         ],
       );
   }
