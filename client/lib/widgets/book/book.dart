@@ -16,17 +16,40 @@ class Book extends StatefulWidget {
   State<Book> createState() => _BookState();
 }
 
-class _BookState extends State<Book> {
+class _BookState extends State<Book> with SingleTickerProviderStateMixin {
   bool isFinished = false;
+  late Animation animation;
+  late Animation backgroundAnimation;
+  late AnimationController animationController;
 
   @override
   void initState() {
     super.initState();
     isFinished = widget.data.isFinished;
+    animationController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this
+    );
+
+    animation = ColorTween(
+      begin: Colors.transparent,
+      end: Colors.green[500]
+    ).animate(animationController)..addListener(() => setState(() {}));
+
+    backgroundAnimation = ColorTween(
+      begin: Colors.transparent,
+      end: Colors.white
+    ).animate(animationController)..addListener(() => setState(() {}));
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isFinished) {
+      animationController.forward();
+    } else {
+      animationController.reverse();
+    }
+
     return GridTile(
       child: InkWell(
         borderRadius: BorderRadius.circular(8.0),
@@ -51,8 +74,8 @@ class _BookState extends State<Book> {
                   children: [
                     TextButton(
                       onPressed: () {},
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           Icon(Icons.info_outline),
                           SizedBox(width: 8,),
                           Text("View details")
@@ -122,10 +145,20 @@ class _BookState extends State<Book> {
                       right: 6,
                       top: 6,
                       child: Icon(
-                        Icons.check_circle,
-                        color: isFinished ? Colors.green[500] : Colors.transparent,
+                        Icons.circle,
+                        color: backgroundAnimation.value,
+                        // size: 0,
                       ),
-                    )
+                    ),
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: animation.value,
+                        // size: 0,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -140,5 +173,11 @@ class _BookState extends State<Book> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    animationController.dispose();
   }
 }
