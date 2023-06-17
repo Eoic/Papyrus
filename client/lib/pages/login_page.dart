@@ -3,11 +3,11 @@ import 'package:client/widgets/heading.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatelessWidget {
-  LoginPage({ super.key });
+  const LoginPage({ super.key });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: SafeArea(
         child: Center(
           child: CustomScrollView(
@@ -15,7 +15,7 @@ class LoginPage extends StatelessWidget {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Column(
-                  children: const [
+                  children: [
                     Heading(subtitle: "All your books in one place",),
                     Expanded(child: LoginForm())
                   ]

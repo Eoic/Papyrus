@@ -39,8 +39,15 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
           final provider = Provider.of<GoogleSignInProvider>(context, listen: false);
 
           provider.signInWithGoogle().then((value) {
-            // Navigator.pushNamed(context, "/library");
             context.go("/library");
+          }).catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                duration: const Duration(seconds: 5),
+                content: const Text("Failed to sign in with Google account."),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              )
+            );
           });
 
           setState(() => isSigningIn = false);

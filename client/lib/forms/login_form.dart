@@ -109,8 +109,8 @@ class _LoginForm extends State<LoginForm> {
                 minimumSize: MaterialStatePropertyAll<Size>(Size.fromHeight(50)),
                 elevation: MaterialStatePropertyAll<double>(2.0),
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Spacer(),
                   Text("Continue"),
                   Spacer(),
@@ -124,7 +124,7 @@ class _LoginForm extends State<LoginForm> {
                 children: [
                   const Spacer(),
                   const TitledDivider(title: "Or continue with"),
-                  GoogleSignInButton(
+                  const GoogleSignInButton(
                     title: "Sign in with Google",
                   ),
                   Row(
@@ -132,13 +132,7 @@ class _LoginForm extends State<LoginForm> {
                     children: [
                       const Text("Don't have an account?"),
                       TextButton(
-                        onPressed: () {
-                          context.go("/register");
-                          // Navigator.pushReplacementNamed(
-                          //   context,
-                          //   "/register"
-                          // );
-                        },
+                        onPressed: () => context.go("/register"),
                         child: const Text("Sign up")
                       )
                     ],

@@ -1,4 +1,3 @@
-
 import 'package:client/pages/book_details_page.dart';
 import 'package:client/pages/dashboard_page.dart';
 import 'package:client/pages/goals_page.dart';
