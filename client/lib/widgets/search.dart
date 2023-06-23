@@ -22,7 +22,7 @@ class _SearchState extends State<Search> {
               border: const OutlineInputBorder(),
               labelText: "Search...",
               isDense: true,
-              prefixIcon: const Icon(Icons.search),
+              // prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.tune_rounded),
                 onPressed: () {

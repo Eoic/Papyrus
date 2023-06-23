@@ -14,7 +14,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "946926764317-bh068d544vqucn1lh9r95qcbheefh1qn.apps.googleusercontent.com",
+          "client_id": "946926764317-mv3bcfeqr9qeilnosbuos1r6lt98e3dv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.badlogic.papyrus",
+            "certificate_hash": "c364bd544470ccb5543ce67250869f089a70c782"
+          }
+        },
+        {
+          "client_id": "946926764317-b8glqg4pna5oq092nrmp7dou70f6243c.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -27,7 +35,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "946926764317-bh068d544vqucn1lh9r95qcbheefh1qn.apps.googleusercontent.com",
+              "client_id": "946926764317-b8glqg4pna5oq092nrmp7dou70f6243c.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

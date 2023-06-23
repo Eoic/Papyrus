@@ -4,8 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../models/book_data.dart';
 
-class LibraryPage extends StatelessWidget {
+class LibraryPage extends StatefulWidget {
   LibraryPage({ super.key });
+
+  @override
+  State<LibraryPage> createState() => _LibraryPageState();
+}
+
+class _LibraryPageState extends State<LibraryPage> {
+  bool isSearchExpanded = false;
 
   var books = [
     BookData(
@@ -79,17 +86,54 @@ class LibraryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("All books"),
+        titleSpacing: 0,
+        scrolledUnderElevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() => isSearchExpanded = !isSearchExpanded);
+            },
+            icon: const Icon(Icons.search),
+          )
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         child: const Icon(Icons.cloud_upload_rounded, size: 32,),
         shape: CircleBorder(),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            ListTile(
+              title: Text("All books"),
+              leading: Icon(Icons.stacked_bar_chart),
+              onTap: () { print("Tapped"); },
+              selected: true,
+            ),
+            ListTile(
+              title: Text("Shelves"),
+              leading: Icon(Icons.shelves),
+              onTap: () { print("Shelves."); },
+            ),
+            ListTile(
+              title: Text("Topics"),
+              leading: Icon(Icons.topic),
+              onTap: () { print("Topics."); },
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 4.0),
           child: Column(
             children: [
-              const Search(),
+              if (isSearchExpanded)
+                const Search(),
+
               const SizedBox(height: 12,),
               Expanded(child: GridView.count(
                 mainAxisSpacing: 8,
