@@ -19,13 +19,13 @@ class BookDetailsPage extends StatelessWidget {
         appBar: AppBar(
           bottom: const TabBar(
             tabs: [
-              Tab(text: "Details",),
-              Tab(text: "Annotations",),
-              Tab(text: "Notes",),
+              Tab(text: 'Details',),
+              Tab(text: 'Annotations',),
+              Tab(text: 'Notes',),
             ],
           ),
         ),
-        body: TabBarView(
+        body: const TabBarView(
           children: [
             BookDetails(),
             BookAnnotations(),

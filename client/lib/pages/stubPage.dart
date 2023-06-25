@@ -7,18 +7,19 @@ class StubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Something'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {  },
-        child: Text("Hello"),
-      ),
-      body: SafeArea(
-        child: Text(title)
-      )
-    );
+    return Text(title);
+    // return Scaffold(
+    //   appBar: AppBar(
+    //     title: Text('Something'),
+    //   ),
+    //   floatingActionButton: FloatingActionButton(
+    //     onPressed: () {  },
+    //     child: Text("Hello"),
+    //   ),
+    //   body: SafeArea(
+    //     child: Text(title)
+    //   )
+    // );
     // return ;
   }
 }

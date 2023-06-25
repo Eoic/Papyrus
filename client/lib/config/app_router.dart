@@ -1,3 +1,4 @@
+
 import 'package:client/pages/book_details_page.dart';
 import 'package:client/pages/dashboard_page.dart';
 import 'package:client/pages/goals_page.dart';
@@ -93,12 +94,14 @@ class AppRouter {
         },
         routes: [
           GoRoute(
+            name: 'LOGIN',
             path: 'login',
             builder: (BuildContext context, GoRouterState state) {
               return const LoginPage();
             },
           ),
           GoRoute(
+            name: 'REGISTER',
             path: 'register',
             builder: (BuildContext context, GoRouterState state) {
               return const RegisterPage();
@@ -116,6 +119,7 @@ class AppRouter {
         },
         routes: [
           GoRoute(
+            name: 'DASHBOARD',
             path: '/dashboard',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
@@ -124,10 +128,13 @@ class AppRouter {
           ),
           ShellRoute(
             navigatorKey: drawerShellNavigatorKey,
-            builder: (context, state, child) {
-              return ScaffoldWithDrawer(
-                tabs: libraryDrawerTabs,
-                child: child,
+            pageBuilder: (context, state, widget) {
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: ScaffoldWithDrawer(
+                  tabs: libraryDrawerTabs,
+                  child: widget,
+                ),
               );
             },
             routes: [
@@ -137,9 +144,10 @@ class AppRouter {
                 redirect: (context, state) {
                   return state.location == '/library' ? '/library/books' : null;
                 },
-                builder: (BuildContext context, GoRouterState state) {
-                  return const StubPage(title: 'Loading...');
-                },
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const StubPage(title: 'Loading...')
+                ),
                 routes: [
                   GoRoute(
                     name: 'BOOKS',
@@ -184,31 +192,8 @@ class AppRouter {
               ),
             ]
           ),
-          // GoRoute(
-          //   path: '/library',
-          //   pageBuilder: (context, state) => NoTransitionPage(
-          //     key: state.pageKey,
-          //     child: AllBooksPage()
-          //   ),
-          //   routes: [
-          //     GoRoute(
-          //       name: 'SEARCH_OPTIONS',
-          //       path: 'search/options',
-          //       builder: (context, state) {
-          //         return const SearchOptionsPage();
-          //       },
-          //     ),
-          //     GoRoute(
-          //       name: 'BOOK_DETAILS',
-          //       path: 'details/:bookId',
-          //       builder: (context, state) {
-          //         var bookId = state.params['bookId'];
-          //         return BookDetailsPage(id: bookId);
-          //       }
-          //     ),
-          //   ]
-          // ),
           GoRoute(
+            name: 'GOALS',
             path: '/goals',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
@@ -216,6 +201,7 @@ class AppRouter {
             )
           ),
           GoRoute(
+            name: 'STATISTICS',
             path: '/statistics',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
@@ -223,6 +209,7 @@ class AppRouter {
             )
           ),
           GoRoute(
+            name: 'PROFILE',
             path: '/profile',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,

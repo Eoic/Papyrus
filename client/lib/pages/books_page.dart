@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../models/book_data.dart';
 
-class AllBooksPage extends StatefulWidget {
-  AllBooksPage({ super.key });
+class BooksPage extends StatefulWidget {
+  const BooksPage({ super.key });
 
   @override
-  State<AllBooksPage> createState() => _AllBooksState();
+  State<BooksPage> createState() => _AllBooksState();
 }
 
-class _AllBooksState extends State<AllBooksPage> {
+class _AllBooksState extends State<BooksPage> {
   bool isSearchExpanded = false;
 
   var books = [
@@ -90,6 +90,7 @@ class _AllBooksState extends State<AllBooksPage> {
         title: const Text("All books"),
         titleSpacing: 0,
         scrolledUnderElevation: 0,
+        // KEEP
         actions: [
           IconButton(
             onPressed: () {
@@ -98,34 +99,16 @@ class _AllBooksState extends State<AllBooksPage> {
             icon: const Icon(Icons.search),
           )
         ],
+        // ENDKEEP
       ),
+      // KEEP
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         shape: const CircleBorder(),
         child: const Icon(Icons.cloud_upload_rounded, size: 32,),
       ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              title: Text("All books"),
-              leading: Icon(Icons.stacked_bar_chart),
-              onTap: () { print("Tapped"); },
-              selected: true,
-            ),
-            ListTile(
-              title: Text("Shelves"),
-              leading: Icon(Icons.shelves),
-              onTap: () { print("Shelves."); },
-            ),
-            ListTile(
-              title: Text("Topics"),
-              leading: Icon(Icons.topic),
-              onTap: () { print("Topics."); },
-            ),
-          ],
-        ),
-      ),
+      // ENDKEEP
+      // KEEP
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 4.0),
@@ -154,6 +137,7 @@ class _AllBooksState extends State<AllBooksPage> {
           ),
         ),
       ),
+      // ENDKEEP
     );
   }
 }
