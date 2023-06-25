@@ -107,8 +107,7 @@ class _RegisterForm extends State<RegisterForm> {
                   signUp().then((value) {
                     setState(() => isRegisterDisabled = false);
                     Navigator.of(context).pop();
-                    // Navigator.pushNamed(context, "/library");
-                    context.go("/library");
+                    context.goNamed("LIBRARY");
                   }).catchError((error) async {
                     setState(() => isRegisterDisabled = false);
                     Navigator.of(context).pop();
@@ -119,7 +118,7 @@ class _RegisterForm extends State<RegisterForm> {
                 minimumSize: MaterialStatePropertyAll<Size>(Size.fromHeight(46)),
                 elevation: MaterialStatePropertyAll<double>(2.0),
               ),
-              child: Row(
+              child: const Row(
                 children: const [
                   Spacer(),
                   Text("Continue"),
@@ -133,8 +132,10 @@ class _RegisterForm extends State<RegisterForm> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Spacer(),
-                  const TitledDivider(title: "Or continue with"),
-                  GoogleSignInButton(
+                  const TitledDivider(
+                    title: "Or continue with"
+                  ),
+                  const GoogleSignInButton(
                     title: "Sign up with Google",
                   ),
                   Row(
@@ -142,13 +143,7 @@ class _RegisterForm extends State<RegisterForm> {
                     children: [
                       const Text("Already have an account?"),
                       TextButton(
-                        onPressed: () {
-                          context.go("/login");
-                          // Navigator.pushReplacementNamed(
-                          //   context,
-                          //   "/login"
-                          // );
-                        },
+                        onPressed: () => context.go("/login"),
                         child: const Text("Sign in")
                       )
                     ],

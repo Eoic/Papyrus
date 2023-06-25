@@ -1,11 +1,12 @@
 import 'package:client/pages/book_details_page.dart';
 import 'package:client/pages/dashboard_page.dart';
 import 'package:client/pages/goals_page.dart';
-import 'package:client/pages/library_page.dart';
+import 'package:client/pages/books_page.dart';
 import 'package:client/pages/login_page.dart';
 import 'package:client/pages/profile_page.dart';
 import 'package:client/pages/register_page.dart';
 import 'package:client/pages/statistics_page.dart';
+import 'package:client/pages/stubPage.dart';
 import 'package:client/pages/welcome_page.dart';
 import 'package:client/widgets/navbar_scaffold.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -13,39 +14,72 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
 import '../pages/search_options_page.dart';
-
-// https://github.com/bizz84/nested_navigation_examples/blob/d0b5dc691c4620cd54fe6864aed01b76dbf77091/examples/gorouter/lib/main.dart#L94
+import '../widgets/drawer_scaffold.dart';
 
 class AppRouter {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
   final shellNavigatorKey = GlobalKey<NavigatorState>();
+  final drawerShellNavigatorKey = GlobalKey<NavigatorState>();
 
-  final tabs = [
+  final bottomGlobalNavigationTabs = [
     ScaffoldWithNavBarTabItem(
       initialLocation: '/dashboard',
       icon: const Icon(Icons.dashboard),
-      label: "Dashboard"
+      label: 'Dashboard'
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/library',
       icon: const Icon(Icons.library_books),
-      label: "Library",
+      label: 'Library',
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/goals',
       icon: const Icon(Icons.emoji_events),
-      label: "Goals"
+      label: 'Goals'
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/statistics',
       icon: const Icon(Icons.stacked_line_chart),
-      label: "Statistics"
+      label: 'Statistics'
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/profile',
       icon: const Icon(Icons.person),
-      label: "Profile"
-    )
+      label: 'Profile'
+    ),
+  ];
+
+  final libraryDrawerTabs = [
+    const ScaffoldWithDrawerTabItem(
+      initialLocation: '/library/books',
+      label: 'All books',
+      icon: Icon(Icons.stacked_bar_chart),
+    ),
+    const ScaffoldWithDrawerTabItem(
+      initialLocation: '/library/shelves',
+      label: 'Shelves',
+      icon: Icon(Icons.shelves),
+    ),
+    const ScaffoldWithDrawerTabItem(
+      initialLocation: '/library/topics',
+      label: 'Topics',
+      icon: Icon(Icons.topic),
+    ),
+    const ScaffoldWithDrawerTabItem(
+      initialLocation: '/library/bookmarks',
+      label: 'Bookmarks',
+      icon: Icon(Icons.bookmark),
+    ),
+    const ScaffoldWithDrawerTabItem(
+      initialLocation: '/library/annotations',
+      label: 'Annotations',
+      icon: Icon(Icons.border_color),
+    ),
+    const ScaffoldWithDrawerTabItem(
+      initialLocation: '/library/notes',
+      label: 'Notes',
+      icon: Icon(Icons.notes),
+    ),
   ];
 
   late final GoRouter router = GoRouter(
@@ -53,21 +87,21 @@ class AppRouter {
     navigatorKey: rootNavigatorKey,
     routes: [
       GoRoute(
-        path: "/",
+        path: '/',
         builder: (BuildContext context, GoRouterState state) {
           return const WelcomePage();
         },
         routes: [
           GoRoute(
-            path: "login",
+            path: 'login',
             builder: (BuildContext context, GoRouterState state) {
-              return LoginPage();
+              return const LoginPage();
             },
           ),
           GoRoute(
-            path: "register",
+            path: 'register',
             builder: (BuildContext context, GoRouterState state) {
-              return RegisterPage();
+              return const RegisterPage();
             }
           )
         ],
@@ -76,58 +110,120 @@ class AppRouter {
         navigatorKey: shellNavigatorKey,
         builder: (context, state, child) {
           return ScaffoldWithBottomNavBar(
-            tabs: tabs,
+            tabs: bottomGlobalNavigationTabs,
             child: child
           );
         },
         routes: [
           GoRoute(
-            path: "/dashboard",
+            path: '/dashboard',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const DashboardPage()
             ),
           ),
-          GoRoute(
-            path: "/library",
-            pageBuilder: (context, state) => NoTransitionPage(
-              key: state.pageKey,
-              child: LibraryPage()
-            ),
+          ShellRoute(
+            navigatorKey: drawerShellNavigatorKey,
+            builder: (context, state, child) {
+              return ScaffoldWithDrawer(
+                tabs: libraryDrawerTabs,
+                child: child,
+              );
+            },
             routes: [
               GoRoute(
-                name: 'SEARCH_OPTIONS',
-                path: 'search/options',
-                builder: (context, state) {
-                  return SearchOptionsPage();
+                name: 'LIBRARY',
+                path: '/library',
+                redirect: (context, state) {
+                  return state.location == '/library' ? '/library/books' : null;
                 },
-              ),
-              GoRoute(
-                name: 'BOOK_DETAILS',
-                path: 'details/:bookId',
-                builder: (context, state) {
-                  var bookId = state.params["bookId"];
-                  return BookDetailsPage(id: bookId);
-                }
+                builder: (BuildContext context, GoRouterState state) {
+                  return const StubPage(title: 'Loading...');
+                },
+                routes: [
+                  GoRoute(
+                    name: 'BOOKS',
+                    path: 'books',
+                    pageBuilder: (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: const StubPage(title: 'Books')
+                    ),
+                  ),
+                  GoRoute(
+                    name: 'SHELVES',
+                    path: 'shelves',
+                    pageBuilder: (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: const StubPage(title: 'Shelves')
+                    ),
+                  ),
+                  GoRoute(
+                    name: 'TOPICS',
+                    path: 'topics',
+                    pageBuilder: (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: const StubPage(title: 'Topics')
+                    ),
+                  ),
+                  GoRoute(
+                    name: 'SEARCH_OPTIONS',
+                    path: 'search/options',
+                    builder: (context, state) {
+                      return const SearchOptionsPage();
+                    },
+                  ),
+                  GoRoute(
+                    name: 'BOOK_DETAILS',
+                    path: 'details/:bookId',
+                    builder: (context, state) {
+                      var bookId = state.params['bookId'];
+                      return BookDetailsPage(id: bookId);
+                    }
+                  ),
+                ]
               ),
             ]
           ),
+          // GoRoute(
+          //   path: '/library',
+          //   pageBuilder: (context, state) => NoTransitionPage(
+          //     key: state.pageKey,
+          //     child: AllBooksPage()
+          //   ),
+          //   routes: [
+          //     GoRoute(
+          //       name: 'SEARCH_OPTIONS',
+          //       path: 'search/options',
+          //       builder: (context, state) {
+          //         return const SearchOptionsPage();
+          //       },
+          //     ),
+          //     GoRoute(
+          //       name: 'BOOK_DETAILS',
+          //       path: 'details/:bookId',
+          //       builder: (context, state) {
+          //         var bookId = state.params['bookId'];
+          //         return BookDetailsPage(id: bookId);
+          //       }
+          //     ),
+          //   ]
+          // ),
           GoRoute(
-            path: "/goals",
+            path: '/goals',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const GoalsPage()
             )
           ),
           GoRoute(
-            path: "/statistics",
+            path: '/statistics',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const StatisticsPage()
             )
           ),
           GoRoute(
-            path: "/profile",
+            path: '/profile',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const ProfilePage()
@@ -138,15 +234,15 @@ class AppRouter {
     ],
     redirect: (BuildContext context, GoRouterState state) {
       if (FirebaseAuth.instance.currentUser == null) {
-        if (state.subloc.contains("/login") || state.subloc.contains("/register")) {
+        if (state.subloc.contains('/login') || state.subloc.contains('/register')) {
           return null;
         }
 
-        return "/";
+        return '/';
       }
 
-      if (state.subloc == "/") {
-        return "/library";
+      if (state.subloc == '/') {
+        return '/library/books';
       }
 
       return null;

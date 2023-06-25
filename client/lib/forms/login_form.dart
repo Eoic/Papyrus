@@ -96,8 +96,7 @@ class _LoginForm extends State<LoginForm> {
                   signIn().then((value) {
                     setState(() => isLoginDisabled = false);
                     Navigator.of(context).pop();
-                    context.go("/library");
-                    // Navigator.pushNamed(context, "/library");
+                    context.goNamed('LIBRARY');
                   }).catchError((error) async {
                     setState(() => isLoginDisabled = false);
                     Navigator.of(context).pop();

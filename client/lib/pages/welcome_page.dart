@@ -15,17 +15,17 @@ class WelcomePage extends StatelessWidget {
               Column(
                 children: [
                   const Image(
-                    image: AssetImage("assets/images/logo.png"),
+                    image: AssetImage('assets/images/logo.png'),
                     height: 150.0,
                   ),
                   Text(
-                    "Papyrus",
+                    'Papyrus',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       fontSize: 48
                     ),
                   ),
                   const Text(
-                    "Your ultimate digital library",
+                    'Your ultimate digital library',
                     style: TextStyle(
                       fontSize: 16.0
                     ),
@@ -47,7 +47,7 @@ class WelcomePage extends StatelessWidget {
                       onPressed: () {
                         context.go('/register');
                       },
-                      child: const Text("Get started")
+                      child: const Text('Get started')
                     ),
                     const SizedBox(height: 16.0,),
                     ElevatedButton(
@@ -58,14 +58,14 @@ class WelcomePage extends StatelessWidget {
                       onPressed: () {
                         context.go('/login');
                       },
-                      child: const Text("Sign in")
+                      child: const Text('Sign in')
                     ),
                     const SizedBox(height: 16.0),
                     TextButton(
                       onPressed: () {
-                        context.go('/library');
+                        context.goNamed('LIBRARY');
                       },
-                      child: const Text("Use offline mode"),
+                      child: const Text('Use offline mode'),
                     )
                   ],
                 ),
