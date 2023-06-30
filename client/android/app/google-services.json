@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "946926764317",
-    "project_id": "papyrus-e8441",
-    "storage_bucket": "papyrus-e8441.appspot.com"
+    "project_number": "789494478936",
+    "project_id": "papyrus-library-manager",
+    "storage_bucket": "papyrus-library-manager.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:946926764317:android:5b00a16972ccf8dc56a1f4",
+        "mobilesdk_app_id": "1:789494478936:android:1a5ded1a77cadbc08b322d",
         "android_client_info": {
           "package_name": "com.badlogic.papyrus"
         }
       },
       "oauth_client": [
         {
-          "client_id": "946926764317-mv3bcfeqr9qeilnosbuos1r6lt98e3dv.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.badlogic.papyrus",
-            "certificate_hash": "c364bd544470ccb5543ce67250869f089a70c782"
-          }
-        },
-        {
-          "client_id": "946926764317-b8glqg4pna5oq092nrmp7dou70f6243c.apps.googleusercontent.com",
+          "client_id": "789494478936-65nqnlao1g8ho5puig9noa5dtri6smr3.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCqjVDdndJwg6H-jPLXzhn7ARNezfOnuaM"
+          "current_key": "AIzaSyABqcOAVutKXuslOYo4ZcN_rklCMUaBD5M"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "946926764317-b8glqg4pna5oq092nrmp7dou70f6243c.apps.googleusercontent.com",
+              "client_id": "789494478936-65nqnlao1g8ho5puig9noa5dtri6smr3.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
