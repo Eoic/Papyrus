@@ -1,4 +1,5 @@
 import 'package:client/widgets/profile_button.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,7 @@ class ProfilePage extends StatelessWidget {
 
     return FirebaseAuth.instance.signOut();
   }
+  // ---
 
   @override
   Widget build(BuildContext context) {
@@ -26,25 +28,6 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Profile")),
       body: SafeArea(
-        // child: Row(
-        //   children: [
-        //     Text("Signed in as ${user?.email ?? "Anonymous."}"),
-        //     TextButton(
-        //         onPressed: user?.email != null ? () {
-        //           final userInfo = FirebaseAuth.instance.currentUser;
-        //
-        //           if (userInfo != null) {
-        //             final googleProvider = Provider.of<GoogleSignInProvider>(context, listen: false);
-        //
-        //             signOut(userInfo, googleProvider).then((value) {
-        //               context.go("/login");
-        //             });
-        //           }
-        //         } : null,
-        //         child: const Text("Logout")
-        //     )
-        //   ],
-        // ),
         child: SafeArea(
           child: SingleChildScrollView(
             child: Container(
@@ -55,14 +38,14 @@ class ProfilePage extends StatelessWidget {
                     width: 128.0,
                     height: 128.0,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(100),
-                      child: const Image(image: AssetImage("assets/images/profile.png")),
+                      borderRadius: BorderRadius.circular(10),
+                      child: FirebaseAuth.instance.currentUser?.photoURL != null ? Image.network(FirebaseAuth.instance.currentUser!.photoURL as String, scale: 0.7,) : const Image(image: AssetImage('assets/images/profile.png')),
                     ),
                   ),
-                  SizedBox(height: 12.0,),
+                  const SizedBox(height: 12.0,),
                   Text(user?.displayName ?? "Anonymous user", style: Theme.of(context).textTheme.titleLarge),
-                  Text(user?.email ?? "-", style: Theme.of(context).textTheme.bodyMedium),
-                  SizedBox(height: 12.0,),
+                  Text((user?.email == null || user?.email?.trim() == '') ? 'No email provided.' : '-', style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 12.0,),
                   SizedBox(
                     width: 200,
                     child: ElevatedButton(
@@ -101,7 +84,7 @@ class ProfilePage extends StatelessWidget {
                   ProfileButton(
                     title: "Logout",
                     icon: Icons.logout_rounded,
-                    onPressed: user?.email != null ? () {
+                    onPressed: () {
                       final userInfo = FirebaseAuth.instance.currentUser;
 
                       if (userInfo != null) {
@@ -111,7 +94,7 @@ class ProfilePage extends StatelessWidget {
                           context.go("/login");
                         });
                       }
-                    } : null,
+                    }
                   ),
                 ],
               ),
