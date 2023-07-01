@@ -35,11 +35,12 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
         ),
         onPressed: () async {
           setState(() => isSigningIn = true);
-
           final provider = Provider.of<GoogleSignInProvider>(context, listen: false);
 
           provider.signInWithGoogle().then((value) {
-            context.goNamed('LIBRARY');
+            if (value != null) {
+              context.goNamed('LIBRARY');
+            }
           }).catchError((error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
