@@ -1,0 +1,200 @@
+{
+  "openapi" : "3.0.0",
+  "info" : {
+    "title" : "Papyrus OAuth2 application specification",
+    "description" : "This is an example of using OAuth2 Application Flow in a specification to describe security to your API.",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "https://virtserver.swaggerhub.com/KAROLISSTRAZDAS/Papyrus/1.0.0",
+    "description" : "SwaggerHub API Auto Mocking"
+  } ],
+  "security" : [ {
+    "application" : [ "read", "write" ]
+  } ],
+  "paths" : {
+    "/books" : {
+      "get" : {
+        "summary" : "List all books.",
+        "description" : "Returns all books owned by the user.",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "The number of items to skip before starting to collect the result set.",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "example" : 0,
+            "default" : 0
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "The numbers of items to return.",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "example" : 20,
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ping" : {
+      "get" : {
+        "summary" : "Server heartbeat operation",
+        "description" : "This operation shows how to override the global security defined above, as we want to open it up for all users.",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "security" : [ ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Shelf" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          }
+        },
+        "description" : "Groups books according to the subject or other grouping criteria."
+      },
+      "Note" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "content" : {
+            "type" : "string"
+          }
+        },
+        "description" : "Additional note associated with the book. It's different from the annotation because it's a general note for the entire book, and not for the highlighted text excerpt."
+      },
+      "Annotation" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "description" : "Highlighted text metadata within the book."
+      },
+      "Book" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 1
+          },
+          "title" : {
+            "type" : "string",
+            "example" : "George Orwell"
+          },
+          "author" : {
+            "type" : "string",
+            "example" : "Coming Up for Air"
+          },
+          "description" : {
+            "type" : "string",
+            "example" : "The story follows George Bowling, a 45-year-old husband, father, and insurance salesman, who foresees World War II and attempts to recapture idyllic childhood innocence and escape his dreary life by returning to Lower Binfield, his birthplace."
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "example" : "1939"
+          },
+          "isbn" : {
+            "type" : "string",
+            "example" : "978-0-14-118569-9"
+          },
+          "cover" : {
+            "type" : "string",
+            "example" : "https://s3.amazonaws.com/books429625/covers/commin-up-for-air.jpg"
+          },
+          "language" : {
+            "type" : "string",
+            "example" : "EN"
+          },
+          "pages" : {
+            "type" : "integer",
+            "example" : 237
+          }
+        },
+        "description" : "Information about the book (e.g. title, publication date, page count) and other metadata. Can be a record supplementing the digital file or a record for a physical book. "
+      },
+      "Topic" : {
+        "description" : "Groups books within the shelf according to the topic."
+      },
+      "UserProgress" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "description" : "Reading progress record for a particular book."
+      },
+      "User" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "description" : "User of the system."
+      }
+    },
+    "securitySchemes" : {
+      "application" : {
+        "type" : "oauth2",
+        "flows" : {
+          "clientCredentials" : {
+            "tokenUrl" : "http://example.com/oauth/token",
+            "scopes" : {
+              "write" : "allows modifying resources",
+              "read" : "allows reading resources"
+            }
+          }
+        }
+      }
+    }
+  }
+}
