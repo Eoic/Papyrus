@@ -1,13 +1,16 @@
 <a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/Specification-GitBook-%234477de.svg"/></a>
 
 # Papyrus
-The gloat of this project is to provide a comprehensive solution for managing both electronic and physical books across many devices. It aims to enhance the reading experience by enabling users to track their books, reading statistics, set customized reading goals, and more.
+Papyrus is a cross-platform software for reading and managing book collections. It seeks to enhance the reading experience by enabling users to organize their collections of physical and electronic books, set customized reading goals, track reading progress and other statistics, and more.
 
 ### Features
-* E-book uploading, conversion and management (shelves, topics, tags, etc).
-* Management and progress tracking of physical books.
-* Full-text search.
-* Annotations.
-* Reading goals.
-* Statistics.
+* E-book uploading and management (e.g. shelves, topics, tags, etc).
+* Physical book management and progress tracking (e.g. edit metadata, track reading progress).
+* Convert e-book files between popular formats.
+* Full-text search (for book text, annotations).
+* Annotations and notes - create annotation on book text, and notes to summarize the books.
+* Reading goals (e.g. read `N` books in `M` months, read `N` hours per day for `M` days).
+* Reading statistics (e.g. time spent, pages read, books started / reading / completed)
 * Reading progress synchronization across devices.
+* Cross-platform support (e.g. Windows, Linux, Android, iOS, Web, e-readers).
+* Integrated reader with customization capabilities (e.g. theme, font, spacing).
