@@ -21,9 +21,9 @@ layout:
 
 # What is Papyrus?
 
-Papyrus is a cross-platform software for managing your physical and electronic books seamlessly, across a wide range of devices. Nowadays there is no shortage of software solutions offering some of the functionality a regular reader may require - an integrated e-book viewer, some way of categorization (e.g. virtual, shelves, tags), statistics tracking (e.g. reading time, books read), file uploads, and so on. Yet, one could argue that each of the mentioned solutions leaves a lot to be desired, mainly because while doing a subset of things well, some other, arguably essential, functionality is missing or the UX is just not good.
+Papyrus is a cross-platform software for managing your physical and electronic books seamlessly, across a wide range of devices. Nowadays there is no shortage of software solutions offering some of the functionality a regular reader may require - an integrated e-book viewer, some way of categorization (e.g. shelves, categories, tags), statistics tracking (e.g. reading time, number of books read), file uploads, and so on. Yet, one could argue that each of the mentioned solutions leaves a lot to be desired, mainly because while doing a subset of things well, some other, arguably essential, functionality is missing or the UX is just not good.
 
-Papyrus is an attempt to make a versatile, easy-to-use system that would work on a diverse range of platforms - Android, iOS, Web, Desktop, etc., with intuitive and modern UI, customization options, and a wide range of functionality.&#x20;
+Papyrus is an attempt to make a versatile, easy-to-use system that would enhance the reading experience, and make it more accessible by working on a diverse range of platforms - Android, iOS, Web, Desktop, etc., with intuitive and modern UI, customization options, and a wide range of functionality.&#x20;
 
 ## **Main features**
 
