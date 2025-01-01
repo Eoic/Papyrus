@@ -9,9 +9,9 @@ description: >-
 | Purpose               | Name            | Language(s)         |
 | --------------------- | --------------- | ------------------- |
 | User interface design | Figma           | -                   |
-| Project management    | GitHub projects | -                   |
+| Project management    | GitHub Projects | -                   |
 | Front-end             | Flutter         | Dart, Kotlin, Swift |
-| Back-end              | Actix Web       | Rust                |
+| Back-end              | FastAPI         | Python              |
 |                       | GraphQL         | -                   |
 |                       | Redis           | -                   |
 | Database              | PostgreSQL      | -                   |
