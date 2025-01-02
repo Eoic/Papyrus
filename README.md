@@ -4,7 +4,7 @@
 Papyrus is an attempt to make a versatile, easy-to-use system that would enhance the reading experience, and make it more accessible by working on a diverse range of platforms - Android, iOS, Web, Desktop, etc., with intuitive and modern UI, customization options, and a wide range of functionality. 
 
 ### Main features
-1. **Track physical books and e-books** - upload e-books and choose where the files and related data are being stored, whether locally, on a local server, or in the cloud. While not essential, keeping track of your physical books can also be a nice touch. 
+1. **Track physical books and e-books** - upload e-books and choose where the files and related data are being stored, whether locally, on a local server, or in the cloud. It can also work for keeping track of your physical books - just fill in the metadata of the book you want to track.
 2. **Track reading progress** - reading progress is synchronized with the server, whenever possible, so you can always continue where you left off.
 3. **View reading statistics** - track how many books you read and how much time you spent reading. 
 4. **Customize the reader** - choose the font, font size, background, foreground, character, and word spacing, and save your look-and-feel profiles to make the editor look the way you want to. 
