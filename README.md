@@ -9,7 +9,7 @@
   A cross-platform book management system.
 </p>
 
-## Table of Contents
+## Table of contents
 - [Overview](#overview)
   - [Why?](#why)
   - [Key features](#key-features)
