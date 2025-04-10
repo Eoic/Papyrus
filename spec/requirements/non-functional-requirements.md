@@ -1,5 +1,6 @@
 ---
 description: Non-functional requirements of the system.
+icon: head-side
 ---
 
 # Non-functional requirements
