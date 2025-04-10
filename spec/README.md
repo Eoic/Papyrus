@@ -22,7 +22,7 @@ layout:
 
 # What is Papyrus?
 
-Papyrus aims to provide a versatile, easy-to-use system that enhances the reading experience. It's designed to be accessible on a wide range of platforms, including Android, iOS, Web, and Desktop, featuring an intuitive, modern UI with ample customization options.
+Papyrus aims to provide a versatile, easy-to-use system that makes reading comfortable and fun. It's designed to be accessible on a wide range of platforms, including Android, iOS, Web, and Desktop, featuring an intuitive, modern UI with various customization options.
 
 ### Key Features
 
@@ -36,7 +36,7 @@ Papyrus aims to provide a versatile, easy-to-use system that enhances the readin
 
 Many solutions offer some reading functionalities but fall short on some essential features or user experience. Papyrus aims to deliver a comprehensive solution that balances functionality with good user experience, covering all your reading needs in one application.
 
-**Organize books:**
+1. **Organize books:**
 
 * Convert books to and from different formats.
 * Edit metadata, perform full-text search, group books into categories, and add tags for quick search.
