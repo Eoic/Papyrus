@@ -1,6 +1,7 @@
 <a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/Specification-GitBook-%234477de.svg"/></a>
 
 # Papyrus
+### About
 Papyrus aims to provide a versatile, easy-to-use system that makes reading comfortable and fun. It's designed to be accessible on a wide range of platforms, including Android, iOS, Web, and Desktop, featuring an intuitive, modern UI with various customization options. You can find more information in the specification [here](https://karolis-1.gitbook.io/papyrus-project/).
 
 ### Why?
