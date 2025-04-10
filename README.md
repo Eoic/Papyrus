@@ -5,7 +5,7 @@ A cross-platform book management sustem.
 
 ## Table of Contents
 - [Overview](#overview)
- - [Why](#why)
+ - [Why?](#why)
  - [Key features](#key-features)
 - [Getting started](#getting-started)
  - [Prerequisites](#prerequisites)
