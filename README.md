@@ -10,6 +10,7 @@ A cross-platform book management sustem.
 - [Getting started](#getting-started)
  - [Prerequisites](#prerequisites)
  - [Installation](#installation)
+- [Project resources](#project-resources)
 - [Contributing](#contributing)
 - [Contact](#contact)
 
@@ -60,6 +61,11 @@ Many solutions offer some reading functionalities but fall short on some essenti
    ```bash
    flutter run -d windows  # or -d macos, -d linux
    ```
+
+## Project resources
+* **API Specification**: the backend REST API is documented using OpenAPI specification. You can find the current OpenAPI spec in the [design/api](./design/api/) directory.
+* **Design Pprototype**: the UI/UX design of Papyrus is created in Figma, and you cabn view the design [here](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus?node-id=0-1&t=2x3bT0cacWbQsPdy-1).
+
 ## Contributing
 Follow the steps to submit your contributions:
 1. Fork the repository.
