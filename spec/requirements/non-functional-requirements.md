@@ -30,6 +30,6 @@ layout:
 
 ## 3. Platforms
 
-1. The system should be available in Firefox and Chrome browsers and mobile devices.
-2. The system should be available on Windows 10 or later.
-3. The system should work on devices running Android 14 or later (that included e-readers too).
+* NFR-3.1. The system should be available in Firefox and Chrome browsers and mobile devices.
+* NFR-3.2. The system should be available on Windows 10 or later.
+* NFR-3.3. The system should work on devices running Android 14 or later (that included e-readers too).
