@@ -1,7 +1,12 @@
 <a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/Specification-GitBook-%234477de.svg"/></a>
+---
+<h1 align="center">
+  <img width="300" src="/public/img/logo-dark.svg#gh-dark-mode-only" alt="papyrus">
+</h1>
 
-# Papyrus
-A cross-platform book management sustem.
+<p align="center">
+  A cross-platform book management system.
+</p>
 
 ## Table of Contents
 - [Overview](#overview)
