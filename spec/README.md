@@ -28,9 +28,9 @@ Papyrus aims to provide a versatile, easy-to-use system that makes reading comfo
 
 * **Cross-platform:** manage physical and electronic books seamlessly across devices.
 * **Integrated e-book viewer:** customize your reading experience with various look-and-feel options.
-* **Flexible management:** organize books into shelves, categories, attach tags, create custom filters.
+* **Flexible management:** organize physical and e-books into shelves, categories, attach tags, create custom filters.
 * **Progress tracking:** track reading time and books read, plan and create custom reading goals.
-* **File uploads:** easily add new books.
+* **Storage:** easily add new books, convert and export books files, choose file storage methods.
 
 ### Why?
 
