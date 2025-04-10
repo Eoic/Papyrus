@@ -4,7 +4,6 @@
 * [Requirements](requirements/README.md)
   * [Functional requirements](requirements/functional-requirements.md)
   * [Non-functional requirements](requirements/non-functional-requirements.md)
-  * [Summary](requirements/summary.md)
 * [Actors](actors.md)
 * [Use cases](use-cases.md)
 * [Technologies](technologies.md)
