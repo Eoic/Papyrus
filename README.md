@@ -2,6 +2,7 @@
 ---
 <h1 align="center">
   <img width="300" src="/public/img/logo-dark.svg#gh-dark-mode-only" alt="papyrus">
+  <img width="300" src="/public/img/logo-light.svg#gh-light-mode-only" alt="papyrus">
 </h1>
 
 <p align="center">
