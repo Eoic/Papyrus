@@ -1,4 +1,6 @@
 <a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/Specification-GitBook-%234477de.svg"/></a>
+[![Discord](https://img.shields.io/discord/1254909723765899316.svg?logo=discord&logoColor=white&logoWidth=20&labelColor=7289DA&label=Discord&color=17cf48)](https://discord.gg/XjBV8uPW)  
+
 ---
 <h1 align="center">
   <img width="300" src="/public/img/logo-dark.svg#gh-dark-mode-only" alt="papyrus">
