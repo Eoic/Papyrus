@@ -1,15 +1,14 @@
-<a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/Specification-GitBook-%234477de.svg"/></a>
-[![Discord](https://img.shields.io/discord/1254909723765899316.svg?logo=discord&logoColor=white&logoWidth=20&labelColor=7289DA&label=Discord&color=17cf48)](https://discord.gg/XjBV8uPW)  
+<a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/GitBook-Specification-%232F2F2F.svg?logo=gitbook&logoColor=white&labelColor=%23307f98"/></a>
+<a href="https://discord.gg/XjBV8uPW"><img src="https://img.shields.io/badge/Discord-Chat-%232F2F2F.svg?logo=discord&logoColor=white&labelColor=%235865F5"/></a>
+___
 
----
-<h1 align="center">
+<div align="center">
   <img width="300" src="/public/img/logo-dark.svg#gh-dark-mode-only" alt="papyrus">
   <img width="300" src="/public/img/logo-light.svg#gh-light-mode-only" alt="papyrus">
-</h1>
+  <p align="center"> A cross-platform book management system. </p>
+</div>
 
-<p align="center">
-  A cross-platform book management system.
-</p>
+___
 
 ## Table of contents
 - [Overview](#overview)
