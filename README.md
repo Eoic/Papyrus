@@ -1,5 +1,5 @@
 <a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/GitBook-Specification-%232F2F2F.svg?logo=gitbook&logoColor=white&labelColor=%23307f98"/></a>
-<a href="https://discord.gg/XjBV8uPW"><img src="https://img.shields.io/badge/Discord-Chat-%232F2F2F.svg?logo=discord&logoColor=white&labelColor=%235865F5"/></a>
+<a href="https://discord.gg/PHAAZZBS"><img src="https://img.shields.io/badge/Discord-Chat-%232F2F2F.svg?logo=discord&logoColor=white&labelColor=%235865F5"/></a>
 ___
 
 <div align="center">
