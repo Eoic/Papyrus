@@ -1,5 +1,7 @@
+
 <a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/GitBook-Specification-%232F2F2F.svg?logo=gitbook&logoColor=white&labelColor=%23307f98"/></a>
 <a href="https://discord.gg/PHAAZZBS"><img src="https://img.shields.io/badge/Discord-Chat-%232F2F2F.svg?logo=discord&logoColor=white&labelColor=%235865F5"/></a>
+<a href="https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus"><img src="https://img.shields.io/badge/Trello-Board-%232F2F2F.svg?logo=trello&logoColor=white&labelColor=%230055CC"/></a>
 ___
 
 <div align="center">
