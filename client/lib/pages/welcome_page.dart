@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class WelcomePage extends StatelessWidget {
-  const WelcomePage({ super.key });
+  const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,46 +20,50 @@ class WelcomePage extends StatelessWidget {
                   ),
                   Text(
                     'Papyrus',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontSize: 48
-                    ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineLarge
+                        ?.copyWith(fontSize: 48),
                   ),
                   const Text(
                     'Your ultimate digital library',
-                    style: TextStyle(
-                      fontSize: 16.0
-                    ),
+                    style: TextStyle(fontSize: 16.0),
                   )
                 ],
               ),
               const Spacer(),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 26.0, vertical: 12.0),
                 child: Column(
                   children: [
                     ElevatedButton(
-                      style: ButtonStyle(
-                        minimumSize: const MaterialStatePropertyAll<Size>(Size.fromHeight(50)),
-                        elevation: const MaterialStatePropertyAll<double>(2.0),
-                        backgroundColor: MaterialStatePropertyAll<Color>(Theme.of(context).colorScheme.primary),
-                        foregroundColor: MaterialStatePropertyAll<Color>(Theme.of(context).colorScheme.onPrimary),
-                      ),
-                      onPressed: () {
-                        context.go('/register');
-                      },
-                      child: const Text('Get started')
+                        style: ButtonStyle(
+                          minimumSize: const WidgetStatePropertyAll<Size>(
+                              Size.fromHeight(50)),
+                          elevation: const WidgetStatePropertyAll<double>(2.0),
+                          backgroundColor: WidgetStatePropertyAll<Color>(
+                              Theme.of(context).colorScheme.primary),
+                          foregroundColor: WidgetStatePropertyAll<Color>(
+                              Theme.of(context).colorScheme.onPrimary),
+                        ),
+                        onPressed: () {
+                          context.go('/register');
+                        },
+                        child: const Text('Get started')),
+                    const SizedBox(
+                      height: 16.0,
                     ),
-                    const SizedBox(height: 16.0,),
                     ElevatedButton(
-                      style: const ButtonStyle(
-                        minimumSize: MaterialStatePropertyAll<Size>(Size.fromHeight(50)),
-                        elevation: MaterialStatePropertyAll<double>(2.0),
-                      ),
-                      onPressed: () {
-                        context.go('/login');
-                      },
-                      child: const Text('Sign in')
-                    ),
+                        style: const ButtonStyle(
+                          minimumSize:
+                              WidgetStatePropertyAll<Size>(Size.fromHeight(50)),
+                          elevation: WidgetStatePropertyAll<double>(2.0),
+                        ),
+                        onPressed: () {
+                          context.go('/login');
+                        },
+                        child: const Text('Sign in')),
                     const SizedBox(height: 16.0),
                     TextButton(
                       onPressed: () {

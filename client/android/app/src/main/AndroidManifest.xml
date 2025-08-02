@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.client">
+    package="com.badlogic.papyrus">
    <application
         android:label="Papyrus"
         android:name="${applicationName}"

@@ -1,13 +1,11 @@
-
 import 'package:client/pages/book_details_page.dart';
 import 'package:client/pages/dashboard_page.dart';
 import 'package:client/pages/goals_page.dart';
-import 'package:client/pages/books_page.dart';
 import 'package:client/pages/login_page.dart';
 import 'package:client/pages/profile_page.dart';
 import 'package:client/pages/register_page.dart';
 import 'package:client/pages/statistics_page.dart';
-import 'package:client/pages/stubPage.dart';
+import 'package:client/pages/stub_page.dart';
 import 'package:client/pages/welcome_page.dart';
 import 'package:client/widgets/navbar_scaffold.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,7 +24,7 @@ class AppRouter {
     ScaffoldWithNavBarTabItem(
       initialLocation: '/dashboard',
       icon: const Icon(Icons.dashboard),
-      label: 'Dashboard'
+      label: 'Dashboard',
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/library',
@@ -36,17 +34,17 @@ class AppRouter {
     ScaffoldWithNavBarTabItem(
       initialLocation: '/goals',
       icon: const Icon(Icons.emoji_events),
-      label: 'Goals'
+      label: 'Goals',
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/statistics',
       icon: const Icon(Icons.stacked_line_chart),
-      label: 'Statistics'
+      label: 'Statistics',
     ),
     ScaffoldWithNavBarTabItem(
       initialLocation: '/profile',
       icon: const Icon(Icons.person),
-      label: 'Profile'
+      label: 'Profile',
     ),
   ];
 
@@ -105,8 +103,8 @@ class AppRouter {
             path: 'register',
             builder: (BuildContext context, GoRouterState state) {
               return const RegisterPage();
-            }
-          )
+            },
+          ),
         ],
       ),
       ShellRoute(
@@ -114,7 +112,7 @@ class AppRouter {
         builder: (context, state, child) {
           return ScaffoldWithBottomNavBar(
             tabs: bottomGlobalNavigationTabs,
-            child: child
+            child: child,
           );
         },
         routes: [
@@ -123,7 +121,7 @@ class AppRouter {
             path: '/dashboard',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const DashboardPage()
+              child: const DashboardPage(),
             ),
           ),
           ShellRoute(
@@ -142,11 +140,13 @@ class AppRouter {
                 name: 'LIBRARY',
                 path: '/library',
                 redirect: (context, state) {
-                  return state.location == '/library' ? '/library/books' : null;
+                  return state.uri.toString() == '/library'
+                      ? '/library/books'
+                      : null;
                 },
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const StubPage(title: 'Loading...')
+                  child: const StubPage(title: 'Loading...'),
                 ),
                 routes: [
                   GoRoute(
@@ -154,7 +154,7 @@ class AppRouter {
                     path: 'books',
                     pageBuilder: (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const StubPage(title: 'Books')
+                      child: const StubPage(title: 'Books'),
                     ),
                   ),
                   GoRoute(
@@ -162,7 +162,7 @@ class AppRouter {
                     path: 'shelves',
                     pageBuilder: (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const StubPage(title: 'Shelves')
+                      child: const StubPage(title: 'Shelves'),
                     ),
                   ),
                   GoRoute(
@@ -170,7 +170,7 @@ class AppRouter {
                     path: 'topics',
                     pageBuilder: (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const StubPage(title: 'Topics')
+                      child: const StubPage(title: 'Topics'),
                     ),
                   ),
                   GoRoute(
@@ -184,51 +184,50 @@ class AppRouter {
                     name: 'BOOK_DETAILS',
                     path: 'details/:bookId',
                     builder: (context, state) {
-                      var bookId = state.params['bookId'];
+                      var bookId = state.pathParameters['bookId'];
                       return BookDetailsPage(id: bookId);
-                    }
+                    },
                   ),
-                ]
+                ],
               ),
-            ]
+            ],
           ),
           GoRoute(
             name: 'GOALS',
             path: '/goals',
-            pageBuilder: (context, state) => NoTransitionPage(
-              key: state.pageKey,
-              child: const GoalsPage()
-            )
+            pageBuilder: (context, state) =>
+                NoTransitionPage(key: state.pageKey, child: const GoalsPage()),
           ),
           GoRoute(
             name: 'STATISTICS',
             path: '/statistics',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const StatisticsPage()
-            )
+              child: const StatisticsPage(),
+            ),
           ),
           GoRoute(
             name: 'PROFILE',
             path: '/profile',
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
-              child: const ProfilePage()
-            )
-          )
-        ]
-      )
+              child: const ProfilePage(),
+            ),
+          ),
+        ],
+      ),
     ],
     redirect: (BuildContext context, GoRouterState state) {
       if (FirebaseAuth.instance.currentUser == null) {
-        if (state.subloc.contains('/login') || state.subloc.contains('/register')) {
+        if (state.uri.toString().contains('/login') ||
+            state.uri.toString().contains('/register')) {
           return null;
         }
 
         return '/';
       }
 
-      if (state.subloc == '/') {
+      if (state.uri.toString() == '/') {
         return '/library/books';
       }
 
