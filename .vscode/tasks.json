@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Launch Android emulator",
+      "type": "shell",
+      "command": "emulator",
+      "args": [
+        "-avd",
+        "${input:avdName}"
+      ],
+      "presentation": {
+        "reveal": "never"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "avdName",
+      "type": "promptString",
+      "description": "Pixel 9 Pro",
+      "default": "Pixel_9_Pro"
+    }
+  ]
+}

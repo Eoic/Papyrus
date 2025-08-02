@@ -29,7 +29,7 @@ class ScaffoldWithDrawerTabItem {
   ListTile createDrawerTile({
     required int index,
     required bool selected,
-    required void Function(int index) onTap
+    required void Function(int index) onTap,
   }) {
     return DrawerTile(
       index: index,
@@ -59,11 +59,14 @@ class _ScaffoldWithDrawer extends State<ScaffoldWithDrawer> {
   String appBarTitle = 'Unknown';
 
   int locationToTabIndex(String location) {
-    final index = widget.tabs.indexWhere((tab) => location.startsWith(tab.initialLocation));
+    final index = widget.tabs.indexWhere(
+      (tab) => location.startsWith(tab.initialLocation),
+    );
     return index < 0 ? 0 : index;
   }
 
-  int get currentIndex => locationToTabIndex(GoRouter.of(context).location);
+  int get currentIndex =>
+      locationToTabIndex(GoRouterState.of(context).uri.path);
 
   void onItemTapped(BuildContext context, int tabIndex) {
     if (tabIndex != currentIndex) {
@@ -92,13 +95,15 @@ class _ScaffoldWithDrawer extends State<ScaffoldWithDrawer> {
       ),
       drawer: Drawer(
         child: ListView(
-          children: widget.tabs.mapIndexed(
-            (index, tab) => tab.createDrawerTile(
-              index: index,
-              onTap: (int index) => onItemTapped(context, index),
-              selected: currentIndex == index,
-            )
-          ).toList(),
+          children: widget.tabs
+              .mapIndexed(
+                (index, tab) => tab.createDrawerTile(
+                  index: index,
+                  onTap: (int index) => onItemTapped(context, index),
+                  selected: currentIndex == index,
+                ),
+              )
+              .toList(),
         ),
       ),
     );

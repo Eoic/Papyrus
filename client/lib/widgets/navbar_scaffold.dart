@@ -7,7 +7,7 @@ class ScaffoldWithNavBarTabItem extends BottomNavigationBarItem {
   ScaffoldWithNavBarTabItem({
     required this.initialLocation,
     required super.icon,
-    super.label
+    super.label,
   });
 }
 
@@ -18,7 +18,7 @@ class ScaffoldWithBottomNavBar extends StatefulWidget {
   const ScaffoldWithBottomNavBar({
     super.key,
     required this.child,
-    required this.tabs
+    required this.tabs,
   });
 
   @override
@@ -27,11 +27,14 @@ class ScaffoldWithBottomNavBar extends StatefulWidget {
 
 class _ScaffoldWithBottomNavBar extends State<ScaffoldWithBottomNavBar> {
   int locationToTabIndex(String location) {
-    final index = widget.tabs.indexWhere((tab) => location.startsWith(tab.initialLocation));
+    final index = widget.tabs.indexWhere(
+      (tab) => location.startsWith(tab.initialLocation),
+    );
     return index < 0 ? 0 : index;
   }
 
-  int get currentIndex => locationToTabIndex(GoRouter.of(context).location);
+  int get currentIndex =>
+      locationToTabIndex(GoRouterState.of(context).uri.path);
 
   void onItemTapped(BuildContext context, int tabIndex) {
     if (tabIndex != currentIndex) {

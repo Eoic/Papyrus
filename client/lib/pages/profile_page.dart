@@ -1,5 +1,4 @@
 import 'package:client/widgets/profile_button.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:client/providers/google_sign_in_provider.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({ super.key });
+  const ProfilePage({super.key});
 
   // TODO: Move to service.
   Future signOut(User userInfo, GoogleSignInProvider provider) async {
@@ -39,63 +38,75 @@ class ProfilePage extends StatelessWidget {
                     height: 128.0,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: FirebaseAuth.instance.currentUser?.photoURL != null ? Image.network(FirebaseAuth.instance.currentUser!.photoURL as String, scale: 0.7,) : const Image(image: AssetImage('assets/images/profile.png')),
+                      child: FirebaseAuth.instance.currentUser?.photoURL != null
+                          ? Image.network(
+                              FirebaseAuth.instance.currentUser!.photoURL
+                                  as String,
+                              scale: 0.7,
+                            )
+                          : const Image(
+                              image: AssetImage('assets/images/profile.png')),
                     ),
                   ),
-                  const SizedBox(height: 12.0,),
-                  Text(user?.displayName ?? "Anonymous user", style: Theme.of(context).textTheme.titleLarge),
-                  Text((user?.email == null || user?.email?.trim() == '') ? 'No email provided.' : '-', style: Theme.of(context).textTheme.bodyMedium),
-                  const SizedBox(height: 12.0,),
-                  SizedBox(
-                    width: 200,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: Text("Edit profile")
-                    )
+                  const SizedBox(
+                    height: 12.0,
                   ),
-                  SizedBox(height: 24,),
-
+                  Text(user?.displayName ?? "Anonymous user",
+                      style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                      (user?.email == null || user?.email?.trim() == '')
+                          ? 'No email provided.'
+                          : '-',
+                      style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(
+                    height: 12.0,
+                  ),
+                  SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                          onPressed: () {}, child: const Text("Edit profile"))),
+                  const SizedBox(
+                    height: 24,
+                  ),
                   ProfileButton(
                     title: "Settings",
                     icon: Icons.settings_rounded,
                     onPressed: () {},
                   ),
-
                   ProfileButton(
                     title: "Billing details",
                     icon: Icons.payment_rounded,
                     onPressed: () {},
                   ),
-
                   ProfileButton(
                     title: "Storage management",
                     icon: Icons.storage_rounded,
                     onPressed: () {},
                   ),
-
-                  SizedBox(height: 24,),
-
+                  const SizedBox(
+                    height: 24,
+                  ),
                   ProfileButton(
                     title: "Information",
                     icon: Icons.info_rounded,
                     onPressed: () {},
                   ),
-
                   ProfileButton(
-                    title: "Logout",
-                    icon: Icons.logout_rounded,
-                    onPressed: () {
-                      final userInfo = FirebaseAuth.instance.currentUser;
+                      title: "Logout",
+                      icon: Icons.logout_rounded,
+                      onPressed: () {
+                        final userInfo = FirebaseAuth.instance.currentUser;
 
-                      if (userInfo != null) {
-                        final googleProvider = Provider.of<GoogleSignInProvider>(context, listen: false);
+                        if (userInfo != null) {
+                          final googleProvider =
+                              Provider.of<GoogleSignInProvider>(context,
+                                  listen: false);
 
-                        signOut(userInfo, googleProvider).then((value) {
-                          context.go("/login");
-                        });
-                      }
-                    }
-                  ),
+                          signOut(userInfo, googleProvider).then((value) {
+                            context.go("/login");
+                          });
+                        }
+                      }),
                 ],
               ),
             ),

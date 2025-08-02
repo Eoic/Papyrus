@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class Heading extends StatelessWidget {
   final String subtitle;
 
-  const Heading({
-    Key? key,
-    required this.subtitle,
-  }) : super(key: key);
+  const Heading({super.key, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -21,25 +18,15 @@ class Heading extends StatelessWidget {
                 image: AssetImage("assets/images/logo.png"),
                 height: 64.0,
               ),
-              const SizedBox(width: 12.0,),
-              Text(
-                "Papyrus",
-                style: Theme.of(context).textTheme.displayMedium,
-              )
+              const SizedBox(width: 12.0),
+              Text("Papyrus", style: Theme.of(context).textTheme.displayMedium),
             ],
           ),
-          const SizedBox(height: 6.0,),
+          const SizedBox(height: 6.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 16
-                ),
-              ),
-            ],
-          )
+            children: [Text(subtitle, style: const TextStyle(fontSize: 16))],
+          ),
         ],
       ),
     );

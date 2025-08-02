@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/book_data.dart';
 
 class BooksPage extends StatefulWidget {
-  const BooksPage({ super.key });
+  const BooksPage({super.key});
 
   @override
   State<BooksPage> createState() => _AllBooksState();
@@ -19,37 +19,13 @@ class _AllBooksState extends State<BooksPage> {
       title: "The Lord of the Rings",
       author: "J. R. R. Tolkien",
       coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: true
-    ),
-    BookData(
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false
-    ),
-    BookData(
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: false
-    ),
-    BookData(
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: true
-    ),
-    BookData(
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
       isFinished: true,
     ),
     BookData(
       title: "The Pillars of The Earth",
       author: "Ken Follet",
       coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false
+      isFinished: false,
     ),
     BookData(
       title: "The Lord of the Rings",
@@ -61,7 +37,31 @@ class _AllBooksState extends State<BooksPage> {
       title: "The Pillars of The Earth",
       author: "Ken Follet",
       coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false
+      isFinished: true,
+    ),
+    BookData(
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: true,
+    ),
+    BookData(
+      title: "The Pillars of The Earth",
+      author: "Ken Follet",
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: false,
+    ),
+    BookData(
+      title: "The Lord of the Rings",
+      author: "J. R. R. Tolkien",
+      coverURL: "assets/images/book_placeholder.jpg",
+      isFinished: false,
+    ),
+    BookData(
+      title: "The Pillars of The Earth",
+      author: "Ken Follet",
+      coverURL: "assets/images/book_placeholder_2.jpg",
+      isFinished: false,
     ),
     BookData(
       title: "The Lord of the Rings",
@@ -97,7 +97,7 @@ class _AllBooksState extends State<BooksPage> {
               setState(() => isSearchExpanded = !isSearchExpanded);
             },
             icon: const Icon(Icons.search),
-          )
+          ),
         ],
         // ENDKEEP
       ),
@@ -105,7 +105,7 @@ class _AllBooksState extends State<BooksPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         shape: const CircleBorder(),
-        child: const Icon(Icons.cloud_upload_rounded, size: 32,),
+        child: const Icon(Icons.cloud_upload_rounded, size: 32),
       ),
       // ENDKEEP
       // KEEP
@@ -114,25 +114,28 @@ class _AllBooksState extends State<BooksPage> {
           padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 4.0),
           child: Column(
             children: [
-              if (isSearchExpanded)
-                const Search(),
+              if (isSearchExpanded) const Search(),
 
-              const SizedBox(height: 12,),
-              Expanded(child: GridView.count(
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                crossAxisCount: 3,
-                childAspectRatio: 0.5,
-                children: [
-                  ...books
-                    .asMap()
-                    .map((index, data) => MapEntry(
-                      index,
-                      Book(id: index.toString(), data: data)
-                    )
-                  ).values.toList(),
-                ],
-              )),
+              const SizedBox(height: 12),
+              Expanded(
+                child: GridView.count(
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  crossAxisCount: 3,
+                  childAspectRatio: 0.5,
+                  children: [
+                    ...books
+                        .asMap()
+                        .map(
+                          (index, data) => MapEntry(
+                            index,
+                            Book(id: index.toString(), data: data),
+                          ),
+                        )
+                        .values,
+                  ],
+                ),
+              ),
             ],
           ),
         ),

@@ -6,11 +6,7 @@ class Book extends StatefulWidget {
   final String id;
   final BookData data;
 
-  const Book({
-    super.key,
-    required this.id,
-    required this.data,
-  });
+  const Book({super.key, required this.id, required this.data});
 
   @override
   State<Book> createState() => _BookState();
@@ -28,17 +24,17 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
     isFinished = widget.data.isFinished;
     animationController = AnimationController(
       duration: const Duration(milliseconds: 250),
-      vsync: this
+      vsync: this,
     );
 
     animation = ColorTween(
       begin: Colors.transparent,
-      end: Colors.green[500]
+      end: Colors.green[500],
     ).animate(animationController)..addListener(() => setState(() {}));
 
     backgroundAnimation = ColorTween(
       begin: Colors.transparent,
-      end: Colors.green[100]
+      end: Colors.green[100],
     ).animate(animationController)..addListener(() => setState(() {}));
   }
 
@@ -54,15 +50,16 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
       child: InkWell(
         borderRadius: BorderRadius.circular(8.0),
         onTap: () {
-          context.pushNamed('BOOK_DETAILS', params: {"bookId": widget.id });
+          context.pushNamed(
+            'BOOK_DETAILS',
+            pathParameters: {"bookId": widget.id},
+          );
         },
         onLongPress: () {
           showModalBottomSheet(
             isScrollControlled: true,
             shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(18.0)
-              )
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18.0)),
             ),
             context: context,
             builder: (context) {
@@ -77,10 +74,10 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
                       child: const Row(
                         children: [
                           Icon(Icons.info_outline),
-                          SizedBox(width: 8,),
-                          Text("View details")
+                          SizedBox(width: 8),
+                          Text("View details"),
                         ],
-                      )
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -91,46 +88,54 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
                       },
                       child: Row(
                         children: [
-                          Icon(!isFinished ? Icons.check_box_outline_blank_rounded : Icons.check_box_rounded),
-                          SizedBox(width: 8,),
-                          Text(isFinished ? "Mark as unfinished" : "Mark as finished")
+                          Icon(
+                            !isFinished
+                                ? Icons.check_box_outline_blank_rounded
+                                : Icons.check_box_rounded,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isFinished
+                                ? "Mark as unfinished"
+                                : "Mark as finished",
+                          ),
                         ],
-                      )
-                    ),
-                    TextButton(
-                        onPressed: () {},
-                        child: Row(
-                          children: const [
-                            Icon(Icons.add_to_photos_rounded),
-                            SizedBox(width: 8,),
-                            Text("Add to shelf")
-                          ],
-                        )
+                      ),
                     ),
                     TextButton(
                       onPressed: () {},
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
+                          Icon(Icons.add_to_photos_rounded),
+                          SizedBox(width: 8),
+                          Text("Add to shelf"),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: const Row(
+                        children: [
                           Icon(Icons.download_rounded),
-                          SizedBox(width: 8,),
-                          Text("Export")
+                          SizedBox(width: 8),
+                          Text("Export"),
                         ],
-                      )
+                      ),
                     ),
                     TextButton(
                       onPressed: () {},
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           Icon(Icons.delete_outline),
-                          SizedBox(width: 8,),
-                          Text("Delete from library")
+                          SizedBox(width: 8),
+                          Text("Delete from library"),
                         ],
-                      )
-                    )
+                      ),
+                    ),
                   ],
                 ),
               );
-            }
+            },
           );
         },
         child: Column(
@@ -173,9 +178,10 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
                 ),
               ),
             ),
-            const SizedBox(height: 2,),
-            Text(widget.data.title, overflow: TextOverflow.ellipsis,),
-            Text(widget.data.author,
+            const SizedBox(height: 2),
+            Text(widget.data.title, overflow: TextOverflow.ellipsis),
+            Text(
+              widget.data.author,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall,
             ),
