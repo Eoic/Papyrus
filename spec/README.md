@@ -28,15 +28,15 @@ Papyrus is a cross-platform application for reading and managing both physical a
 
 ### Rationale
 
-Nowadays, many solutions exist that offer some reading functionalities but often fall short on a subset of essential features or user experience. Papyrus aims to deliver a comprehensive solution that balances functionality with good user experience, covering all reading needs in a single application.&#x20;
+Nowadays, many solutions exist that offer some reading functionalities but often fall short on a subset of essential features or user experience. Papyrus aims to deliver a comprehensive solution that balances functionality with good user experience, covering all reading needs in a single application.
 
 ### Goals
 
-* **Cross-platform -** manage physical and electronic books seamlessly across devices, whether it's a desktop PC, smartphone or an e-reader. No need to relearn the UI or use third-party apps.
-* **Integrated reader -** read added books and customize reading experience with various look-and-feel options.
-* **Flexible management -** organize physical and digital books into shelves, assign categories, attach tags, create custom filters and more.
-* **Progress tracking and goals -** track reading time and books read, plan and create custom reading goals.
-* **Storage flexibility -** choose between local and cloud storage options for saving digital book files, notes and annotations.
+* **Cross-platform** - manage physical and electronic books seamlessly across devices, whether it's a desktop PC, smartphone or an e-reader. No need to relearn the UI or use third-party apps.
+* **Integrated reader** - read added books and customize reading experience with various look-and-feel options.
+* **Flexible management** - organize physical and digital books into shelves, assign categories, attach tags, create custom filters and more.
+* **Progress tracking and goals** - track reading time and books read, plan and create custom reading goals.
+* **Storage flexibility** - choose between local and cloud storage options for saving digital book files, notes and annotations.
 * **Data ownership** - export book lists, book files, and annotations to files in popular formats or sync to services like Google Docs, Zotero, etc.
 * **Developer friendly** - allow easy hosting and setting up local storage server, have a public REST API to allow for building front-ends.
 
@@ -159,7 +159,7 @@ Nowadays, many solutions exist that offer some reading functionalities but often
     * Set goals for the number of books to read within a specified period (e.g., "Read 12 books in 6 months").
     * Option to specify which books or categories count towards the goal.
   * **Custom goals:**
-    * Allow users to define goals with flexible criteria (e.g., "Read all books by Author X by the end of the year") and allow updating goal status manually (e.g., checkbox, numeric input).&#x20;
+    * Allow users to define goals with flexible criteria (e.g., "Read all books by Author X by the end of the year") and allow updating goal status manually (e.g., checkbox, numeric input).
 * **Progress tracking:**
   * Automatic tracking of reading time for each book.
   * Recording of pages read and current reading position.
@@ -192,7 +192,7 @@ Nowadays, many solutions exist that offer some reading functionalities but often
     * Users can link their cloud storage accounts.
     * Option to store e-books in the cloud and download them for offline reading.
     * Synchronization of e-books and metadata with the cloud.
-  * **Network Storage - s**upport for connecting to network storage locations (e.g., NAS, shared folders).
+  * **Network Storage** - support for connecting to network storage locations (e.g., NAS, shared folders).
 * **Physical book tracking:**
   * Manual entry of physical book details, like title, author, ISBN, edition, etc.
   * Ability to categorize and tag physical books.
@@ -210,7 +210,7 @@ Nowadays, many solutions exist that offer some reading functionalities but often
   * Create notes associated with specific text selections, pages, or the entire book.
   * Support for rich text formatting in notes (bold, italics, lists) through rich-text editor or Markdown syntax.
   * Organization of notes (e.g., folders, labels).
-* **Bookmarks - c**reate and manage bookmarks within digital books.
+* **Bookmarks** - create and manage bookmarks within digital books.
 * **Annotation Management:**
   * View and manage all highlights, notes, and bookmarks for a book in a dedicated panel.
   * Search and filter annotations.
@@ -235,3 +235,25 @@ Nowadays, many solutions exist that offer some reading functionalities but often
   * "Smart" categorization.
 * Optical character recognition (OCR):
   * For importing text from scanned documents or images.
+
+---
+
+## Specification overview
+
+This specification provides comprehensive documentation for the Papyrus book management system, covering all aspects from requirements to implementation details:
+
+### [Requirements](requirements/README.md)
+- **[Functional requirements](requirements/functional-requirements.md)**: Core features and capabilities
+- **[Non-functional requirements](requirements/non-functional-requirements.md)**: Performance, security, and quality attributes
+
+### [System design](actors.md)
+- **[Actors](actors.md)**: User types and their interactions with the system
+- **[Use cases](use-cases.md)**: Detailed scenarios and workflows
+- **[Entities](entities.md)**: Data model and relationships
+- **[Database model](database-model.md)**: Complete database schema and design
+
+### [Implementation](technologies.md)
+- **[Technologies](technologies.md)**: Technology stack and architecture decisions
+- **[User interface](user-interface.md)**: Design guidelines and UI specifications
+
+This specification serves as the definitive guide for understanding, developing, and maintaining the Papyrus system.

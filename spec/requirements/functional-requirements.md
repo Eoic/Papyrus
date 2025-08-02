@@ -17,11 +17,11 @@ layout:
 
 ## 1. User management
 
-* FR-1.1. User can create an account using and email address and a password.&#x20;
-* FR-1.2. User can login to the system using an email and and password.
+* FR-1.1. User can create an account using an email address and a password.
+* FR-1.2. User can login to the system using an email and password.
 * FR-1.3. User can login to the system using their Google account.
 * FR-1.4. User can login to the system in offline mode without providing any credentials, without requiring active internet connection.
-* FR-1.5. Use can restore their account via password recovery link.
+* FR-1.5. User can restore their account via password recovery link.
 
 ## 2. Book management
 
@@ -31,8 +31,8 @@ layout:
 * FR-2.4. User can export selected book files from the system.
 * FR-2.5. User can export data about uploaded books from the system in a structured, human readable format.
 * FR-2.6. User can import new book records to the system from a file.
-* FR-2.7. System allows a full-text search capabilities to search book contents.&#x20;
-* FR-2.8. System allow searching for books using the following properties: book metadata values, tags, categories, predefined complex filters and text contents (full-text search).
+* FR-2.7. System allows full-text search capabilities to search book contents.
+* FR-2.8. System allows searching for books using the following properties: book metadata values, tags, categories, predefined complex filters and text contents (full-text search).
 * FR-2.9. A user can create shelves that group books into categories.
 * FR-2.10. A user can assign tags to a book, each consisting of a title and a color. A book can have between 0 to 10 unique tags.
 * FR-2.11. A user can create complex filters via a query language, such as "Release date between 1950 and 2000."
@@ -45,16 +45,19 @@ layout:
 
 ## 4. Annotations and notes
 
-* FR-4.1. A user can create annotation by selecting book text in the viewer. Annotation consists of selected, color and an optional note.
-* FR-4.5. A user can create one or more notes for each book in the library. The difference between a note and an annotation is that a note if free-style text not attached to the content in the book.&#x20;
+* FR-4.1. A user can create annotation by selecting book text in the viewer. Annotation consists of selected text, color and an optional note.
+* FR-4.2. A user can create one or more notes for each book in the library. The difference between a note and an annotation is that a note is free-style text not attached to the content in the book.
+* FR-4.3. A user can edit and delete existing annotations and notes.
+* FR-4.4. A user can export annotations and notes to external formats (text, PDF, Markdown).
+* FR-4.5. A user can search through all annotations and notes across their library.
 
 ## 5. Progress tracking
 
 * FR-5.1. A user can view reading progress that includes:
   * Time spent reading.
-  * Number to books added, in progress, and completed.
-  * Number of pages pages read.
-  * Time spend reading per book.
+  * Number of books added, in progress, and completed.
+  * Number of pages read.
+  * Time spent reading per book.
   * Reading velocity per book (how much time was spent relative to page count).
 * FR-5.2. A user can choose to filter the statistics based on the following attributes:
   * **Time frame:**
@@ -70,7 +73,7 @@ layout:
 
 ## 6. Goal management
 
-* FR-6.1. User can create time-based reading goals such as "Read `N` books in `M` months.", where `N`and `M`are non negative integer values. Goal templates are predefined and selected can be selected by the user from a list.
+* FR-6.1. User can create time-based reading goals such as 'Read N books in M months', where N and M are non-negative integer values. Goal templates are predefined and can be selected by the user from a list.
 * FR-6.2. User can manually update goal values.
 * FR-6.3. System can automatically update goal progress values, start and end goals and display completion status.
 
