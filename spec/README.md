@@ -38,6 +38,8 @@ Nowadays, many solutions exist that offer some reading functionalities but often
 * **Progress tracking and goals** - track reading time and books read, plan and create custom reading goals.
 * **Storage flexibility** - choose between local and cloud storage options for saving digital book files, notes and annotations.
 * **Data ownership** - export book lists, book files, and annotations to files in popular formats or sync to services like Google Docs, Zotero, etc.
+* **Privacy first** - no default analytics and optional self-hosted synchronization.
+* **Extensible** - plugin system for metadata sources, storage and reader features.
 * **Developer friendly** - allow easy hosting and setting up local storage server, have a public REST API to allow for building front-ends.
 
 ### Target audience

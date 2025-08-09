@@ -36,6 +36,7 @@ layout:
 * FR-2.9. A user can create shelves that group books into categories.
 * FR-2.10. A user can assign tags to a book, each consisting of a title and a color. A book can have between 0 to 10 unique tags.
 * FR-2.11. A user can create complex filters via a query language, such as "Release date between 1950 and 2000."
+* FR-2.12. User can scan ISBN barcodes to add physical books with fetched metadata.
 
 ## 3. Integrated viewer
 
@@ -82,4 +83,6 @@ layout:
 * FR-7.1. The system allows a user to choose a file storage method: device, self-hosted server, or personal cloud storage (e.g., Google Drive).
 * FR-7.2. A user can upload a book file by selecting it from the device.
 * FR-7.3. The system is capable of applying OCR to scanned files. This functionality ensures that any text within scanned documents is processed.
+* FR-7.4. The system supports optional plugins for import, metadata and storage features.
+* FR-7.5. The system can browse and download books from OPDS catalogs.
 

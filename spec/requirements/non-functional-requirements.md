@@ -60,6 +60,7 @@ layout:
 * NFR-6.2. All data transmission should use TLS 1.3 or higher encryption.
 * NFR-6.3. The system should support two-factor authentication (TOTP).
 * NFR-6.4. Session management should include automatic timeout and secure token handling.
+* NFR-6.5. The application collects no analytics by default; telemetry is opt-in.
 
 ## 7. Reliability
 
@@ -67,3 +68,7 @@ layout:
 * NFR-7.2. Data corruption should be prevented through checksums and integrity verification.
 * NFR-7.3. The system should gracefully handle network interruptions without data loss.
 * NFR-7.4. Automatic backup and restore capabilities should be available for user data.
+
+## 8. Extensibility
+
+* NFR-8.1. The architecture should support modular plugins without compromising core stability.
