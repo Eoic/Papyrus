@@ -1,6 +1,7 @@
 # Table of contents
 
 * [What is Papyrus?](README.md)
+* [Market analysis](market-analysis.md)
 * [Requirements](requirements/README.md)
   * [Functional requirements](requirements/functional-requirements.md)
   * [Non-functional requirements](requirements/non-functional-requirements.md)
