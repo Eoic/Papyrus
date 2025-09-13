@@ -1,0 +1,382 @@
+{
+  "openapi" : "3.0.0",
+  "info" : {
+    "title" : "Papyrus OAuth2 application specification",
+    "description" : "This is an example of using OAuth2 Application Flow in a specification to describe security to your API.",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "https://virtserver.swaggerhub.com/Eoic/Papyrus/1.0.0",
+    "description" : "SwaggerHub API Auto Mocking"
+  }, {
+    "url" : "https://virtserver.swaggerhub.com/KAROLISSTRAZDAS/Papyrus/1.0.0",
+    "description" : "SwaggerHub API Auto Mocking"
+  } ],
+  "security" : [ {
+    "application" : [ "read", "write", "admin" ]
+  } ],
+  "tags" : [ {
+    "name" : "Books"
+  }, {
+    "name" : "Shelves"
+  }, {
+    "name" : "Topics"
+  }, {
+    "name" : "Annotations"
+  }, {
+    "name" : "Notes"
+  }, {
+    "name" : "User progress"
+  } ],
+  "paths" : {
+    "/books" : {
+      "get" : {
+        "tags" : [ "Books" ],
+        "summary" : "List all books.",
+        "description" : "Returns all books owned by the user.",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "The number of items to skip before starting to collect the result set.",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "example" : 0,
+            "default" : 0
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "The numbers of items to return.",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "example" : 20,
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "application" : [ "read" ]
+        } ]
+      },
+      "post" : {
+        "tags" : [ "Books" ],
+        "summary" : "Create an new book",
+        "description" : "Create a new record either for a physical or a digital book.",
+        "responses" : {
+          "201" : {
+            "description" : "Book created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "application" : [ "write" ]
+        } ]
+      }
+    },
+    "/books/{bookId}" : {
+      "put" : {
+        "tags" : [ "Books" ],
+        "summary" : "Update data of a specific book",
+        "parameters" : [ {
+          "name" : "bookId",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Book updated",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "application" : [ "write" ]
+        } ]
+      },
+      "delete" : {
+        "tags" : [ "Books" ],
+        "summary" : "Delete a specific book",
+        "parameters" : [ {
+          "name" : "bookId",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Book deleted"
+          }
+        },
+        "security" : [ {
+          "application" : [ "write" ]
+        } ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Shelf" : {
+        "required" : [ "title" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 1
+          },
+          "title" : {
+            "type" : "string",
+            "example" : "Classics"
+          },
+          "description" : {
+            "type" : "string",
+            "example" : "Various classical literature books."
+          },
+          "books" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Book"
+            }
+          }
+        },
+        "description" : "Groups books according to the subject or other grouping criteria."
+      },
+      "Note" : {
+        "required" : [ "bookId", "content" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 1
+          },
+          "content" : {
+            "type" : "string",
+            "example" : "Determine the soundness of the architecture according to changes and problem domains. Main goal - avoiding structural decay. "
+          },
+          "bookId" : {
+            "type" : "string",
+            "example" : "1"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "example" : "2024-01-01T12:00:27.87+00:00"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "example" : "2024-07-02T12:01:38.14+00:00"
+          }
+        },
+        "description" : "Additional note associated with the book. It's different from the annotation because it's a general note for the entire book, and not for the highlighted text excerpt."
+      },
+      "Annotation" : {
+        "required" : [ "color", "locationEnd", "locationStart" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "color" : {
+            "type" : "string",
+            "example" : "#FFFF00"
+          },
+          "locationStart" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "locationEnd" : {
+            "type" : "string",
+            "format" : "int64"
+          }
+        },
+        "description" : "Highlighted text metadata within the book."
+      },
+      "Book" : {
+        "required" : [ "author", "title" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 1
+          },
+          "title" : {
+            "type" : "string",
+            "example" : "Coming Up for Air"
+          },
+          "author" : {
+            "type" : "string",
+            "example" : "George Orwell"
+          },
+          "description" : {
+            "type" : "string",
+            "example" : "The story follows George Bowling, a 45-year-old husband, father, and insurance salesman, who foresees World War II and attempts to recapture idyllic childhood innocence and escape his dreary life by returning to Lower Binfield, his birthplace."
+          },
+          "published" : {
+            "type" : "string",
+            "example" : "1939"
+          },
+          "isbn" : {
+            "type" : "string",
+            "example" : "978-0-14-118569-9"
+          },
+          "cover" : {
+            "type" : "string",
+            "example" : "https://s3.amazonaws.com/books429625/covers/coming-up-for-air.jpg"
+          },
+          "file" : {
+            "type" : "string",
+            "example" : "https://s3.amazonaws.com/books429625/files/george-orwell-coming-up-for-air.epub"
+          },
+          "language" : {
+            "type" : "string",
+            "example" : "EN"
+          },
+          "format" : {
+            "type" : "string",
+            "example" : "EPUB"
+          },
+          "rating" : {
+            "maximum" : 5,
+            "minimum" : 1,
+            "type" : "integer",
+            "example" : 3
+          },
+          "pages" : {
+            "type" : "integer",
+            "example" : 237
+          }
+        },
+        "description" : "Information about the book (e.g. title, publication date, page count) and other metadata. Can be a record supplementing the digital file or a record for a physical book."
+      },
+      "Topic" : {
+        "required" : [ "title" ],
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string",
+            "example" : "Tragedy"
+          }
+        },
+        "description" : "Groups books within the shelf according to the topic."
+      },
+      "UserProgress" : {
+        "required" : [ "bookId", "duration", "pagesRead" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "userId" : {
+            "type" : "integer",
+            "example" : 1
+          },
+          "bookId" : {
+            "type" : "integer",
+            "example" : 5
+          },
+          "pagesRead" : {
+            "type" : "integer",
+            "example" : 154
+          },
+          "duration" : {
+            "type" : "integer",
+            "example" : 4581
+          },
+          "lastReadAt" : {
+            "type" : "string",
+            "example" : "2024-01-11T12:00:27.87+00:00"
+          }
+        },
+        "description" : "Reading progress record for a particular book."
+      },
+      "User" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "description" : "User of the system."
+      }
+    },
+    "securitySchemes" : {
+      "application" : {
+        "type" : "oauth2",
+        "flows" : {
+          "clientCredentials" : {
+            "tokenUrl" : "http://example.com/oauth/token",
+            "scopes" : {
+              "write" : "allows modifying resources",
+              "read" : "allows reading resources",
+              "admin" : "allows reading an modifying admin resources"
+            }
+          }
+        }
+      }
+    }
+  }
+}

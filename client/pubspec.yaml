@@ -1,0 +1,34 @@
+name: papyrus
+description: "Digital library management application."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  go_router: ^16.2.1
+  collection: ^1.19.1
+  provider: ^6.1.5+1
+  firebase_auth: ^6.0.2
+  firebase_core: ^4.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/google_logo.png
+    - assets/images/logo.png
+    - assets/images/book_placeholder.jpg
+    - assets/images/book_placeholder_2.jpg
+    - assets/images/profile.png
