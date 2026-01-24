@@ -180,7 +180,3 @@ Please ensure your code follows the existing style and includes appropriate test
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-**Project Maintainer:** [Karolis Strazdas](mailto:karolis.strazdas@pm.me)
