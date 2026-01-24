@@ -1,97 +1,186 @@
-
-<a href="https://karolis-1.gitbook.io/papyrus-project/"><img src="https://img.shields.io/badge/GitBook-Specification-%232F2F2F.svg?logo=gitbook&logoColor=white&labelColor=%23307f98"/></a>
-<a href="https://discord.gg/PHAAZZBS"><img src="https://img.shields.io/badge/Discord-Chat-%232F2F2F.svg?logo=discord&logoColor=white&labelColor=%235865F5"/></a>
-<a href="https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus"><img src="https://img.shields.io/badge/Trello-Board-%232F2F2F.svg?logo=trello&logoColor=white&labelColor=%230055CC"/></a>
-___
-
 <div align="center">
-  <img width="300" src="/public/img/logo-dark.svg#gh-dark-mode-only" alt="papyrus">
-  <img width="300" src="/public/img/logo-light.svg#gh-light-mode-only" alt="papyrus">
-  <p align="center"> A cross-platform book management system. </p>
+  <img width="300" src="/public/img/logo-dark.svg#gh-dark-mode-only" alt="Papyrus">
+  <img width="300" src="/public/img/logo-light.svg#gh-light-mode-only" alt="Papyrus">
+
+  <p><strong>A cross-platform book management application</strong></p>
+
+  <p>
+    <a href="https://eoic.github.io/Papyrus/"><img src="https://img.shields.io/badge/Documentation-blue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
+    <a href="https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus"><img src="https://img.shields.io/badge/Trello-Board-blue?logo=trello&logoColor=white" alt="Trello Board"/></a>
+    <a href="https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus"><img src="https://img.shields.io/badge/Figma-Prototype-orange?logo=figma&logoColor=white" alt="Figma Prototype"/></a>
+    <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
+  </p>
 </div>
 
-___
-
-## Table of contents
-- [Overview](#overview)
-  - [Why?](#why)
-  - [Key features](#key-features)
-- [Getting started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Project resources](#project-resources)
-- [Contributing](#contributing)
-- [Contact](#contact)
+---
 
 ## Overview
-Papyrus aims to provide a versatile, easy-to-use system that makes reading comfortable and fun. It's designed to be accessible on a wide range of platforms, including Android, iOS, Web, and Desktop, featuring an intuitive, modern UI with various customization options. You can find more information in the specification [here](https://karolis-1.gitbook.io/papyrus-project/).
 
-### Why?
-Many solutions offer some reading functionalities but fall short on some essential features or user experience. Papyrus aims to deliver a comprehensive solution that balances functionality with good user experience, covering all your reading needs in one application.
+Papyrus is an open-source, cross-platform application for managing and reading books. It supports both physical and digital book collections across Android, iOS, Web, Desktop, and e-ink devices. The application features an integrated e-book reader, flexible organization tools, progress tracking, various storage back-ends and cross-device synchronization via a self-hostable server.
 
-### Key Features
-* **Cross-platform**: manage physical and electronic books seamlessly across devices.
- Integrated e-book viewer: customize your reading experience with various look-and-feel options.
-* **Flexible management**: organize physical and e-books into shelves, categories, attach tags, create custom filters.
-* **Progress tracking**: track reading time and books read, plan and create custom reading goals.
-* **Storage**: easily add new books, convert and export books files, choose file storage methods.
+### Why Papyrus?
+
+Many reading applications offer partial solutions but fall short on essential features or user experience. Papyrus aims to deliver a comprehensive, privacy oriented solution that:
+
+- Works offline-first with optional cloud sync
+- Supports self-hosting for complete data ownership
+- Provides a unified experience across all platforms
+- Offers extensive customization for different reading preferences
+
+## Features
+
+| Category | Features |
+|----------|----------|
+| **Reading** | Integrated viewer for EPUB, PDF, MOBI, AZW3, TXT, CBR, CBZ |
+| **Organization** | Shelves, tags, topics, custom filters, advanced search |
+| **Annotations** | Highlights, bookmarks, notes with export capabilities |
+| **Progress** | Reading time tracking, page/percentage progress, statistics |
+| **Goals** | Reading goals (books, pages, time) with streak tracking |
+| **Sync** | Cross-device synchronization via self-hostable server |
+| **Storage** | Multiple backends: Local, Google Drive, WebDAV, MinIO, S3 |
+| **Accessibility** | E-ink optimization, dark/light themes, customizable fonts |
+
+## Supported platforms
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Android | Supported | Primary mobile target |
+| iOS | Supported | Requires Xcode for building |
+| Web | Supported | PWA with offline support |
+| Windows | Supported | Native desktop experience |
+| macOS | Supported | Requires Xcode for building |
+| Linux | Supported | AppImage/Snap distribution |
+| E-ink | Supported | Optimized UI for Boox, Kobo, etc. |
 
 ## Getting started
+
 ### Prerequisites
-- **Flutter SDK:** Ensure you have [Flutter installed](https://flutter.dev/docs/get-started/install).  
-- **Dart SDK:** This is included when you install Flutter.
+
+- **Flutter SDK 3.x**: [Installation guide](https://flutter.dev/docs/get-started/install)
+- **Dart SDK 3.x**: Included with Flutter
 
 ### Installation
-1. Clone the repository
- ```bash
- git clone git@github.com:Eoic/Papyrus.git
- cd Papyrus
- ```
-2. Install dependencies
- ```bash
- flutter pub get
- ```
-3. Run the application
 
-   **Mobile (Android / iOS)**
-   Connect your device or start an emulator and run:
+1. **Clone the repository**
+
    ```bash
+   git clone git@github.com:Eoic/Papyrus.git
+   cd Papyrus
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   cd client
+   flutter pub get
+   ```
+
+3. **Run the application**
+
+   ```bash
+   # Android/iOS (with connected device or emulator)
    flutter run
+
+   # Web
+   flutter run -d chrome
+
+   # Desktop
+   flutter run -d windows    # or: macos, linux
    ```
 
-   **Web**
-   Run the following command to launch Papyrus in Chrome (or another supported browser):
-   ```bash
-   flutter run -f chrome
-   ```
+## Project structure
 
-   **Desktop**
-   Make sure desktop support is enabled by referring to Flutter desktop setup page. Then run:
-   ```bash
-   flutter run -d windows  # or -d macos, -d linux
-   ```
+```
+Papyrus/
+├── client/                 # Flutter application
+│   ├── lib/
+│   │   ├── config/         # App configuration, routing
+│   │   ├── pages/          # Screen widgets
+│   │   ├── providers/      # State management
+│   │   ├── widgets/        # Reusable components
+│   │   ├── models/         # Data models
+│   │   └── themes/         # Color schemes
+│   └── test/               # Unit and widget tests
+├── spec/                   # Project documentation (MkDocs)
+├── design/
+│   └── api/                # OpenAPI specification
+└── public/                 # Static assets
+```
 
-## Project resources
-* **API Specification**: the backend REST API is documented using OpenAPI specification. You can find the current OpenAPI spec in the [design/api](./design/api/) directory.
-* **Design Prototype**: the UI/UX design is created in Figma, and you can find it [here](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus?node-id=0-1&t=2x3bT0cacWbQsPdy-1).
+## Documentation
+
+Project documentation is available in the `/spec/` directory and can be built into a browsable static site using MkDocs.
+
+```bash
+# Install documentation dependencies
+pip install -r docs-requirements.txt
+
+# Serve documentation locally (http://127.0.0.1:8000)
+mkdocs serve
+
+# Build static site
+mkdocs build
+```
+
+**Documentation includes:**
+
+- [Market Analysis](spec/market-analysis.md) - Competitive landscape
+- [Functional Requirements](spec/requirements/functional-requirements.md) - System capabilities
+- [Use Cases](spec/use-cases.md) - Detailed workflows
+- [Database Model](spec/database-model.md) - Data architecture
+- [Server Architecture](spec/server-architecture.md) - Backend design
+- [Technologies](spec/technologies.md) - Tech stack details
+
+## Technology stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| Frontend | Flutter / Dart | Cross-platform UI |
+| Backend | FastAPI / Python | REST API server |
+| Database | PostgreSQL | Primary data store |
+| Cache | Redis | Sessions, caching |
+| Storage | Multiple backends | Book file storage |
 
 ## Contributing
-Follow the steps to submit your contributions:
-1. Fork the repository.
-2. Create a feature branch:
+
+Contributions are welcome! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch:
+
    ```bash
-   git checkout b feature/<your-feature>
+   git checkout -b feature/your-feature-name
    ```
-3. Commit your changes:
+
+3. **Commit** your changes:
+
    ```bash
-   git commit -m "<description of your changes>"
+   git commit -m "Add: description of your changes"
    ```
-4. Push to your branch:
+
+4. **Push** to your branch:
+
    ```bash
-   git push origin feature/<your-feature>
+   git push origin feature/your-feature-name
    ```
-5. Open a pull request.
+
+5. **Open** a pull request
+
+Please ensure your code follows the existing style and includes appropriate tests.
+
+## Resources
+
+| Resource | Description |
+|----------|-------------|
+| [Documentation](https://karolis-1.gitbook.io/papyrus-project/) | Full project specification |
+| [API Specification](design/api/swagger.yaml) | OpenAPI/Swagger definition |
+| [Figma Prototype](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus) | UI/UX design |
+| [Trello Board](https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus) | Project management |
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
-For any questions, feedback, or suggestions, please contact:
-- **Project Maintainer:** [Karolis Strazdas](mailto:karolis.strazdas@pm.me)
+
+**Project Maintainer:** [Karolis Strazdas](mailto:karolis.strazdas@pm.me)
