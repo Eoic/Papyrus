@@ -1,0 +1,45 @@
+/* Papyrus Documentation - Custom Styles */
+
+/* Improved Mermaid diagram rendering */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Better table styling */
+.md-typeset table:not([class]) {
+  font-size: 0.85rem;
+}
+
+/* Custom admonition for e-ink specific content */
+.md-typeset .admonition.eink,
+.md-typeset details.eink {
+  border-color: #607d8b;
+}
+
+.md-typeset .eink > .admonition-title,
+.md-typeset .eink > summary {
+  background-color: rgba(96, 125, 139, 0.1);
+}
+
+.md-typeset .eink > .admonition-title::before,
+.md-typeset .eink > summary::before {
+  background-color: #607d8b;
+  -webkit-mask-image: var(--md-admonition-icon--example);
+  mask-image: var(--md-admonition-icon--example);
+}
+
+/* Code block improvements */
+.md-typeset pre > code {
+  font-size: 0.8rem;
+}
+
+/* Navigation improvements */
+.md-nav__link {
+  font-size: 0.75rem;
+}
+
+/* Header styling */
+.md-header {
+  background-color: var(--md-primary-fg-color);
+}

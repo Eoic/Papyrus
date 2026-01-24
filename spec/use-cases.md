@@ -1,306 +1,1346 @@
+# Use Cases
+
+This section presents the main use cases derived from the functional requirements. Each use case includes actors, requirements traceability, detailed flows, and alternative scenarios.
+
+## Use Case Notation
+
+| Element | Description |
+|---------|-------------|
+| **UC-X.Y** | Use case identifier (section X, item Y) |
+| **Actors** | User types involved |
+| **Priority** | P0-P3 (matches requirement priority) |
+| **Requirements** | Links to FR and NFR |
+| **Preconditions** | State required before use case |
+| **Main Flow** | Primary success scenario |
+| **Alternative Flows** | Variations and edge cases |
+| **Postconditions** | State after successful completion |
+
 ---
-description: >-
-  List of use cases created from the defined requirements. Each table of the use
-  case is linked to system actors and one or more functional or non-functional
-  requirements.
+
+## 1. User Management Use Cases
+
+### UC-1.1: Create User Account
+
+**Actors:** Anonymous User → Registered User
+**Priority:** P0
+**Requirements:** [FR-1.1](requirements/functional-requirements.md#fr-11-account-registration)
+
+**Description:** User creates a new account to access synchronization and cloud features.
+
+**Preconditions:**
+
+- User is not logged in
+- User has valid email address
+
+**Main Flow:**
+
+1. User navigates to registration screen
+2. User enters email address and password
+3. System validates email format and uniqueness
+4. System validates password strength (8+ chars, mixed case, number)
+5. System creates account in inactive state
+6. System sends verification email
+7. User clicks verification link
+8. System activates account
+9. User is redirected to login screen
+
+**Alternative Flows:**
+
+*A1: Email already registered*
+
+- At step 3, if email exists:
+  - System displays "Email already registered" error
+  - User can choose to log in or recover password
+
+*A2: Weak password*
+
+- At step 4, if password is too weak:
+  - System displays password requirements
+  - User must enter a stronger password
+
+*A3: Verification link expired*
+
+- At step 7, if link expired (24 hours):
+  - System displays expiration message
+  - User can request new verification email
+
+**Postconditions:**
+
+- New user account exists
+- User can log in with credentials
+
 ---
 
-# Use cases
+### UC-1.2: Login with Credentials
 
-This section presents the main use cases derived from the functional requirements, organized by functional areas. Each use case includes the involved actors and references to the corresponding requirements.
+**Actors:** Registered User
+**Priority:** P0
+**Requirements:** [FR-1.2](requirements/functional-requirements.md#fr-12-emailpassword-login)
 
-## Requirements traceability
+**Description:** User authenticates using email and password.
 
-This document maintains bi-directional traceability between use cases and requirements:
+**Preconditions:**
 
-- **Functional Requirements**: [Functional Requirements](requirements/functional-requirements.md)
-- **Non-Functional Requirements**: [Non-Functional Requirements](requirements/non-functional-requirements.md)
-- **System Actors**: [Actors](actors.md)
+- User has registered account
+- Account is verified and active
 
-## Use case notation
+**Main Flow:**
 
-- **UC-X.Y**: Use case identifier (section X, item Y)
-- **Actors**: User types involved in the use case
-- **Requirements**: Links to related functional (FR) and non-functional (NFR) requirements
-- **Description**: Brief summary of the use case purpose
-- **Main flow**: Step-by-step description of the normal execution path
-
-## 1. User management use cases
-
-### UC-1.1: Create user account
-**Actors:** Anonymous user → Registered user  
-**Requirements:** [FR-1.1](requirements/functional-requirements.md#1-user-management)  
-**Description:** User creates a new account using email and password to access synchronization features.
-
-**Main flow:**
-1. User accesses registration form
-2. User provides email address and password
-3. System validates input and creates account
-4. User receives confirmation
-5. User can now access registered user features
-
-### UC-1.2: Login with credentials
-**Actors:** Registered user  
-**Requirements:** [FR-1.2](requirements/functional-requirements.md#1-user-management)  
-**Description:** User authenticates using email and password to access their account.
-
-**Main flow:**
-1. User accesses login form
+1. User navigates to login screen
 2. User enters email and password
 3. System validates credentials
-4. User gains access to personal library and settings
+4. System creates session token
+5. User is redirected to library
 
-### UC-1.3: Login with Google account
-**Actors:** Registered user  
-**Requirements:** [FR-1.3](requirements/functional-requirements.md#1-user-management)  
-**Description:** User authenticates using their Google account for quick access.
+**Alternative Flows:**
 
-**Main flow:**
-1. User selects Google login option
-2. User authorizes application via Google OAuth
-3. System creates or links account
-4. User gains access to personal library and settings
+*A1: Invalid credentials*
 
-### UC-1.4: Use application offline
-**Actors:** Anonymous user, Registered user  
-**Requirements:** [FR-1.4](requirements/functional-requirements.md#1-user-management), [NFR-2.1](requirements/non-functional-requirements.md#2-synchronization)  
-**Description:** User accesses core functionality without internet connection.
+- At step 3, if credentials invalid:
+  - System displays "Invalid email or password"
+  - Failed attempt is logged
+  - After 5 failures, temporary lockout (15 minutes)
 
-**Main flow:**
+*A2: Account not verified*
+
+- At step 3, if account not verified:
+  - System prompts to resend verification email
+
+*A3: Account disabled*
+
+- At step 3, if account disabled:
+  - System displays account disabled message
+  - User is directed to support contact
+
+**Postconditions:**
+
+- User is authenticated
+- Session token is stored on device
+- User has access to their library
+
+---
+
+### UC-1.3: Login with Google Account
+
+**Actors:** Registered User
+**Priority:** P1
+**Requirements:** [FR-1.3](requirements/functional-requirements.md#fr-13-oauth-login-google)
+
+**Description:** User authenticates via Google OAuth 2.0.
+
+**Preconditions:**
+
+- User has Google account
+- Device has internet connection
+
+**Main Flow:**
+
+1. User selects "Sign in with Google"
+2. System redirects to Google OAuth
+3. User authorizes application
+4. Google returns authorization code
+5. System exchanges code for user info
+6. If new user, system creates account
+7. System creates session token
+8. User is redirected to library
+
+**Alternative Flows:**
+
+*A1: User denies authorization*
+
+- At step 3, if user denies:
+  - System returns to login screen
+  - Message: "Google sign-in cancelled"
+
+*A2: Link to existing account*
+
+- At step 6, if email matches existing account:
+  - System prompts to link accounts
+  - User confirms linking
+
+**Postconditions:**
+
+- User is authenticated
+- Google account linked to Papyrus account
+
+---
+
+### UC-1.4: Use Application Offline
+
+**Actors:** Anonymous User, Registered User
+**Priority:** P0
+**Requirements:** [FR-1.4](requirements/functional-requirements.md#fr-14-offline-mode), [NFR-2.1](requirements/non-functional-requirements.md#nfr-21-onlineoffline-parity)
+
+**Description:** User accesses application without internet connection.
+
+**Preconditions:**
+
+- Application is installed on device
+- For registered users: at least one previous online session
+
+**Main Flow:**
+
 1. User opens application without internet
-2. System loads local data and libraries
-3. User can read, annotate, and manage local books
-4. Changes are stored locally for later synchronization
+2. System detects offline state
+3. System loads local data
+4. User accesses library and books
+5. User can read, annotate, organize
+6. Changes are stored locally
+7. Offline indicator is displayed
 
-### UC-1.5: Recover password
-**Actors:** Registered user  
-**Requirements:** [FR-1.5](requirements/functional-requirements.md#1-user-management)  
-**Description:** User resets forgotten password via email recovery.
+**Alternative Flows:**
 
-**Main flow:**
-1. User requests password recovery
-2. System sends recovery link to registered email
-3. User follows link and creates new password
-4. User can login with new credentials
+*A1: First launch (Anonymous)*
 
-## 2. Book management use cases
+- User can immediately use all local features
+- No account required
 
-### UC-2.1: Import book files
-**Actors:** Reader  
-**Requirements:** [FR-2.6](requirements/functional-requirements.md#2-book-management), [FR-7.2](requirements/functional-requirements.md#7-storage-and-synchronization)  
-**Description:** User adds new books to their library from local files.
+*A2: First launch (Registered, never synced)*
 
-**Main flow:**
-1. User selects import option
-2. User chooses book files from device storage
-3. System processes and extracts metadata
-4. Books are added to user's library
+- System shows "Connect to sync your data"
+- User can continue with empty library
 
-### UC-2.2: Convert book formats
-**Actors:** Reader  
-**Requirements:** [FR-2.1](requirements/functional-requirements.md#2-book-management)  
-**Description:** User converts existing book to different format.
+*A3: Sync when online*
 
-**Main flow:**
-1. User selects book for conversion
-2. User chooses target format (EPUB, PDF, MOBI)
-3. System processes conversion
-4. Converted file is available for download or use
+- When internet restored:
+  - System begins background sync
+  - Pending changes indicator updates
 
-### UC-2.3: Edit book metadata
-**Actors:** Reader  
-**Requirements:** [FR-2.2](requirements/functional-requirements.md#2-book-management), [FR-2.3](requirements/functional-requirements.md#2-book-management)  
-**Description:** User modifies book information and metadata fields.
+**Postconditions:**
 
-**Main flow:**
+- User can use reading and management features
+- Changes are queued for sync
+
+---
+
+### UC-1.5: Recover Password
+
+**Actors:** Registered User
+**Priority:** P1
+**Requirements:** [FR-1.5](requirements/functional-requirements.md#fr-15-password-recovery)
+
+**Description:** User resets forgotten password via email.
+
+**Preconditions:**
+
+- User has registered account
+- User has access to registered email
+
+**Main Flow:**
+
+1. User clicks "Forgot password"
+2. User enters registered email
+3. System sends recovery email with link
+4. User clicks link (valid 24 hours)
+5. User enters new password
+6. System validates password strength
+7. System updates password
+8. All existing sessions are invalidated
+9. User is redirected to login
+
+**Alternative Flows:**
+
+*A1: Email not found*
+
+- At step 3, system still shows success message (security)
+- No email sent if account doesn't exist
+
+*A2: Link expired*
+
+- At step 4, if link expired:
+  - System displays expiration message
+  - User can request new link
+
+**Postconditions:**
+
+- Password is updated
+- User must log in with new password
+
+---
+
+### UC-1.6: Delete Account
+
+**Actors:** Registered User
+**Priority:** P1
+**Requirements:** [FR-1.6](requirements/functional-requirements.md#fr-16-account-deletion)
+
+**Description:** User permanently deletes their account and all data.
+
+**Preconditions:**
+
+- User is logged in
+- User understands consequences
+
+**Main Flow:**
+
+1. User navigates to account settings
+2. User selects "Delete account"
+3. System displays warning about data loss
+4. User confirms by entering password
+5. System marks account for deletion
+6. System logs user out
+7. Account and data deleted within 30 days
+
+**Alternative Flows:**
+
+*A1: Export data first*
+
+- Before step 4, user can export all data
+- See UC-2.7 for export process
+
+*A2: Cancel deletion*
+
+- Within 7 days, user can log in to cancel
+- Account is restored to active state
+
+**Postconditions:**
+
+- Account is deleted
+- User data removed from server
+- Local data remains on device
+
+---
+
+## 2. Book Management Use Cases
+
+### UC-2.1: Import Book Files
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-2.6](requirements/functional-requirements.md#fr-26-book-import), [FR-7.2](requirements/functional-requirements.md#fr-72-file-upload)
+
+**Description:** User adds books to library from files.
+
+**Preconditions:**
+
+- User has book files in supported format
+
+**Main Flow:**
+
+1. User selects "Add books"
+2. User chooses import source (device, cloud, URL)
+3. User selects files
+4. System uploads/imports files
+5. System extracts metadata from files
+6. System checks for duplicates
+7. Books are added to library
+8. User receives confirmation
+
+**Alternative Flows:**
+
+*A1: Unsupported format*
+
+- System displays format error
+- Lists supported formats
+
+*A2: Duplicate detected*
+
+- System shows existing book
+- User can: skip, replace, keep both
+
+*A3: Bulk import*
+
+- User selects folder
+- System imports all supported files
+- Progress shown for large imports
+
+*A4: Import from URL*
+
+- User enters URL
+- System downloads and imports
+
+**Postconditions:**
+
+- Books are in user's library
+- Metadata is populated
+
+---
+
+### UC-2.2: Convert Book Formats
+
+**Actors:** Reader
+**Priority:** P2
+**Requirements:** [FR-2.1](requirements/functional-requirements.md#fr-21-format-conversion)
+
+**Description:** User converts book to different format.
+
+**Preconditions:**
+
+- Book exists in library
+- Source format supports conversion
+
+**Main Flow:**
+
 1. User opens book details
-2. User edits metadata fields (title, author, tags, etc.)
-3. User can add or remove custom metadata fields
-4. Changes are saved to library
+2. User selects "Convert format"
+3. User chooses target format
+4. User sets conversion options (optional)
+5. System processes conversion
+6. Converted file is added to library
+7. Original file is preserved
 
-### UC-2.4: Organize books into shelves
-**Actors:** Reader  
-**Requirements:** [FR-2.9](requirements/functional-requirements.md#2-book-management)  
-**Description:** User creates and manages book collections using shelves.
+**Alternative Flows:**
 
-**Main flow:**
-1. User creates new shelf with name and description
-2. User assigns books to shelves
-3. User can view and manage shelf contents
-4. Books can belong to multiple shelves
+*A1: Conversion fails*
 
-### UC-2.5: Tag books
-**Actors:** Reader  
-**Requirements:** [FR-2.10](requirements/functional-requirements.md#2-book-management)  
-**Description:** User assigns visual tags to books for organization.
+- System shows error details
+- User can retry with different options
 
-**Main flow:**
-1. User selects book for tagging
-2. User creates or selects tags (title and color)
-3. User can assign up to 10 unique tags per book
-4. Tags are visible in library and search results
+*A2: Large file*
 
-### UC-2.6: Search books
-**Actors:** Reader  
-**Requirements:** [FR-2.7](requirements/functional-requirements.md#2-book-management), [FR-2.8](requirements/functional-requirements.md#2-book-management), [FR-2.11](requirements/functional-requirements.md#2-book-management)  
-**Description:** User finds books using various search criteria and filters.
+- Progress indicator shown
+- Conversion runs in background
+- Notification when complete
 
-**Main flow:**
-1. User enters search query or creates filter
-2. System searches metadata, tags, categories, and content
-3. User can use complex filters and query language
-4. Results are displayed with relevant matches highlighted
+**Postconditions:**
 
-### UC-2.7: Export books and data
-**Actors:** Reader  
-**Requirements:** [FR-2.4](requirements/functional-requirements.md#2-book-management), [FR-2.5](requirements/functional-requirements.md#2-book-management)  
-**Description:** User exports book files and metadata for backup or migration.
+- New file in target format exists
+- Original file unchanged
 
-**Main flow:**
-1. User selects books or entire library for export
-2. User chooses export format and options
-3. System creates structured export file
-4. User downloads or saves export data
+---
 
-## 3. Reading and viewer use cases
+### UC-2.3: Edit Book Metadata
 
-### UC-3.1: Read books with integrated viewer
-**Actors:** Reader  
-**Requirements:** [FR-3.1](requirements/functional-requirements.md#3-integrated-viewer), [NFR-3.1](requirements/non-functional-requirements.md#3-platforms), [NFR-3.3](requirements/non-functional-requirements.md#3-platforms)  
-**Description:** User reads books using the built-in e-book viewer.
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-2.2](requirements/functional-requirements.md#fr-22-manual-metadata-editing), [FR-2.13](requirements/functional-requirements.md#fr-213-metadata-fetching)
 
-**Main flow:**
+**Description:** User modifies book information.
+
+**Preconditions:**
+
+- Book exists in library
+
+**Main Flow:**
+
+1. User opens book details
+2. User selects "Edit"
+3. User modifies metadata fields
+4. User saves changes
+5. System validates and stores changes
+
+**Alternative Flows:**
+
+*A1: Fetch metadata online*
+
+- User clicks "Fetch metadata"
+- System searches online sources
+- User reviews and selects matches
+- Selected metadata is applied
+
+*A2: Edit cover image*
+
+- User can upload new cover
+- User can crop/adjust cover
+- User can fetch cover online
+
+**Postconditions:**
+
+- Book metadata is updated
+
+---
+
+### UC-2.4: Organize Books into Shelves
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-2.9](requirements/functional-requirements.md#fr-29-shelf-organization)
+
+**Description:** User creates and manages book collections.
+
+**Preconditions:**
+
+- User has books in library
+
+**Main Flow:**
+
+1. User navigates to Shelves
+2. User creates new shelf (name, description, color)
+3. User adds books to shelf
+4. Shelf is saved
+
+**Alternative Flows:**
+
+*A1: Add from library view*
+
+- User long-presses book
+- User selects "Add to shelf"
+- User chooses shelf(s)
+
+*A2: Create nested shelf*
+
+- User creates shelf within existing shelf
+- Hierarchy is maintained
+
+*A3: Drag and drop*
+
+- User drags book to shelf
+- Book is added to shelf
+
+**Postconditions:**
+
+- Books are organized in shelves
+
+---
+
+### UC-2.5: Tag Books
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-2.10](requirements/functional-requirements.md#fr-210-book-tagging)
+
+**Description:** User assigns colored labels to books.
+
+**Preconditions:**
+
+- User has books in library
+
+**Main Flow:**
+
+1. User opens book details or context menu
+2. User selects "Tags"
+3. User creates or selects tags
+4. Tags are applied to book
+
+**Alternative Flows:**
+
+*A1: Create new tag*
+
+- User enters tag name
+- User selects color
+- Tag is created and applied
+
+*A2: Batch tagging*
+
+- User selects multiple books
+- User applies tags to all
+
+**Postconditions:**
+
+- Books have assigned tags
+- Tags visible in library view
+
+---
+
+### UC-2.6: Search Books
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-2.7](requirements/functional-requirements.md#fr-27-full-text-search), [FR-2.8](requirements/functional-requirements.md#fr-28-advanced-search), [FR-2.11](requirements/functional-requirements.md#fr-211-query-language-filters)
+
+**Description:** User finds books using search and filters.
+
+**Preconditions:**
+
+- User has books in library
+
+**Main Flow:**
+
+1. User opens search
+2. User enters query
+3. System searches metadata
+4. Results are displayed
+5. User can filter/sort results
+
+**Alternative Flows:**
+
+*A1: Full-text search*
+
+- User searches book contents
+- Results show matched text with context
+
+*A2: Advanced filters*
+
+- User uses filter panel
+- Multiple criteria combined
+
+*A3: Query language*
+
+- User types query like `author:"Name" AND year:>2000`
+- System parses and executes
+
+*A4: Save search*
+
+- User saves search as filter
+- Filter available for reuse
+
+**Postconditions:**
+
+- Matching books are displayed
+
+---
+
+### UC-2.7: Export Books and Data
+
+**Actors:** Reader
+**Priority:** P0/P1
+**Requirements:** [FR-2.4](requirements/functional-requirements.md#fr-24-book-file-export), [FR-2.5](requirements/functional-requirements.md#fr-25-library-data-export)
+
+**Description:** User exports library data for backup or migration.
+
+**Preconditions:**
+
+- User has books in library
+
+**Main Flow:**
+
+1. User navigates to Export
+2. User selects what to export (books, metadata, annotations)
+3. User chooses format (ZIP, JSON, CSV)
+4. System creates export file
+5. User downloads export
+
+**Alternative Flows:**
+
+*A1: Selective export*
+
+- User selects specific books
+- Only selected items exported
+
+*A2: Export to cloud*
+
+- User chooses cloud destination
+- File uploaded directly
+
+**Postconditions:**
+
+- Export file is created
+- User has backup of data
+
+---
+
+### UC-2.8: Scan ISBN Barcode
+
+**Actors:** Reader
+**Priority:** P2
+**Requirements:** [FR-2.12](requirements/functional-requirements.md#fr-212-isbn-barcode-scanning)
+
+**Description:** User adds physical book by scanning barcode.
+
+**Preconditions:**
+
+- Device has camera
+- Physical book has ISBN barcode
+
+**Main Flow:**
+
+1. User selects "Scan ISBN"
+2. Camera opens
+3. User scans barcode
+4. System decodes ISBN
+5. System fetches metadata
+6. User reviews and confirms
+7. Book is added as physical
+
+**Alternative Flows:**
+
+*A1: Manual ISBN entry*
+
+- If scan fails, user types ISBN
+- System fetches metadata
+
+*A2: No metadata found*
+
+- System shows "Not found"
+- User can enter details manually
+
+**Postconditions:**
+
+- Physical book added to library
+
+---
+
+### UC-2.9: Track Physical Book
+
+**Actors:** Reader
+**Priority:** P1
+**Requirements:** [FR-2.14](requirements/functional-requirements.md#fr-214-physical-book-tracking)
+
+**Description:** User manages physical books in library.
+
+**Preconditions:**
+
+- None
+
+**Main Flow:**
+
+1. User selects "Add physical book"
+2. User enters book details
+3. User sets reading status
+4. User can add location (e.g., "Shelf 3")
+5. Book is added to library
+
+**Alternative Flows:**
+
+*A1: Mark as lent*
+
+- User marks book as lent
+- User enters borrower info
+- Reminder can be set
+
+**Postconditions:**
+
+- Physical book tracked in library
+
+---
+
+## 3. Reading and Viewer Use Cases
+
+### UC-3.1: Read Books with Integrated Viewer
+
+**Actors:** Reader, E-ink Reader
+**Priority:** P0
+**Requirements:** [FR-3.1](requirements/functional-requirements.md#fr-31-e-book-reading)
+
+**Description:** User reads e-books in the viewer.
+
+**Preconditions:**
+
+- Book exists in library
+- Book format is supported
+
+**Main Flow:**
+
 1. User opens book from library
-2. System loads book in integrated viewer
-3. User navigates through pages and chapters
-4. Reading progress is automatically tracked
+2. System loads book in viewer
+3. System restores last position
+4. User reads and navigates
+5. System saves progress automatically
 
-### UC-3.2: Customize reading experience
-**Actors:** Reader  
-**Requirements:** [FR-3.2](requirements/functional-requirements.md#3-integrated-viewer)  
-**Description:** User personalizes viewer appearance and layout.
+**Alternative Flows:**
 
-**Main flow:**
-1. User accesses viewer settings
-2. User adjusts font, size, spacing, colors, layout
-3. User previews changes in real-time
-4. Settings are saved and applied to reading session
+*A1: Navigate via TOC*
 
-### UC-3.3: Manage reading profiles
-**Actors:** Reader  
-**Requirements:** [FR-3.3](requirements/functional-requirements.md#3-integrated-viewer)  
-**Description:** User creates and manages custom reading profiles.
+- User opens table of contents
+- User selects chapter
 
-**Main flow:**
-1. User creates new reading profile
-2. User configures all visual and layout preferences
-3. User saves profile with descriptive name
-4. User can switch between profiles during reading
+*A2: Go to page/position*
 
-## 4. Annotations and notes use cases
+- User enters page number or percentage
+- System jumps to position
 
-### UC-4.1: Create text annotations
-**Actors:** Reader  
-**Requirements:** [FR-4.1](requirements/functional-requirements.md#4-annotations-and-notes)  
-**Description:** User highlights and annotates text while reading.
+*A3: E-ink mode*
 
-**Main flow:**
-1. User selects text in book viewer
-2. User chooses highlight color and adds optional note
-3. Annotation is saved and visible in text
-4. User can review annotations in dedicated panel
+- System detects e-ink display
+- UI adapts (no animations, high contrast)
 
-### UC-4.2: Create book notes
-**Actors:** Reader  
-**Requirements:** [FR-4.2](requirements/functional-requirements.md#4-annotations-and-notes)  
+**Postconditions:**
+
+- Reading position is saved
+- Time tracked for statistics
+
+---
+
+### UC-3.2: Customize Reading Experience
+
+**Actors:** Reader, E-ink Reader
+**Priority:** P0
+**Requirements:** [FR-3.2](requirements/functional-requirements.md#fr-32-viewer-customization)
+
+**Description:** User personalizes viewer appearance.
+
+**Preconditions:**
+
+- Book is open in viewer
+
+**Main Flow:**
+
+1. User opens reader settings
+2. User adjusts typography (font, size, spacing)
+3. User sets colors (background, text)
+4. User configures layout (margins, mode)
+5. Changes apply immediately
+6. Settings are saved
+
+**Alternative Flows:**
+
+*A1: Quick theme switch*
+
+- User taps theme button
+- Cycles through presets
+
+*A2: E-ink optimized*
+
+- User enables e-ink mode
+- High contrast, no animations
+
+**Postconditions:**
+
+- Reader customized to preference
+
+---
+
+### UC-3.3: Manage Reading Profiles
+
+**Actors:** Reader, E-ink Reader
+**Priority:** P1
+**Requirements:** [FR-3.3](requirements/functional-requirements.md#fr-33-reading-profiles)
+
+**Description:** User saves and switches reader configurations.
+
+**Preconditions:**
+
+- Reader settings have been customized
+
+**Main Flow:**
+
+1. User opens profile management
+2. User creates new profile
+3. User names profile (e.g., "Night reading")
+4. Current settings saved to profile
+5. User can switch between profiles
+
+**Alternative Flows:**
+
+*A1: Set default profile*
+
+- User marks profile as default
+- Applied to new books
+
+*A2: Export/import profiles*
+
+- User exports profile to file
+- Can import on other devices
+
+**Postconditions:**
+
+- Profiles saved for quick switching
+
+---
+
+### UC-3.4: Manage Bookmarks
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-3.4](requirements/functional-requirements.md#fr-34-bookmarks)
+
+**Description:** User creates and uses bookmarks.
+
+**Preconditions:**
+
+- Book is open in viewer
+
+**Main Flow:**
+
+1. User taps bookmark button
+2. Bookmark created at current position
+3. User can add note (optional)
+4. Bookmark saved
+
+**Alternative Flows:**
+
+*A1: View all bookmarks*
+
+- User opens bookmark panel
+- Sees list with positions
+- Taps to navigate
+
+*A2: Delete bookmark*
+
+- User swipes or long-press
+- Confirms deletion
+
+**Postconditions:**
+
+- Bookmark saved and accessible
+
+---
+
+## 4. Annotations and Notes Use Cases
+
+### UC-4.1: Create Text Annotations
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-4.1](requirements/functional-requirements.md#fr-41-text-highlighting)
+
+**Description:** User highlights text while reading.
+
+**Preconditions:**
+
+- Book is open in viewer
+
+**Main Flow:**
+
+1. User selects text
+2. Context menu appears
+3. User chooses highlight color
+4. User adds note (optional)
+5. Annotation saved
+
+**Alternative Flows:**
+
+*A1: Quick highlight*
+
+- User selects and taps color
+- Instant highlight without menu
+
+**Postconditions:**
+
+- Text is highlighted
+- Annotation appears in panel
+
+---
+
+### UC-4.2: Create Book Notes
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-4.2](requirements/functional-requirements.md#fr-42-book-notes)
+
 **Description:** User creates free-form notes for books.
 
-**Main flow:**
-1. User opens notes panel for book
-2. User creates new note with title and content
-3. Note is saved and associated with book
-4. User can organize and search through notes
+**Preconditions:**
 
-## 5. Progress tracking use cases
+- Book exists in library
 
-### UC-5.1: Track reading progress
-**Actors:** Reader  
-**Requirements:** [FR-5.1](requirements/functional-requirements.md#5-progress-tracking), [FR-5.3](requirements/functional-requirements.md#5-progress-tracking)  
-**Description:** System automatically tracks and displays reading statistics.
+**Main Flow:**
 
-**Main flow:**
-1. System monitors reading time and progress
-2. System calculates statistics (books read, pages, velocity)
-3. Progress is synchronized across devices
-4. User can view detailed progress reports
+1. User opens book notes
+2. User creates new note
+3. User enters title and content
+4. Note saved
 
-### UC-5.2: Filter progress statistics
-**Actors:** Reader  
-**Requirements:** [FR-5.2](requirements/functional-requirements.md#5-progress-tracking)  
-**Description:** User customizes progress views with filters and time ranges.
+**Alternative Flows:**
 
-**Main flow:**
-1. User accesses progress dashboard
-2. User selects time frame (week, month, year, custom)
-3. User filters by specific books or all books
-4. System displays filtered statistics and charts
+*A1: Rich text editing*
 
-## 6. Goal management use cases
+- User uses formatting (bold, lists)
+- Markdown syntax supported
 
-### UC-6.1: Create reading goals
-**Actors:** Reader  
-**Requirements:** [FR-6.1](requirements/functional-requirements.md#6-goal-management)  
-**Description:** User sets time-based reading objectives.
+**Postconditions:**
 
-**Main flow:**
-1. User accesses goal creation interface
-2. User selects goal template (read N books in M months)
-3. User customizes goal parameters
-4. System begins tracking progress toward goal
+- Note attached to book
 
-### UC-6.2: Manage goal progress
-**Actors:** Reader  
-**Requirements:** [FR-6.2](requirements/functional-requirements.md#6-goal-management), [FR-6.3](requirements/functional-requirements.md#6-goal-management)  
-**Description:** User and system update goal progress and status.
+---
 
-**Main flow:**
-1. System automatically updates goal progress based on reading activity
-2. User can manually adjust progress if needed
-3. System displays completion status and remaining time
-4. User receives notifications about goal progress
+### UC-4.3: Manage Annotations
 
-## 7. Storage and synchronization use cases
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-4.3](requirements/functional-requirements.md#fr-43-annotation-editing)
 
-### UC-7.1: Configure storage options
-**Actors:** Registered user, System administrator  
-**Requirements:** [FR-7.1](requirements/functional-requirements.md#7-storage-and-synchronization), [NFR-1.2](requirements/non-functional-requirements.md#1-storage)  
-**Description:** User selects and configures preferred storage backend.
+**Description:** User edits or deletes annotations.
 
-**Main flow:**
-1. User accesses storage settings
-2. User chooses between local, self-hosted, or cloud storage
-3. User provides necessary credentials and configuration
-4. System validates and activates storage connection
+**Preconditions:**
 
-### UC-7.2: Process scanned documents
-**Actors:** Reader  
-**Requirements:** [FR-7.3](requirements/functional-requirements.md#7-storage-and-synchronization)  
-**Description:** System applies OCR to scanned book files for text extraction.
+- Annotations exist for book
 
-**Main flow:**
-1. User uploads scanned document (PDF, images)
-2. System detects that OCR processing is needed
-3. System applies OCR to extract text content
-4. Processed book becomes searchable and accessible
+**Main Flow:**
 
-### UC-7.3: Synchronize data across devices
-**Actors:** Registered user  
-**Requirements:** [FR-5.3](requirements/functional-requirements.md#5-progress-tracking), [NFR-2.1](requirements/non-functional-requirements.md#2-synchronization), [NFR-2.2](requirements/non-functional-requirements.md#2-synchronization)  
-**Description:** System keeps user data consistent across multiple devices.
+1. User opens annotation panel
+2. User selects annotation
+3. User edits (color, note) or deletes
+4. Changes saved
 
-**Main flow:**
-1. User makes changes on one device
-2. System queues changes for synchronization
-3. When online, system syncs changes to server
-4. Other devices receive and apply synchronized changes
-5. Offline changes are marked with appropriate indicators
+**Postconditions:**
+
+- Annotations updated
+
+---
+
+### UC-4.4: Export Annotations
+
+**Actors:** Reader
+**Priority:** P1
+**Requirements:** [FR-4.4](requirements/functional-requirements.md#fr-44-annotation-export)
+
+**Description:** User exports annotations to file.
+
+**Preconditions:**
+
+- Book has annotations
+
+**Main Flow:**
+
+1. User opens export options
+2. User selects format (Markdown, PDF, TXT)
+3. User configures options (include context, metadata)
+4. System generates export
+5. User downloads file
+
+**Postconditions:**
+
+- Annotations exported to file
+
+---
+
+### UC-4.5: Search Annotations
+
+**Actors:** Reader
+**Priority:** P1
+**Requirements:** [FR-4.5](requirements/functional-requirements.md#fr-45-annotation-search)
+
+**Description:** User searches through annotations.
+
+**Preconditions:**
+
+- User has annotations
+
+**Main Flow:**
+
+1. User opens annotation search
+2. User enters search query
+3. Results from all books shown
+4. User can filter by book, color, date
+
+**Postconditions:**
+
+- Matching annotations displayed
+
+---
+
+## 5. Progress Tracking Use Cases
+
+### UC-5.1: Track Reading Progress
+
+**Actors:** Reader
+**Priority:** P0
+**Requirements:** [FR-5.1](requirements/functional-requirements.md#fr-51-reading-statistics)
+
+**Description:** System tracks and displays reading activity.
+
+**Preconditions:**
+
+- User reads books in viewer
+
+**Main Flow:**
+
+1. System monitors reading sessions
+2. System records time and pages
+3. User views progress dashboard
+4. Statistics displayed (charts, metrics)
+
+**Postconditions:**
+
+- Reading activity is tracked
+- Statistics available
+
+---
+
+### UC-5.2: Filter Progress Statistics
+
+**Actors:** Reader
+**Priority:** P1
+**Requirements:** [FR-5.2](requirements/functional-requirements.md#fr-52-statistics-filtering)
+
+**Description:** User customizes statistics view.
+
+**Preconditions:**
+
+- Reading data exists
+
+**Main Flow:**
+
+1. User opens statistics
+2. User selects time range
+3. User filters by books/shelves
+4. Filtered results displayed
+
+**Postconditions:**
+
+- Statistics filtered to selection
+
+---
+
+## 6. Goal Management Use Cases
+
+### UC-6.1: Create Reading Goals
+
+**Actors:** Reader
+**Priority:** P1
+**Requirements:** [FR-6.1](requirements/functional-requirements.md#fr-61-reading-goals)
+
+**Description:** User sets reading objectives.
+
+**Preconditions:**
+
+- User wants to track goals
+
+**Main Flow:**
+
+1. User opens Goals
+2. User creates new goal
+3. User selects type (books, pages, time)
+4. User sets target and period
+5. Goal is saved and tracking begins
+
+**Postconditions:**
+
+- Goal is active
+- Progress tracked automatically
+
+---
+
+### UC-6.2: Manage Goal Progress
+
+**Actors:** Reader
+**Priority:** P1
+**Requirements:** [FR-6.2](requirements/functional-requirements.md#fr-62-manual-goal-updates), [FR-6.3](requirements/functional-requirements.md#fr-63-automatic-goal-progress)
+
+**Description:** User and system update goal progress.
+
+**Preconditions:**
+
+- Active goal exists
+
+**Main Flow:**
+
+1. System updates progress automatically
+2. User can manually adjust if needed
+3. Progress displayed with visualizations
+4. Notifications sent at milestones
+
+**Postconditions:**
+
+- Goal progress is current
+
+---
+
+## 7. Storage and Synchronization Use Cases
+
+### UC-7.1: Configure Storage Options
+
+**Actors:** Registered User, System Administrator
+**Priority:** P0
+**Requirements:** [FR-7.1](requirements/functional-requirements.md#fr-71-file-storage-backend-selection), [FR-7.1.1](requirements/functional-requirements.md#fr-711-metadata-server-configuration)
+
+**Description:** User configures metadata server connection and file storage backend(s) for synchronization and book storage.
+
+**Preconditions:**
+
+- Application is installed
+- Internet connection available (for server configuration)
+
+**Main Flow (Metadata Server):**
+
+1. User opens Settings > Sync & Storage
+2. User selects metadata server option:
+   - Official hosted server (default)
+   - Self-hosted server (enter URL)
+3. User logs in or registers on metadata server
+4. System validates connection
+5. Sync capabilities are enabled
+
+**Main Flow (File Storage Backend):**
+
+1. User opens Settings > Storage > File Storage
+2. User clicks "Add Storage Backend"
+3. User selects backend type (Google Drive, WebDAV, MinIO, etc.)
+4. User configures credentials:
+   - OAuth flow for Google/OneDrive/Dropbox
+   - URL + credentials for WebDAV/MinIO
+5. System validates connection and shows storage info
+6. User sets backend as primary (optional)
+7. Backend is available for file storage
+
+**Alternative Flows:**
+
+*A1: Cloud storage OAuth (Google Drive, OneDrive, Dropbox)*
+
+1. User clicks "Connect with [Provider]"
+2. OAuth popup opens
+3. User authorizes Papyrus access
+4. System stores tokens securely
+5. Storage folder is created automatically
+
+*A2: Self-hosted metadata server*
+
+1. User enters server URL (e.g., <https://papyrus.home.local>)
+2. System tests connection and retrieves server info
+3. User registers or logs in on self-hosted server
+4. Connection is established
+
+*A3: WebDAV server (Nextcloud, etc.)*
+
+1. User enters WebDAV URL
+2. User enters username and password
+3. System tests connection
+4. User specifies folder path
+
+*A4: MinIO/S3-compatible storage*
+
+1. User enters endpoint URL
+2. User enters bucket name
+3. User enters access key and secret key
+4. System tests connection
+
+*A5: Local-only mode (no sync)*
+
+1. User skips metadata server setup
+2. User uses only local storage
+3. All data stored on device only
+4. No cross-device sync available
+
+*A6: Dedicated Papyrus server for files*
+
+1. User selects "Papyrus Server" as file storage
+2. Files stored on same server as metadata
+3. Single server handles everything
+
+**Postconditions:**
+
+- Metadata server connected (optional)
+- File storage backend(s) configured
+- Cross-device sync enabled (if metadata server connected)
+- Books can be uploaded to selected storage
+
+See [Server Architecture](server-architecture.md) for technical details.
+
+---
+
+### UC-7.2: Process Scanned Documents
+
+**Actors:** Reader
+**Priority:** P2
+**Requirements:** [FR-7.3](requirements/functional-requirements.md#fr-73-ocr-processing)
+
+**Description:** System applies OCR to scanned books.
+
+**Preconditions:**
+
+- PDF with scanned images uploaded
+
+**Main Flow:**
+
+1. System detects scanned content
+2. System queues OCR processing
+3. OCR runs in background
+4. Text extracted and indexed
+5. User notified of completion
+
+**Postconditions:**
+
+- Book content is searchable
+
+---
+
+### UC-7.3: Synchronize Data Across Devices
+
+**Actors:** Registered User
+**Priority:** P0
+**Requirements:** [FR-5.3](requirements/functional-requirements.md#fr-53-cross-device-sync), [NFR-2.1](requirements/non-functional-requirements.md#nfr-21-onlineoffline-parity)
+
+**Description:** System keeps metadata, reading progress, and annotations consistent across devices via the metadata server.
+
+**Preconditions:**
+
+- User logged into metadata server on multiple devices
+- At least one device has internet connection
+
+**Main Flow:**
+
+1. User makes changes on device A (e.g., reads pages, adds annotation)
+2. Changes are saved locally immediately
+3. Changes are queued in sync queue
+4. When online, client pushes changes to metadata server
+5. Metadata server records changes with timestamps
+6. Device B polls or receives push notification
+7. Device B fetches changes from metadata server
+8. Device B applies changes to local storage
+9. UI updates to reflect synchronized state
+
+**Synchronized Data:**
+
+- Reading position (page, chapter, percentage)
+- Annotations (highlights, notes)
+- Bookmarks
+- Book metadata edits
+- Shelf and tag assignments
+- Reading goals and progress
+- Reading session statistics
+
+**Alternative Flows:**
+
+*A1: Conflict detected (same book, both devices)*
+
+1. System compares timestamps
+2. For reading position: latest timestamp wins
+3. For metadata: merge non-conflicting fields, latest wins for conflicts
+4. For annotations: keep both (no conflict, additive)
+5. User notified of resolved conflicts (optional)
+
+*A2: Offline changes accumulated*
+
+1. User works offline on device A
+2. Multiple changes queued locally
+3. When device comes online, all queued changes sync
+4. Server processes changes in timestamp order
+
+*A3: Book file sync*
+
+1. If book exists on server but not locally
+2. User can download for offline access
+3. File downloaded from configured storage backend
+4. Local reading position preserved after download
+
+*A4: Metadata server unavailable*
+
+1. Client detects connection failure
+2. UI shows "Offline" or "Sync unavailable" indicator
+3. All changes continue to be saved locally
+4. Sync resumes automatically when server available
+
+**Postconditions:**
+
+- All devices have consistent metadata
+- Reading position synchronized
+- Annotations available on all devices
+
+See [Server Architecture](server-architecture.md#synchronization-architecture) for sync details.
+
+---
+
+### UC-7.4: Browse OPDS Catalog
+
+**Actors:** Reader
+**Priority:** P2
+**Requirements:** [FR-7.5](requirements/functional-requirements.md#fr-75-opds-catalog-support)
+
+**Description:** User downloads books from online catalogs.
+
+**Preconditions:**
+
+- OPDS catalog URL known
+- Internet connection available
+
+**Main Flow:**
+
+1. User adds OPDS catalog URL
+2. System loads catalog
+3. User browses or searches
+4. User selects book to download
+5. Book added to library
+
+**Alternative Flows:**
+
+*A1: Protected catalog*
+
+- User enters credentials
+- System authenticates
+
+**Postconditions:**
+
+- Book downloaded to library
+
+---
+
+## Use Case Summary
+
+### By Priority
+
+| Priority | Use Cases | Description |
+|----------|-----------|-------------|
+| **P0** | UC-1.1, UC-1.2, UC-1.4, UC-2.1, UC-2.3, UC-2.4, UC-2.5, UC-2.6, UC-2.7, UC-3.1, UC-3.2, UC-3.4, UC-4.1, UC-4.2, UC-4.3, UC-5.1, UC-7.1, UC-7.3 | MVP critical |
+| **P1** | UC-1.3, UC-1.5, UC-1.6, UC-2.9, UC-3.3, UC-4.4, UC-4.5, UC-5.2, UC-6.1, UC-6.2 | MVP high priority |
+| **P2** | UC-2.2, UC-2.8, UC-7.2, UC-7.4 | Post-MVP |
+
+### By Actor
+
+| Actor | Primary Use Cases |
+|-------|-------------------|
+| Anonymous User | UC-1.4 |
+| Registered User | UC-1.1, UC-1.2, UC-1.3, UC-1.5, UC-1.6, UC-7.1, UC-7.3 |
+| Reader | UC-2.x, UC-3.x, UC-4.x, UC-5.x, UC-6.x |
+| E-ink Reader | UC-3.1, UC-3.2, UC-3.3 |
+| System Administrator | UC-7.1 |

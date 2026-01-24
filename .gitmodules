@@ -1,4 +1,0 @@
-[submodule "server"]
-	path = server
-	url = git@github.com:Eoic/Shelf.git
-	branch = master

@@ -1,261 +1,218 @@
----
-description: A short overview of the project.
-icon: books
-cover: >-
-  https://images.unsplash.com/photo-1604866830893-c13cafa515d5?crop=entropy&cs=srgb&fm=jpg&ixid=M3wxOTcwMjR8MHwxfHNlYXJjaHwxfHxib29rc3xlbnwwfHx8fDE3MzU3NzEzODh8MA&ixlib=rb-4.0.3&q=85
-coverY: 0
-layout:
-  cover:
-    visible: true
-    size: full
-  title:
-    visible: true
-  description:
-    visible: true
-  tableOfContents:
-    visible: true
-  outline:
-    visible: true
-  pagination:
-    visible: true
----
+# Papyrus
 
-# What is Papyrus?
+**A cross-platform e-book reading and management application**
 
-### About
+## Overview
 
-Papyrus is a cross-platform application for reading and managing both physical and digital books. It aims to provide a versatile, user-friendly system that makes reading comfortable and fun, all while being accessible on Android, iOS, Web, and Desktop platforms. Papyrus features an intuitive, modern UI with extensive customization options, unifying book organization, reading, note taking, progress tracking, and personalized settings.
+Papyrus is an open-source application for reading and managing both physical and digital books. It provides a versatile, user-friendly system that makes reading comfortable and fun across Android, iOS, Web, Desktop (Windows, macOS, Linux), and e-ink devices. Papyrus features an intuitive, modern UI with extensive customization options, unifying book organization, reading, note-taking, progress tracking, and personalized settings in a single application.
 
-### Rationale
+## Why Papyrus?
 
-Nowadays, many solutions exist that offer some reading functionalities but often fall short on a subset of essential features or user experience. Papyrus aims to deliver a comprehensive solution that balances functionality with good user experience, covering all reading needs in a single application.
+Existing solutions often fall short in one or more areas:
 
-### Goals
+| Problem                              | How Papyrus Solves It                        |
+| ------------------------------------ | -------------------------------------------- |
+| Fragmented ecosystems (Kindle, Kobo) | Single app works everywhere with your books  |
+| Complex desktop-only tools (Calibre) | Simple, intuitive interface on all platforms |
+| Subscription-based cloud services    | Self-hostable, no mandatory subscriptions    |
+| Privacy concerns with analytics      | No analytics by default, opt-in telemetry    |
+| Poor e-ink device support            | Optimized UI for e-ink displays              |
+| No offline functionality             | Offline-first design with optional sync      |
 
-* **Cross-platform** - manage physical and electronic books seamlessly across devices, whether it's a desktop PC, smartphone or an e-reader. No need to relearn the UI or use third-party apps.
-* **Integrated reader** - read added books and customize reading experience with various look-and-feel options.
-* **Flexible management** - organize physical and digital books into shelves, assign categories, attach tags, create custom filters and more.
-* **Progress tracking and goals** - track reading time and books read, plan and create custom reading goals.
-* **Storage flexibility** - choose between local and cloud storage options for saving digital book files, notes and annotations.
-* **Data ownership** - export book lists, book files, and annotations to files in popular formats or sync to services like Google Docs, Zotero, etc.
-* **Privacy first** - no default analytics and optional self-hosted synchronization.
-* **Extensible** - plugin system for metadata sources, storage and reader features.
-* **Developer friendly** - allow easy hosting and setting up local storage server, have a public REST API to allow for building front-ends.
+## Goals
 
-### Target audience
+1. **Cross-platform** - Manage books seamlessly across all devices without relearning the UI
+2. **Integrated reader** - Read e-books with extensive customization options
+3. **Flexible management** - Organize books into shelves, categories, and tags with powerful filtering
+4. **Progress tracking** - Track reading time, books read, and achieve reading goals
+5. **Storage flexibility** - Choose between local, self-hosted, or cloud storage
+6. **Data ownership** - Export everything in open formats; your data is yours
+7. **Privacy first** - No default analytics; optional self-hosted synchronization
+8. **Extensible** - Plugin system for metadata sources, storage, and reader features
+9. **Developer friendly** - Public REST API and easy self-hosting
 
-* Readers who regularly consume digital and/or physical books and are looking for a centralized solution that allows them to manage their libraries.
-* Users who want to track statistics of their reading habits and assess their progress over time.
-* Users who are looking to build or reinforce their reading habits through goals and gamification.
+## Target Audience
 
-### Core features
+- **Regular readers** who consume digital and/or physical books and need a centralized library management solution
+- **Habit builders** who want to track reading statistics and build reading habits through goals
+- **Privacy-conscious users** who prefer local control over their data
+- **Multi-device users** who read on phones, tablets, e-readers, and computers
+- **E-ink device owners** who want a dedicated reading experience optimized for their hardware
 
-#### **1. Cross-platform compatibility**
+## Supported Platforms
 
-* **Platforms:**
-  * Android (Mobile).
-  * iOS (Mobile).
-  * Web (Firefox, Chrome and Safari).
-  * Desktop (Windows, macOS, Linux).
-* **Data synchronization:**
-  * Synchronization of library data across all logged-in devices:
-    * Book metadata and files (if any).
-    * Categories, shelves and tags.
-    * Reading progress (current page).
-    * Notes and highlights.
-    * Reading profiles (customized reader settings).
-    * Reading goals.
-    * Statistics (reading time, books read).
+| Platform                            | Status    | Notes                                      |
+| ----------------------------------- | --------- | ------------------------------------------ |
+| Android (8.0+)                      | Primary   | Full feature support                       |
+| iOS (12.0+)                         | Primary   | Full feature support                       |
+| Web (Chrome, Firefox, Safari, Edge) | Primary   | PWA with offline support                   |
+| Windows (10+)                       | Primary   | Native desktop experience                  |
+| macOS (10.15+)                      | Primary   | Native desktop experience                  |
+| Linux                               | Primary   | Native desktop experience                  |
+| E-ink devices                       | Secondary | Optimized grayscale UI, reduced animations |
 
-#### **2. Integrated book viewer**
+## Supported E-book Formats
 
-* **Supported formats:**
-  * Primary formats: EPUB, PDF, MOBI, AZW3, TXT, CBR, CBZ.
-  * Potential future formats: DOCX, FB2, HTML.
-* **Customization options:**
-  * **Typography:**
-    * Font selection - include a selection of common fonts (e.g., Arial, Times New Roman, Open Sans, Roboto) and allow users to add custom fonts from their device or via a web link.
-    * Font size - adjustable with a slider or discrete steps.
-    * Font weight - support for bold, regular, and potentially light/extra-bold weights.
-    * Line spacing - adjustable spacing between lines, expressed as a multiplier or in pixels.
-    * Paragraph spacing - adjustable spacing before and after paragraphs.
-    * Text alignment - left, right, center, justified.
-    * Text direction - support for left-to-right (LTR) and right-to-left (RTL) text.
-  * **Colors and appearance:**
-    * Background color - predefined themes (light, dark, sepia, etc.) and a color picker for custom colors.
-    * Text color - customizable text color.
-    * Link color - customizable color for hyperlinks.
-    * Margins - adjustable top, bottom, left, and right margins.
-    * Padding - adjustable padding.
-  * **Layout and navigation:**
-    * Page layout - single-page and two-page (landscape) views.
-    * Scrolling mode - paginated and continuous scrolling modes.
-    * Screen orientation - support for portrait and landscape modes on mobile devices.
-    * Brightness control - in-app brightness adjustment.
-    * Page turning - tap zones, swipe gestures, volume key navigation, and on-screen controls.
-    * Table of contents - navigation via an interactive table of contents.
-    * Go to page - ability to jump to a specific page number or percentage.
-    * Progress bar - visual indicator of reading progress within the book.
-  * **Advanced:**
-    * Character spacing - adjustable spacing between individual characters.
-    * Word spacing - adjustable spacing between words.
-    * Text scaling - ability to scale the text horizontally.
-    * Initial column count - for multi-column layouts, usually relevant for larger displays.
-* **Reading profiles:**
-  * Users can save and manage multiple named reading profiles, each containing a complete set of viewer customization settings.
-  * Quick switching between profiles.
-  * Option to set a default profile.
-  * Profile import and export.
-
-#### **3. Flexible book management**
-
-* **Library organization:**
-  * **Shelves:**
-    * User-defined virtual shelves for grouping books (e.g., "Software engineering", "Non-fiction", "Sci-fi").
-    * Shelves can have sub-shelves (nested shelves) for more fine grained categorization.
-  * **Categories:**
-    * Dynamic categorization of books based on metadata.
-    * Predefined categories (e.g., author, genre, publisher, language, series).
-    * User-defined categories.
-    * Category conditions:
-      * Define categories using rules or conditions (e.g., "Release Date > 2000," "Rating >= 4," "Tags contains 'Sci-Fi'").
-      * Support for logical operators (AND, OR, NOT).
-      * Graphical interface for defining conditions (e.g., dropdown menus, date pickers) in addition to a text-based query language.
-  * **Tags:**
-    * User-defined labels for books.
-    * Books can have multiple tags.
-    * Tags are color coded.
-  * **Custom filters:**
-    * Create complex filters using combinations of metadata fields, categories, tags, and reading progress.
-    * Save and name custom filters for reuse.
-    * Example filters: "Books by author X published after 1990 with the tag 'History' that I haven't started reading."
-    * Filters are created with a query language (DSL, like in Jira) or through a graphical user interface.
-    * Filters can be saved to reuse later.
-* **Metadata management:**
-  * **Metadata editing:**
-    * Manual editing of book metadata (title, author, publisher, publication date, ISBN, description, cover image, series, etc.).
-    * Batch editing of metadata for multiple books.
-  * **Metadata retrieval:**
-    * Automatically fetch metadata from online sources (e.g., Open Library, Google Books, Goodreads).
-    * User-configurable metadata sources (manual entry).
-    * Option to prioritize metadata sources (e.g., manual over online, Open Library over Goodreads).
-  * **Cover image management:**
-    * Automatic downloading of cover images from online sources.
-    * Manual selection of cover images from local files.
-    * Ability to edit and crop cover images.
-* **Search:**
-  * **Basic search -** search across title, author, and series.
-  * **Advanced search - u**se filters, categories, and tags to narrow down search results.
-  * **Full-text Search - s**earch within the content of digital books (where supported by the format).
-* **Sorting:**
-  * Sort books by title, author, date added, publication date, rating, etc.
-  * Ascending / descending order.
-
-#### **4. Reading goals and progress tracking**
-
-* **Goal setting:**
-  * **Time-based goals:**
-    * Set goals for daily, weekly, or monthly reading time (e.g., "Read 30 minutes per day").
-    * Option to set goals for specific days of the week.
-  * **Book-based Goals:**
-    * Set goals for the number of books to read within a specified period (e.g., "Read 12 books in 6 months").
-    * Option to specify which books or categories count towards the goal.
-  * **Custom goals:**
-    * Allow users to define goals with flexible criteria (e.g., "Read all books by Author X by the end of the year") and allow updating goal status manually (e.g., checkbox, numeric input).
-* **Progress tracking:**
-  * Automatic tracking of reading time for each book.
-  * Recording of pages read and current reading position.
-  * Tracking of completed books (user can set this status to a book manually).
-  * Visualizations of reading progress:
-    * Progress bars.
-    * Charts (e.g., daily/weekly reading time).
-    * Statistics (e.g., average reading time per day, books read per month).
-  * Tracking reading progress across devices.
-* **Reminders and notifications:**
-  * Optional reminders to meet reading goals.
-  * Customizable notification settings.
-
-#### **5. Storage and book import and export**
-
-* **E-book imports:**
-  * Import from local storage (files and folders) or via URL.
-  * Import from cloud storage services (Google Drive, Dropbox, OneDrive, etc.).
-  * Bulk import of multiple files / folders.
-* **E-book export:**
-  * Export entire library or selected books to local storage as an archive (e.g., ZIP).
-  * Export metadata along with book files.
-* **E-book conversion:**
-  * Convert e-books between supported formats.
-  * Batch conversion of multiple books.
-  * Conversion options (e.g., font size, margins).
-* **Storage options:**
-  * **Local storage** - store e-book files on the user's device or in a self-hosted server.
-  * **Cloud Storage** - integration with cloud storage providers.
-    * Users can link their cloud storage accounts.
-    * Option to store e-books in the cloud and download them for offline reading.
-    * Synchronization of e-books and metadata with the cloud.
-  * **Network Storage** - support for connecting to network storage locations (e.g., NAS, shared folders).
-* **Physical book tracking:**
-  * Manual entry of physical book details, like title, author, ISBN, edition, etc.
-  * Ability to categorize and tag physical books.
-  * Option to mark physical books as "Read" with a completion date.
-  * Include physical books in search and filtering.
-  * Option to add personal notes for physical books.
-
-#### **6. Notes and annotations**
-
-* **Highlighting:**
-  * Highlight text with multiple colors (pre-selected or through a color picker).
-  * Option to add notes to highlights.
-  * Highlight styling (e.g., underline, bold).
-* **Note-taking:**
-  * Create notes associated with specific text selections, pages, or the entire book.
-  * Support for rich text formatting in notes (bold, italics, lists) through rich-text editor or Markdown syntax.
-  * Organization of notes (e.g., folders, labels).
-* **Bookmarks** - create and manage bookmarks within digital books.
-* **Annotation Management:**
-  * View and manage all highlights, notes, and bookmarks for a book in a dedicated panel.
-  * Search and filter annotations.
-  * Export annotations:
-    * Export to plain text, RTF, HTML, Markdown.
-    * Option to include context around highlights.
-
-#### **7. Advanced features**
-
-* Socialization:
-  * Sharing thoughts, reading progress and reviews with friends.
-  * Sharing book recommendations.
-* Audiobook Support:
-  * Manage and play audiobooks.
-  * Synchronize audiobook progress across devices.
-  * Text-to-speech support.
-* OPDS Support:
-  * Browse and download books from online catalogs.
-* AI-Powered Features:
-  * Book summaries through LLMs.
-  * Personalized recommendations according to library content.
-  * "Smart" categorization.
-* Optical character recognition (OCR):
-  * For importing text from scanned documents or images.
+| Format  | Read    | Convert To | Notes                                |
+| ------- | ------- | ---------- | ------------------------------------ |
+| EPUB    | Yes     | Yes        | Primary format, full feature support |
+| PDF     | Yes     | Yes        | Fixed layout support                 |
+| MOBI    | Yes     | Yes        | Kindle format                        |
+| AZW3    | Yes     | No         | Kindle format (read-only)            |
+| TXT     | Yes     | Yes        | Plain text                           |
+| CBR/CBZ | Yes     | No         | Comic book archives                  |
+| FB2     | Planned | Planned    | Future support                       |
+| DOCX    | Planned | Planned    | Future support                       |
 
 ---
 
-## Specification overview
+## Feature Overview
 
-This specification provides comprehensive documentation for the Papyrus book management system, covering all aspects from requirements to implementation details:
+### Core Features (MVP)
 
-### [Requirements](requirements/README.md)
-- **[Functional requirements](requirements/functional-requirements.md)**: Core features and capabilities
-- **[Non-functional requirements](requirements/non-functional-requirements.md)**: Performance, security, and quality attributes
+These features define the minimum viable product and are prioritized for initial release:
 
-### [System design](actors.md)
-- **[Actors](actors.md)**: User types and their interactions with the system
-- **[Use cases](use-cases.md)**: Detailed scenarios and workflows
-- **[Entities](entities.md)**: Data model and relationships
-- **[Database model](database-model.md)**: Complete database schema and design
+#### 1. Book Management
 
-### [Implementation](technologies.md)
-- **[Technologies](technologies.md)**: Technology stack and architecture decisions
-- **[User interface](user-interface.md)**: Design guidelines and UI specifications
+- **Import books** from local storage, URL, or cloud services (Google Drive, OneDrive, Dropbox)
+- **Organize with shelves** - user-defined collections (e.g., "Currently Reading", "Sci-Fi")
+- **Tag books** with color-coded labels (0-10 tags per book)
+- **Edit metadata** manually or fetch from online sources (Open Library, Google Books)
+- **Search and filter** by title, author, tags, shelves, reading status, and more
+- **Physical book tracking** - manually add and track physical books in your library
 
-This specification serves as the definitive guide for understanding, developing, and maintaining the Papyrus system.
+#### 2. Integrated E-book Reader
+
+**Typography controls:**
+
+- Font family selection (built-in and custom fonts)
+- Font size, weight, line spacing, paragraph spacing
+- Text alignment (left, right, center, justified)
+- RTL language support
+
+**Appearance:**
+
+- Background color themes (light, dark, sepia, custom)
+- Text and link color customization
+- Adjustable margins and padding
+- Brightness control (in-app)
+
+**Navigation:**
+
+- Single-page and two-page layouts
+- Paginated and continuous scroll modes
+- Table of contents navigation
+- Go-to-page/percentage jump
+- Progress bar with position indicator
+- Touch zones, swipe gestures, volume key navigation
+
+**Reading profiles:**
+
+- Save named presets of all reader settings
+- Quick profile switching
+- Default profile per device
+- Profile import/export
+
+#### 3. Annotations and Notes
+
+- **Highlight text** with multiple colors
+- **Add notes** to highlights or create standalone book notes
+- **Bookmarks** for quick navigation
+- **Export annotations** to text, PDF, or Markdown
+- **Search** across all annotations and notes
+
+#### 4. Reading Progress and Goals
+
+**Automatic tracking:**
+
+- Reading time per book and total
+- Pages/percentage read
+- Books started, in progress, completed
+- Reading velocity statistics
+
+**Goals:**
+
+- Time-based goals (e.g., "Read 30 minutes daily")
+- Book count goals (e.g., "Read 12 books this year")
+- Custom goals with manual progress updates
+- Visual progress indicators and charts
+
+**Synchronization:**
+
+- Reading position synced across devices
+- Progress and statistics synchronized
+
+#### 5. Storage and Sync
+
+**Storage options:**
+
+- Device local storage (default, no account required)
+- Self-hosted server (for privacy-focused users)
+- Cloud storage (Google Drive, OneDrive, Dropbox)
+- Network storage (NAS, shared folders)
+
+**Offline support:**
+
+- Full offline functionality without account
+- Automatic sync when online
+- Conflict resolution options
+
+### Advanced Features (Post-MVP)
+
+These features are planned for future releases:
+
+- **Format conversion** between EPUB, PDF, and MOBI
+- **OPDS catalog browsing** - download from online catalogs
+- **OCR processing** - extract text from scanned documents
+- **Audiobook support** - manage and play audiobooks with synchronized progress
+- **Text-to-speech** - read books aloud
+- **Social features** - share progress, reviews, and recommendations
+- **AI-powered features** - summaries, recommendations, smart categorization
+- **ISBN barcode scanning** - add physical books by scanning
+- **Plugin system** - extend functionality with community plugins
+
+---
+
+## Documentation
+
+This specification provides comprehensive documentation for development and maintenance:
+
+### Requirements
+
+- **[Requirements Overview](requirements/README.md)** - Structure and traceability
+- **[Functional Requirements](requirements/functional-requirements.md)** - What the system does
+- **[Non-Functional Requirements](requirements/non-functional-requirements.md)** - How the system performs
+
+### System Design
+
+- **[Actors](actors.md)** - User types and their interactions
+- **[Use Cases](use-cases.md)** - Detailed workflows and scenarios
+- **[Entities](entities.md)** - Data model and relationships
+- **[Database Model](database-model.md)** - Database schema and design
+
+### Implementation
+
+- **[Technologies](technologies.md)** - Technology stack and architecture
+- **[User Interface](user-interface.md)** - Design guidelines and UI specifications
+- **[Market Analysis](market-analysis.md)** - Competitive landscape and positioning
+
+---
+
+## Quick Reference
+
+### Requirement Notation
+
+| Prefix  | Meaning                    | Example                  |
+| ------- | -------------------------- | ------------------------ |
+| FR-X.Y  | Functional Requirement     | FR-2.1 (Book conversion) |
+| NFR-X.Y | Non-Functional Requirement | NFR-4.1 (Startup time)   |
+| UC-X.Y  | Use Case                   | UC-2.1 (Import books)    |
+
+### Feature Priority Levels
+
+| Level         | Description                              |
+| ------------- | ---------------------------------------- |
+| P0 - Critical | Must have for MVP launch                 |
+| P1 - High     | Should have for MVP, can defer if needed |
+| P2 - Medium   | Nice to have, planned for post-MVP       |
+| P3 - Low      | Future consideration, not planned        |

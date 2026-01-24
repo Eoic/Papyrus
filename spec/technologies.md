@@ -1,222 +1,445 @@
----
-description: >-
-  This section describes technologies which will be used for the design and
-  implementation of the project.
----
-
 # Technologies
 
-This section outlines the technology stack selected for the Papyrus cross-platform book management system. The choices prioritize developer friendliness, self-hosting capabilities, and user data ownership while maintaining performance and scalability.
+This section describes the technology stack, architecture decisions, and deployment options for Papyrus.
 
-## Technology stack overview
+## Technology Stack Overview
 
-| Purpose               | Name            | Language(s)         | Rationale |
-| --------------------- | --------------- | ------------------- | --------- |
-| User interface design | Figma           | -                   | Industry standard for UI/UX design and prototyping |
-| Project management    | GitHub Projects | -                   | Integrated with code repository for seamless workflow |
-| Front-end             | Flutter         | Dart, Kotlin, Swift | Cross-platform development with native performance |
-| Back-end              | FastAPI         | Python              | Self-hostable, developer-friendly architecture |
-| API documentation     | OpenAPI/Swagger | YAML                | Standardized API documentation and client generation |
-| Caching layer         | Redis           | -                   | High-performance caching and session management |
-| Database              | PostgreSQL      | SQL                 | Robust relational database with JSON support |
-| File storage          | Multiple backends | -                 | Flexible storage options for user data ownership |
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | Flutter 3.x (Dart 3.x) | Cross-platform UI |
+| **Backend** | FastAPI (Python 3.9+) | REST API server |
+| **Database** | PostgreSQL 14+ | Primary data store |
+| **Caching** | Redis 6+ | Sessions, caching |
+| **Storage** | Multiple backends | Book file storage |
+| **Deployment** | Docker, Kubernetes | Container orchestration |
 
-## Front-end technologies
+---
 
-### Flutter framework
-**Version:** Flutter 3.x with Dart 3.x
-**Platforms supported:** Android, iOS, Web, Windows, macOS, Linux
+## Frontend: Flutter
 
-**Key features:**
-- Single codebase for all platforms
-- Material 3 design system support
-- Native performance with compiled code
-- Hot reload for rapid development
-- Rich ecosystem of packages
+### Why Flutter?
 
-**Architecture patterns:**
-- Provider/Riverpod for state management
-- Clean architecture with separation of concerns
-- Repository pattern for data access
-- Dependency injection for testability
+- **Single codebase** for Android, iOS, Web, Desktop, and e-ink devices
+- **High performance** with native compilation
+- **Rich widget library** with Material 3 support
+- **Strong typing** with Dart language
+- **Active community** and extensive packages
 
-### Platform-specific components
-- **Android:** Kotlin for platform-specific integrations
-- **iOS:** Swift for platform-specific integrations  
-- **Web:** Progressive Web App capabilities
-- **Desktop:** Platform channels for native file operations
+### Target Platforms
 
-## Back-end architecture
+| Platform | SDK | Build Target |
+|----------|-----|-------------|
+| Android | Flutter SDK | APK/AAB |
+| iOS | Flutter SDK + Xcode | IPA |
+| Web | Flutter SDK | PWA |
+| Windows | Flutter SDK + MSVC | EXE |
+| macOS | Flutter SDK + Xcode | DMG |
+| Linux | Flutter SDK + GTK | AppImage/Snap |
+| E-ink | Android APK | Optimized build |
 
-### Custom REST API server
-**Framework:** FastAPI
-**Language:** Python 3.9+
-**Architecture:** Microservices-ready monolith
+### Key Packages
 
-**Core principles:**
-- Self-hostable with minimal dependencies
-- Stateless design for horizontal scaling
-- Automatic API documentation with OpenAPI/Swagger
-- Developer-friendly setup and configuration
+```yaml
+dependencies:
+  # State Management
+  provider: ^6.0.0          # ChangeNotifier pattern
 
-**Key features:**
-- RESTful API design with OpenAPI specification
-- Authentication with multiple providers (email/password, OAuth)
-- File upload and processing capabilities
-- OCR integration for scanned documents
-- Full-text search capabilities
-- Data export in multiple formats
+  # Navigation
+  go_router: ^12.0.0        # Declarative routing
 
-### Database layer
-**Primary database:** PostgreSQL 14+
-**Features used:**
-- JSON/JSONB support for flexible metadata
-- Full-text search capabilities
-- UUID primary keys for distributed systems
-- Advanced indexing for performance
-- ACID compliance for data integrity
+  # Storage
+  hive: ^2.2.0              # Local key-value store
+  sqflite: ^2.3.0           # SQLite for mobile
 
-**Schema design:**
-- Normalized structure with foreign key constraints
-- Flexible metadata storage using JSON fields
-- Optimized indexes for common query patterns
-- Migration-friendly design for future updates
+  # E-book Rendering
+  epub_view: ^3.0.0         # EPUB reader
+  pdfx: ^2.4.0              # PDF viewer
 
-### Caching and session management
-**Technology:** Redis 6+
-**Use cases:**
-- Session storage for user authentication
-- API response caching for improved performance
-- Temporary file processing status
-- Real-time synchronization coordination
+  # Networking
+  dio: ^5.3.0               # HTTP client
+  connectivity_plus: ^5.0.0  # Network detection
 
-## Storage backends
+  # UI Components
+  flutter_slidable: ^3.0.0   # Swipe actions
+  cached_network_image: ^3.3.0 # Image caching
 
-### Multiple storage options
-The system supports various storage backends to ensure user data ownership and flexibility:
-
-**Local storage:**
-- Server-local file system
-- Network-attached storage (NAS)
-- Self-hosted solutions
-
-**Cloud storage providers:**
-- **Google Drive:** OAuth 2.0 integration
-- **Microsoft OneDrive:** Graph API integration
-- **Dropbox:** API v2 integration (future)
-
-**Object storage:**
-- **MinIO:** Self-hosted S3-compatible storage
-- **Amazon S3:** Public cloud option (future)
-- **Generic S3:** Any S3-compatible service
-
-**Configuration:**
-- Per-user storage preferences
-- Multiple storage backends per user
-- Automatic failover and redundancy options
-- Encryption at rest and in transit
-
-## Development and deployment
-
-### Development tools
-- **IDE:** VS Code with Flutter and Dart extensions
-- **Version control:** Git with GitHub
-- **Package management:** pub.dev for Dart, pip for Python
-- **Testing:** Flutter test framework, pytest for backend
-- **Code quality:** ESLint/dart analyze, black/flake8 for Python
-
-### Deployment options
-**Self-hosted deployment:**
-- Docker containers for easy deployment
-- Docker Compose for development environments
-- Kubernetes manifests for production scaling
-- Environment-based configuration management
-
-**Cloud deployment (optional):**
-- Heroku for simple deployments
-- DigitalOcean App Platform
-- Google Cloud Run for containerized applications
-- AWS/Azure for enterprise deployments
-
-### Database deployment
-- PostgreSQL container or managed service
-- Redis container or managed service
-- Automated backup and restore procedures
-- Migration scripts for schema updates
-
-## Security considerations
-
-### Data protection
-- **Encryption:** TLS 1.3 for data in transit
-- **File encryption:** Optional client-side encryption
-- **Database encryption:** Encrypted columns for sensitive data
-- **Token security:** JWT with proper expiration and refresh
-
-### Authentication and authorization
-- **Multi-factor authentication:** TOTP support
-- **OAuth 2.0:** Google, Microsoft integration
-- **API keys:** For programmatic access
-- **Role-based access:** User permissions and admin controls
-
-### Privacy compliance
-- **Data minimization:** Only collect necessary data
-- **Right to deletion:** Complete data removal capabilities
-- **Data portability:** Export in standard formats
-- **Consent management:** Clear privacy controls for users
-
-## Development workflow
-
-### Code organization
-```
-papyrus/
-├── client/                 # Flutter application
-│   ├── lib/
-│   │   ├── core/          # Core utilities and constants
-│   │   ├── data/          # Data layer (repositories, APIs)
-│   │   ├── domain/        # Business logic and entities
-│   │   ├── presentation/  # UI components and screens
-│   │   └── main.dart
-│   ├── test/              # Unit and widget tests
-│   └── integration_test/  # Integration tests
-├── server/                # Backend API server
-│   ├── app/              # Application code
-│   ├── tests/            # Backend tests
-│   ├── migrations/       # Database migrations
-│   └── docker/           # Container configurations
-└── docs/                 # Documentation
+  # Authentication
+  firebase_auth: ^4.0.0     # Firebase auth
+  google_sign_in: ^6.1.0    # Google OAuth
 ```
 
-### Build and deployment pipeline
-1. **Development:** Local development with hot reload
-2. **Testing:** Automated unit and integration tests
-3. **Code review:** Pull request workflow with CI checks
-4. **Staging:** Automated deployment to staging environment
-5. **Production:** Manual promotion with rollback capabilities
+### Architecture: Clean Architecture
 
-### API versioning strategy
-- Semantic versioning for API releases
-- Backward compatibility maintenance
-- Deprecation notices for breaking changes
-- Client SDK generation from OpenAPI specs
+```
+lib/
+├── main.dart                    # App entry point
+├── config/
+│   ├── app_router.dart          # Route configuration
+│   ├── themes.dart              # Theme definitions
+│   └── constants.dart           # App constants
+├── core/
+│   ├── errors/                  # Error handling
+│   ├── network/                 # API client
+│   └── utils/                   # Utilities
+├── data/
+│   ├── datasources/             # Remote & local data
+│   ├── models/                  # Data models (DTOs)
+│   └── repositories/            # Repository implementations
+├── domain/
+│   ├── entities/                # Business entities
+│   ├── repositories/            # Repository interfaces
+│   └── usecases/                # Business logic
+├── presentation/
+│   ├── pages/                   # Screen widgets
+│   ├── widgets/                 # Reusable components
+│   ├── providers/               # State management
+│   └── forms/                   # Form widgets
+└── services/
+    ├── storage/                 # Storage backends
+    ├── sync/                    # Synchronization
+    └── reader/                  # E-book rendering
+```
 
-## Performance considerations
+### Offline-First Architecture
 
-### Client-side optimization
-- **Lazy loading:** Progressive content loading
-- **Image optimization:** Adaptive image sizes and caching
-- **Offline support:** Local data storage and sync
-- **Memory management:** Efficient resource usage
+Papyrus uses an offline-first approach where all data is stored locally first, then synchronized with the server when online.
 
-### Server-side optimization
-- **Database indexing:** Optimized queries for common operations
-- **Caching strategy:** Multi-level caching for frequently accessed data
-- **File processing:** Background jobs for CPU-intensive tasks
-- **API rate limiting:** Protection against abuse
+```mermaid
+flowchart TB
+    subgraph FlutterApp["Flutter App"]
+        subgraph Presentation["Presentation Layer"]
+            UI["UI Layer<br/>(Widgets)"]
+        end
 
-### Scalability planning
-- **Horizontal scaling:** Stateless server design
-- **Database scaling:** Read replicas and connection pooling
-- **CDN integration:** Static asset delivery optimization
-- **Monitoring:** Application performance monitoring and alerting
+        subgraph Domain["Domain Layer"]
+            UseCases["UseCases"]
+        end
 
-This technology stack provides a solid foundation for building a comprehensive, self-hostable book management system that prioritizes user data ownership while maintaining modern development practices and deployment flexibility.
+        subgraph Data["Data Layer"]
+            Repository["Repository"]
+        end
+
+        UI --> UseCases --> Repository
+
+        subgraph Storage["Storage"]
+            Local["Local Storage<br/>(Hive/SQLite)"]
+            Remote["Remote API<br/>(Optional)"]
+            SyncQueue["Sync Queue<br/>(Pending Changes)"]
+        end
+
+        Repository --> Local
+        Repository --> Remote
+        Local --> SyncQueue
+        Remote --> SyncQueue
+    end
+```
+
+**Key Principles:**
+
+1. All reads go to local storage first
+2. Writes are saved locally immediately
+3. Background sync pushes changes to server
+4. Conflict resolution on sync
+5. Works fully without internet
+
+### E-ink Optimization
+
+For e-ink devices, the app implements specific optimizations:
+
+**E-ink Mode Features:**
+
+- High contrast black/white color scheme
+- Disabled or minimal animations
+- Larger touch targets (minimum 48px)
+- Reduced screen refresh operations
+- Hardware page-turn button support
+- Optimized font rendering for grayscale
+
+**Detection and Configuration:**
+
+- Automatic detection via device model (Boox, Kobo, etc.)
+- Manual toggle in settings
+- E-ink specific reading profile defaults
+- Reduced refresh rate for battery efficiency
+
+---
+
+## Backend: FastAPI
+
+### Why FastAPI?
+
+- **High performance** with async support
+- **Automatic API docs** via OpenAPI/Swagger
+- **Type safety** with Pydantic models
+- **Easy to deploy** with Docker
+- **Python ecosystem** for OCR, ML features
+
+### API Structure
+
+```
+server/
+├── app/
+│   ├── main.py              # FastAPI app
+│   ├── config.py            # Settings
+│   ├── database.py          # DB connection
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── auth.py      # Authentication
+│   │   │   ├── books.py     # Book endpoints
+│   │   │   ├── shelves.py   # Shelf endpoints
+│   │   │   ├── sync.py      # Sync endpoints
+│   │   │   └── ...
+│   │   └── deps.py          # Dependencies
+│   ├── models/              # SQLAlchemy models
+│   ├── schemas/             # Pydantic schemas
+│   ├── services/            # Business logic
+│   └── utils/               # Utilities
+├── tests/
+├── alembic/                 # Migrations
+├── Dockerfile
+└── requirements.txt
+```
+
+### API Endpoints (Summary)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/v1/auth/register | Register account |
+| POST | /api/v1/auth/login | Login |
+| POST | /api/v1/auth/google | Google OAuth |
+| GET | /api/v1/books | List books |
+| POST | /api/v1/books | Create book |
+| GET | /api/v1/books/{id} | Get book |
+| PUT | /api/v1/books/{id} | Update book |
+| DELETE | /api/v1/books/{id} | Delete book |
+| POST | /api/v1/books/{id}/upload | Upload file |
+| GET | /api/v1/shelves | List shelves |
+| POST | /api/v1/sync | Sync changes |
+| GET | /api/v1/sync/status | Sync status |
+
+Full API specification: [`/design/api/swagger.yaml`](../design/api/swagger.yaml)
+
+---
+
+## Database: PostgreSQL
+
+### Why PostgreSQL?
+
+- **JSONB support** for flexible metadata
+- **Full-text search** for book content
+- **Reliability** and ACID compliance
+- **Scalability** with read replicas
+- **Rich ecosystem** of tools
+
+### Configuration
+
+```yaml
+# docker-compose.yml
+services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: papyrus
+      POSTGRES_USER: papyrus
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+```
+
+---
+
+## Caching: Redis
+
+### Use Cases
+
+- **Session storage** - JWT token blacklist
+- **Rate limiting** - API request throttling
+- **Cache** - Frequently accessed data
+- **Pub/Sub** - Real-time sync notifications
+
+```yaml
+# docker-compose.yml
+services:
+  redis:
+    image: redis:6-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+```
+
+---
+
+## Storage Architecture
+
+Papyrus uses a **split storage architecture** separating metadata from files:
+
+- **Metadata Server**: Stores user data, book metadata, reading progress, annotations, sync state
+- **File Storage Backends**: Store actual book files (user's choice)
+
+This separation allows users to choose their preferred file storage while using a centralized (or self-hosted) metadata server for synchronization.
+
+See [Server Architecture](server-architecture.md) for complete details.
+
+### File Storage Backends
+
+| Backend | Use Case | Configuration |
+|---------|----------|--------------|
+| **Local** | Default, single device | Device file system |
+| **Google Drive** | Consumer cloud | OAuth 2.0 |
+| **OneDrive** | Microsoft ecosystem | OAuth 2.0 |
+| **Dropbox** | Cross-platform cloud | OAuth 2.0 |
+| **WebDAV** | NAS, Nextcloud | Username/Password |
+| **MinIO/S3** | Self-hosted S3-compatible | Access/Secret keys |
+| **Papyrus Server** | Unified self-hosting | Same as metadata server |
+
+### Storage Interface
+
+```dart
+abstract class StorageBackend {
+  Future<void> connect();
+  Future<void> disconnect();
+  Future<String> uploadFile(String localPath, String remotePath);
+  Future<String> downloadFile(String remotePath, String localPath);
+  Future<void> deleteFile(String remotePath);
+  Future<List<String>> listFiles(String path);
+  Future<bool> fileExists(String path);
+  Future<StorageInfo> getStorageInfo();
+}
+```
+
+---
+
+## Security
+
+### Authentication
+
+- **JWT tokens** for API authentication
+- **Refresh token rotation** for security
+- **OAuth 2.0** for Google sign-in
+- **bcrypt/Argon2** for password hashing
+
+### Encryption
+
+- **TLS 1.3** for all network traffic
+- **AES-256** for sensitive data at rest
+- **Key derivation** using PBKDF2
+
+### Privacy
+
+- **No default analytics** - opt-in telemetry only
+- **Data minimization** - collect only necessary data
+- **Right to deletion** - complete data removal
+- **Data export** - full user data portability
+
+---
+
+## Deployment
+
+### Docker Compose (Development/Small Scale)
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+services:
+  api:
+    build: ./server
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://papyrus:password@postgres/papyrus
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+### Kubernetes (Production)
+
+For production deployments with scaling requirements, Kubernetes manifests are provided with:
+
+- Horizontal pod autoscaling
+- Secrets management
+- Persistent volume claims
+- Ingress configuration
+- Health checks
+
+---
+
+## Development Environment
+
+### Prerequisites
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Flutter SDK | 3.x | Frontend development |
+| Dart | 3.x | Flutter language |
+| Python | 3.9+ | Backend development |
+| Docker | 20+ | Container runtime |
+| VS Code | Latest | Recommended IDE |
+
+### Setup Commands
+
+```bash
+# Clone repository
+git clone https://github.com/user/papyrus.git
+cd papyrus
+
+# Frontend setup
+cd client
+flutter pub get
+flutter run
+
+# Backend setup (in another terminal)
+cd server
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# Or with Docker
+docker-compose up -d
+```
+
+### Code Quality
+
+```bash
+# Frontend
+dart analyze
+dart format .
+flutter test
+
+# Backend
+flake8 app/
+black app/
+pytest tests/
+```
+
+---
+
+## Third-Party Services (Optional)
+
+| Service | Purpose | Required |
+|---------|---------|----------|
+| Firebase Auth | Authentication | Optional |
+| Google Books API | Metadata | Optional |
+| Open Library API | Metadata | Optional |
+| Sentry | Error tracking | Optional |
+| Plausible | Privacy-friendly analytics | Optional |
