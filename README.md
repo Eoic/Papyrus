@@ -180,7 +180,3 @@ Please ensure your code follows the existing style and includes appropriate test
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-**Project Maintainer:** [Karolis Strazdas](mailto:karolis.strazdas@pm.me)
