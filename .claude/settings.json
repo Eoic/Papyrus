@@ -2,6 +2,7 @@
   "enabledPlugins": {
     "feature-dev@claude-plugins-official": true,
     "agents-specialized-domains@buildwithclaude": true,
-    "documentation-generation@claude-code-workflows": true
+    "documentation-generation@claude-code-workflows": true,
+    "agents-design-experience@buildwithclaude": true
   }
 }
