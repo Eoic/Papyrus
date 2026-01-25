@@ -8,7 +8,7 @@
     <a href="https://eoic.github.io/Papyrus/"><img src="https://img.shields.io/badge/Documentation-blue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
     <a href="https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus"><img src="https://img.shields.io/badge/Trello-Board-blue?logo=trello&logoColor=white" alt="Trello Board"/></a>
     <a href="https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus"><img src="https://img.shields.io/badge/Figma-Prototype-orange?logo=figma&logoColor=white" alt="Figma Prototype"/></a>
-    <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
+    <img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"/>
   </p>
 </div>
 
@@ -179,7 +179,7 @@ Please ensure your code follows the existing style and includes appropriate test
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 

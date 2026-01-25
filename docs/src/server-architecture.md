@@ -16,7 +16,7 @@ flowchart TB
         Eink["E-ink"]
     end
 
-    subgraph Server["Papyrus Server (Self-Hostable)"]
+    subgraph Server["Papyrus Server"]
         subgraph Metadata["Metadata Storage (Always)"]
             M1["User accounts"]
             M2["Book metadata"]

@@ -1,28 +1,17 @@
-# MkDocs Configuration for Papyrus Documentation
-# https://www.mkdocs.org/
-
 site_name: Papyrus Documentation
 site_description: Cross-platform e-book management application
 site_author: Papyrus Team
 site_url: https://papyrus.example.com/docs/
-
-# Repository
 repo_name: Papyrus
 repo_url: https://github.com/Eoic/Papyrus
-edit_uri: edit/master/spec/
+edit_uri: edit/master/docs/src/
+docs_dir: docs/src
+site_dir: docs/site
 
-# Documentation source directory
-docs_dir: spec
-
-# Build output directory
-site_dir: site
-
-# Theme Configuration
 theme:
   name: material
   language: en
 
-  # Color palette with light/dark toggle
   palette:
     - scheme: default
       primary: deep purple
@@ -37,39 +26,33 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 
-  # Features
   features:
-    - navigation.instant        # Instant loading
-    - navigation.tracking       # URL updates with anchor
-    - navigation.tabs           # Top-level nav as tabs
-    - navigation.sections       # Render sections as groups
-    - navigation.expand         # Expand all sections by default
-    - navigation.top            # Back to top button
-    - search.suggest            # Search suggestions
-    - search.highlight          # Highlight search terms
-    - content.code.copy         # Copy button for code blocks
-    - content.tabs.link         # Link content tabs
-    - toc.follow                # TOC follows scroll
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
 
-  # Icons
   icon:
     repo: fontawesome/brands/github
 
-  # Custom fonts
   font:
     text: Inter
     code: JetBrains Mono
 
-# Plugins
 plugins:
   - search:
       separator: '[\s\-\.]+'
   - minify:
       minify_html: true
 
-# Markdown Extensions
 markdown_extensions:
-  # Python Markdown
   - abbr
   - admonition
   - attr_list
@@ -81,7 +64,6 @@ markdown_extensions:
       permalink: true
       toc_depth: 3
 
-  # PyMdown Extensions
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:
@@ -112,7 +94,6 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tilde
 
-# Page Navigation
 nav:
   - Home: README.md
 
@@ -138,22 +119,18 @@ nav:
   - Reference:
     - External Resources: external/index.md
 
-# Extra configuration
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Eoic/Papyrus
 
-  # Version provider (optional, for versioned docs)
-  # version:
-  #   provider: mike
+  version:
+    provider: mike
 
-# Extra CSS/JS
 extra_css:
   - stylesheets/extra.css
 
 extra_javascript:
   - javascripts/extra.js
 
-# Copyright
 copyright: Copyright &copy; 2026 Papyrus Project
