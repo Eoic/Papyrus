@@ -98,26 +98,26 @@ nav:
   - Home: README.md
 
   - Analysis:
-    - Market Analysis: market-analysis.md
+    - Market analysis: market-analysis.md
 
   - Requirements:
     - Overview: requirements/README.md
-    - Functional Requirements: requirements/functional-requirements.md
-    - Non-Functional Requirements: requirements/non-functional-requirements.md
+    - Functional requirements: requirements/functional-requirements.md
+    - Non-functional requirements: requirements/non-functional-requirements.md
 
-  - System Design:
+  - System design:
     - Actors: actors.md
-    - Use Cases: use-cases.md
+    - Use cases: use-cases.md
     - Entities: entities.md
-    - Database Model: database-model.md
-    - Server Architecture: server-architecture.md
+    - Database model: database-model.md
+    - Server architecture: server-architecture.md
 
   - Implementation:
     - Technologies: technologies.md
-    - User Interface: user-interface.md
+    - User interface: user-interface.md
 
   - Reference:
-    - External Resources: external/index.md
+    - External resources: external/index.md
 
 extra:
   social:

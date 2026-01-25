@@ -1,8 +1,8 @@
-# Server Architecture
+# Server architecture
 
 This document describes the server-side architecture for Papyrus, including the self-hostable Papyrus Server, file storage backends, and synchronization mechanisms that enable cross-device functionality.
 
-## Architecture Overview
+## Architecture overview
 
 Papyrus uses a **flexible storage architecture** with a central server for metadata and user-chosen file storage:
 
@@ -50,7 +50,7 @@ flowchart TB
     Server -.->|"OR (user's choice)"| AltStorage
 ```
 
-### Key Principles
+### Key principles
 
 1. **Unified Server**: The Papyrus Server handles metadata (always) and can also handle files (optionally)
 2. **User Choice**: Users select their preferred file storage—either the Papyrus Server or external providers
@@ -60,7 +60,7 @@ flowchart TB
 
 ---
 
-## Papyrus Server
+## Papyrus server
 
 The Papyrus Server is the central, self-hostable backend for cross-device synchronization. It always handles metadata storage and can optionally serve as the file storage backend.
 
@@ -70,25 +70,25 @@ The Papyrus Server is the central, self-hostable backend for cross-device synchr
 
 | Component | Description |
 |-----------|-------------|
-| **User Management** | Account registration, authentication, sessions |
-| **Book Metadata** | Title, author, ISBN, description, cover URLs |
-| **Library Organization** | Shelves, tags, series, custom fields |
-| **Reading Progress** | Current position, completion status, time tracking |
+| **User management** | Account registration, authentication, sessions |
+| **Book metadata** | Title, author, ISBN, description, cover URLs |
+| **Library organization** | Shelves, tags, series, custom fields |
+| **Reading progress** | Current position, completion status, time tracking |
 | **Annotations** | Highlights, notes, bookmarks |
 | **Goals** | Reading goals and progress tracking |
-| **Sync Coordination** | Change tracking, conflict resolution |
-| **File References** | Pointers to files in storage backends |
+| **Sync coordination** | Change tracking, conflict resolution |
+| **File references** | Pointers to files in storage backends |
 
-**File Storage (Optional—when server is chosen as file backend):**
+**File storage (only when server is chosen as file backend):**
 
 | Component | Description |
 |-----------|-------------|
-| **Book Files** | EPUB, PDF, MOBI, and other e-book formats |
-| **Cover Images** | Book cover artwork |
+| **Book files** | EPUB, PDF, MOBI, and other e-book formats |
+| **Cover images** | Book cover artwork |
 | **File API** | Upload, download, and delete operations |
-| **Storage Management** | Quota tracking, cleanup |
+| **Storage management** | Quota tracking, cleanup |
 
-### Data Model
+### Data model
 
 ```mermaid
 flowchart TB
@@ -120,7 +120,7 @@ flowchart TB
     FileRef -.->|"Points to storage"| Storage[("Storage Backend")]
 ```
 
-### API Endpoints
+### API endpoints
 
 The Papyrus Server exposes a RESTful API:
 
@@ -141,11 +141,11 @@ The Papyrus Server exposes a RESTful API:
 
 Full API specification: [`/design/api/swagger.yaml`](../design/api/swagger.yaml)
 
-### Self-Hosting
+### Self-hosting
 
 The Papyrus Server is designed for easy self-hosting:
 
-**Minimum Requirements:**
+**Minimum requirements:**
 
 - 1 CPU core
 - 512MB RAM
@@ -154,7 +154,7 @@ The Papyrus Server is designed for easy self-hosting:
 - PostgreSQL 14+ or SQLite
 - Docker (recommended) or Python 3.9+
 
-**Deployment Options:**
+**Deployment options:**
 
 ```yaml
 # docker-compose.yml (minimal)
@@ -210,7 +210,7 @@ volumes:
   redis_data:
 ```
 
-### Hosted Option
+### Hosted option
 
 For users who don't want to self-host, an official hosted service may be provided:
 
@@ -224,30 +224,30 @@ For users who don't want to self-host, an official hosted service may be provide
 
 ---
 
-## File Storage Backends
+## File storage backends
 
 Users configure file storage backends in the application settings. Multiple backends can be configured, with one designated as primary.
 
-### Supported Backends
+### Supported backends
 
-#### 1. Local Storage (Default)
+#### 1. Local storage (default)
 
 Files stored only on the device. No sync capability.
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Offline-only, single device |
+| **Use case** | Offline-only, single device |
 | **Sync** | None |
 | **Setup** | None required |
 | **Capacity** | Device storage |
 
-#### 2. Google Drive
+#### 2. Google drive
 
 Files stored in user's Google Drive account.
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Consumer users, existing Google users |
+| **Use case** | Consumer users, existing Google users |
 | **Sync** | Automatic via Google |
 | **Setup** | OAuth 2.0 authorization |
 | **Capacity** | User's Google storage quota |
@@ -266,7 +266,7 @@ Files stored in user's Microsoft OneDrive account.
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Microsoft ecosystem users |
+| **Use case** | Microsoft ecosystem users |
 | **Sync** | Automatic via OneDrive |
 | **Setup** | OAuth 2.0 authorization |
 | **Capacity** | User's OneDrive storage quota |
@@ -285,7 +285,7 @@ Files stored in user's Dropbox account.
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Dropbox users, cross-platform |
+| **Use case** | Dropbox users, cross-platform |
 | **Sync** | Automatic via Dropbox |
 | **Setup** | OAuth 2.0 authorization |
 | **Capacity** | User's Dropbox storage quota |
@@ -304,7 +304,7 @@ Files stored on any WebDAV-compatible server (Nextcloud, ownCloud, etc.).
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Self-hosters, NAS users |
+| **Use case** | Self-hosters, NAS users |
 | **Sync** | Via WebDAV server |
 | **Setup** | Server URL + credentials |
 | **Capacity** | Server storage |
@@ -319,13 +319,13 @@ Username: user
 Password: ********
 ```
 
-#### 6. MinIO / S3-Compatible
+#### 6. MinIO / s3-compatible
 
 Files stored in MinIO, AWS S3, or any S3-compatible storage.
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Self-hosters, enterprise, developers |
+| **Use case** | Self-hosters, enterprise, developers |
 | **Sync** | Via S3 API |
 | **Setup** | Endpoint + access keys |
 | **Capacity** | Bucket capacity |
@@ -341,13 +341,13 @@ Secret Key: ********
 Region: us-east-1 (optional)
 ```
 
-#### 7. Papyrus Server (Unified Storage)
+#### 7. Papyrus server (unified storage)
 
 Files stored on the same Papyrus Server that handles metadata—the simplest self-hosted setup.
 
 | Property | Value |
 |----------|-------|
-| **Use Case** | Full self-hosting, single server |
+| **Use case** | Full self-hosting, single server |
 | **Sync** | Via Papyrus API |
 | **Setup** | Included with Papyrus Server |
 | **Capacity** | Server storage |
@@ -360,7 +360,7 @@ Server URL: https://papyrus.example.com
 Auth: Same as Papyrus Server login
 ```
 
-### Backend Comparison
+### Backend comparison
 
 | Backend | Self-Hosted | Free Tier | Max File Size | Offline Access |
 |---------|-------------|-----------|---------------|----------------|
@@ -372,7 +372,7 @@ Auth: Same as Papyrus Server login
 | MinIO/S3 | Yes | N/A | 5TB per object | Selective |
 | Papyrus Server | Yes | N/A | Server limit | Selective |
 
-### Storage Configuration UI
+### Storage configuration UI
 
 Users configure storage backends in **Settings > Storage**:
 
@@ -402,9 +402,9 @@ flowchart TB
 
 ---
 
-## Synchronization Architecture
+## Synchronization architecture
 
-### Sync Flow
+### Sync flow
 
 ```mermaid
 sequenceDiagram
@@ -426,9 +426,9 @@ sequenceDiagram
     LB->>FS: 5. Sync Files (if needed)
 ```
 
-### Sync Components
+### Sync components
 
-#### 1. Change Tracking
+#### 1. Change tracking
 
 Every syncable entity includes:
 
@@ -443,7 +443,7 @@ Every syncable entity includes:
 }
 ```
 
-#### 2. Sync Queue
+#### 2. Sync queue
 
 Local changes are queued for sync:
 
@@ -462,7 +462,7 @@ Local changes are queued for sync:
 }
 ```
 
-#### 3. Conflict Resolution
+#### 3. Conflict resolution
 
 When concurrent edits occur:
 
@@ -474,7 +474,7 @@ When concurrent edits occur:
 | Shelf membership | Union of all changes |
 | Deletions | Delete wins (with grace period) |
 
-**Conflict Example:**
+**Conflict example:**
 
 ```
 Device A: Sets book title to "Title A" at T1
@@ -482,7 +482,7 @@ Device B: Sets book author to "Author B" at T2
 Resolution: Title = "Title A", Author = "Author B" (merged)
 ```
 
-#### 4. File Sync
+#### 4. File sync
 
 Book files sync separately from metadata:
 
@@ -501,7 +501,7 @@ sequenceDiagram
     C->>C: Cache locally for offline access
 ```
 
-### Sync Settings
+### Sync settings
 
 Users configure sync behavior in Settings > Sync:
 
@@ -517,9 +517,9 @@ Users configure sync behavior in Settings > Sync:
 
 ---
 
-## Offline Capabilities
+## Offline capabilities
 
-### Offline-First Design
+### Offline-first design
 
 Papyrus works fully offline with eventual sync:
 
@@ -533,7 +533,7 @@ Papyrus works fully offline with eventual sync:
 | **Book import** | Import to local storage |
 | **Goals** | Progress tracked offline |
 
-### Offline Storage
+### Offline storage
 
 Local device storage structure:
 
@@ -556,7 +556,7 @@ Local device storage structure:
     └── storage.json         # Backend configuration
 ```
 
-### Download Management
+### Download management
 
 Users control which books are available offline in **Settings > Offline Books**:
 
@@ -589,21 +589,21 @@ Users control which books are available offline in **Settings > Offline Books**:
 
 ### Authentication
 
-| Method | Use Case |
+| Method | Use case |
 |--------|----------|
-| **JWT Tokens** | API authentication |
-| **Refresh Tokens** | Long-lived sessions with rotation |
+| **JWT tokens** | API authentication |
+| **Refresh tokens** | Long-lived sessions with rotation |
 | **OAuth 2.0** | Google sign-in, storage backends |
-| **API Keys** | Third-party integrations (optional) |
+| **API keys** | Third-party integrations (optional) |
 
-### Data Protection
+### Data protection
 
 | Layer | Protection |
 |-------|------------|
-| **In Transit** | TLS 1.3 for all connections |
-| **At Rest (Server)** | Database encryption (optional) |
-| **At Rest (Client)** | Platform keychain for credentials |
-| **Storage Backends** | Provider's encryption (Google, etc.) |
+| **In transit** | TLS 1.3 for all connections |
+| **At rest (server)** | Database encryption (optional) |
+| **At rest (client)** | Platform keychain for credentials |
+| **Storage backends** | Provider's encryption (Google, etc.) |
 
 ### Privacy
 
@@ -615,9 +615,9 @@ Users control which books are available offline in **Settings > Offline Books**:
 
 ---
 
-## Deployment Scenarios
+## Deployment scenarios
 
-### Scenario 1: Cloud-First User
+### Scenario 1: cloud-first user
 
 Uses hosted Papyrus Server + Google Drive for files.
 
@@ -628,7 +628,7 @@ Client ──▶ Hosted Papyrus Server (papyrus.app)
 
 **Setup:** Sign up, connect Google Drive, done.
 
-### Scenario 2: Privacy-Conscious Self-Hoster
+### Scenario 2: privacy-conscious self-hoster
 
 Self-hosts everything on home server.
 
@@ -639,7 +639,7 @@ Client ──▶ Self-Hosted Papyrus Server (home.local)
 
 **Setup:** Deploy Docker stack, configure DNS/VPN.
 
-### Scenario 3: Hybrid User
+### Scenario 3: hybrid user
 
 Self-hosted metadata, Dropbox for files (for mobile access).
 
@@ -650,7 +650,7 @@ Client ──▶ Self-Hosted Papyrus Server (VPS)
 
 **Setup:** Deploy server on VPS, connect Dropbox.
 
-### Scenario 4: Offline-Only User
+### Scenario 4: offline-only user
 
 No server, local storage only.
 
@@ -662,7 +662,7 @@ Client ──▶ Local Storage Only
 
 ---
 
-## Related Documents
+## Related documents
 
 - [Technologies](technologies.md) - Technology stack details
 - [Database Model](database-model.md) - Data schema

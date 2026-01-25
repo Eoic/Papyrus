@@ -40,7 +40,7 @@ class ProjectDocumentGenerator:
 
 **User Story:** As a [USER TYPE], I want {feature}, so that [BENEFIT]
 
-#### Acceptance Criteria
+#### Acceptance criteria
 
 1. WHEN [trigger/condition], THE system SHALL [behavior]
 2. WHERE [context applies], THE system SHALL [behavior]

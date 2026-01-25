@@ -2,7 +2,7 @@
 
 This section describes the technology stack, architecture decisions, and deployment options for Papyrus.
 
-## Technology Stack Overview
+## Technology stack overview
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -25,7 +25,7 @@ This section describes the technology stack, architecture decisions, and deploym
 - **Strong typing** with Dart language
 - **Active community** and extensive packages
 
-### Target Platforms
+### Target platforms
 
 | Platform | SDK | Build Target |
 |----------|-----|-------------|
@@ -37,7 +37,7 @@ This section describes the technology stack, architecture decisions, and deploym
 | Linux | Flutter SDK + GTK | AppImage/Snap |
 | E-ink | Android APK | Optimized build |
 
-### Key Packages
+### Key packages
 
 ```yaml
 dependencies:
@@ -68,7 +68,7 @@ dependencies:
   google_sign_in: ^6.1.0    # Google OAuth
 ```
 
-### Architecture: Clean Architecture
+### Architecture: clean architecture
 
 ```
 lib/
@@ -100,7 +100,7 @@ lib/
     └── reader/                  # E-book rendering
 ```
 
-### Offline-First Architecture
+### Offline-first architecture
 
 Papyrus uses an offline-first approach where all data is stored locally first, then synchronized with the server when online.
 
@@ -134,7 +134,7 @@ flowchart TB
     end
 ```
 
-**Key Principles:**
+**Key principles:**
 
 1. All reads go to local storage first
 2. Writes are saved locally immediately
@@ -142,11 +142,11 @@ flowchart TB
 4. Conflict resolution on sync
 5. Works fully without internet
 
-### E-ink Optimization
+### E-ink optimization
 
 For e-ink devices, the app implements specific optimizations:
 
-**E-ink Mode Features:**
+**E-ink mode features:**
 
 - High contrast black/white color scheme
 - Disabled or minimal animations
@@ -155,7 +155,7 @@ For e-ink devices, the app implements specific optimizations:
 - Hardware page-turn button support
 - Optimized font rendering for grayscale
 
-**Detection and Configuration:**
+**Detection and configuration:**
 
 - Automatic detection via device model (Boox, Kobo, etc.)
 - Manual toggle in settings
@@ -174,7 +174,7 @@ For e-ink devices, the app implements specific optimizations:
 - **Easy to deploy** with Docker
 - **Python ecosystem** for OCR, ML features
 
-### API Structure
+### API structure
 
 ```
 server/
@@ -200,7 +200,7 @@ server/
 └── requirements.txt
 ```
 
-### API Endpoints (Summary)
+### API endpoints (summary)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -252,7 +252,7 @@ services:
 
 ## Caching: Redis
 
-### Use Cases
+### Use cases
 
 - **Session storage** - JWT token blacklist
 - **Rate limiting** - API request throttling
@@ -273,20 +273,20 @@ services:
 
 ---
 
-## Storage Architecture
+## Storage architecture
 
 Papyrus uses a **split storage architecture** separating metadata from files:
 
-- **Metadata Server**: Stores user data, book metadata, reading progress, annotations, sync state
+- **Metadata server**: Stores user data, book metadata, reading progress, annotations, sync state
 - **File Storage Backends**: Store actual book files (user's choice)
 
 This separation allows users to choose their preferred file storage while using a centralized (or self-hosted) metadata server for synchronization.
 
 See [Server Architecture](server-architecture.md) for complete details.
 
-### File Storage Backends
+### File storage backends
 
-| Backend | Use Case | Configuration |
+| Backend | Use case | Configuration |
 |---------|----------|--------------|
 | **Local** | Default, single device | Device file system |
 | **Google Drive** | Consumer cloud | OAuth 2.0 |
@@ -296,7 +296,7 @@ See [Server Architecture](server-architecture.md) for complete details.
 | **MinIO/S3** | Self-hosted S3-compatible | Access/Secret keys |
 | **Papyrus Server** | Unified self-hosting | Same as metadata server |
 
-### Storage Interface
+### Storage interface
 
 ```dart
 abstract class StorageBackend {
@@ -339,7 +339,7 @@ abstract class StorageBackend {
 
 ## Deployment
 
-### Docker Compose (Development/Small Scale)
+### Docker Compose (development/small scale)
 
 ```yaml
 # docker-compose.yml
@@ -371,7 +371,7 @@ volumes:
   redis_data:
 ```
 
-### Kubernetes (Production)
+### Kubernetes (production)
 
 For production deployments with scaling requirements, Kubernetes manifests are provided with:
 
@@ -383,7 +383,7 @@ For production deployments with scaling requirements, Kubernetes manifests are p
 
 ---
 
-## Development Environment
+## Development environment
 
 ### Prerequisites
 
@@ -395,7 +395,7 @@ For production deployments with scaling requirements, Kubernetes manifests are p
 | Docker | 20+ | Container runtime |
 | VS Code | Latest | Recommended IDE |
 
-### Setup Commands
+### Setup commands
 
 ```bash
 # Clone repository
@@ -418,7 +418,7 @@ uvicorn app.main:app --reload
 docker-compose up -d
 ```
 
-### Code Quality
+### Code quality
 
 ```bash
 # Frontend
@@ -434,7 +434,7 @@ pytest tests/
 
 ---
 
-## Third-Party Services (Optional)
+## Third-party services (optional)
 
 | Service | Purpose | Required |
 |---------|---------|----------|

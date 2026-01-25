@@ -1,15 +1,15 @@
-# Requirements Overview
+# Requirements overview
 
 This section provides an overview of the requirements specification for Papyrus, including the structure, notation, and traceability between requirements, use cases, and entities.
 
-## Document Structure
+## Document structure
 
 | Document | Purpose |
 |----------|---------|
 | [Functional Requirements](functional-requirements.md) | What the system does |
 | [Non-Functional Requirements](non-functional-requirements.md) | How the system performs |
 
-## Requirement Notation
+## Requirement notation
 
 ### Identifiers
 
@@ -17,9 +17,9 @@ This section provides an overview of the requirements specification for Papyrus,
 |---------|---------|---------|
 | **FR-X.Y** | Functional Requirement | FR-2.1 (Format Conversion) |
 | **NFR-X.Y** | Non-Functional Requirement | NFR-4.1 (Startup Time) |
-| **UC-X.Y** | Use Case | UC-2.1 (Import Books) |
+| **UC-X.Y** | Use case | UC-2.1 (Import Books) |
 
-### Priority Levels
+### Priority levels
 
 | Priority | Label | MVP Target | Description |
 |----------|-------|-----------|-------------|
@@ -30,9 +30,9 @@ This section provides an overview of the requirements specification for Papyrus,
 
 ---
 
-## Requirement Categories
+## Requirement categories
 
-### Functional Requirements (FR)
+### Functional requirements (FR)
 
 | Category | ID Range | Count | Description |
 |----------|----------|-------|-------------|
@@ -45,7 +45,7 @@ This section provides an overview of the requirements specification for Papyrus,
 | Storage & Sync | FR-7.x | 6 | Metadata server, file storage backends, OPDS |
 | **Total** | | **42** | |
 
-### Non-Functional Requirements (NFR)
+### Non-functional requirements (NFR)
 
 | Category | ID Range | Count | Description |
 |----------|----------|-------|-------------|
@@ -62,9 +62,9 @@ This section provides an overview of the requirements specification for Papyrus,
 
 ---
 
-## MVP Scope Summary
+## MVP scope summary
 
-### P0 Requirements (Must Have)
+### P0 requirements (must have)
 
 | Category | Requirements |
 |----------|-------------|
@@ -83,7 +83,7 @@ This section provides an overview of the requirements specification for Papyrus,
 
 **Total P0**: 18 FR + 17 NFR = **35 requirements**
 
-### P1 Requirements (Should Have)
+### P1 requirements (should have)
 
 | Category | Requirements |
 |----------|-------------|
@@ -105,11 +105,11 @@ This section provides an overview of the requirements specification for Papyrus,
 
 ---
 
-## Traceability Matrix
+## Traceability matrix
 
-### Requirements to Use Cases
+### Requirements to use cases
 
-| FR | Use Case | Description |
+| FR | Use case | Description |
 |----|----------|-------------|
 | FR-1.1 | UC-1.1 | Account registration |
 | FR-1.2 | UC-1.2 | Login with credentials |
@@ -145,7 +145,7 @@ This section provides an overview of the requirements specification for Papyrus,
 | FR-7.3 | UC-7.2 | OCR processing |
 | FR-7.5 | UC-7.4 | OPDS browsing |
 
-### Requirements to Entities
+### Requirements to entities
 
 | FR | Primary Entities |
 |----|------------------|
@@ -159,35 +159,35 @@ This section provides an overview of the requirements specification for Papyrus,
 
 ---
 
-## Core Principles
+## Core principles
 
 The requirements reflect these core principles:
 
-### 1. User Data Ownership
+### 1. User data ownership
 
 - All data exportable in open formats
 - No vendor lock-in
 - Self-hosting option available
 
-### 2. Cross-Platform Accessibility
+### 2. Cross-platform accessibility
 
 - Consistent experience across all devices
 - E-ink devices as first-class citizens
 - Progressive Web App support
 
-### 3. Offline Functionality
+### 3. Offline functionality
 
 - Full feature parity offline
 - Sync when connected
 - No account required for basic use
 
-### 4. Privacy First
+### 4. Privacy first
 
 - No default analytics
 - Opt-in telemetry only
 - Local-first architecture
 
-### 5. Developer Friendly
+### 5. Developer friendly
 
 - Open source
 - Public REST API
@@ -195,7 +195,7 @@ The requirements reflect these core principles:
 
 ---
 
-## Related Documents
+## Related documents
 
 - [Functional Requirements](functional-requirements.md)
 - [Non-Functional Requirements](non-functional-requirements.md)

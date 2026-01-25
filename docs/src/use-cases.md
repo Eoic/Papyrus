@@ -1,8 +1,8 @@
-# Use Cases
+# Use cases
 
 This section presents the main use cases derived from the functional requirements. Each use case includes actors, requirements traceability, detailed flows, and alternative scenarios.
 
-## Use Case Notation
+## Use case notation
 
 | Element | Description |
 |---------|-------------|
@@ -11,15 +11,15 @@ This section presents the main use cases derived from the functional requirement
 | **Priority** | P0-P3 (matches requirement priority) |
 | **Requirements** | Links to FR and NFR |
 | **Preconditions** | State required before use case |
-| **Main Flow** | Primary success scenario |
-| **Alternative Flows** | Variations and edge cases |
+| **Main flow** | Primary success scenario |
+| **Alternative flows** | Variations and edge cases |
 | **Postconditions** | State after successful completion |
 
 ---
 
-## 1. User Management Use Cases
+## 1. User management use cases
 
-### UC-1.1: Create User Account
+### UC-1.1: Create user account
 
 **Actors:** Anonymous User → Registered User
 **Priority:** P0
@@ -32,7 +32,7 @@ This section presents the main use cases derived from the functional requirement
 - User is not logged in
 - User has valid email address
 
-**Main Flow:**
+**Main flow:**
 
 1. User navigates to registration screen
 2. User enters email address and password
@@ -44,7 +44,7 @@ This section presents the main use cases derived from the functional requirement
 8. System activates account
 9. User is redirected to login screen
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Email already registered*
 
@@ -71,7 +71,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-1.2: Login with Credentials
+### UC-1.2: Login with credentials
 
 **Actors:** Registered User
 **Priority:** P0
@@ -84,7 +84,7 @@ This section presents the main use cases derived from the functional requirement
 - User has registered account
 - Account is verified and active
 
-**Main Flow:**
+**Main flow:**
 
 1. User navigates to login screen
 2. User enters email and password
@@ -92,7 +92,7 @@ This section presents the main use cases derived from the functional requirement
 4. System creates session token
 5. User is redirected to library
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Invalid credentials*
 
@@ -120,7 +120,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-1.3: Login with Google Account
+### UC-1.3: Login with Google account
 
 **Actors:** Registered User
 **Priority:** P1
@@ -133,7 +133,7 @@ This section presents the main use cases derived from the functional requirement
 - User has Google account
 - Device has internet connection
 
-**Main Flow:**
+**Main flow:**
 
 1. User selects "Sign in with Google"
 2. System redirects to Google OAuth
@@ -144,7 +144,7 @@ This section presents the main use cases derived from the functional requirement
 7. System creates session token
 8. User is redirected to library
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: User denies authorization*
 
@@ -165,7 +165,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-1.4: Use Application Offline
+### UC-1.4: Use application offline
 
 **Actors:** Anonymous User, Registered User
 **Priority:** P0
@@ -178,7 +178,7 @@ This section presents the main use cases derived from the functional requirement
 - Application is installed on device
 - For registered users: at least one previous online session
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens application without internet
 2. System detects offline state
@@ -188,7 +188,7 @@ This section presents the main use cases derived from the functional requirement
 6. Changes are stored locally
 7. Offline indicator is displayed
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: First launch (Anonymous)*
 
@@ -213,7 +213,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-1.5: Recover Password
+### UC-1.5: Recover password
 
 **Actors:** Registered User
 **Priority:** P1
@@ -226,7 +226,7 @@ This section presents the main use cases derived from the functional requirement
 - User has registered account
 - User has access to registered email
 
-**Main Flow:**
+**Main flow:**
 
 1. User clicks "Forgot password"
 2. User enters registered email
@@ -238,7 +238,7 @@ This section presents the main use cases derived from the functional requirement
 8. All existing sessions are invalidated
 9. User is redirected to login
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Email not found*
 
@@ -258,7 +258,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-1.6: Delete Account
+### UC-1.6: Delete account
 
 **Actors:** Registered User
 **Priority:** P1
@@ -271,7 +271,7 @@ This section presents the main use cases derived from the functional requirement
 - User is logged in
 - User understands consequences
 
-**Main Flow:**
+**Main flow:**
 
 1. User navigates to account settings
 2. User selects "Delete account"
@@ -281,7 +281,7 @@ This section presents the main use cases derived from the functional requirement
 6. System logs user out
 7. Account and data deleted within 30 days
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Export data first*
 
@@ -301,9 +301,9 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-## 2. Book Management Use Cases
+## 2. Book management use cases
 
-### UC-2.1: Import Book Files
+### UC-2.1: Import book files
 
 **Actors:** Reader
 **Priority:** P0
@@ -315,7 +315,7 @@ This section presents the main use cases derived from the functional requirement
 
 - User has book files in supported format
 
-**Main Flow:**
+**Main flow:**
 
 1. User selects "Add books"
 2. User chooses import source (device, cloud, URL)
@@ -326,7 +326,7 @@ This section presents the main use cases derived from the functional requirement
 7. Books are added to library
 8. User receives confirmation
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Unsupported format*
 
@@ -356,7 +356,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.2: Convert Book Formats
+### UC-2.2: Convert book formats
 
 **Actors:** Reader
 **Priority:** P2
@@ -369,7 +369,7 @@ This section presents the main use cases derived from the functional requirement
 - Book exists in library
 - Source format supports conversion
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens book details
 2. User selects "Convert format"
@@ -379,7 +379,7 @@ This section presents the main use cases derived from the functional requirement
 6. Converted file is added to library
 7. Original file is preserved
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Conversion fails*
 
@@ -399,7 +399,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.3: Edit Book Metadata
+### UC-2.3: Edit book metadata
 
 **Actors:** Reader
 **Priority:** P0
@@ -411,7 +411,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Book exists in library
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens book details
 2. User selects "Edit"
@@ -419,7 +419,7 @@ This section presents the main use cases derived from the functional requirement
 4. User saves changes
 5. System validates and stores changes
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Fetch metadata online*
 
@@ -440,7 +440,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.4: Organize Books into Shelves
+### UC-2.4: Organize books into shelves
 
 **Actors:** Reader
 **Priority:** P0
@@ -452,14 +452,14 @@ This section presents the main use cases derived from the functional requirement
 
 - User has books in library
 
-**Main Flow:**
+**Main flow:**
 
 1. User navigates to Shelves
 2. User creates new shelf (name, description, color)
 3. User adds books to shelf
 4. Shelf is saved
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Add from library view*
 
@@ -483,7 +483,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.5: Tag Books
+### UC-2.5: Tag books
 
 **Actors:** Reader
 **Priority:** P0
@@ -495,14 +495,14 @@ This section presents the main use cases derived from the functional requirement
 
 - User has books in library
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens book details or context menu
 2. User selects "Tags"
 3. User creates or selects tags
 4. Tags are applied to book
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Create new tag*
 
@@ -522,7 +522,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.6: Search Books
+### UC-2.6: Search books
 
 **Actors:** Reader
 **Priority:** P0
@@ -534,7 +534,7 @@ This section presents the main use cases derived from the functional requirement
 
 - User has books in library
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens search
 2. User enters query
@@ -542,7 +542,7 @@ This section presents the main use cases derived from the functional requirement
 4. Results are displayed
 5. User can filter/sort results
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Full-text search*
 
@@ -570,7 +570,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.7: Export Books and Data
+### UC-2.7: Export books and data
 
 **Actors:** Reader
 **Priority:** P0/P1
@@ -582,7 +582,7 @@ This section presents the main use cases derived from the functional requirement
 
 - User has books in library
 
-**Main Flow:**
+**Main flow:**
 
 1. User navigates to Export
 2. User selects what to export (books, metadata, annotations)
@@ -590,7 +590,7 @@ This section presents the main use cases derived from the functional requirement
 4. System creates export file
 5. User downloads export
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Selective export*
 
@@ -609,7 +609,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.8: Scan ISBN Barcode
+### UC-2.8: Scan ISBN barcode
 
 **Actors:** Reader
 **Priority:** P2
@@ -622,7 +622,7 @@ This section presents the main use cases derived from the functional requirement
 - Device has camera
 - Physical book has ISBN barcode
 
-**Main Flow:**
+**Main flow:**
 
 1. User selects "Scan ISBN"
 2. Camera opens
@@ -632,7 +632,7 @@ This section presents the main use cases derived from the functional requirement
 6. User reviews and confirms
 7. Book is added as physical
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Manual ISBN entry*
 
@@ -650,7 +650,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-2.9: Track Physical Book
+### UC-2.9: Track physical book
 
 **Actors:** Reader
 **Priority:** P1
@@ -662,7 +662,7 @@ This section presents the main use cases derived from the functional requirement
 
 - None
 
-**Main Flow:**
+**Main flow:**
 
 1. User selects "Add physical book"
 2. User enters book details
@@ -670,7 +670,7 @@ This section presents the main use cases derived from the functional requirement
 4. User can add location (e.g., "Shelf 3")
 5. Book is added to library
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Mark as lent*
 
@@ -684,9 +684,9 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-## 3. Reading and Viewer Use Cases
+## 3. Reading and viewer use cases
 
-### UC-3.1: Read Books with Integrated Viewer
+### UC-3.1: Read books with integrated viewer
 
 **Actors:** Reader, E-ink Reader
 **Priority:** P0
@@ -699,7 +699,7 @@ This section presents the main use cases derived from the functional requirement
 - Book exists in library
 - Book format is supported
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens book from library
 2. System loads book in viewer
@@ -707,7 +707,7 @@ This section presents the main use cases derived from the functional requirement
 4. User reads and navigates
 5. System saves progress automatically
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Navigate via TOC*
 
@@ -731,7 +731,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-3.2: Customize Reading Experience
+### UC-3.2: Customize reading experience
 
 **Actors:** Reader, E-ink Reader
 **Priority:** P0
@@ -743,7 +743,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Book is open in viewer
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens reader settings
 2. User adjusts typography (font, size, spacing)
@@ -752,7 +752,7 @@ This section presents the main use cases derived from the functional requirement
 5. Changes apply immediately
 6. Settings are saved
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Quick theme switch*
 
@@ -770,7 +770,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-3.3: Manage Reading Profiles
+### UC-3.3: Manage reading profiles
 
 **Actors:** Reader, E-ink Reader
 **Priority:** P1
@@ -782,7 +782,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Reader settings have been customized
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens profile management
 2. User creates new profile
@@ -790,7 +790,7 @@ This section presents the main use cases derived from the functional requirement
 4. Current settings saved to profile
 5. User can switch between profiles
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Set default profile*
 
@@ -808,7 +808,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-3.4: Manage Bookmarks
+### UC-3.4: Manage bookmarks
 
 **Actors:** Reader
 **Priority:** P0
@@ -820,14 +820,14 @@ This section presents the main use cases derived from the functional requirement
 
 - Book is open in viewer
 
-**Main Flow:**
+**Main flow:**
 
 1. User taps bookmark button
 2. Bookmark created at current position
 3. User can add note (optional)
 4. Bookmark saved
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: View all bookmarks*
 
@@ -846,9 +846,9 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-## 4. Annotations and Notes Use Cases
+## 4. Annotations and notes use cases
 
-### UC-4.1: Create Text Annotations
+### UC-4.1: Create text annotations
 
 **Actors:** Reader
 **Priority:** P0
@@ -860,7 +860,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Book is open in viewer
 
-**Main Flow:**
+**Main flow:**
 
 1. User selects text
 2. Context menu appears
@@ -868,7 +868,7 @@ This section presents the main use cases derived from the functional requirement
 4. User adds note (optional)
 5. Annotation saved
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Quick highlight*
 
@@ -882,7 +882,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-4.2: Create Book Notes
+### UC-4.2: Create book notes
 
 **Actors:** Reader
 **Priority:** P0
@@ -894,14 +894,14 @@ This section presents the main use cases derived from the functional requirement
 
 - Book exists in library
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens book notes
 2. User creates new note
 3. User enters title and content
 4. Note saved
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Rich text editing*
 
@@ -914,7 +914,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-4.3: Manage Annotations
+### UC-4.3: Manage annotations
 
 **Actors:** Reader
 **Priority:** P0
@@ -926,7 +926,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Annotations exist for book
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens annotation panel
 2. User selects annotation
@@ -939,7 +939,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-4.4: Export Annotations
+### UC-4.4: Export annotations
 
 **Actors:** Reader
 **Priority:** P1
@@ -951,7 +951,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Book has annotations
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens export options
 2. User selects format (Markdown, PDF, TXT)
@@ -965,7 +965,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-4.5: Search Annotations
+### UC-4.5: Search annotations
 
 **Actors:** Reader
 **Priority:** P1
@@ -977,7 +977,7 @@ This section presents the main use cases derived from the functional requirement
 
 - User has annotations
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens annotation search
 2. User enters search query
@@ -990,9 +990,9 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-## 5. Progress Tracking Use Cases
+## 5. Progress tracking use cases
 
-### UC-5.1: Track Reading Progress
+### UC-5.1: Track reading progress
 
 **Actors:** Reader
 **Priority:** P0
@@ -1004,7 +1004,7 @@ This section presents the main use cases derived from the functional requirement
 
 - User reads books in viewer
 
-**Main Flow:**
+**Main flow:**
 
 1. System monitors reading sessions
 2. System records time and pages
@@ -1018,7 +1018,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-5.2: Filter Progress Statistics
+### UC-5.2: Filter progress statistics
 
 **Actors:** Reader
 **Priority:** P1
@@ -1030,7 +1030,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Reading data exists
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens statistics
 2. User selects time range
@@ -1043,9 +1043,9 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-## 6. Goal Management Use Cases
+## 6. Goal management use cases
 
-### UC-6.1: Create Reading Goals
+### UC-6.1: Create reading goals
 
 **Actors:** Reader
 **Priority:** P1
@@ -1057,7 +1057,7 @@ This section presents the main use cases derived from the functional requirement
 
 - User wants to track goals
 
-**Main Flow:**
+**Main flow:**
 
 1. User opens Goals
 2. User creates new goal
@@ -1072,7 +1072,7 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-### UC-6.2: Manage Goal Progress
+### UC-6.2: Manage goal progress
 
 **Actors:** Reader
 **Priority:** P1
@@ -1084,7 +1084,7 @@ This section presents the main use cases derived from the functional requirement
 
 - Active goal exists
 
-**Main Flow:**
+**Main flow:**
 
 1. System updates progress automatically
 2. User can manually adjust if needed
@@ -1097,9 +1097,9 @@ This section presents the main use cases derived from the functional requirement
 
 ---
 
-## 7. Storage and Synchronization Use Cases
+## 7. Storage and synchronization use cases
 
-### UC-7.1: Configure Storage Options
+### UC-7.1: Configure storage options
 
 **Actors:** Registered User, System Administrator
 **Priority:** P0
@@ -1112,7 +1112,7 @@ This section presents the main use cases derived from the functional requirement
 - Application is installed
 - Internet connection available (for server configuration)
 
-**Main Flow (Metadata Server):**
+**Main flow (Metadata server):**
 
 1. User opens Settings > Sync & Storage
 2. User selects metadata server option:
@@ -1122,7 +1122,7 @@ This section presents the main use cases derived from the functional requirement
 4. System validates connection
 5. Sync capabilities are enabled
 
-**Main Flow (File Storage Backend):**
+**Main flow (File Storage Backend):**
 
 1. User opens Settings > Storage > File Storage
 2. User clicks "Add Storage Backend"
@@ -1134,7 +1134,7 @@ This section presents the main use cases derived from the functional requirement
 6. User sets backend as primary (optional)
 7. Backend is available for file storage
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Cloud storage OAuth (Google Drive, OneDrive, Dropbox)*
 
@@ -1189,7 +1189,7 @@ See [Server Architecture](server-architecture.md) for technical details.
 
 ---
 
-### UC-7.2: Process Scanned Documents
+### UC-7.2: Process scanned documents
 
 **Actors:** Reader
 **Priority:** P2
@@ -1201,7 +1201,7 @@ See [Server Architecture](server-architecture.md) for technical details.
 
 - PDF with scanned images uploaded
 
-**Main Flow:**
+**Main flow:**
 
 1. System detects scanned content
 2. System queues OCR processing
@@ -1215,7 +1215,7 @@ See [Server Architecture](server-architecture.md) for technical details.
 
 ---
 
-### UC-7.3: Synchronize Data Across Devices
+### UC-7.3: Synchronize data across devices
 
 **Actors:** Registered User
 **Priority:** P0
@@ -1228,7 +1228,7 @@ See [Server Architecture](server-architecture.md) for technical details.
 - User logged into metadata server on multiple devices
 - At least one device has internet connection
 
-**Main Flow:**
+**Main flow:**
 
 1. User makes changes on device A (e.g., reads pages, adds annotation)
 2. Changes are saved locally immediately
@@ -1240,7 +1240,7 @@ See [Server Architecture](server-architecture.md) for technical details.
 8. Device B applies changes to local storage
 9. UI updates to reflect synchronized state
 
-**Synchronized Data:**
+**Synchronized data:**
 
 - Reading position (page, chapter, percentage)
 - Annotations (highlights, notes)
@@ -1250,7 +1250,7 @@ See [Server Architecture](server-architecture.md) for technical details.
 - Reading goals and progress
 - Reading session statistics
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Conflict detected (same book, both devices)*
 
@@ -1291,7 +1291,7 @@ See [Server Architecture](server-architecture.md#synchronization-architecture) f
 
 ---
 
-### UC-7.4: Browse OPDS Catalog
+### UC-7.4: Browse OPDS catalog
 
 **Actors:** Reader
 **Priority:** P2
@@ -1304,7 +1304,7 @@ See [Server Architecture](server-architecture.md#synchronization-architecture) f
 - OPDS catalog URL known
 - Internet connection available
 
-**Main Flow:**
+**Main flow:**
 
 1. User adds OPDS catalog URL
 2. System loads catalog
@@ -1312,7 +1312,7 @@ See [Server Architecture](server-architecture.md#synchronization-architecture) f
 4. User selects book to download
 5. Book added to library
 
-**Alternative Flows:**
+**Alternative flows:**
 
 *A1: Protected catalog*
 
@@ -1325,9 +1325,9 @@ See [Server Architecture](server-architecture.md#synchronization-architecture) f
 
 ---
 
-## Use Case Summary
+## Use case summary
 
-### By Priority
+### By priority
 
 | Priority | Use Cases | Description |
 |----------|-----------|-------------|
@@ -1335,9 +1335,9 @@ See [Server Architecture](server-architecture.md#synchronization-architecture) f
 | **P1** | UC-1.3, UC-1.5, UC-1.6, UC-2.9, UC-3.3, UC-4.4, UC-4.5, UC-5.2, UC-6.1, UC-6.2 | MVP high priority |
 | **P2** | UC-2.2, UC-2.8, UC-7.2, UC-7.4 | Post-MVP |
 
-### By Actor
+### By actor
 
-| Actor | Primary Use Cases |
+| Actor | Primary use cases |
 |-------|-------------------|
 | Anonymous User | UC-1.4 |
 | Registered User | UC-1.1, UC-1.2, UC-1.3, UC-1.5, UC-1.6, UC-7.1, UC-7.3 |

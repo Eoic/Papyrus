@@ -1,4 +1,4 @@
-# Table of Contents
+# Table of contents
 
 ## Introduction
 
@@ -14,7 +14,7 @@
   - [Functional Requirements](requirements/functional-requirements.md) - System capabilities and features
   - [Non-Functional Requirements](requirements/non-functional-requirements.md) - Performance, security, and quality attributes
 
-## System Design
+## System design
 
 - [Actors](actors.md) - User types, personas, and their goals
 - [Use Cases](use-cases.md) - Detailed workflows and user scenarios

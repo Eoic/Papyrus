@@ -1,24 +1,24 @@
-# User Interface
+# User interface
 
 This section outlines the user interface design principles, layout patterns, and key screen specifications for the Papyrus cross-platform book management system. The design follows Material 3 guidelines while maintaining consistency across all supported platforms, with special considerations for e-ink devices.
 
-## Design Principles
+## Design principles
 
-### Material 3 Foundation
+### Material 3 foundation
 
 - Modern, clean design based on Material 3 design system
 - Adaptive color schemes with dynamic theming support
 - Consistent typography and spacing throughout the application
 - Platform-specific adaptations while maintaining core design language
 
-### Cross-Platform Consistency
+### Cross-platform consistency
 
 - Unified experience across Android, iOS, Web, Desktop, and E-ink platforms
 - Responsive layouts that adapt to different screen sizes and orientations
 - Consistent navigation patterns and interaction behaviors
 - Platform-appropriate UI elements while maintaining brand identity
 
-### E-ink First Design
+### E-ink first design
 
 For e-ink devices, the design prioritizes:
 
@@ -37,16 +37,16 @@ For e-ink devices, the design prioritizes:
 - Color-blind friendly design choices
 - E-ink optimized modes with maximum contrast
 
-### User-Centric Design
+### User-centric design
 
 - Intuitive navigation with minimal learning curve
 - Contextual actions and smart defaults
 - Customizable interface elements based on user preferences
 - Efficient workflows for common tasks
 
-## Information Architecture
+## Information architecture
 
-### Primary Navigation Structure
+### Primary navigation structure
 
 ```
 Home / Library
@@ -85,13 +85,13 @@ Settings
 └── About
 ```
 
-## Key Screen Specifications
+## Key screen specifications
 
-### 1. Library/Home Screen
+### 1. Library/home screen
 
 **Purpose:** Primary entry point showing user's book collection
 
-**Layout Components:**
+**Layout components:**
 
 - **Header bar:** App logo, search icon, user profile menu
 - **Navigation tabs:** All Books, Shelves, Series, Tags, Search
@@ -100,25 +100,25 @@ Settings
 - **Floating action button:** Add new book
 - **Bottom navigation:** Library, Reader, Progress, Settings (mobile)
 
-**Responsive Behavior:**
+**Responsive behavior:**
 
 - Desktop: Sidebar navigation with main content area
 - Tablet: Adaptive grid layout with 3-4 columns
 - Mobile: Single column list with compact view option
 - E-ink: High-contrast list view with larger text and touch targets
 
-**Key Interactions:**
+**Key interactions:**
 
 - Tap book cover to open in reader
 - Long press for context menu (add to shelf, edit, delete)
 - Swipe gestures for quick actions (mark as read, favorite) - disabled on e-ink
 - Search with auto-complete and recent searches
 
-### 2. Book Reader Screen
+### 2. Book reader screen
 
 **Purpose:** Immersive reading experience with customization options
 
-**Layout Components:**
+**Layout components:**
 
 - **Reading area:** Full-screen book content with minimal UI
 - **Top toolbar:** Back button, book title, reading settings (auto-hide)
@@ -127,7 +127,7 @@ Settings
 - **Reading settings overlay:** Font, spacing, colors, theme options
 - **Annotation tools:** Highlight colors, note creation, bookmark
 
-**Adaptive Features:**
+**Adaptive features:**
 
 - Automatic day/night theme switching (disabled on e-ink)
 - Reading profiles for different contexts (indoor/outdoor, device type)
@@ -135,7 +135,7 @@ Settings
 - Adjustable UI element visibility and timing
 - E-ink mode with page-turn only refresh
 
-**Customization Options:**
+**Customization options:**
 
 - Font family, size, weight selection
 - Line height and letter spacing adjustments
@@ -145,7 +145,7 @@ Settings
 - Column layout for wide screens
 - E-ink refresh mode (full page, partial, fast)
 
-**E-ink Reader Optimizations:**
+**E-ink reader optimizations:**
 
 - Full page refresh option to clear ghosting
 - Hardware button mapping for page turns
@@ -153,11 +153,11 @@ Settings
 - High contrast text rendering
 - Optional inverted mode (white text on black)
 
-### 3. Book Details Screen
+### 3. Book details screen
 
 **Purpose:** Comprehensive book information and management
 
-**Layout Components:**
+**Layout components:**
 
 - **Header:** Book cover, title, author, rating
 - **Metadata section:** Publication info, ISBN, page count, format
@@ -168,7 +168,7 @@ Settings
 - **Series information:** Series name, book number, other books in series
 - **Related information:** Author's other works, similar books
 
-**Management Features:**
+**Management features:**
 
 - Metadata editing with form validation
 - Tag assignment with color coding
@@ -177,11 +177,11 @@ Settings
 - Export options (book file, metadata, notes)
 - Delete confirmation with data preservation options
 
-### 4. Search and Discovery Screen
+### 4. Search and discovery screen
 
 **Purpose:** Advanced book finding and filtering capabilities
 
-**Layout Components:**
+**Layout components:**
 
 - **Search bar:** Text input with voice search option (voice disabled on e-ink)
 - **Filter chips:** Quick access to common filters
@@ -189,7 +189,7 @@ Settings
 - **Results area:** Filtered book grid with sort options
 - **Search suggestions:** Recent searches, popular tags, saved filters
 
-**Search Capabilities:**
+**Search capabilities:**
 
 - Full-text search across book content (where supported)
 - Metadata search (title, author, ISBN, description)
@@ -199,7 +199,7 @@ Settings
 - Saved search patterns
 - Search history and suggestions
 
-**Filter Options:**
+**Filter options:**
 
 - Reading status (not started, in progress, completed)
 - Book format (EPUB, PDF, physical, etc.)
@@ -210,11 +210,11 @@ Settings
 - Series membership
 - Custom metadata fields
 
-### 5. Progress and Statistics Screen
+### 5. Progress and statistics screen
 
 **Purpose:** Reading analytics and goal tracking
 
-**Layout Components:**
+**Layout components:**
 
 - **Summary cards:** Books read, time spent, current streak
 - **Charts area:** Reading progress visualizations
@@ -223,7 +223,7 @@ Settings
 - **Achievement badges:** Reading milestones and accomplishments
 - **Detailed statistics:** Books by genre, reading speed, completion rates
 
-**Visualization Types:**
+**Visualization types:**
 
 - Reading time trends (line charts)
 - Books completed over time (bar charts)
@@ -231,18 +231,18 @@ Settings
 - Genre preferences (pie charts)
 - Goal progress indicators (progress bars, circular indicators)
 
-**E-ink Adaptations:**
+**E-ink adaptations:**
 
 - Static, high-contrast charts without animations
 - Simplified visualizations with clear labels
 - Text-based statistics as primary, charts as secondary
 - Manual refresh button for updated data
 
-### 6. Settings and Preferences Screen
+### 6. Settings and preferences screen
 
 **Purpose:** Application configuration and user account management
 
-**Layout Organization:**
+**Layout organization:**
 
 - **Account section:** Profile info, authentication, data sync
 - **Reading preferences:** Default reader settings, profiles
@@ -252,7 +252,7 @@ Settings
 - **Notifications:** Goal reminders, sync status, updates
 - **About:** Version info, licenses, support contact
 
-**Key Configuration Areas:**
+**Key configuration areas:**
 
 - Reading profile management with import/export
 - Storage backend selection and configuration
@@ -261,7 +261,7 @@ Settings
 - Privacy settings and data retention policies
 - E-ink mode settings and optimizations
 
-## Platform-Specific Adaptations
+## Platform-specific adaptations
 
 ### Desktop (Windows, macOS, Linux)
 
@@ -279,7 +279,7 @@ Settings
 - **Share integration:** Share books and notes with other apps
 - **Background sync:** Offline reading with background synchronization
 
-### Web Browser
+### Web browser
 
 - **Responsive design:** Adaptive layouts for various screen sizes
 - **Progressive web app:** Offline functionality and app-like experience
@@ -287,11 +287,11 @@ Settings
 - **Cross-browser compatibility:** Support for modern browsers
 - **Bookmark integration:** Browser bookmark sync for reading positions
 
-### E-ink Devices
+### E-ink devices
 
 E-ink devices require special UI considerations due to their unique display characteristics:
 
-**Display Optimizations:**
+**Display optimizations:**
 
 - **No animations:** All transitions are instant cuts, no fades or slides
 - **Minimal refresh:** UI updates batched to reduce screen flicker
@@ -306,7 +306,7 @@ E-ink devices require special UI considerations due to their unique display char
 - **Simplified menus:** Reduced nesting, more items per screen
 - **Confirmation dialogs:** Extra confirmation for destructive actions (slower to undo)
 
-**Reader Specific:**
+**Reader specific:**
 
 - **Page-based reading:** Pagination preferred over scrolling
 - **Refresh modes:**
@@ -323,11 +323,11 @@ E-ink devices require special UI considerations due to their unique display char
 - **Battery optimization:** Minimize background activity
 - **Offline first:** Assume intermittent connectivity
 
-## Color Scheme and Theming
+## Color scheme and theming
 
 The application uses Material 3 design system with custom color schemes optimized for reading applications.
 
-### Light Theme (Default)
+### Light theme (default)
 
 Based on Material 3 light color scheme with purple primary colors:
 
@@ -343,7 +343,7 @@ Based on Material 3 light color scheme with purple primary colors:
 | On Surface Variant | Medium Gray | #47464F | Secondary text color |
 | Outline | Medium Gray | #787680 | Borders and dividers |
 
-### Dark Theme
+### Dark theme
 
 Optimized dark color scheme for comfortable night reading:
 
@@ -359,7 +359,7 @@ Optimized dark color scheme for comfortable night reading:
 | On Surface Variant | Medium Light Gray | #C8C5D0 | Secondary text color |
 | Outline | Gray | #928F9A | Borders and dividers |
 
-### E-ink Theme
+### E-ink theme
 
 Maximum contrast theme optimized for e-ink displays:
 
@@ -385,7 +385,7 @@ Maximum contrast theme optimized for e-ink displays:
 - No transparency or alpha blending
 - Icons use solid fills, not outlines
 
-### Sepia Theme (Reading)
+### Sepia theme (reading)
 
 Warm-toned theme for extended reading sessions:
 
@@ -395,14 +395,14 @@ Warm-toned theme for extended reading sessions:
 | On Surface | Dark Brown | #5C4A32 | Text color |
 | Primary | Brown | #8B7355 | Links and accents |
 
-### Reading-Specific Color Considerations
+### Reading-specific color considerations
 
 - **Error colors:** Red tones (#BA1A1A light, #FFB4AB dark) for validation and warnings
 - **Tertiary colors:** Pink-purple accent (#7A5368 light, #EAB9D2 dark) for special highlights
 - **Shadow and scrim:** Pure black (#000000) for depth and overlays
 - **Inverse colors:** Automatically calculated contrasting colors for accessibility
 
-### Dynamic Theming Features
+### Dynamic theming features
 
 - **System integration:** Automatic theme switching based on system preferences
 - **Material You support:** Dynamic color generation from wallpaper (Android 12+)
@@ -411,9 +411,9 @@ Warm-toned theme for extended reading sessions:
 - **Custom accent colors:** User-customizable accent colors while maintaining accessibility
 - **E-ink auto-detection:** Automatic switch to e-ink theme on compatible devices
 
-## Responsive Design Breakpoints
+## Responsive design breakpoints
 
-### Breakpoint Definitions
+### Breakpoint definitions
 
 | Breakpoint | Width | Layout | Navigation |
 |------------|-------|--------|------------|
@@ -423,7 +423,7 @@ Warm-toned theme for extended reading sessions:
 | Desktop Large | 1200px+ | Multiple panels | Sidebar navigation |
 | E-ink | Any | Simplified single column | Tab bar or hardware buttons |
 
-### Layout Adaptations
+### Layout adaptations
 
 | Element | Mobile | Tablet | Desktop | E-ink |
 |---------|--------|--------|---------|-------|
@@ -434,7 +434,7 @@ Warm-toned theme for extended reading sessions:
 | Touch Targets | 44px | 44px | 36px | 56px |
 | Font Size | 16px base | 16px base | 14px base | 18px base |
 
-### E-ink Specific Layout Rules
+### E-ink specific layout rules
 
 - Maximum content width: 600px (typical e-reader width)
 - Minimum touch target: 56px × 56px
@@ -443,9 +443,9 @@ Warm-toned theme for extended reading sessions:
 - Button padding: 16px minimum
 - Border width: 2px minimum for visibility
 
-## Accessibility Features
+## Accessibility features
 
-### Visual Accessibility
+### Visual accessibility
 
 - **High contrast modes:** Enhanced contrast ratios for better visibility
 - **Font scaling:** Support for system font size preferences (up to 200%)
@@ -453,7 +453,7 @@ Warm-toned theme for extended reading sessions:
 - **Focus indicators:** Clear focus states for keyboard navigation
 - **E-ink compatibility:** Full functionality in grayscale
 
-### Motor Accessibility
+### Motor accessibility
 
 - **Touch targets:** Minimum 44px touch targets (56px on e-ink)
 - **Gesture alternatives:** Tap alternatives for all swipe gestures
@@ -461,7 +461,7 @@ Warm-toned theme for extended reading sessions:
 - **Voice control:** Voice command support where available
 - **Hardware button support:** Physical button navigation on supported devices
 
-### Cognitive Accessibility
+### Cognitive accessibility
 
 - **Simple navigation:** Clear, consistent navigation patterns
 - **Help tooltips:** Contextual help for complex features
@@ -469,7 +469,7 @@ Warm-toned theme for extended reading sessions:
 - **Progress indicators:** Clear feedback for long-running operations
 - **Confirmation dialogs:** Explicit confirmation for destructive actions
 
-### E-ink Accessibility Considerations
+### E-ink accessibility considerations
 
 - **Slow refresh accommodation:** Extra time for users to read before screen updates
 - **Clear state indication:** Obvious visual feedback for selected/active states
@@ -477,9 +477,9 @@ Warm-toned theme for extended reading sessions:
 - **Consistent layout:** Predictable element positioning across screens
 - **Text-first design:** Information conveyed through text, not color or icons alone
 
-## Component Library
+## Component library
 
-### Button Variants
+### Button variants
 
 | Variant | Standard | E-ink |
 |---------|----------|-------|
@@ -488,7 +488,7 @@ Warm-toned theme for extended reading sessions:
 | Tertiary | Text only | Underlined text |
 | Disabled | 50% opacity | Gray fill, no interaction |
 
-### Form Elements
+### Form elements
 
 | Element | Standard | E-ink |
 |---------|----------|-------|
@@ -498,7 +498,7 @@ Warm-toned theme for extended reading sessions:
 | Toggle | Animated switch | Static on/off states |
 | Dropdown | Animated expand | Full screen picker |
 
-### Feedback Components
+### Feedback components
 
 | Component | Standard | E-ink |
 |-----------|----------|-------|

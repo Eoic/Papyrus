@@ -36,7 +36,7 @@ class DocumentValidator:
             warnings.append("No user stories found in requirements")
         
         # Check for acceptance criteria
-        if "Acceptance Criteria" not in content:
+        if "Acceptance criteria" not in content:
             errors.append("No acceptance criteria found")
         
         # Check for SHALL statements

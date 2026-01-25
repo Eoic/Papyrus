@@ -2,7 +2,7 @@
 
 This section defines the user types that interact with Papyrus. Each actor represents a distinct user group with specific needs, goals, and interaction patterns.
 
-## Actor Summary
+## Actor summary
 
 | Actor | Type | Description | Key Use Cases |
 |-------|------|-------------|---------------|
@@ -15,7 +15,7 @@ This section defines the user types that interact with Papyrus. Each actor repre
 
 ---
 
-## Primary Actors
+## Primary actors
 
 ### Reader
 
@@ -36,7 +36,7 @@ The core user of Papyrus who uses the application for reading and managing their
 - Take notes and highlights while reading
 - Achieve personal reading goals
 
-**Primary Use Cases:**
+**Primary use cases:**
 
 - [UC-2.1](use-cases.md#uc-21-import-book-files) Import book files
 - [UC-2.4](use-cases.md#uc-24-organize-books-into-shelves) Organize books into shelves
@@ -48,7 +48,7 @@ The core user of Papyrus who uses the application for reading and managing their
 - [UC-5.1](use-cases.md#uc-51-track-reading-progress) Track reading progress
 - [UC-6.1](use-cases.md#uc-61-create-reading-goals) Create reading goals
 
-**Requirements Addressed:**
+**Requirements addressed:**
 
 - FR-2.x (Book Management)
 - FR-3.x (Integrated Viewer)
@@ -58,7 +58,7 @@ The core user of Papyrus who uses the application for reading and managing their
 
 ---
 
-### Anonymous User
+### Anonymous user
 
 A user who accesses Papyrus without creating an account, using the application entirely in offline mode.
 
@@ -83,14 +83,14 @@ A user who accesses Papyrus without creating an account, using the application e
 - All data stored locally on device
 - Must manually transfer data between devices
 
-**Primary Use Cases:**
+**Primary use cases:**
 
 - [UC-1.4](use-cases.md#uc-14-use-application-offline) Use application offline
 - [UC-2.1](use-cases.md#uc-21-import-book-files) Import book files
 - [UC-3.1](use-cases.md#uc-31-read-books-with-integrated-viewer) Read books
 - [UC-2.7](use-cases.md#uc-27-export-books-and-data) Export books and data
 
-**Requirements Addressed:**
+**Requirements addressed:**
 
 - FR-1.4 (Offline Mode)
 - NFR-2.1 (Online/Offline Parity)
@@ -98,7 +98,7 @@ A user who accesses Papyrus without creating an account, using the application e
 
 ---
 
-### Registered User
+### Registered user
 
 A user with an account who can access synchronization and cloud features.
 
@@ -116,7 +116,7 @@ A user with an account who can access synchronization and cloud features.
 - Access books from anywhere
 - Recover data if device is lost
 
-**Primary Use Cases:**
+**Primary use cases:**
 
 - [UC-1.1](use-cases.md#uc-11-create-user-account) Create user account
 - [UC-1.2](use-cases.md#uc-12-login-with-credentials) Login with credentials
@@ -125,7 +125,7 @@ A user with an account who can access synchronization and cloud features.
 - [UC-7.1](use-cases.md#uc-71-configure-storage-options) Configure storage
 - [UC-7.3](use-cases.md#uc-73-synchronize-data-across-devices) Synchronize data
 
-**Requirements Addressed:**
+**Requirements addressed:**
 
 - FR-1.x (User Management)
 - FR-5.3 (Cross-Device Sync)
@@ -134,7 +134,7 @@ A user with an account who can access synchronization and cloud features.
 
 ---
 
-### E-ink Reader
+### E-ink reader
 
 A user who primarily reads on dedicated e-ink devices (Kindle, Kobo, reMarkable, etc.).
 
@@ -152,7 +152,7 @@ A user who primarily reads on dedicated e-ink devices (Kindle, Kobo, reMarkable,
 - Minimal battery consumption
 - Fast page turns with reduced screen flashing
 
-**Specific Needs:**
+**Specific needs:**
 
 - High contrast, grayscale-optimized interface
 - Reduced or disabled animations
@@ -160,14 +160,14 @@ A user who primarily reads on dedicated e-ink devices (Kindle, Kobo, reMarkable,
 - Large, clear touch targets
 - Support for hardware buttons (page turn)
 
-**Primary Use Cases:**
+**Primary use cases:**
 
 - [UC-3.1](use-cases.md#uc-31-read-books-with-integrated-viewer) Read books (primary focus)
 - [UC-3.2](use-cases.md#uc-32-customize-reading-experience) Customize reading experience
 - [UC-3.3](use-cases.md#uc-33-manage-reading-profiles) Manage reading profiles
 - [UC-4.1](use-cases.md#uc-41-create-text-annotations) Create annotations
 
-**Requirements Addressed:**
+**Requirements addressed:**
 
 - NFR-3.4 (E-Reader Support)
 - NFR-5.2 (Accessibility)
@@ -176,9 +176,9 @@ A user who primarily reads on dedicated e-ink devices (Kindle, Kobo, reMarkable,
 
 ---
 
-## Secondary Actors
+## Secondary actors
 
-### System Administrator
+### System administrator
 
 A technical user responsible for deploying and maintaining self-hosted Papyrus server instances.
 
@@ -206,7 +206,7 @@ A technical user responsible for deploying and maintaining self-hosted Papyrus s
 - User account administration
 - Log monitoring and troubleshooting
 
-**Requirements Addressed:**
+**Requirements addressed:**
 
 - NFR-7.1 (Uptime)
 - NFR-7.4 (Backup/Restore)
@@ -241,14 +241,14 @@ A technical user who integrates with Papyrus via API or develops extensions.
 - Data export formats (JSON, CSV)
 - Webhook integrations
 
-**Requirements Addressed:**
+**Requirements addressed:**
 
 - FR-7.4 (Plugin System)
 - NFR-8.1 (Extensibility)
 
 ---
 
-## Actor Relationships
+## Actor relationships
 
 ```mermaid
 flowchart TB
@@ -276,7 +276,7 @@ flowchart TB
     end
 ```
 
-**Key Relationships:**
+**Key relationships:**
 
 - Anonymous User can upgrade to Registered User while preserving data
 - Reader is the base role; Anonymous, Registered, and E-ink Reader inherit capabilities

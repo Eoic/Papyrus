@@ -51,12 +51,14 @@ python scripts/validate_documents.py \
 ## Document Types
 
 ### Requirements Document
+
 - User stories in standard format
 - Testable acceptance criteria using SHALL statements
 - Requirement numbering for traceability
 - Glossary of domain terms
 
 ### Design Document  
+
 - System architecture diagrams
 - Component responsibilities and interfaces
 - Data models and schemas
@@ -64,6 +66,7 @@ python scripts/validate_documents.py \
 - Deployment configuration
 
 ### Implementation Plan
+
 - Hierarchical task breakdown
 - Requirement tracing (links tasks to requirements)
 - Dependency management between tasks
@@ -79,13 +82,16 @@ python scripts/validate_documents.py \
 ## Files Included
 
 ### Scripts
+
 - `generate_project_docs.py` - Automated document generation
 - `validate_documents.py` - Document validation and completeness checking
 
 ### References
+
 - `domain-templates.md` - Domain-specific templates and patterns
 
 ### Assets
+
 - `requirements-template.md` - Basic requirements document template
 
 ## Best Practices
@@ -100,18 +106,21 @@ python scripts/validate_documents.py \
 ## Common Use Cases
 
 ### Starting a New Project
+
 ```
 User: "I want to build a real-time chat application"
 AI: [Uses this skill to generate complete project documentation]
 ```
 
 ### Expanding Existing Project
+
 ```
 User: "Add user authentication to my project requirements"
 AI: [Adds properly formatted requirements with acceptance criteria]
 ```
 
 ### Creating Technical Specification
+
 ```
 User: "Design the architecture for a microservices e-commerce platform"
 AI: [Generates design document with components, interfaces, and deployment]
@@ -123,7 +132,7 @@ When using these documents for AI-assisted development:
 
 1. **Requirements First** - Implement in order of requirement priority
 2. **Follow Task Dependencies** - Complete prerequisite tasks first
-3. **Test Against Acceptance Criteria** - Each SHALL statement is a test case
+3. **Test Against Acceptance criteria** - Each SHALL statement is a test case
 4. **Reference Design Interfaces** - Use the specified APIs and data models
 5. **Track Progress** - Check off completed tasks in the implementation plan
 
@@ -142,6 +151,7 @@ Before using documents for implementation:
 ## Example Output
 
 The generated documents follow industry-standard formats that are:
+
 - **Machine-readable** - Structured for AI parsing
 - **Human-readable** - Clear for developers to understand  
 - **Version-control friendly** - Plain text Markdown format

@@ -31,7 +31,7 @@ Existing solutions often fall short in one or more areas:
 8. **Extensible** - Plugin system for metadata sources, storage, and reader features
 9. **Developer friendly** - Public REST API and easy self-hosting
 
-## Target Audience
+## Target audience
 
 - **Regular readers** who consume digital and/or physical books and need a centralized library management solution
 - **Habit builders** who want to track reading statistics and build reading habits through goals
@@ -39,7 +39,7 @@ Existing solutions often fall short in one or more areas:
 - **Multi-device users** who read on phones, tablets, e-readers, and computers
 - **E-ink device owners** who want a dedicated reading experience optimized for their hardware
 
-## Supported Platforms
+## Supported platforms
 
 | Platform                            | Status    | Notes                                      |
 | ----------------------------------- | --------- | ------------------------------------------ |
@@ -51,7 +51,7 @@ Existing solutions often fall short in one or more areas:
 | Linux                               | Primary   | Native desktop experience                  |
 | E-ink devices                       | Secondary | Optimized grayscale UI, reduced animations |
 
-## Supported E-book Formats
+## Supported e-book formats
 
 | Format  | Read    | Convert To | Notes                                |
 | ------- | ------- | ---------- | ------------------------------------ |
@@ -66,13 +66,13 @@ Existing solutions often fall short in one or more areas:
 
 ---
 
-## Feature Overview
+## Feature overview
 
-### Core Features (MVP)
+### Core features (MVP)
 
 These features define the minimum viable product and are prioritized for initial release:
 
-#### 1. Book Management
+#### 1. Book management
 
 - **Import books** from local storage, URL, or cloud services (Google Drive, OneDrive, Dropbox)
 - **Organize with shelves** - user-defined collections (e.g., "Currently Reading", "Sci-Fi")
@@ -81,7 +81,7 @@ These features define the minimum viable product and are prioritized for initial
 - **Search and filter** by title, author, tags, shelves, reading status, and more
 - **Physical book tracking** - manually add and track physical books in your library
 
-#### 2. Integrated E-book Reader
+#### 2. Integrated e-book reader
 
 **Typography controls:**
 
@@ -113,7 +113,7 @@ These features define the minimum viable product and are prioritized for initial
 - Default profile per device
 - Profile import/export
 
-#### 3. Annotations and Notes
+#### 3. Annotations and notes
 
 - **Highlight text** with multiple colors
 - **Add notes** to highlights or create standalone book notes
@@ -121,7 +121,7 @@ These features define the minimum viable product and are prioritized for initial
 - **Export annotations** to text, PDF, or Markdown
 - **Search** across all annotations and notes
 
-#### 4. Reading Progress and Goals
+#### 4. Reading progress and goals
 
 **Automatic tracking:**
 
@@ -142,7 +142,7 @@ These features define the minimum viable product and are prioritized for initial
 - Reading position synced across devices
 - Progress and statistics synchronized
 
-#### 5. Storage and Sync
+#### 5. Storage and sync
 
 **Storage options:**
 
@@ -157,7 +157,7 @@ These features define the minimum viable product and are prioritized for initial
 - Automatic sync when online
 - Conflict resolution options
 
-### Advanced Features (Post-MVP)
+### Advanced features (post-MVP)
 
 These features are planned for future releases:
 
@@ -183,7 +183,7 @@ This specification provides comprehensive documentation for development and main
 - **[Functional Requirements](requirements/functional-requirements.md)** - What the system does
 - **[Non-Functional Requirements](requirements/non-functional-requirements.md)** - How the system performs
 
-### System Design
+### System design
 
 - **[Actors](actors.md)** - User types and their interactions
 - **[Use Cases](use-cases.md)** - Detailed workflows and scenarios
@@ -198,17 +198,17 @@ This specification provides comprehensive documentation for development and main
 
 ---
 
-## Quick Reference
+## Quick reference
 
-### Requirement Notation
+### Requirement notation
 
 | Prefix  | Meaning                    | Example                  |
 | ------- | -------------------------- | ------------------------ |
 | FR-X.Y  | Functional Requirement     | FR-2.1 (Book conversion) |
 | NFR-X.Y | Non-Functional Requirement | NFR-4.1 (Startup time)   |
-| UC-X.Y  | Use Case                   | UC-2.1 (Import books)    |
+| UC-X.Y  | Use case                   | UC-2.1 (Import books)    |
 
-### Feature Priority Levels
+### Feature priority levels
 
 | Level         | Description                              |
 | ------------- | ---------------------------------------- |

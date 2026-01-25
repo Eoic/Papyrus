@@ -1,8 +1,8 @@
-# Non-Functional Requirements
+# Non-functional requirements
 
 This document defines the non-functional requirements (quality attributes) for Papyrus. These requirements specify how the system should perform rather than what it should do.
 
-## Priority Levels
+## Priority levels
 
 | Priority | Description | Target |
 |----------|-------------|--------|
@@ -15,20 +15,20 @@ This document defines the non-functional requirements (quality attributes) for P
 
 ## 1. Storage
 
-### NFR-1.1: Maximum File Size
+### NFR-1.1: Maximum file size
 
 **Priority:** P0
 
 Maximum allowed file size shall not exceed 2048 MB (2 GB) per book file.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Files up to 2 GB upload successfully
 - Files exceeding 2 GB are rejected with clear error message
 - Large file uploads show progress indicator
 - Upload can be resumed after interruption (for files > 100 MB)
 
-### NFR-1.2: Storage Backend Support
+### NFR-1.2: Storage backend support
 
 **Priority:** P0
 
@@ -41,33 +41,33 @@ The system shall support multiple storage backends.
 3. Self-hosted server (MinIO, local file system)
 4. Network-attached storage (NAS via SMB/NFS)
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Each backend can be configured independently
 - User can switch between backends without data loss
 - Backend credentials are stored securely (encrypted)
 - Connection status is visible to user
 
-### NFR-1.3: Multi-Backend Configuration
+### NFR-1.3: Multi-backend configuration
 
 **Priority:** P1
 
 The system shall support multiple storage backends per user with automatic failover.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - User can configure up to 3 storage backends
 - One backend is designated as primary
 - Automatic failover to secondary if primary is unavailable
 - Manual override to force specific backend
 
-### NFR-1.4: File Encryption
+### NFR-1.4: File encryption
 
 **Priority:** P2
 
 File encryption shall be available for sensitive content with user-controlled keys.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - AES-256 encryption for files at rest
 - User-managed encryption keys
@@ -78,13 +78,13 @@ File encryption shall be available for sensitive content with user-controlled ke
 
 ## 2. Synchronization
 
-### NFR-2.1: Online/Offline Parity
+### NFR-2.1: Online/offline parity
 
 **Priority:** P0
 
 The system shall work in online and offline mode with full feature parity for core reading features.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - All reading features work offline
 - Library management works offline
@@ -92,20 +92,20 @@ The system shall work in online and offline mode with full feature parity for co
 - Only sync and cloud features require connectivity
 - Clear indicator of online/offline status
 
-### NFR-2.2: Offline Change Indicators
+### NFR-2.2: Offline change indicators
 
 **Priority:** P0
 
 Any changes made offline shall have an appropriate visual indicator.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Unsynced items show sync-pending icon
 - Last sync timestamp visible in settings
 - Number of pending changes displayed
 - User can manually trigger sync when online
 
-### NFR-2.3: Conflict Resolution
+### NFR-2.3: Conflict resolution
 
 **Priority:** P1
 
@@ -118,20 +118,20 @@ Synchronization conflicts shall be resolved with user-selectable strategies.
 3. Manual resolution (user chooses)
 4. Merge (where possible)
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - User can set default strategy in settings
 - Per-conflict override option
 - Conflict history log
 - No silent data loss
 
-### NFR-2.4: Sync Performance
+### NFR-2.4: Sync performance
 
 **Priority:** P0
 
 Cross-device synchronization shall complete within 30 seconds under normal network conditions (>= 1 Mbps).
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Reading position syncs within 30 seconds
 - Metadata changes sync within 1 minute
@@ -140,9 +140,9 @@ Cross-device synchronization shall complete within 30 seconds under normal netwo
 
 ---
 
-## 3. Platform Support
+## 3. Platform support
 
-### NFR-3.1: Web Browser Support
+### NFR-3.1: Web browser support
 
 **Priority:** P0
 
@@ -155,14 +155,14 @@ The system shall be available in modern web browsers.
 - Safari 14+
 - Edge 90+
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - All core features work in supported browsers
 - Progressive Web App (PWA) installable
 - Offline capability via service worker
 - Responsive design for all viewport sizes
 
-### NFR-3.2: Desktop Operating System Support
+### NFR-3.2: Desktop operating system support
 
 **Priority:** P0
 
@@ -174,14 +174,14 @@ The system shall be available on major desktop operating systems.
 - macOS 10.15 (Catalina) or later
 - Major Linux distributions (Ubuntu 20.04+, Fedora 35+, Debian 11+)
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Native application available for each platform
 - Platform-specific keyboard shortcuts
 - System tray/menu bar integration
 - File association for supported formats
 
-### NFR-3.3: Mobile Operating System Support
+### NFR-3.3: Mobile operating system support
 
 **Priority:** P0
 
@@ -192,7 +192,7 @@ The system shall work on mobile devices.
 - Android 8.0 (API level 26) or later
 - iOS 12.0 or later
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - App available in Google Play Store and Apple App Store
 - Touch-optimized interface
@@ -200,7 +200,7 @@ The system shall work on mobile devices.
 - Background sync support
 - Push notifications (optional)
 
-### NFR-3.4: E-ink Device Support
+### NFR-3.4: E-ink device support
 
 **Priority:** P1
 
@@ -212,7 +212,7 @@ The system shall support e-ink readers and tablets with touch interfaces.
 - Android-based e-ink devices (Boox, Hisense)
 - reMarkable (future consideration)
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - E-ink optimized UI mode (high contrast, grayscale)
 - Reduced/disabled animations
@@ -225,26 +225,26 @@ The system shall support e-ink readers and tablets with touch interfaces.
 
 ## 4. Performance
 
-### NFR-4.1: Application Startup
+### NFR-4.1: Application startup
 
 **Priority:** P0
 
 Application startup time shall not exceed 3 seconds on supported devices.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Cold start < 3 seconds on mid-range devices (2020+)
 - Warm start < 1 second
 - Library view loads within 2 seconds of app start
 - Progress indicator shown if startup exceeds 1 second
 
-### NFR-4.2: Book Opening
+### NFR-4.2: Book opening
 
 **Priority:** P0
 
 Book opening time shall not exceed 2 seconds for files up to 50 MB.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - EPUB < 50 MB opens in < 2 seconds
 - PDF < 50 MB opens in < 3 seconds
@@ -252,13 +252,13 @@ Book opening time shall not exceed 2 seconds for files up to 50 MB.
 - Last reading position restored automatically
 - Opening performance measured on mid-range devices
 
-### NFR-4.3: Search Performance
+### NFR-4.3: Search performance
 
 **Priority:** P0
 
 Search results shall be returned within 1 second for libraries up to 10,000 books.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Metadata search returns in < 500ms
 - Full-text search returns in < 1 second
@@ -266,13 +266,13 @@ Search results shall be returned within 1 second for libraries up to 10,000 book
 - Search is cancelable
 - Incremental results shown as available
 
-### NFR-4.4: Library Scalability
+### NFR-4.4: Library scalability
 
 **Priority:** P1
 
 The system shall support libraries with up to 50,000 books without performance degradation.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Library view loads in < 3 seconds with 50,000 books
 - Search remains under 2 seconds
@@ -280,13 +280,13 @@ The system shall support libraries with up to 50,000 books without performance d
 - Memory usage scales linearly with library size
 - Virtual scrolling for large lists
 
-### NFR-4.5: E-ink Performance
+### NFR-4.5: E-ink performance
 
 **Priority:** P1
 
 The system shall be optimized for e-ink display refresh characteristics.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Page turns complete in < 500ms
 - Minimal full-refresh operations
@@ -298,13 +298,13 @@ The system shall be optimized for e-ink display refresh characteristics.
 
 ## 5. Usability
 
-### NFR-5.1: Design System
+### NFR-5.1: Design system
 
 **Priority:** P0
 
 The user interface shall follow Material 3 design guidelines.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Consistent use of Material 3 components
 - Dynamic color theming support
@@ -318,7 +318,7 @@ The user interface shall follow Material 3 design guidelines.
 
 The application shall be accessible to users with disabilities (WCAG 2.1 AA compliance).
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Screen reader compatibility (TalkBack, VoiceOver)
 - Minimum color contrast ratio 4.5:1
@@ -328,13 +328,13 @@ The application shall be accessible to users with disabilities (WCAG 2.1 AA comp
 - No information conveyed by color alone
 - Touch targets minimum 44x44 points
 
-### NFR-5.3: RTL and Internationalization
+### NFR-5.3: RTL and internationalization
 
 **Priority:** P1
 
 The system shall support right-to-left (RTL) languages and internationalization.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - UI mirrors correctly for RTL languages
 - Book content renders correctly for RTL text
@@ -348,7 +348,7 @@ The system shall support right-to-left (RTL) languages and internationalization.
 
 All user-facing text shall be localizable.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - English as primary language
 - Localization framework in place for additional languages
@@ -356,13 +356,13 @@ All user-facing text shall be localizable.
 - Locale can be overridden in settings
 - Pluralization rules supported
 
-### NFR-5.5: E-ink Usability
+### NFR-5.5: E-ink usability
 
 **Priority:** P1
 
 The system shall provide optimized usability for e-ink displays.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - High contrast theme option
 - Simplified UI with fewer visual elements
@@ -374,13 +374,13 @@ The system shall provide optimized usability for e-ink displays.
 
 ## 6. Security
 
-### NFR-6.1: Password Security
+### NFR-6.1: Password security
 
 **Priority:** P0
 
 User passwords shall be hashed using industry-standard algorithms.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Passwords hashed with bcrypt or Argon2
 - Minimum password length: 8 characters
@@ -388,39 +388,39 @@ User passwords shall be hashed using industry-standard algorithms.
 - No plaintext password storage or transmission
 - Secure password reset mechanism
 
-### NFR-6.2: Transport Security
+### NFR-6.2: Transport security
 
 **Priority:** P0
 
 All data transmission shall use TLS 1.3 or higher encryption.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - HTTPS required for all API communication
 - Certificate pinning for mobile apps (optional)
 - No fallback to unencrypted connections
 - TLS 1.2 minimum (1.3 preferred)
 
-### NFR-6.3: Two-Factor Authentication
+### NFR-6.3: Two-factor authentication
 
 **Priority:** P2
 
 The system shall support two-factor authentication (TOTP).
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - TOTP-based 2FA (Google Authenticator compatible)
 - Backup codes available
 - 2FA can be enabled/disabled by user
 - Graceful recovery if 2FA device lost
 
-### NFR-6.4: Session Management
+### NFR-6.4: Session management
 
 **Priority:** P0
 
 Session management shall include automatic timeout and secure token handling.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - JWT tokens with configurable expiration
 - Refresh token rotation
@@ -428,13 +428,13 @@ Session management shall include automatic timeout and secure token handling.
 - Automatic logout after inactivity (configurable)
 - Secure token storage on device
 
-### NFR-6.5: Privacy by Default
+### NFR-6.5: Privacy by default
 
 **Priority:** P0
 
 The application shall collect no analytics by default; telemetry is opt-in.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - No analytics without explicit consent
 - Clear privacy policy accessible in-app
@@ -446,39 +446,39 @@ The application shall collect no analytics by default; telemetry is opt-in.
 
 ## 7. Reliability
 
-### NFR-7.1: System Uptime
+### NFR-7.1: System uptime
 
 **Priority:** P1
 
 The system shall have 99.5% uptime for self-hosted deployments under normal conditions.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Maximum planned downtime: 4 hours/month
 - Health check endpoints available
 - Graceful degradation during partial outages
 - Automatic recovery from transient failures
 
-### NFR-7.2: Data Integrity
+### NFR-7.2: Data integrity
 
 **Priority:** P0
 
 Data corruption shall be prevented through checksums and integrity verification.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - File checksums verified on upload/download
 - Database transactions are atomic
 - Corrupted files detected and reported
 - No silent data corruption
 
-### NFR-7.3: Network Resilience
+### NFR-7.3: Network resilience
 
 **Priority:** P0
 
 The system shall gracefully handle network interruptions without data loss.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Operations are idempotent where possible
 - Uploads/downloads resumable
@@ -486,13 +486,13 @@ The system shall gracefully handle network interruptions without data loss.
 - Clear error messages for network issues
 - Automatic retry with exponential backoff
 
-### NFR-7.4: Backup and Restore
+### NFR-7.4: Backup and restore
 
 **Priority:** P1
 
 Automatic backup and restore capabilities shall be available for user data.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Export all user data in portable format
 - Import/restore from backup
@@ -503,13 +503,13 @@ Automatic backup and restore capabilities shall be available for user data.
 
 ## 8. Extensibility
 
-### NFR-8.1: Plugin Architecture
+### NFR-8.1: Plugin architecture
 
 **Priority:** P3
 
 The architecture shall support modular plugins without compromising core stability.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Plugin API documented
 - Plugins run in sandboxed environment
@@ -521,13 +521,13 @@ The architecture shall support modular plugins without compromising core stabili
 
 ## 9. Maintainability
 
-### NFR-9.1: Code Quality
+### NFR-9.1: Code quality
 
 **Priority:** P1
 
 The codebase shall maintain high quality standards.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Automated linting (dart analyze)
 - Code formatting enforced (dart format)
@@ -535,13 +535,13 @@ The codebase shall maintain high quality standards.
 - No critical security vulnerabilities
 - Documentation for public APIs
 
-### NFR-9.2: Logging and Monitoring
+### NFR-9.2: Logging and monitoring
 
 **Priority:** P1
 
 The system shall provide comprehensive logging and monitoring capabilities.
 
-**Acceptance Criteria:**
+**Acceptance criteria:**
 
 - Structured logging for all components
 - Log levels configurable (debug, info, warning, error)
@@ -551,9 +551,9 @@ The system shall provide comprehensive logging and monitoring capabilities.
 
 ---
 
-## Requirements Summary
+## Requirements summary
 
-### MVP (P0/P1) Requirements Count
+### MVP (p0/p1) requirements count
 
 | Category | P0 | P1 | Total |
 |----------|----|----|-------|
@@ -568,7 +568,7 @@ The system shall provide comprehensive logging and monitoring capabilities.
 | Maintainability | 0 | 2 | 2 |
 | **Total** | **17** | **12** | **29** |
 
-### Post-MVP (P2/P3) Requirements
+### Post-MVP (p2/p3) requirements
 
 | Requirement | Priority | Description |
 |-------------|----------|-------------|

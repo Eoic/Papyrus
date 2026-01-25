@@ -1,8 +1,8 @@
-# Database Model
+# Database model
 
 This section presents the database schema for Papyrus, showing table structures, relationships, constraints, and design principles.
 
-## Schema Overview
+## Schema overview
 
 The database consists of 16 tables organized into functional groups:
 
@@ -17,7 +17,7 @@ The database consists of 16 tables organized into functional groups:
 
 ---
 
-## Entity Relationship Diagram
+## Entity relationship diagram
 
 ```mermaid
 erDiagram
@@ -314,7 +314,7 @@ erDiagram
 
 ---
 
-## Table Definitions
+## Table definitions
 
 ### USER
 
@@ -701,7 +701,7 @@ CREATE TABLE saved_filter (
 CREATE INDEX idx_saved_filter_user_id ON saved_filter(user_id);
 ```
 
-### Junction Tables
+### Junction tables
 
 ```sql
 CREATE TABLE book_shelf (
@@ -726,16 +726,16 @@ CREATE INDEX idx_book_tag_tag_id ON book_tag(tag_id);
 
 ---
 
-## Design Principles
+## Design principles
 
-### Data Integrity
+### Data integrity
 
 - **Foreign key constraints** ensure referential integrity
 - **Check constraints** validate data ranges and enums
 - **Unique constraints** prevent duplicate entries
 - **NOT NULL constraints** ensure required fields
 
-### Performance Optimization
+### Performance optimization
 
 - **UUID primary keys** for distributed systems
 - **Indexes** on frequently queried columns
@@ -759,15 +759,15 @@ CREATE INDEX idx_book_tag_tag_id ON book_tag(tag_id);
 
 ---
 
-## Migration Notes
+## Migration notes
 
-### Initial Setup
+### Initial setup
 
 1. Create tables in dependency order (USER first)
 2. Create indexes after data population for speed
 3. Insert default shelves per user on registration
 
-### Version History
+### Version history
 
 | Version | Changes |
 |---------|---------|

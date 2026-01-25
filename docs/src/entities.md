@@ -2,7 +2,7 @@
 
 This section defines the data model entities for Papyrus. These entities form the foundation for the database schema and represent the core data structures managed by the application.
 
-## Entity Overview
+## Entity overview
 
 | Entity | Description | Related Requirements |
 |--------|-------------|---------------------|
@@ -23,7 +23,7 @@ This section defines the data model entities for Papyrus. These entities form th
 
 ---
 
-## Entity Relationship Diagram
+## Entity relationship diagram
 
 ```mermaid
 erDiagram
@@ -149,7 +149,7 @@ erDiagram
 
 ---
 
-## Core Entities
+## Core entities
 
 ### User
 
@@ -278,7 +278,7 @@ Represents a user-created collection for organizing books.
 - One-to-many with Shelf (children)
 - Many-to-many with Book
 
-**Default Shelves:**
+**Default shelves:**
 
 - "Currently Reading" (is_default: true)
 - "Want to Read" (is_default: true)
@@ -366,7 +366,7 @@ Represents a text highlight with optional note in a digital book.
 - Many-to-one with Book
 - Many-to-one with User
 
-**Highlight Colors (defaults):**
+**Highlight colors (defaults):**
 
 - Yellow (#FFEB3B)
 - Green (#4CAF50)
@@ -520,7 +520,7 @@ Represents saved reader customization settings.
 
 - Many-to-one with User
 
-**Suggested Profiles:**
+**Suggested profiles:**
 
 - "Day" - Light background, dark text
 - "Night" - Dark background, light text
@@ -594,7 +594,7 @@ Represents a configured file storage backend where book files are stored. Users 
 - Many-to-one with User
 - One-to-many with Book (books reference storage backend)
 
-**Connection Config Examples:**
+**Connection configuration examples:**
 
 ```json
 // Google Drive
@@ -656,7 +656,7 @@ Represents a saved search or filter query for reuse.
 
 - Many-to-one with User
 
-**Query Language Examples:**
+**Query language examples:**
 
 - `author:"Isaac Asimov" AND year:>1970`
 - `tag:science-fiction OR tag:fantasy`
@@ -665,7 +665,7 @@ Represents a saved search or filter query for reuse.
 
 ---
 
-## Junction Tables
+## Junction tables
 
 ### BookShelf
 
@@ -690,30 +690,30 @@ Many-to-many relationship between Book and Tag.
 
 ---
 
-## Entity Relationships Summary
+## Entity relationships summary
 
-### By Functional Area
+### By functional area
 
-**User Management**
+**User management**
 
 - User owns all other entities through user_id foreign key
 - User can be anonymous (no email) or registered
 
-**Book Organization**
+**Book organization**
 
 - Books belong to Shelves (many-to-many)
 - Books have Tags (many-to-many, max 10)
 - Books can belong to a Series (many-to-one)
 - Shelves can be nested (self-referential)
 
-**Reading Experience**
+**Reading experience**
 
 - Books have Annotations (one-to-many)
 - Books have Notes (one-to-many)
 - Books have Bookmarks (one-to-many)
 - Users have ReadingProfiles (one-to-many)
 
-**Progress & Goals**
+**Progress and goals**
 
 - Books have ReadingSessions (one-to-many)
 - Users have ReadingGoals (one-to-many)
@@ -725,12 +725,12 @@ Many-to-many relationship between Book and Tag.
 - Users have SavedFilters (one-to-many)
 - Books reference FileStorageBackend (many-to-one)
 
-### Data Integrity Rules
+### Data integrity rules
 
-1. **Cascade Delete**: When User is deleted, all owned entities are deleted
+1. **Cascade delete**: When User is deleted, all owned entities are deleted
 2. **Nullify**: When Series is deleted, Book.series_id is set to null
 3. **Restrict**: Cannot delete Shelf/Tag while books are associated
-4. **Unique Constraints**:
+4. **Unique constraints**:
    - User email must be unique
    - Tag name unique per user
    - Shelf name unique within parent
