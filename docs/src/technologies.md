@@ -217,7 +217,7 @@ server/
 | POST | /api/v1/sync | Sync changes |
 | GET | /api/v1/sync/status | Sync status |
 
-Full API specification: [`/design/api/swagger.yaml`](../design/api/swagger.yaml)
+Full API specification: [API](api/index.md)
 
 ---
 

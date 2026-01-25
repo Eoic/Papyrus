@@ -139,7 +139,7 @@ The Papyrus Server exposes a RESTful API:
 | **Storage** | `/api/v1/storage/*` | Backend configuration |
 | **Files** | `/api/v1/files/*` | File upload/download (when server is file backend) |
 
-Full API specification: [`/design/api/swagger.yaml`](../design/api/swagger.yaml)
+Full API specification: [API](api/index.md)
 
 ### Self-hosting
 
@@ -668,4 +668,4 @@ Client ──▶ Local Storage Only
 - [Database Model](database-model.md) - Data schema
 - [Functional Requirements](requirements/functional-requirements.md) - FR-7.x (Storage & Sync)
 - [Non-Functional Requirements](requirements/non-functional-requirements.md) - NFR-2.x (Synchronization)
-- [API Specification](../design/api/swagger.yaml) - Full API documentation
+- [API](api/index.md) - Full API documentation

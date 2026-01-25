@@ -116,6 +116,9 @@ nav:
     - Technologies: technologies.md
     - User interface: user-interface.md
 
+  - API:
+    - Overview: api/index.md
+
   - Reference:
     - External resources: external/index.md
 

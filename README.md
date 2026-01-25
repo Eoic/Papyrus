@@ -145,26 +145,26 @@ mkdocs build
 
 Contributions are welcome! Please follow these steps:
 
-1. **Fork** the repository
-2. **Create** a feature branch:
+1. Fork the repository
+2. Create a feature branch:
 
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
-3. **Commit** your changes:
+3. Commit your changes:
 
    ```bash
    git commit -m "Add: description of your changes"
    ```
 
-4. **Push** to your branch:
+4. Push to your branch:
 
    ```bash
    git push origin feature/your-feature-name
    ```
 
-5. **Open** a pull request
+5. Open a pull request
 
 Please ensure your code follows the existing style and includes appropriate tests.
 
@@ -173,9 +173,9 @@ Please ensure your code follows the existing style and includes appropriate test
 | Resource | Description |
 |----------|-------------|
 | [Documentation](https://karolis-1.gitbook.io/papyrus-project/) | Full project specification |
-| [API Specification](design/api/swagger.yaml) | OpenAPI/Swagger definition |
-| [Figma Prototype](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus) | UI/UX design |
-| [Trello Board](https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus) | Project management |
+| [API specification](docs/src/api/openapi.yaml) | OpenAPI/Swagger definition |
+| [Figma prototype](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus) | UI/UX design |
+| [Trello board](https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus) | Project management |
 
 ## License
 

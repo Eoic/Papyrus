@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Papyrus API Documentation</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        :root {
+            --primary-color: #673ab7;
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --sidebar-bg: #fafafa;
+            --right-panel-bg: #263238;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --sidebar-bg: #252525;
+            --right-panel-bg: #1e1e1e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .toolbar-title {
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-title a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .back-link {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .redoc-container {
+            padding-top: 48px;
+        }
+
+        /* Dark mode overrides for Redoc */
+        [data-theme="dark"] .api-content {
+            background-color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <div class="toolbar-title">
+            <span>📚</span>
+            <a href="./">Papyrus API</a>
+        </div>
+        <div class="toolbar-actions">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+                <span class="material-icons" style="font-size: 18px;">dark_mode</span>
+                <span id="theme-label">Dark</span>
+            </button>
+            <a href="./" class="back-link">
+                <span class="material-icons" style="font-size: 18px;">arrow_back</span>
+                Back to Docs
+            </a>
+        </div>
+    </div>
+
+    <div class="redoc-container" id="redoc-container"></div>
+
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <script>
+        const lightTheme = {
+            colors: {
+                primary: { main: '#673ab7' },
+                text: { primary: '#333333' },
+                http: {
+                    get: '#4caf50',
+                    post: '#2196f3',
+                    put: '#ff9800',
+                    delete: '#f44336',
+                    patch: '#9c27b0'
+                }
+            },
+            typography: {
+                fontFamily: 'Inter, sans-serif',
+                headings: { fontFamily: 'Inter, sans-serif' },
+                code: { fontFamily: 'JetBrains Mono, monospace' }
+            },
+            sidebar: {
+                backgroundColor: '#fafafa',
+                textColor: '#333333'
+            },
+            rightPanel: {
+                backgroundColor: '#263238'
+            }
+        };
+
+        const darkTheme = {
+            colors: {
+                primary: { main: '#9575cd' },
+                text: { primary: '#e0e0e0' },
+                http: {
+                    get: '#66bb6a',
+                    post: '#42a5f5',
+                    put: '#ffb74d',
+                    delete: '#ef5350',
+                    patch: '#ab47bc'
+                }
+            },
+            typography: {
+                fontFamily: 'Inter, sans-serif',
+                headings: { fontFamily: 'Inter, sans-serif' },
+                code: { fontFamily: 'JetBrains Mono, monospace' }
+            },
+            sidebar: {
+                backgroundColor: '#252525',
+                textColor: '#e0e0e0'
+            },
+            rightPanel: {
+                backgroundColor: '#1e1e1e'
+            }
+        };
+
+        function getPreferredTheme() {
+            const saved = localStorage.getItem('redoc-theme');
+            if (saved) return saved;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function renderRedoc(theme) {
+            const container = document.getElementById('redoc-container');
+            container.innerHTML = '';
+            Redoc.init('./openapi.yaml', {
+                theme: theme === 'dark' ? darkTheme : lightTheme,
+                hideDownloadButton: false,
+                expandResponses: '200,201',
+                pathInMiddlePanel: true,
+                scrollYOffset: 48
+            }, container);
+        }
+
+        function updateThemeUI(theme) {
+            document.body.setAttribute('data-theme', theme);
+            const label = document.getElementById('theme-label');
+            const icon = document.querySelector('.theme-toggle .material-icons');
+            if (theme === 'dark') {
+                label.textContent = 'Light';
+                icon.textContent = 'light_mode';
+            } else {
+                label.textContent = 'Dark';
+                icon.textContent = 'dark_mode';
+            }
+        }
+
+        function toggleTheme() {
+            const current = document.body.getAttribute('data-theme') || 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('redoc-theme', next);
+            updateThemeUI(next);
+            renderRedoc(next);
+        }
+
+        // Initialize
+        const initialTheme = getPreferredTheme();
+        updateThemeUI(initialTheme);
+        renderRedoc(initialTheme);
+    </script>
+</body>
+
+</html>

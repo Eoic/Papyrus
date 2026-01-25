@@ -43,3 +43,67 @@
 .md-header {
   background-color: var(--md-primary-fg-color);
 }
+
+/* Swagger UI styling for Material theme integration */
+.swagger-ui-wrap {
+  margin: 1rem 0;
+}
+
+.swagger-ui .topbar {
+  display: none;
+}
+
+.swagger-ui .info {
+  margin: 20px 0;
+}
+
+.swagger-ui .info .title {
+  font-family: var(--md-text-font-family);
+  color: var(--md-typeset-color);
+}
+
+.swagger-ui .info .description p {
+  font-family: var(--md-text-font-family);
+  color: var(--md-typeset-color);
+}
+
+.swagger-ui .opblock-tag {
+  font-family: var(--md-text-font-family);
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.swagger-ui .opblock .opblock-summary-operation-id,
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-description {
+  font-family: var(--md-text-font-family);
+}
+
+.swagger-ui .btn {
+  font-family: var(--md-text-font-family);
+}
+
+.swagger-ui select,
+.swagger-ui input[type="text"],
+.swagger-ui textarea {
+  font-family: var(--md-code-font-family);
+}
+
+.swagger-ui .model-title {
+  font-family: var(--md-text-font-family);
+}
+
+.swagger-ui table thead tr th,
+.swagger-ui table tbody tr td {
+  font-family: var(--md-text-font-family);
+  font-size: 0.8rem;
+}
+
+/* Dark mode support for Swagger UI */
+[data-md-color-scheme="slate"] .swagger-ui {
+  filter: invert(88%) hue-rotate(180deg);
+}
+
+[data-md-color-scheme="slate"] .swagger-ui .highlight-code,
+[data-md-color-scheme="slate"] .swagger-ui pre {
+  filter: invert(100%) hue-rotate(180deg);
+}
