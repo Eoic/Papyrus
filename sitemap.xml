@@ -2,58 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://papyrus.example.com/docs/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/SUMMARY/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/actors/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/database-model/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/entities/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/market-analysis/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/server-architecture/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/technologies/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/use-cases/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/user-interface/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/external/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/requirements/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/requirements/functional-requirements/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
     <url>
          <loc>https://papyrus.example.com/docs/requirements/non-functional-requirements/</loc>
-         <lastmod>2026-01-24</lastmod>
+         <lastmod>2026-01-25</lastmod>
     </url>
 </urlset>
