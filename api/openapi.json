@@ -1,0 +1,7006 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Papyrus Server API",
+    "version": "1.0.0",
+    "description": "REST API for Papyrus - a cross-platform book management application.\n\n## Overview\n\nThe Papyrus Server handles metadata storage and synchronization for the Papyrus\ne-book reader application. It provides endpoints for:\n\n- **Authentication**: User registration, login, OAuth, and session management\n- **Books**: CRUD operations for book metadata and file references\n- **Organization**: Shelves, tags, and series management\n- **Annotations**: Highlights, notes, and bookmarks\n- **Progress**: Reading sessions and statistics\n- **Goals**: Reading goal tracking\n- **Sync**: Cross-device synchronization\n- **Storage**: File storage backend configuration\n- **Files**: File upload/download (when server is file backend)\n\n## Authentication\n\nMost endpoints require authentication via JWT Bearer token. Obtain tokens\nthrough the `/auth/login` or `/auth/oauth/google` endpoints.\n\n```\nAuthorization: Bearer <access_token>\n```\n\nAccess tokens expire after 1 hour. Use the refresh token to obtain new\naccess tokens via `/auth/refresh`.\n\n## Rate Limiting\n\n- Authentication endpoints: 5 requests per minute\n- General API: 100 requests per minute\n- File uploads: 10 requests per minute\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Human-readable error message\",\n    \"details\": { ... }\n  }\n}\n```\n",
+    "contact": {
+      "name": "Papyrus Support",
+      "url": "https://github.com/Eoic/Papyrus"
+    },
+    "license": {
+      "name": "AGPL-3.0",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.papyrus.app/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.papyrus.app/v1",
+      "description": "Staging server"
+    },
+    {
+      "url": "http://localhost:8080/v1",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication and session management"
+    },
+    {
+      "name": "Users",
+      "description": "User profile and preferences"
+    },
+    {
+      "name": "Books",
+      "description": "Book metadata and file management"
+    },
+    {
+      "name": "Shelves",
+      "description": "Book collection organization"
+    },
+    {
+      "name": "Tags",
+      "description": "Color-coded book labels"
+    },
+    {
+      "name": "Series",
+      "description": "Book series grouping"
+    },
+    {
+      "name": "Annotations",
+      "description": "Text highlights with notes"
+    },
+    {
+      "name": "Notes",
+      "description": "Free-form book notes"
+    },
+    {
+      "name": "Bookmarks",
+      "description": "Saved reading positions"
+    },
+    {
+      "name": "Progress",
+      "description": "Reading sessions and statistics"
+    },
+    {
+      "name": "Goals",
+      "description": "Reading goal management"
+    },
+    {
+      "name": "Sync",
+      "description": "Cross-device synchronization"
+    },
+    {
+      "name": "Storage",
+      "description": "File storage backend configuration"
+    },
+    {
+      "name": "Files",
+      "description": "File upload and download"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register a new user account",
+        "description": "Creates a new user account with email and password.\nA verification email is sent to the provided address.\nThe account remains inactive until email is verified.\n",
+        "operationId": "registerUser",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "description": "Email already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login with email and password",
+        "description": "Authenticates a user with email and password credentials.\nReturns access and refresh tokens on success.\n",
+        "operationId": "loginUser",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account not verified or disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/auth/oauth/google": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login or register with Google OAuth",
+        "description": "Authenticates a user via Google OAuth 2.0.\nCreates a new account if the Google email is not registered.\nLinks Google account if email matches existing account.\n",
+        "operationId": "googleOAuth",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleOAuthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "description": "Invalid OAuth token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token",
+        "description": "Exchanges a valid refresh token for a new access token.\nThe refresh token is rotated for security.\n",
+        "operationId": "refreshToken",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout and invalidate tokens",
+        "description": "Invalidates the current session and all associated tokens.\nOptionally invalidates all sessions for the user.\n",
+        "operationId": "logoutUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "all_devices": {
+                    "type": "boolean",
+                    "description": "Logout from all devices",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Logout successful"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verify email address",
+        "description": "Verifies the user's email address using the token sent via email.\nActivates the account on successful verification.\n",
+        "operationId": "verifyEmail",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Email verification token"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Email verified successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resend verification email",
+        "description": "Sends a new verification email to the user's registered address.",
+        "operationId": "resendVerification",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification email sent (if account exists)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "If the email is registered, a verification link has been sent"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Request password reset",
+        "description": "Sends a password reset link to the user's email.\nFor security, always returns success even if email doesn't exist.\n",
+        "operationId": "forgotPassword",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset email sent (if account exists)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "If the email is registered, a reset link has been sent"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Reset password with token",
+        "description": "Resets the user's password using the token from the reset email.\nInvalidates all existing sessions after password change.\n",
+        "operationId": "resetPassword",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "password"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Password reset token"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8,
+                    "description": "New password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Password has been reset successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token, or weak password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get current user profile",
+        "description": "Returns the authenticated user's profile information.",
+        "operationId": "getCurrentUser",
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update current user profile",
+        "description": "Updates the authenticated user's profile information.",
+        "operationId": "updateCurrentUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete current user account",
+        "description": "Permanently deletes the user account and all associated data.\nRequires password confirmation for security.\nData is scheduled for deletion within 30 days.\n",
+        "operationId": "deleteCurrentUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "Current password for confirmation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Account scheduled for deletion"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Invalid password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/preferences": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user preferences",
+        "description": "Returns the user's application preferences.",
+        "operationId": "getUserPreferences",
+        "responses": {
+          "200": {
+            "description": "User preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user preferences",
+        "description": "Updates the user's application preferences.",
+        "operationId": "updateUserPreferences",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferences"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preferences updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/users/me/change-password": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Change password",
+        "description": "Changes the user's password. Requires current password verification.",
+        "operationId": "changePassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_password",
+                  "new_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Password changed successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Weak password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Current password incorrect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "List user's books",
+        "description": "Returns a paginated list of books in the user's library.\nSupports filtering, sorting, and search.\n",
+        "operationId": "listBooks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/SortParam"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ReadingStatus"
+            },
+            "description": "Filter by reading status"
+          },
+          {
+            "name": "shelf_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by shelf"
+          },
+          {
+            "name": "tag_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by tag"
+          },
+          {
+            "name": "series_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by series"
+          },
+          {
+            "name": "is_physical",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by physical/digital"
+          },
+          {
+            "name": "is_favorite",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter favorites only"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in title, author, description"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Advanced query language filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of books",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Create a new book",
+        "description": "Adds a new book to the user's library.\nFor digital books, use the file upload endpoint first.\n",
+        "operationId": "createBook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Book created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Get book details",
+        "description": "Returns detailed information about a specific book.",
+        "operationId": "getBook",
+        "responses": {
+          "200": {
+            "description": "Book details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Update book metadata",
+        "description": "Updates book metadata fields.",
+        "operationId": "updateBook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Book updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Delete a book",
+        "description": "Removes a book from the library.\nOptionally deletes the associated file from storage.\n",
+        "operationId": "deleteBook",
+        "parameters": [
+          {
+            "name": "delete_file",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Also delete the book file from storage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Book deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/cover": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Get book cover image",
+        "description": "Returns the book's cover image.",
+        "operationId": "getBookCover",
+        "responses": {
+          "200": {
+            "description": "Cover image",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect to cover URL"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Upload book cover image",
+        "description": "Uploads or replaces the book's cover image.",
+        "operationId": "uploadBookCover",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to fetch cover from"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cover uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/shelves": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Get book's shelves",
+        "description": "Returns the shelves this book belongs to.",
+        "operationId": "getBookShelves",
+        "responses": {
+          "200": {
+            "description": "List of shelves",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "shelves": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Shelf"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Set book's shelves",
+        "description": "Replaces all shelf assignments for this book.",
+        "operationId": "setBookShelves",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "shelf_ids"
+                ],
+                "properties": {
+                  "shelf_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shelves updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "shelves": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Shelf"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/tags": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Get book's tags",
+        "description": "Returns the tags assigned to this book.",
+        "operationId": "getBookTags",
+        "responses": {
+          "200": {
+            "description": "List of tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Set book's tags",
+        "description": "Replaces all tag assignments for this book.\nMaximum 10 tags per book.\n",
+        "operationId": "setBookTags",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "tag_ids"
+                ],
+                "properties": {
+                  "tag_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "maxItems": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Tag"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/progress": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Get reading progress",
+        "description": "Returns the current reading progress for a book.",
+        "operationId": "getBookProgress",
+        "responses": {
+          "200": {
+            "description": "Reading progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProgress"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Update reading progress",
+        "description": "Updates the reading position and status for a book.",
+        "operationId": "updateBookProgress",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProgressRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Progress updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProgress"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/books/metadata/fetch": {
+      "post": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Fetch metadata from online sources",
+        "description": "Searches online sources (Open Library, Google Books) for book metadata.\nReturns multiple matches for user selection.\n",
+        "operationId": "fetchBookMetadata",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isbn": {
+                    "type": "string",
+                    "description": "ISBN-10 or ISBN-13"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "author": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Metadata search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MetadataSearchResult"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/shelves": {
+      "get": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "List all shelves",
+        "description": "Returns all shelves for the user, including nested structure.",
+        "operationId": "listShelves",
+        "parameters": [
+          {
+            "name": "include_books",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include book counts"
+          },
+          {
+            "name": "flat",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Return flat list instead of tree"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shelves",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShelfList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "Create a new shelf",
+        "description": "Creates a new shelf or sub-shelf.",
+        "operationId": "createShelf",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShelfRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Shelf created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shelf"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "description": "Shelf name already exists at this level",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shelves/{shelf_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ShelfIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "Get shelf details",
+        "description": "Returns detailed information about a shelf.",
+        "operationId": "getShelf",
+        "responses": {
+          "200": {
+            "description": "Shelf details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shelf"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "Update shelf",
+        "description": "Updates shelf properties.",
+        "operationId": "updateShelf",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShelfRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shelf updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shelf"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "Delete shelf",
+        "description": "Deletes a shelf. Books in the shelf are not deleted.\nCannot delete default shelves.\n",
+        "operationId": "deleteShelf",
+        "responses": {
+          "204": {
+            "description": "Shelf deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Cannot delete default shelf",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/shelves/{shelf_id}/books": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ShelfIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "List books in shelf",
+        "description": "Returns books in this shelf with pagination.",
+        "operationId": "listShelfBooks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/SortParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of books",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "Add books to shelf",
+        "description": "Adds one or more books to the shelf.",
+        "operationId": "addBooksToShelf",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "book_ids"
+                ],
+                "properties": {
+                  "book_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Books added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "added_count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Shelves"
+        ],
+        "summary": "Remove books from shelf",
+        "description": "Removes one or more books from the shelf.",
+        "operationId": "removeBooksFromShelf",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "book_ids"
+                ],
+                "properties": {
+                  "book_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Books removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "removed_count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "List all tags",
+        "description": "Returns all tags for the user.",
+        "operationId": "listTags",
+        "parameters": [
+          {
+            "name": "include_counts",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include book counts for each tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "Create a new tag",
+        "description": "Creates a new tag with name and color.",
+        "operationId": "createTag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "description": "Tag name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags/{tag_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TagIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "Get tag details",
+        "description": "Returns detailed information about a tag.",
+        "operationId": "getTag",
+        "responses": {
+          "200": {
+            "description": "Tag details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "Update tag",
+        "description": "Updates tag name or color.",
+        "operationId": "updateTag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "Delete tag",
+        "description": "Deletes a tag and removes it from all books.",
+        "operationId": "deleteTag",
+        "responses": {
+          "204": {
+            "description": "Tag deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/tags/{tag_id}/books": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TagIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "List books with tag",
+        "description": "Returns books that have this tag.",
+        "operationId": "listTagBooks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of books",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/series": {
+      "get": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "List all series",
+        "description": "Returns all series for the user.",
+        "operationId": "listSeries",
+        "parameters": [
+          {
+            "name": "include_books",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include book counts"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Create a new series",
+        "description": "Creates a new series.",
+        "operationId": "createSeries",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSeriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Series created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Series"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "description": "Series name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/SeriesIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Get series details",
+        "description": "Returns detailed information about a series including its books.",
+        "operationId": "getSeries",
+        "responses": {
+          "200": {
+            "description": "Series details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesWithBooks"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Update series",
+        "description": "Updates series information.",
+        "operationId": "updateSeries",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSeriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Series updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Series"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Delete series",
+        "description": "Deletes a series. Books in the series are not deleted.",
+        "operationId": "deleteSeries",
+        "responses": {
+          "204": {
+            "description": "Series deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/annotations": {
+      "get": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "List all annotations",
+        "description": "Returns all annotations across all books.",
+        "operationId": "listAnnotations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "book_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by book"
+          },
+          {
+            "name": "color",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by highlight color"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in highlighted text and notes"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of annotations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/annotations": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "List book annotations",
+        "description": "Returns all annotations for a specific book.",
+        "operationId": "listBookAnnotations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of annotations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Create annotation",
+        "description": "Creates a new text highlight annotation.",
+        "operationId": "createAnnotation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnnotationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Annotation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Annotation"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/annotations/{annotation_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/AnnotationIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Get annotation details",
+        "description": "Returns detailed information about an annotation.",
+        "operationId": "getAnnotation",
+        "responses": {
+          "200": {
+            "description": "Annotation details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Annotation"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Update annotation",
+        "description": "Updates annotation color or note.",
+        "operationId": "updateAnnotation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAnnotationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Annotation updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Annotation"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Delete annotation",
+        "description": "Deletes an annotation.",
+        "operationId": "deleteAnnotation",
+        "responses": {
+          "204": {
+            "description": "Annotation deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/annotations/export": {
+      "post": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Export annotations",
+        "description": "Exports annotations to a file format.",
+        "operationId": "exportAnnotations",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "format"
+                ],
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "markdown",
+                      "txt",
+                      "pdf",
+                      "html",
+                      "json"
+                    ]
+                  },
+                  "book_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "description": "Specific books to export (all if empty)"
+                  },
+                  "include_context": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include surrounding text context"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Export file",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/notes": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List all notes",
+        "description": "Returns all notes across all books.",
+        "operationId": "listNotes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "book_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by book"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in note title and content"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/notes": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List book notes",
+        "description": "Returns all notes for a specific book.",
+        "operationId": "listBookNotes",
+        "responses": {
+          "200": {
+            "description": "List of notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create note",
+        "description": "Creates a new free-form note for a book.",
+        "operationId": "createNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/notes/{note_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/NoteIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Get note details",
+        "description": "Returns detailed information about a note.",
+        "operationId": "getNote",
+        "responses": {
+          "200": {
+            "description": "Note details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Update note",
+        "description": "Updates note title or content.",
+        "operationId": "updateNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete note",
+        "description": "Deletes a note.",
+        "operationId": "deleteNote",
+        "responses": {
+          "204": {
+            "description": "Note deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/books/{book_id}/bookmarks": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "List book bookmarks",
+        "description": "Returns all bookmarks for a specific book.",
+        "operationId": "listBookBookmarks",
+        "responses": {
+          "200": {
+            "description": "List of bookmarks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookmarkList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Create bookmark",
+        "description": "Creates a new bookmark at a specific position.",
+        "operationId": "createBookmark",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookmarkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bookmark created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bookmark"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/bookmarks/{bookmark_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookmarkIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Get bookmark details",
+        "description": "Returns detailed information about a bookmark.",
+        "operationId": "getBookmark",
+        "responses": {
+          "200": {
+            "description": "Bookmark details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bookmark"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Update bookmark",
+        "description": "Updates bookmark note or color.",
+        "operationId": "updateBookmark",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookmarkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bookmark updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bookmark"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Bookmarks"
+        ],
+        "summary": "Delete bookmark",
+        "description": "Deletes a bookmark.",
+        "operationId": "deleteBookmark",
+        "responses": {
+          "204": {
+            "description": "Bookmark deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/progress/sessions": {
+      "get": {
+        "tags": [
+          "Progress"
+        ],
+        "summary": "List reading sessions",
+        "description": "Returns reading session history.",
+        "operationId": "listReadingSessions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "book_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by book"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter sessions after this date"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter sessions before this date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of reading sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingSessionList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Progress"
+        ],
+        "summary": "Record reading session",
+        "description": "Records a completed reading session.",
+        "operationId": "createReadingSession",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReadingSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingSession"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/progress/sessions/{session_id}": {
+      "parameters": [
+        {
+          "name": "session_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Progress"
+        ],
+        "summary": "Get session details",
+        "description": "Returns detailed information about a reading session.",
+        "operationId": "getReadingSession",
+        "responses": {
+          "200": {
+            "description": "Session details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingSession"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Progress"
+        ],
+        "summary": "Delete session",
+        "description": "Deletes a reading session record.",
+        "operationId": "deleteReadingSession",
+        "responses": {
+          "204": {
+            "description": "Session deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/progress/statistics": {
+      "get": {
+        "tags": [
+          "Progress"
+        ],
+        "summary": "Get reading statistics",
+        "description": "Returns aggregated reading statistics.",
+        "operationId": "getReadingStatistics",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "today",
+                "week",
+                "month",
+                "year",
+                "all",
+                "custom"
+              ],
+              "default": "month"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Start date for custom period"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "End date for custom period"
+          },
+          {
+            "name": "book_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Statistics for specific book"
+          },
+          {
+            "name": "shelf_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Statistics for books in shelf"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reading statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingStatistics"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/goals": {
+      "get": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "List reading goals",
+        "description": "Returns all reading goals for the user.",
+        "operationId": "listGoals",
+        "parameters": [
+          {
+            "name": "is_active",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by active status"
+          },
+          {
+            "name": "is_completed",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by completion status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of goals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "Create reading goal",
+        "description": "Creates a new reading goal.",
+        "operationId": "createGoal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Goal created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/goals/{goal_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/GoalIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "Get goal details",
+        "description": "Returns detailed information about a goal.",
+        "operationId": "getGoal",
+        "responses": {
+          "200": {
+            "description": "Goal details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "Update goal",
+        "description": "Updates goal properties.",
+        "operationId": "updateGoal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Goal updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "Delete goal",
+        "description": "Deletes a reading goal.",
+        "operationId": "deleteGoal",
+        "responses": {
+          "204": {
+            "description": "Goal deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/goals/{goal_id}/progress": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/GoalIdParam"
+        }
+      ],
+      "put": {
+        "tags": [
+          "Goals"
+        ],
+        "summary": "Update goal progress",
+        "description": "Manually updates the current progress value.",
+        "operationId": "updateGoalProgress",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_value"
+                ],
+                "properties": {
+                  "current_value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "Optional note for this update"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Progress updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/sync/changes": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Get changes since timestamp",
+        "description": "Returns all changes since the specified timestamp.\nUsed for incremental synchronization.\n",
+        "operationId": "getChanges",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Timestamp to get changes since"
+          },
+          {
+            "name": "entity_types",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "book",
+                  "shelf",
+                  "tag",
+                  "series",
+                  "annotation",
+                  "note",
+                  "bookmark",
+                  "reading_session",
+                  "reading_goal",
+                  "reading_profile"
+                ]
+              }
+            },
+            "description": "Filter by entity types"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncChanges"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Push local changes",
+        "description": "Pushes local changes to the server.\nHandles conflict resolution automatically.\n",
+        "operationId": "pushChanges",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncPushRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Changes applied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPushResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "409": {
+            "description": "Conflict detected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncConflictResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sync/status": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Get sync status",
+        "description": "Returns the current synchronization status.",
+        "operationId": "getSyncStatus",
+        "responses": {
+          "200": {
+            "description": "Sync status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/storage/backends": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "List storage backends",
+        "description": "Returns all configured file storage backends.",
+        "operationId": "listStorageBackends",
+        "responses": {
+          "200": {
+            "description": "List of storage backends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageBackendList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Add storage backend",
+        "description": "Configures a new file storage backend.",
+        "operationId": "createStorageBackend",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStorageBackendRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Backend configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageBackend"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/storage/backends/{backend_id}": {
+      "parameters": [
+        {
+          "name": "backend_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Get storage backend details",
+        "description": "Returns information about a storage backend.",
+        "operationId": "getStorageBackend",
+        "responses": {
+          "200": {
+            "description": "Backend details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageBackend"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Update storage backend",
+        "description": "Updates storage backend configuration.",
+        "operationId": "updateStorageBackend",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStorageBackendRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Backend updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageBackend"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Remove storage backend",
+        "description": "Removes a storage backend configuration.\nDoes not delete files from the backend.\n",
+        "operationId": "deleteStorageBackend",
+        "responses": {
+          "204": {
+            "description": "Backend removed"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/storage/backends/{backend_id}/test": {
+      "parameters": [
+        {
+          "name": "backend_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Test storage backend connection",
+        "description": "Tests connectivity to the storage backend.",
+        "operationId": "testStorageBackend",
+        "responses": {
+          "200": {
+            "description": "Connection test result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "storage_info": {
+                      "type": "object",
+                      "properties": {
+                        "used_bytes": {
+                          "type": "integer",
+                          "format": "int64"
+                        },
+                        "quota_bytes": {
+                          "type": "integer",
+                          "format": "int64"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/storage/backends/{backend_id}/set-primary": {
+      "parameters": [
+        {
+          "name": "backend_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "summary": "Set as primary backend",
+        "description": "Sets this backend as the primary for new uploads.",
+        "operationId": "setPrimaryBackend",
+        "responses": {
+          "200": {
+            "description": "Primary backend set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageBackend"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload a book file",
+        "description": "Uploads a book file to the primary storage backend.\nReturns file metadata after successful upload.\n",
+        "operationId": "uploadFile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Book file (EPUB, PDF, MOBI, etc.)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileInfo"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "413": {
+            "description": "File too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported file format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{book_id}/file": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/BookIdParam"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Get book file download URL",
+        "description": "Returns a signed URL to download the book file.\nURL is valid for a limited time.\n",
+        "operationId": "getBookFileUrl",
+        "responses": {
+          "200": {
+            "description": "Download URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "download_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "expires_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Delete book file",
+        "description": "Deletes the book file from storage.",
+        "operationId": "deleteBookFile",
+        "responses": {
+          "204": {
+            "description": "File deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/reading-profiles": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List reading profiles",
+        "description": "Returns all reading profiles for the user.",
+        "operationId": "listReadingProfiles",
+        "responses": {
+          "200": {
+            "description": "List of reading profiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProfileList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create reading profile",
+        "description": "Creates a new reading profile with viewer settings.",
+        "operationId": "createReadingProfile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReadingProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Profile created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/reading-profiles/{profile_id}": {
+      "parameters": [
+        {
+          "name": "profile_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get reading profile",
+        "description": "Returns a specific reading profile.",
+        "operationId": "getReadingProfile",
+        "responses": {
+          "200": {
+            "description": "Reading profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update reading profile",
+        "description": "Updates reading profile settings.",
+        "operationId": "updateReadingProfile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReadingProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete reading profile",
+        "description": "Deletes a reading profile. Cannot delete the default profile.",
+        "operationId": "deleteReadingProfile",
+        "responses": {
+          "204": {
+            "description": "Profile deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Cannot delete default profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/reading-profiles/{profile_id}/set-default": {
+      "parameters": [
+        {
+          "name": "profile_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Set default reading profile",
+        "description": "Sets this profile as the default for new books.",
+        "operationId": "setDefaultReadingProfile",
+        "responses": {
+          "200": {
+            "description": "Default profile set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/saved-filters": {
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "List saved filters",
+        "description": "Returns all saved search/filter queries.",
+        "operationId": "listSavedFilters",
+        "responses": {
+          "200": {
+            "description": "List of saved filters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedFilterList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Create saved filter",
+        "description": "Saves a search/filter query for reuse.",
+        "operationId": "createSavedFilter",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavedFilterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Filter saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedFilter"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/saved-filters/{filter_id}": {
+      "parameters": [
+        {
+          "name": "filter_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Get saved filter",
+        "description": "Returns a specific saved filter.",
+        "operationId": "getSavedFilter",
+        "responses": {
+          "200": {
+            "description": "Saved filter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedFilter"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Update saved filter",
+        "description": "Updates a saved filter.",
+        "operationId": "updateSavedFilter",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSavedFilterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Filter updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedFilter"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Delete saved filter",
+        "description": "Deletes a saved filter.",
+        "operationId": "deleteSavedFilter",
+        "responses": {
+          "204": {
+            "description": "Filter deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/export/library": {
+      "post": {
+        "tags": [
+          "Books"
+        ],
+        "summary": "Export library data",
+        "description": "Exports library data in structured format.",
+        "operationId": "exportLibrary",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "format"
+                ],
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "csv",
+                      "opml"
+                    ]
+                  },
+                  "include_books": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "include_annotations": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "include_notes": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "include_progress": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "shelf_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "description": "Export only specific shelves"
+                  },
+                  "tag_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "description": "Export only books with these tags"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Export file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/export/books": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Export book files",
+        "description": "Exports book files as a ZIP archive.\nOnly includes files stored on the server.\n",
+        "operationId": "exportBooks",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "book_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "description": "Specific books to export (all if empty)"
+                  },
+                  "include_metadata": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include metadata JSON files"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ZIP archive",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token"
+      }
+    },
+    "parameters": {
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "description": "Page number"
+      },
+      "LimitParam": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        },
+        "description": "Items per page"
+      },
+      "SortParam": {
+        "name": "sort",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "default": "-added_at"
+        },
+        "description": "Sort field with optional direction prefix.\nPrefix with `-` for descending order.\nExamples: `title`, `-added_at`, `author`\n"
+      },
+      "BookIdParam": {
+        "name": "book_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Book ID"
+      },
+      "ShelfIdParam": {
+        "name": "shelf_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Shelf ID"
+      },
+      "TagIdParam": {
+        "name": "tag_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Tag ID"
+      },
+      "SeriesIdParam": {
+        "name": "series_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Series ID"
+      },
+      "AnnotationIdParam": {
+        "name": "annotation_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Annotation ID"
+      },
+      "NoteIdParam": {
+        "name": "note_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Note ID"
+      },
+      "BookmarkIdParam": {
+        "name": "bookmark_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Bookmark ID"
+      },
+      "GoalIdParam": {
+        "name": "goal_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Goal ID"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Too many requests",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": {
+                "code": "RATE_LIMIT_EXCEEDED",
+                "message": "Too many requests. Please try again later.",
+                "details": {
+                  "retry_after": 60
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code",
+                "example": "VALIDATION_ERROR"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Additional error details"
+              }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "example": 150
+          },
+          "total_pages": {
+            "type": "integer",
+            "example": 8
+          },
+          "has_next": {
+            "type": "boolean",
+            "example": true
+          },
+          "has_prev": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "display_name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 8,
+            "description": "Must contain uppercase, lowercase, and number"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "example": "John Doe"
+          }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "message": {
+            "type": "string",
+            "example": "Account created. Please verify your email."
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "format": "password"
+          }
+        }
+      },
+      "GoogleOAuthRequest": {
+        "type": "object",
+        "required": [
+          "id_token"
+        ],
+        "properties": {
+          "id_token": {
+            "type": "string",
+            "description": "Google OAuth ID token"
+          }
+        }
+      },
+      "RefreshTokenRequest": {
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "description": "Refresh token from login"
+          }
+        }
+      },
+      "AuthTokens": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Refresh token for obtaining new access tokens"
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token expiry in seconds",
+            "example": 3600
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "is_anonymous": {
+            "type": "boolean"
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_login_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "avatar_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "UserPreferences": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "User application preferences (flexible structure)",
+        "example": {
+          "theme": "dark",
+          "notifications_enabled": true,
+          "default_shelf": "Currently Reading",
+          "sync_wifi_only": false
+        }
+      },
+      "ReadingStatus": {
+        "type": "string",
+        "enum": [
+          "not_started",
+          "in_progress",
+          "completed",
+          "paused",
+          "abandoned"
+        ]
+      },
+      "Book": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "co_authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isbn": {
+            "type": "string"
+          },
+          "isbn13": {
+            "type": "string"
+          },
+          "publication_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "example": "en"
+          },
+          "page_count": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "series_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "series_name": {
+            "type": "string"
+          },
+          "series_number": {
+            "type": "number"
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "file_format": {
+            "type": "string",
+            "enum": [
+              "epub",
+              "pdf",
+              "mobi",
+              "azw3",
+              "txt",
+              "cbr",
+              "cbz"
+            ]
+          },
+          "file_size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "file_hash": {
+            "type": "string"
+          },
+          "storage_backend_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_physical": {
+            "type": "boolean"
+          },
+          "physical_location": {
+            "type": "string"
+          },
+          "lent_to": {
+            "type": "string"
+          },
+          "lent_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_favorite": {
+            "type": "boolean"
+          },
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "reading_status": {
+            "$ref": "#/components/schemas/ReadingStatus"
+          },
+          "current_page": {
+            "type": "integer"
+          },
+          "current_position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "current_cfi": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_read_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "custom_metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "is_ocr_processed": {
+            "type": "boolean"
+          },
+          "ocr_confidence": {
+            "type": "number"
+          },
+          "shelves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShelfSummary"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          }
+        }
+      },
+      "BookSummary": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "reading_status": {
+            "$ref": "#/components/schemas/ReadingStatus"
+          },
+          "current_position": {
+            "type": "number"
+          },
+          "is_favorite": {
+            "type": "boolean"
+          },
+          "rating": {
+            "type": "integer"
+          }
+        }
+      },
+      "BookList": {
+        "type": "object",
+        "properties": {
+          "books": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Book"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "CreateBookRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "author"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "subtitle": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "author": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "co_authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isbn": {
+            "type": "string"
+          },
+          "isbn13": {
+            "type": "string"
+          },
+          "publication_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "default": "en"
+          },
+          "page_count": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "series_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "series_number": {
+            "type": "number"
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Path returned from file upload"
+          },
+          "file_format": {
+            "type": "string"
+          },
+          "file_size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "file_hash": {
+            "type": "string"
+          },
+          "storage_backend_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_physical": {
+            "type": "boolean",
+            "default": false
+          },
+          "physical_location": {
+            "type": "string"
+          },
+          "custom_metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "shelf_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "tag_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 10
+          }
+        }
+      },
+      "UpdateBookRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "co_authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isbn": {
+            "type": "string"
+          },
+          "isbn13": {
+            "type": "string"
+          },
+          "publication_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "page_count": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "series_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "series_number": {
+            "type": "number"
+          },
+          "is_physical": {
+            "type": "boolean"
+          },
+          "physical_location": {
+            "type": "string"
+          },
+          "lent_to": {
+            "type": "string"
+          },
+          "lent_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_favorite": {
+            "type": "boolean"
+          },
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "reading_status": {
+            "$ref": "#/components/schemas/ReadingStatus"
+          },
+          "custom_metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ReadingProgress": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reading_status": {
+            "$ref": "#/components/schemas/ReadingStatus"
+          },
+          "current_page": {
+            "type": "integer"
+          },
+          "current_position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "current_cfi": {
+            "type": "string"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_read_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total_reading_time_minutes": {
+            "type": "integer"
+          },
+          "sessions_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "UpdateProgressRequest": {
+        "type": "object",
+        "properties": {
+          "reading_status": {
+            "$ref": "#/components/schemas/ReadingStatus"
+          },
+          "current_page": {
+            "type": "integer"
+          },
+          "current_position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "current_cfi": {
+            "type": "string"
+          }
+        }
+      },
+      "MetadataSearchResult": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "open_library",
+              "google_books"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "isbn": {
+            "type": "string"
+          },
+          "isbn13": {
+            "type": "string"
+          },
+          "publication_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "page_count": {
+            "type": "integer"
+          },
+          "language": {
+            "type": "string"
+          }
+        }
+      },
+      "Shelf": {
+        "type": "object",
+        "properties": {
+          "shelf_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "is_smart": {
+            "type": "boolean"
+          },
+          "smart_query": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "integer"
+          },
+          "parent_shelf_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_count": {
+            "type": "integer"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shelf"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ShelfSummary": {
+        "type": "object",
+        "properties": {
+          "shelf_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      },
+      "ShelfList": {
+        "type": "object",
+        "properties": {
+          "shelves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shelf"
+            }
+          }
+        }
+      },
+      "CreateShelfRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "parent_shelf_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_smart": {
+            "type": "boolean",
+            "default": false
+          },
+          "smart_query": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "integer"
+          }
+        }
+      },
+      "UpdateShelfRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "parent_shelf_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_smart": {
+            "type": "boolean"
+          },
+          "smart_query": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "integer"
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "tag_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "usage_count": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TagList": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          }
+        }
+      },
+      "CreateTagRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "color"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateTagRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "Series": {
+        "type": "object",
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "total_books": {
+            "type": "integer"
+          },
+          "is_complete": {
+            "type": "boolean"
+          },
+          "book_count": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SeriesWithBooks": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Series"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "books": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BookSummary"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SeriesList": {
+        "type": "object",
+        "properties": {
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Series"
+            }
+          }
+        }
+      },
+      "CreateSeriesRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "total_books": {
+            "type": "integer"
+          },
+          "is_complete": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "UpdateSeriesRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "total_books": {
+            "type": "integer"
+          },
+          "is_complete": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Annotation": {
+        "type": "object",
+        "properties": {
+          "annotation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_title": {
+            "type": "string"
+          },
+          "selected_text": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "highlight_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "start_position": {
+            "type": "string"
+          },
+          "end_position": {
+            "type": "string"
+          },
+          "chapter_title": {
+            "type": "string"
+          },
+          "chapter_index": {
+            "type": "integer"
+          },
+          "page_number": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AnnotationList": {
+        "type": "object",
+        "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Annotation"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "CreateAnnotationRequest": {
+        "type": "object",
+        "required": [
+          "selected_text",
+          "highlight_color",
+          "start_position",
+          "end_position"
+        ],
+        "properties": {
+          "selected_text": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "highlight_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#FFEB3B"
+          },
+          "start_position": {
+            "type": "string",
+            "description": "CFI or offset"
+          },
+          "end_position": {
+            "type": "string"
+          },
+          "chapter_title": {
+            "type": "string"
+          },
+          "chapter_index": {
+            "type": "integer"
+          },
+          "page_number": {
+            "type": "integer"
+          }
+        }
+      },
+      "UpdateAnnotationRequest": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "highlight_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_title": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "is_pinned": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoteList": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "CreateNoteRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "content": {
+            "type": "string"
+          },
+          "is_pinned": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "UpdateNoteRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "content": {
+            "type": "string"
+          },
+          "is_pinned": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Bookmark": {
+        "type": "object",
+        "properties": {
+          "bookmark_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "string"
+          },
+          "page_number": {
+            "type": "integer"
+          },
+          "chapter_title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookmarkList": {
+        "type": "object",
+        "properties": {
+          "bookmarks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Bookmark"
+            }
+          }
+        }
+      },
+      "CreateBookmarkRequest": {
+        "type": "object",
+        "required": [
+          "position"
+        ],
+        "properties": {
+          "position": {
+            "type": "string",
+            "description": "CFI, page number, or offset"
+          },
+          "page_number": {
+            "type": "integer"
+          },
+          "chapter_title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#FF5722"
+          }
+        }
+      },
+      "UpdateBookmarkRequest": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          }
+        }
+      },
+      "ReadingSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "book_title": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start_position": {
+            "type": "number"
+          },
+          "end_position": {
+            "type": "number"
+          },
+          "pages_read": {
+            "type": "integer"
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReadingSessionList": {
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadingSession"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "CreateReadingSessionRequest": {
+        "type": "object",
+        "required": [
+          "book_id",
+          "start_time"
+        ],
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start_position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "end_position": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pages_read": {
+            "type": "integer"
+          },
+          "device_type": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          }
+        }
+      },
+      "ReadingStatistics": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "object",
+            "properties": {
+              "start_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "end_date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "reading_time_minutes": {
+                "type": "integer"
+              },
+              "pages_read": {
+                "type": "integer"
+              },
+              "books_completed": {
+                "type": "integer"
+              },
+              "sessions_count": {
+                "type": "integer"
+              },
+              "average_session_minutes": {
+                "type": "number"
+              },
+              "reading_days": {
+                "type": "integer"
+              },
+              "current_streak": {
+                "type": "integer"
+              },
+              "longest_streak": {
+                "type": "integer"
+              }
+            }
+          },
+          "daily_breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "reading_time_minutes": {
+                  "type": "integer"
+                },
+                "pages_read": {
+                  "type": "integer"
+                },
+                "sessions_count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "books_breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "book_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "reading_time_minutes": {
+                  "type": "integer"
+                },
+                "pages_read": {
+                  "type": "integer"
+                },
+                "sessions_count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GoalType": {
+        "type": "string",
+        "enum": [
+          "books_count",
+          "pages_count",
+          "reading_time"
+        ]
+      },
+      "TimePeriod": {
+        "type": "string",
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly",
+          "yearly",
+          "custom"
+        ]
+      },
+      "Goal": {
+        "type": "object",
+        "properties": {
+          "goal_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "goal_type": {
+            "$ref": "#/components/schemas/GoalType"
+          },
+          "target_value": {
+            "type": "integer"
+          },
+          "current_value": {
+            "type": "integer"
+          },
+          "progress_percentage": {
+            "type": "number"
+          },
+          "time_period": {
+            "$ref": "#/components/schemas/TimePeriod"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "is_completed": {
+            "type": "boolean"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GoalList": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            }
+          }
+        }
+      },
+      "CreateGoalRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "goal_type",
+          "target_value",
+          "time_period",
+          "start_date",
+          "end_date"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "goal_type": {
+            "$ref": "#/components/schemas/GoalType"
+          },
+          "target_value": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "time_period": {
+            "$ref": "#/components/schemas/TimePeriod"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "UpdateGoalRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string"
+          },
+          "target_value": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "is_active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SyncChanges": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "operation": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "update",
+                    "delete"
+                  ]
+                },
+                "data": {
+                  "type": "object"
+                },
+                "version": {
+                  "type": "integer"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "device_id": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "server_timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SyncPushRequest": {
+        "type": "object",
+        "required": [
+          "changes",
+          "device_id"
+        ],
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "entity_type",
+                "entity_id",
+                "operation",
+                "data",
+                "timestamp"
+              ],
+              "properties": {
+                "entity_type": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "operation": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "update",
+                    "delete"
+                  ]
+                },
+                "data": {
+                  "type": "object"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "version": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "device_id": {
+            "type": "string"
+          }
+        }
+      },
+      "SyncPushResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "new_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "server_timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SyncConflictResponse": {
+        "type": "object",
+        "properties": {
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "local_version": {
+                  "type": "integer"
+                },
+                "server_version": {
+                  "type": "integer"
+                },
+                "server_data": {
+                  "type": "object"
+                },
+                "resolved_data": {
+                  "type": "object"
+                },
+                "resolution_strategy": {
+                  "type": "string",
+                  "enum": [
+                    "latest_wins",
+                    "merge",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "SyncStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "syncing",
+              "error"
+            ]
+          },
+          "last_sync_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "pending_changes": {
+            "type": "integer"
+          },
+          "error_message": {
+            "type": "string"
+          }
+        }
+      },
+      "StorageBackendType": {
+        "type": "string",
+        "enum": [
+          "local",
+          "google_drive",
+          "onedrive",
+          "dropbox",
+          "webdav",
+          "minio",
+          "s3",
+          "papyrus_server"
+        ]
+      },
+      "ConnectionStatus": {
+        "type": "string",
+        "enum": [
+          "connected",
+          "disconnected",
+          "error"
+        ]
+      },
+      "StorageBackend": {
+        "type": "object",
+        "properties": {
+          "backend_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "backend_type": {
+            "$ref": "#/components/schemas/StorageBackendType"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_primary": {
+            "type": "boolean"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "base_path": {
+            "type": "string"
+          },
+          "storage_used_bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "storage_quota_bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_accessed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "connection_status": {
+            "$ref": "#/components/schemas/ConnectionStatus"
+          },
+          "error_message": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StorageBackendList": {
+        "type": "object",
+        "properties": {
+          "backends": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageBackend"
+            }
+          }
+        }
+      },
+      "CreateStorageBackendRequest": {
+        "type": "object",
+        "required": [
+          "backend_type",
+          "name"
+        ],
+        "properties": {
+          "backend_type": {
+            "$ref": "#/components/schemas/StorageBackendType"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "is_primary": {
+            "type": "boolean",
+            "default": false
+          },
+          "connection_config": {
+            "type": "object",
+            "description": "Type-specific connection settings",
+            "additionalProperties": true
+          },
+          "credentials": {
+            "type": "object",
+            "description": "OAuth tokens or API keys",
+            "additionalProperties": true
+          },
+          "base_path": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateStorageBackendRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "connection_config": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "credentials": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "base_path": {
+            "type": "string"
+          }
+        }
+      },
+      "FileInfo": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Relative path in storage"
+          },
+          "file_format": {
+            "type": "string"
+          },
+          "file_size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "file_hash": {
+            "type": "string",
+            "description": "SHA-256 checksum"
+          },
+          "storage_backend_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TextAlign": {
+        "type": "string",
+        "enum": [
+          "left",
+          "right",
+          "center",
+          "justify"
+        ]
+      },
+      "ThemeMode": {
+        "type": "string",
+        "enum": [
+          "light",
+          "dark",
+          "sepia",
+          "custom"
+        ]
+      },
+      "ReadingMode": {
+        "type": "string",
+        "enum": [
+          "paginated",
+          "continuous"
+        ]
+      },
+      "ReadingProfile": {
+        "type": "object",
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "font_family": {
+            "type": "string"
+          },
+          "font_size": {
+            "type": "integer",
+            "minimum": 8,
+            "maximum": 72
+          },
+          "font_weight": {
+            "type": "integer"
+          },
+          "line_height": {
+            "type": "number"
+          },
+          "letter_spacing": {
+            "type": "number"
+          },
+          "paragraph_spacing": {
+            "type": "number"
+          },
+          "text_align": {
+            "$ref": "#/components/schemas/TextAlign"
+          },
+          "margin_horizontal": {
+            "type": "integer"
+          },
+          "margin_vertical": {
+            "type": "integer"
+          },
+          "background_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "text_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "link_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "selection_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "theme_mode": {
+            "$ref": "#/components/schemas/ThemeMode"
+          },
+          "reading_mode": {
+            "$ref": "#/components/schemas/ReadingMode"
+          },
+          "page_turn_animation": {
+            "type": "boolean"
+          },
+          "column_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "hyphenation": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReadingProfileList": {
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadingProfile"
+            }
+          }
+        }
+      },
+      "CreateReadingProfileRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "is_default": {
+            "type": "boolean",
+            "default": false
+          },
+          "font_family": {
+            "type": "string",
+            "default": "Georgia"
+          },
+          "font_size": {
+            "type": "integer",
+            "default": 16
+          },
+          "font_weight": {
+            "type": "integer",
+            "default": 400
+          },
+          "line_height": {
+            "type": "number",
+            "default": 1.5
+          },
+          "letter_spacing": {
+            "type": "number",
+            "default": 0
+          },
+          "paragraph_spacing": {
+            "type": "number",
+            "default": 1.0
+          },
+          "text_align": {
+            "$ref": "#/components/schemas/TextAlign"
+          },
+          "margin_horizontal": {
+            "type": "integer",
+            "default": 20
+          },
+          "margin_vertical": {
+            "type": "integer",
+            "default": 20
+          },
+          "background_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#FFFFFF"
+          },
+          "text_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#000000"
+          },
+          "link_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#0066CC"
+          },
+          "selection_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "default": "#B3D4FC"
+          },
+          "theme_mode": {
+            "$ref": "#/components/schemas/ThemeMode"
+          },
+          "reading_mode": {
+            "$ref": "#/components/schemas/ReadingMode"
+          },
+          "page_turn_animation": {
+            "type": "boolean",
+            "default": true
+          },
+          "column_count": {
+            "type": "integer",
+            "default": 1
+          },
+          "hyphenation": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "UpdateReadingProfileRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "font_family": {
+            "type": "string"
+          },
+          "font_size": {
+            "type": "integer"
+          },
+          "font_weight": {
+            "type": "integer"
+          },
+          "line_height": {
+            "type": "number"
+          },
+          "letter_spacing": {
+            "type": "number"
+          },
+          "paragraph_spacing": {
+            "type": "number"
+          },
+          "text_align": {
+            "$ref": "#/components/schemas/TextAlign"
+          },
+          "margin_horizontal": {
+            "type": "integer"
+          },
+          "margin_vertical": {
+            "type": "integer"
+          },
+          "background_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "text_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "link_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "selection_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "theme_mode": {
+            "$ref": "#/components/schemas/ThemeMode"
+          },
+          "reading_mode": {
+            "$ref": "#/components/schemas/ReadingMode"
+          },
+          "page_turn_animation": {
+            "type": "boolean"
+          },
+          "column_count": {
+            "type": "integer"
+          },
+          "hyphenation": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FilterType": {
+        "type": "string",
+        "enum": [
+          "search",
+          "shelf",
+          "custom"
+        ]
+      },
+      "SavedFilter": {
+        "type": "object",
+        "properties": {
+          "filter_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "filter_type": {
+            "$ref": "#/components/schemas/FilterType"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "is_pinned": {
+            "type": "boolean"
+          },
+          "usage_count": {
+            "type": "integer"
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SavedFilterList": {
+        "type": "object",
+        "properties": {
+          "filters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedFilter"
+            }
+          }
+        }
+      },
+      "CreateSavedFilterRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "query"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "filter_type": {
+            "$ref": "#/components/schemas/FilterType"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "is_pinned": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "UpdateSavedFilterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "filter_type": {
+            "$ref": "#/components/schemas/FilterType"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "is_pinned": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

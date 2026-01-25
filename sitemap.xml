@@ -41,6 +41,10 @@
          <lastmod>2026-01-25</lastmod>
     </url>
     <url>
+         <loc>https://papyrus.example.com/docs/api/</loc>
+         <lastmod>2026-01-25</lastmod>
+    </url>
+    <url>
          <loc>https://papyrus.example.com/docs/external/</loc>
          <lastmod>2026-01-25</lastmod>
     </url>
