@@ -79,6 +79,14 @@ mkdocs gh-deploy
 
 Documentation is available at `http://127.0.0.1:8000` when running `mkdocs serve`.
 
+## UI Conventions
+
+### Text Casing
+
+- **Sentence case** for all UI text including buttons, labels, headings, and section titles
+- Examples: "Apply filters" (not "Apply Filters"), "Quick filters" (not "QUICK FILTERS" or "Quick Filters")
+- Exception: Acronyms remain uppercase (e.g., "PDF", "EPUB")
+
 ## Project Resources
 
 - **Specification**: `/spec/` directory contains requirements, use cases, entities, database model

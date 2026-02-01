@@ -1,0 +1,106 @@
+import 'package:flutter/material.dart';
+import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
+
+/// E-ink optimized bottom navigation with text labels and high contrast.
+/// Uses larger touch targets and no animations.
+class EinkBottomNav extends StatelessWidget {
+  final List<AppShellNavItem> items;
+  final String currentPath;
+  final void Function(String path) onNavigate;
+
+  const EinkBottomNav({
+    super.key,
+    required this.items,
+    required this.currentPath,
+    required this.onNavigate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Only show main nav items
+    final mainItems = items.where((item) => !_isChildPath(item.path)).toList();
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      height: TouchTargets.einkRecommended,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outline,
+            width: BorderWidths.einkDefault,
+          ),
+        ),
+      ),
+      child: Row(
+        children: mainItems.map((item) {
+          final isSelected = _isItemSelected(item);
+          return Expanded(
+            child: _buildNavItem(context, item, isSelected),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    BuildContext context,
+    AppShellNavItem item,
+    bool isSelected,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          // For library, navigate to books subpage
+          if (item.path == '/library') {
+            onNavigate('/library/books');
+          } else {
+            onNavigate(item.path);
+          }
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primary : Colors.transparent,
+            border: Border(
+              left: BorderSide(
+                color: colorScheme.outline,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Center(
+            child: Text(
+              item.label.toUpperCase(),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: isSelected
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool _isChildPath(String path) {
+    final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+    return segments.length > 1;
+  }
+
+  bool _isItemSelected(AppShellNavItem item) {
+    if (currentPath == item.path) return true;
+    if (currentPath.startsWith(item.path) && item.path != '/') return true;
+    if (item.children != null) {
+      return item.children!.any((child) => currentPath.startsWith(child.path));
+    }
+    return false;
+  }
+}

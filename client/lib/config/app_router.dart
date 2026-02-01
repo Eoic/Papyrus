@@ -4,87 +4,25 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/pages/book_details_page.dart';
 import 'package:papyrus/pages/dashboard_page.dart';
 import 'package:papyrus/pages/goals_page.dart';
+import 'package:papyrus/pages/library_page.dart';
 import 'package:papyrus/pages/login_page.dart';
 import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
+import 'package:papyrus/pages/search_options_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
 import 'package:papyrus/pages/stub_page.dart';
 import 'package:papyrus/pages/welcome_page.dart';
-import 'package:papyrus/widgets/navbar_scaffold.dart';
-
-import '../pages/search_options_page.dart';
-import '../widgets/drawer_scaffold.dart';
+import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 
 class AppRouter {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
   final shellNavigatorKey = GlobalKey<NavigatorState>();
-  final drawerShellNavigatorKey = GlobalKey<NavigatorState>();
-
-  final bottomGlobalNavigationTabs = [
-    ScaffoldWithNavBarTabItem(
-      initialLocation: '/dashboard',
-      icon: const Icon(Icons.dashboard),
-      label: 'Dashboard',
-    ),
-    ScaffoldWithNavBarTabItem(
-      initialLocation: '/library',
-      icon: const Icon(Icons.library_books),
-      label: 'Library',
-    ),
-    ScaffoldWithNavBarTabItem(
-      initialLocation: '/goals',
-      icon: const Icon(Icons.emoji_events),
-      label: 'Goals',
-    ),
-    ScaffoldWithNavBarTabItem(
-      initialLocation: '/statistics',
-      icon: const Icon(Icons.stacked_line_chart),
-      label: 'Statistics',
-    ),
-    ScaffoldWithNavBarTabItem(
-      initialLocation: '/profile',
-      icon: const Icon(Icons.person),
-      label: 'Profile',
-    ),
-  ];
-
-  final libraryDrawerTabs = [
-    const ScaffoldWithDrawerTabItem(
-      initialLocation: '/library/books',
-      label: 'All books',
-      icon: Icon(Icons.stacked_bar_chart),
-    ),
-    const ScaffoldWithDrawerTabItem(
-      initialLocation: '/library/shelves',
-      label: 'Shelves',
-      icon: Icon(Icons.shelves),
-    ),
-    const ScaffoldWithDrawerTabItem(
-      initialLocation: '/library/topics',
-      label: 'Topics',
-      icon: Icon(Icons.topic),
-    ),
-    const ScaffoldWithDrawerTabItem(
-      initialLocation: '/library/bookmarks',
-      label: 'Bookmarks',
-      icon: Icon(Icons.bookmark),
-    ),
-    const ScaffoldWithDrawerTabItem(
-      initialLocation: '/library/annotations',
-      label: 'Annotations',
-      icon: Icon(Icons.border_color),
-    ),
-    const ScaffoldWithDrawerTabItem(
-      initialLocation: '/library/notes',
-      label: 'Notes',
-      icon: Icon(Icons.notes),
-    ),
-  ];
 
   late final GoRouter router = GoRouter(
     debugLogDiagnostics: true,
     navigatorKey: rootNavigatorKey,
     routes: [
+      // Auth routes (no shell)
       GoRoute(
         path: '/',
         builder: (BuildContext context, GoRouterState state) {
@@ -107,15 +45,14 @@ class AppRouter {
           ),
         ],
       ),
+      // Main app routes (with adaptive shell)
       ShellRoute(
         navigatorKey: shellNavigatorKey,
         builder: (context, state, child) {
-          return ScaffoldWithBottomNavBar(
-            tabs: bottomGlobalNavigationTabs,
-            child: child,
-          );
+          return AdaptiveAppShell(child: child);
         },
         routes: [
+          // Dashboard
           GoRoute(
             name: 'DASHBOARD',
             path: '/dashboard',
@@ -124,80 +61,100 @@ class AppRouter {
               child: const DashboardPage(),
             ),
           ),
-          ShellRoute(
-            navigatorKey: drawerShellNavigatorKey,
-            pageBuilder: (context, state, widget) {
-              return NoTransitionPage(
-                key: state.pageKey,
-                child: ScaffoldWithDrawer(
-                  tabs: libraryDrawerTabs,
-                  child: widget,
-                ),
-              );
+          // Library and sub-routes
+          GoRoute(
+            name: 'LIBRARY',
+            path: '/library',
+            redirect: (context, state) {
+              // Redirect /library to /library/books
+              return state.uri.toString() == '/library'
+                  ? '/library/books'
+                  : null;
             },
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const LibraryPage(),
+            ),
             routes: [
               GoRoute(
-                name: 'LIBRARY',
-                path: '/library',
-                redirect: (context, state) {
-                  return state.uri.toString() == '/library'
-                      ? '/library/books'
-                      : null;
-                },
+                name: 'BOOKS',
+                path: 'books',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const StubPage(title: 'Loading...'),
+                  child: const LibraryPage(),
                 ),
-                routes: [
-                  GoRoute(
-                    name: 'BOOKS',
-                    path: 'books',
-                    pageBuilder: (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child: const StubPage(title: 'Books'),
-                    ),
-                  ),
-                  GoRoute(
-                    name: 'SHELVES',
-                    path: 'shelves',
-                    pageBuilder: (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child: const StubPage(title: 'Shelves'),
-                    ),
-                  ),
-                  GoRoute(
-                    name: 'TOPICS',
-                    path: 'topics',
-                    pageBuilder: (context, state) => NoTransitionPage(
-                      key: state.pageKey,
-                      child: const StubPage(title: 'Topics'),
-                    ),
-                  ),
-                  GoRoute(
-                    name: 'SEARCH_OPTIONS',
-                    path: 'search/options',
-                    builder: (context, state) {
-                      return const SearchOptionsPage();
-                    },
-                  ),
-                  GoRoute(
-                    name: 'BOOK_DETAILS',
-                    path: 'details/:bookId',
-                    builder: (context, state) {
-                      var bookId = state.pathParameters['bookId'];
-                      return BookDetailsPage(id: bookId);
-                    },
-                  ),
-                ],
+              ),
+              GoRoute(
+                name: 'SHELVES',
+                path: 'shelves',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const StubPage(title: 'Shelves'),
+                ),
+              ),
+              GoRoute(
+                name: 'TOPICS',
+                path: 'topics',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const StubPage(title: 'Topics'),
+                ),
+              ),
+              GoRoute(
+                name: 'BOOKMARKS',
+                path: 'bookmarks',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const StubPage(title: 'Bookmarks'),
+                ),
+              ),
+              GoRoute(
+                name: 'ANNOTATIONS',
+                path: 'annotations',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const StubPage(title: 'Annotations'),
+                ),
+              ),
+              GoRoute(
+                name: 'NOTES',
+                path: 'notes',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const StubPage(title: 'Notes'),
+                ),
+              ),
+              GoRoute(
+                name: 'SEARCH_OPTIONS',
+                path: 'search/options',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const SearchOptionsPage(),
+                ),
+              ),
+              GoRoute(
+                name: 'BOOK_DETAILS',
+                path: 'details/:bookId',
+                pageBuilder: (context, state) {
+                  var bookId = state.pathParameters['bookId'];
+                  return NoTransitionPage(
+                    key: state.pageKey,
+                    child: BookDetailsPage(id: bookId),
+                  );
+                },
               ),
             ],
           ),
+          // Goals
           GoRoute(
             name: 'GOALS',
             path: '/goals',
-            pageBuilder: (context, state) =>
-                NoTransitionPage(key: state.pageKey, child: const GoalsPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const GoalsPage(),
+            ),
           ),
+          // Statistics
           GoRoute(
             name: 'STATISTICS',
             path: '/statistics',
@@ -206,6 +163,7 @@ class AppRouter {
               child: const StatisticsPage(),
             ),
           ),
+          // Profile
           GoRoute(
             name: 'PROFILE',
             path: '/profile',
@@ -218,6 +176,17 @@ class AppRouter {
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {
+      // TODO: Remove this flag before production - bypasses authentication
+      const bypassAuth = true;
+
+      if (bypassAuth) {
+        // When bypassing auth, only redirect root to library
+        if (state.uri.toString() == '/') {
+          return '/library/books';
+        }
+        return null;
+      }
+
       if (FirebaseAuth.instance.currentUser == null) {
         if (state.uri.toString().contains('/login') ||
             state.uri.toString().contains('/register')) {

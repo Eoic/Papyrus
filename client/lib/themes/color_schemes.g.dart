@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+// =============================================================================
+// LIGHT COLOR SCHEME
+// =============================================================================
+
 const lightColorScheme = ColorScheme(
   brightness: Brightness.light,
   primary: Color(0xFF5654A8),
@@ -32,6 +36,10 @@ const lightColorScheme = ColorScheme(
   scrim: Color(0xFF000000),
 );
 
+// =============================================================================
+// DARK COLOR SCHEME
+// =============================================================================
+
 const darkColorScheme = ColorScheme(
   brightness: Brightness.dark,
   primary: Color(0xFFC3C0FF),
@@ -63,3 +71,64 @@ const darkColorScheme = ColorScheme(
   outlineVariant: Color(0xFF47464F),
   scrim: Color(0xFF000000),
 );
+
+// =============================================================================
+// E-INK COLOR SCHEME
+// =============================================================================
+// High contrast, grayscale-only colors optimized for e-ink displays.
+// Rules:
+// - NO gradients - use solid fills only
+// - NO shadows - use 2px black borders instead
+// - NO transparency/opacity - all colors must be solid
+// - Maximum 5 grayscale values for optimal e-ink rendering
+
+const einkColorScheme = ColorScheme(
+  brightness: Brightness.light,
+  // Primary elements: pure black
+  primary: Color(0xFF000000),
+  onPrimary: Color(0xFFFFFFFF),
+  primaryContainer: Color(0xFFF5F5F5),
+  onPrimaryContainer: Color(0xFF000000),
+  // Secondary: dark gray
+  secondary: Color(0xFF404040),
+  onSecondary: Color(0xFFFFFFFF),
+  secondaryContainer: Color(0xFFF5F5F5),
+  onSecondaryContainer: Color(0xFF000000),
+  // Tertiary: same as secondary for e-ink
+  tertiary: Color(0xFF404040),
+  onTertiary: Color(0xFFFFFFFF),
+  tertiaryContainer: Color(0xFFF5F5F5),
+  onTertiaryContainer: Color(0xFF000000),
+  // Error: black (no red on e-ink)
+  error: Color(0xFF000000),
+  errorContainer: Color(0xFFF5F5F5),
+  onError: Color(0xFFFFFFFF),
+  onErrorContainer: Color(0xFF000000),
+  // Surfaces: pure white
+  surface: Color(0xFFFFFFFF),
+  onSurface: Color(0xFF000000),
+  surfaceContainerHighest: Color(0xFFF5F5F5),
+  onSurfaceVariant: Color(0xFF404040),
+  // Outlines: black for visibility
+  outline: Color(0xFF000000),
+  onInverseSurface: Color(0xFF000000),
+  inverseSurface: Color(0xFFFFFFFF),
+  inversePrimary: Color(0xFF000000),
+  // Shadows: none (use borders instead)
+  shadow: Color(0x00000000),
+  surfaceTint: Color(0xFF000000),
+  outlineVariant: Color(0xFFC0C0C0),
+  scrim: Color(0xFF000000),
+);
+
+// E-ink specific colors for custom use
+class EinkColors {
+  EinkColors._();
+
+  static const Color black = Color(0xFF000000);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color darkGray = Color(0xFF404040);
+  static const Color mediumGray = Color(0xFF808080);
+  static const Color lightGray = Color(0xFFC0C0C0);
+  static const Color container = Color(0xFFF5F5F5);
+}

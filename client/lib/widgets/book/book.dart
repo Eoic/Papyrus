@@ -151,10 +151,15 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      child: Image(
-                        image: AssetImage(widget.data.coverURL),
-                        fit: BoxFit.cover,
-                      ),
+                      child: widget.data.coverURL != null
+                          ? Image(
+                              image: AssetImage(widget.data.coverURL!),
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.menu_book, size: 48),
+                            ),
                     ),
                     Positioned(
                       right: 6,

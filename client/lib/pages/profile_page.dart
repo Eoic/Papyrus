@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/google_sign_in_provider.dart';
 import 'package:papyrus/widgets/profile_button.dart';
 import 'package:provider/provider.dart';
@@ -83,6 +84,27 @@ class ProfilePage extends StatelessWidget {
                     title: "Storage management",
                     icon: Icons.storage_rounded,
                     onPressed: () {},
+                  ),
+                  const SizedBox(height: 24),
+                  // E-ink mode toggle for testing
+                  Consumer<DisplayModeProvider>(
+                    builder: (context, displayMode, child) {
+                      return SwitchListTile(
+                        title: const Text('E-ink Display Mode'),
+                        subtitle: Text(
+                          displayMode.isEinkMode
+                              ? 'High contrast mode active'
+                              : 'Standard display mode',
+                        ),
+                        secondary: Icon(
+                          displayMode.isEinkMode
+                              ? Icons.tablet_android
+                              : Icons.phone_android,
+                        ),
+                        value: displayMode.isEinkMode,
+                        onChanged: (_) => displayMode.toggleEinkMode(),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   ProfileButton(
