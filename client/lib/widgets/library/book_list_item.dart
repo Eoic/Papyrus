@@ -3,7 +3,7 @@ import 'package:papyrus/models/book_data.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
-import 'package:papyrus/widgets/context_menu/book_context_menu.dart';
+import 'package:papyrus/utils/book_actions.dart';
 import 'package:provider/provider.dart';
 
 /// List row for displaying books, optimized for e-ink.
@@ -32,37 +32,6 @@ class _BookListItemState extends State<BookListItem> {
   bool get _isDesktop =>
       MediaQuery.of(context).size.width >= Breakpoints.desktopSmall;
 
-  void _showContextMenu(Offset? position) {
-    final libraryProvider = context.read<LibraryProvider>();
-    final isFavorite =
-        libraryProvider.isBookFavorite(widget.book.id, widget.book.isFavorite);
-
-    BookContextMenu.show(
-      context: context,
-      book: widget.book,
-      isFavorite: isFavorite,
-      tapPosition: position,
-      onFavoriteToggle: () {
-        libraryProvider.toggleFavorite(widget.book.id, isFavorite);
-      },
-      onEdit: () {
-        // TODO: Implement edit
-      },
-      onMoveToShelf: () {
-        // TODO: Implement move to shelf
-      },
-      onManageTopics: () {
-        // TODO: Implement manage topics
-      },
-      onStatusChange: (status) {
-        // TODO: Implement status change
-      },
-      onDelete: () {
-        // TODO: Implement delete
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isEink = context.watch<DisplayModeProvider>().isEinkMode;
@@ -80,11 +49,19 @@ class _BookListItemState extends State<BookListItem> {
       child: GestureDetector(
         onSecondaryTapUp: (details) {
           // Right-click for desktop
-          _showContextMenu(details.globalPosition);
+          showBookContextMenu(
+            context: context,
+            book: widget.book,
+            position: details.globalPosition,
+          );
         },
         onLongPressStart: (details) {
           // Long press for mobile
-          _showContextMenu(details.globalPosition);
+          showBookContextMenu(
+            context: context,
+            book: widget.book,
+            position: details.globalPosition,
+          );
         },
         child: Material(
           color: Colors.transparent,
@@ -219,7 +196,10 @@ class _BookListItemState extends State<BookListItem> {
                           child: IconButton(
                             icon: const Icon(Icons.more_vert),
                             iconSize: IconSizes.action,
-                            onPressed: () => _showContextMenu(null),
+                            onPressed: () => showBookContextMenu(
+                              context: context,
+                              book: widget.book,
+                            ),
                             tooltip: 'More options',
                             visualDensity: VisualDensity.compact,
                           ),

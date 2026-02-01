@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/models/daily_activity.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/statistics_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
-import 'package:papyrus/widgets/statistics/genre_distribution.dart';
-import 'package:papyrus/widgets/statistics/reading_time_chart.dart';
-import 'package:papyrus/widgets/statistics/streak_widget.dart';
-import 'package:papyrus/widgets/statistics/summary_stat_card.dart';
+import 'package:papyrus/widgets/statistics/reading_charts.dart';
+import 'package:papyrus/widgets/statistics/stat_card.dart';
 import 'package:provider/provider.dart';
 
 /// Statistics page displaying reading analytics and charts.
@@ -79,9 +78,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Statistics'),
-        actions: [
-          _buildPeriodDropdown(context, provider),
-        ],
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -89,25 +85,54 @@ class _StatisticsPageState extends State<StatisticsPage> {
           child: ListView(
             padding: const EdgeInsets.all(Spacing.md),
             children: [
+              // Period filter
+              _buildPeriodSegmentedButton(context, provider),
+              const SizedBox(height: Spacing.md),
+              // Custom range indicator
+              if (provider.hasCustomRange) ...[
+                _buildCustomRangeChip(context, provider),
+                const SizedBox(height: Spacing.md),
+              ],
               // Summary cards
-              _buildSummaryRow(context, provider),
+              _buildMobileSummaryCards(context, provider),
               const SizedBox(height: Spacing.lg),
               // Reading time chart
-              ReadingTimeChart(
-                activities: provider.readingTimeData,
-                isWeekly: provider.selectedPeriod == StatsPeriod.week,
+              StatSectionCard(
+                title: 'Reading time',
+                child: ReadingTimeBarChart(
+                  activities: provider.readingTimeData,
+                  isWeekly: provider.selectedPeriod == StatsPeriod.week,
+                ),
               ),
               const SizedBox(height: Spacing.lg),
+              // Pages read trend
+              StatSectionCard(
+                title: 'Pages read',
+                child: PagesReadLineChart(
+                  activities: provider.pagesReadData,
+                  isWeekly: provider.selectedPeriod == StatsPeriod.week,
+                ),
+              ),
+              const SizedBox(height: Spacing.lg),
+              // Session stats
+              _buildSessionStatsCard(context, provider),
+              const SizedBox(height: Spacing.lg),
+              // Books per month (for year/all time views)
+              if (provider.selectedPeriod == StatsPeriod.year ||
+                  provider.selectedPeriod == StatsPeriod.allTime) ...[
+                StatSectionCard(
+                  title: 'Books per month',
+                  child: BooksPerMonthChart(
+                    monthlyStats: provider.monthlyStats,
+                  ),
+                ),
+                const SizedBox(height: Spacing.lg),
+              ],
               // Genre distribution
-              GenreDistribution(
-                genres: provider.genreDistribution,
-              ),
+              _buildGenreDistributionCard(context, provider),
               const SizedBox(height: Spacing.lg),
-              // Streak widget
-              StreakWidget(
-                streak: provider.streak,
-              ),
-              const SizedBox(height: Spacing.lg),
+              // Streak section
+              _buildStreakCard(context, provider),
             ],
           ),
         ),
@@ -115,57 +140,425 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildPeriodDropdown(BuildContext context, StatisticsProvider provider) {
-    return PopupMenuButton<StatsPeriod>(
-      initialValue: provider.selectedPeriod,
-      onSelected: provider.setPeriod,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(provider.periodShortLabel),
-            const Icon(Icons.arrow_drop_down),
-          ],
-        ),
-      ),
-      itemBuilder: (context) => StatsPeriod.values.map((period) {
-        return PopupMenuItem(
-          value: period,
-          child: Text(_getPeriodLabel(period)),
-        );
-      }).toList(),
-    );
-  }
+  Widget _buildPeriodSegmentedButton(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-  Widget _buildSummaryRow(BuildContext context, StatisticsProvider provider) {
+    final periods = StatsPeriod.values.where((p) => p != StatsPeriod.custom).toList();
+    final selectedPeriod = provider.selectedPeriod == StatsPeriod.custom
+        ? StatsPeriod.week
+        : provider.selectedPeriod;
+
     return Row(
       children: [
         Expanded(
-          child: SummaryStatCard(
-            value: provider.totalBooks.toString(),
-            label: 'books',
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: colorScheme.outlineVariant,
+                width: BorderWidths.thin,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    for (int i = 0; i < periods.length; i++) ...[
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => provider.setPeriod(periods[i]),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                            color: selectedPeriod == periods[i]
+                                ? colorScheme.primaryContainer
+                                : colorScheme.surfaceContainerLow,
+                            child: Center(
+                              child: Text(
+                                _getPeriodLabel(periods[i]),
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: selectedPeriod == periods[i]
+                                      ? colorScheme.onPrimaryContainer
+                                      : colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (i < periods.length - 1)
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 1,
+                          color: colorScheme.outlineVariant,
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: Spacing.sm),
-        Expanded(
-          child: SummaryStatCard(
-            value: provider.goalsCompleted.toString(),
-            label: 'goals',
+        IconButton.outlined(
+          onPressed: () => _showDateRangePicker(context, provider),
+          icon: const Icon(Icons.date_range_outlined, size: 20),
+          tooltip: 'Custom date range',
+          style: IconButton.styleFrom(
+            side: BorderSide(color: colorScheme.outlineVariant),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCustomRangeChip(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.md,
+        vertical: Spacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.date_range,
+            size: 16,
+            color: colorScheme.onSecondaryContainer,
+          ),
+          const SizedBox(width: Spacing.sm),
+          Text(
+            provider.periodLabel,
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSecondaryContainer,
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          GestureDetector(
+            onTap: () => provider.setPeriod(StatsPeriod.week),
+            child: Icon(
+              Icons.close,
+              size: 16,
+              color: colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileSummaryCards(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: StatCard(
+                value: provider.totalBooks.toString(),
+                label: 'Books read',
+                icon: Icons.menu_book_outlined,
+              ),
+            ),
+            const SizedBox(width: Spacing.md),
+            Expanded(
+              child: StatCard(
+                value: provider.pagesRead.toString(),
+                label: 'Pages read',
+                icon: Icons.article_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Spacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: StatCard(
+                value: provider.totalReadingLabel,
+                label: 'Total reading time',
+                icon: Icons.schedule_outlined,
+              ),
+            ),
+            const SizedBox(width: Spacing.md),
+            Expanded(
+              child: StatCard(
+                value: provider.goalsCompleted.toString(),
+                label: 'Goals completed',
+                icon: Icons.flag_outlined,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSessionStatsCard(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final sessionStats = provider.sessionStats;
+
+    return StatSectionCard(
+      title: 'Session statistics',
+      child: Column(
+        children: [
+          _buildStatRow(
+            context,
+            icon: Icons.timer_outlined,
+            label: 'Average session',
+            value: sessionStats.averageSessionLabel,
+          ),
+          const SizedBox(height: Spacing.sm),
+          _buildStatRow(
+            context,
+            icon: Icons.speed_outlined,
+            label: 'Reading velocity',
+            value: sessionStats.velocityLabel,
+          ),
+          const SizedBox(height: Spacing.sm),
+          _buildStatRow(
+            context,
+            icon: Icons.repeat_outlined,
+            label: 'Total sessions',
+            value: '${sessionStats.totalSessions}',
+          ),
+          const SizedBox(height: Spacing.sm),
+          _buildStatRow(
+            context,
+            icon: Icons.show_chart_outlined,
+            label: 'Avg. daily reading',
+            value: provider.averageReadingLabel,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
         const SizedBox(width: Spacing.sm),
-        Expanded(
-          child: SummaryStatCard(
-            value: provider.totalReadingLabel,
-            label: '/week',
+        Text(
+          label,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
+        const Spacer(),
+        Text(
+          value,
+          style: textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenreDistributionCard(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final genres = provider.genreDistribution;
+
+    if (genres.isEmpty) {
+      return StatSectionCard(
+        title: 'Books by genre',
+        child: Center(
+          child: Text(
+            'No genre data available',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Harmonious color palette based on primary
+    final chartColors = [
+      colorScheme.primary,
+      colorScheme.primary.withValues(alpha: 0.7),
+      colorScheme.tertiary,
+      colorScheme.tertiary.withValues(alpha: 0.7),
+      colorScheme.secondary,
+      colorScheme.secondary.withValues(alpha: 0.7),
+    ];
+
+    final genreData = genres.asMap().entries.map((entry) {
+      return (
+        genre: entry.value.genre,
+        percentage: entry.value.percentage,
+        color: chartColors[entry.key % chartColors.length],
+      );
+    }).toList();
+
+    return StatSectionCard(
+      title: 'Books by genre',
+      child: SizedBox(
+        height: 140,
+        child: Row(
+          children: [
+            GenrePieChart(genres: genreData),
+            const SizedBox(width: Spacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: genreData.map((genre) {
+                  return _buildLegendItem(
+                    context,
+                    color: genre.color,
+                    label: genre.genre,
+                    percentage: (genre.percentage * 100).round(),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(
+    BuildContext context, {
+    required Color color,
+    required String label,
+    required int percentage,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          Expanded(
+            child: Text(
+              label,
+              style: textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text(
+            '$percentage%',
+            style: textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStreakCard(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final streak = provider.streak;
+
+    return StatSectionCard(
+      title: 'Reading streaks',
+      child: Column(
+        children: [
+          _buildStreakRow(
+            context,
+            icon: Icons.local_fire_department,
+            iconColor: streak.hasActiveStreak
+                ? colorScheme.tertiary
+                : colorScheme.onSurfaceVariant,
+            label: 'Current streak',
+            value: '${streak.currentStreak} days',
+            isHighlighted: streak.isCurrentBest,
+          ),
+          const SizedBox(height: Spacing.sm),
+          _buildStreakRow(
+            context,
+            icon: Icons.emoji_events_outlined,
+            iconColor: colorScheme.primary,
+            label: 'Best streak',
+            value: '${streak.bestStreak} days',
+          ),
+          const SizedBox(height: Spacing.sm),
+          _buildStreakRow(
+            context,
+            icon: Icons.calendar_month_outlined,
+            iconColor: colorScheme.onSurfaceVariant,
+            label: 'Days this month',
+            value: '${streak.daysThisMonth} of ${streak.totalDaysInMonth}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStreakRow(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    bool isHighlighted = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: iconColor),
         const SizedBox(width: Spacing.sm),
-        Expanded(
-          child: SummaryStatCard(
-            value: provider.pagesRead.toString(),
-            label: 'pages',
+        Text(
+          label,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: isHighlighted ? colorScheme.tertiary : null,
           ),
         ),
       ],
@@ -187,67 +580,110 @@ class _StatisticsPageState extends State<StatisticsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header with period toggle
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Statistics', style: textTheme.displaySmall),
-                  _buildPeriodSegmentedButton(context, provider),
-                ],
-              ),
+              // TODO: Fix unconstrained width issue with Row in SingleChildScrollView
+              // The OutlinedButton gets infinite width constraints from the scroll view
+              Text('Statistics', style: textTheme.displaySmall),
+              const SizedBox(height: Spacing.md),
+              _buildPeriodSegmentedButton(context, provider),
+              // Custom range indicator
+              if (provider.hasCustomRange) ...[
+                const SizedBox(height: Spacing.md),
+                _buildCustomRangeChip(context, provider),
+              ],
               const SizedBox(height: Spacing.lg),
-              // Summary cards
+              // Summary cards row
               _buildDesktopSummaryRow(context, provider),
               const SizedBox(height: Spacing.lg),
-              // Reading time chart (full width)
-              ReadingTimeChart(
-                activities: provider.readingTimeData,
-                isWeekly: provider.selectedPeriod == StatsPeriod.week,
-                isDesktop: true,
-              ),
-              const SizedBox(height: Spacing.lg),
-              // Bottom row: Genre + Streak
+              // Charts row: Reading time + Pages read
               IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
-                      child: GenreDistribution(
-                        genres: provider.genreDistribution,
+                      child: StatSectionCard(
+                        title: 'Reading time',
                         isDesktop: true,
+                        child: ReadingTimeBarChart(
+                          activities: provider.readingTimeData,
+                          isWeekly: provider.selectedPeriod == StatsPeriod.week,
+                          isDesktop: true,
+                        ),
                       ),
                     ),
                     const SizedBox(width: Spacing.lg),
                     Expanded(
-                      child: StreakWidget(
-                        streak: provider.streak,
+                      child: StatSectionCard(
+                        title: 'Pages read',
                         isDesktop: true,
+                        child: PagesReadLineChart(
+                          activities: provider.pagesReadData,
+                          isWeekly: provider.selectedPeriod == StatsPeriod.week,
+                          isDesktop: true,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: Spacing.lg),
+              // Second row: Session stats + Books per month (if applicable)
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _buildDesktopSessionStatsCard(context, provider),
+                    ),
+                    const SizedBox(width: Spacing.lg),
+                    if (provider.selectedPeriod == StatsPeriod.year ||
+                        provider.selectedPeriod == StatsPeriod.allTime)
+                      Expanded(
+                        child: StatSectionCard(
+                          title: 'Books per month',
+                          isDesktop: true,
+                          child: BooksPerMonthChart(
+                            monthlyStats: provider.monthlyStats,
+                            isDesktop: true,
+                          ),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: _buildDesktopGenreDistributionCard(
+                          context,
+                          provider,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: Spacing.lg),
+              // Third row: Genre distribution (if year view) + Streaks
+              if (provider.selectedPeriod == StatsPeriod.year ||
+                  provider.selectedPeriod == StatsPeriod.allTime)
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _buildDesktopGenreDistributionCard(
+                          context,
+                          provider,
+                        ),
+                      ),
+                      const SizedBox(width: Spacing.lg),
+                      Expanded(
+                        child: _buildDesktopStreakCard(context, provider),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                _buildDesktopStreakCard(context, provider),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPeriodSegmentedButton(
-    BuildContext context,
-    StatisticsProvider provider,
-  ) {
-    return SegmentedButton<StatsPeriod>(
-      segments: StatsPeriod.values.map((period) {
-        return ButtonSegment(
-          value: period,
-          label: Text(_getPeriodLabel(period)),
-        );
-      }).toList(),
-      selected: {provider.selectedPeriod},
-      onSelectionChanged: (selected) {
-        provider.setPeriod(selected.first);
-      },
     );
   }
 
@@ -258,37 +694,197 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return Row(
       children: [
         Expanded(
-          child: SummaryStatCard(
+          child: StatCard(
             value: provider.totalBooks.toString(),
-            label: 'Total books',
+            label: 'Books read',
+            icon: Icons.menu_book_outlined,
             isDesktop: true,
           ),
         ),
         const SizedBox(width: Spacing.md),
         Expanded(
-          child: SummaryStatCard(
-            value: provider.goalsCompleted.toString(),
-            label: 'Goals completed',
-            isDesktop: true,
-          ),
-        ),
-        const SizedBox(width: Spacing.md),
-        Expanded(
-          child: SummaryStatCard(
-            value: provider.totalReadingLabel,
-            label: 'Total reading',
-            isDesktop: true,
-          ),
-        ),
-        const SizedBox(width: Spacing.md),
-        Expanded(
-          child: SummaryStatCard(
+          child: StatCard(
             value: provider.pagesRead.toString(),
             label: 'Pages read',
+            icon: Icons.article_outlined,
+            isDesktop: true,
+          ),
+        ),
+        const SizedBox(width: Spacing.md),
+        Expanded(
+          child: StatCard(
+            value: provider.totalReadingLabel,
+            label: 'Total reading time',
+            icon: Icons.schedule_outlined,
+            isDesktop: true,
+          ),
+        ),
+        const SizedBox(width: Spacing.md),
+        Expanded(
+          child: StatCard(
+            value: provider.goalsCompleted.toString(),
+            label: 'Goals completed',
+            icon: Icons.flag_outlined,
             isDesktop: true,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDesktopSessionStatsCard(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final sessionStats = provider.sessionStats;
+
+    return StatSectionCard(
+      title: 'Session statistics',
+      isDesktop: true,
+      child: Column(
+        children: [
+          _buildStatRow(
+            context,
+            icon: Icons.timer_outlined,
+            label: 'Average session',
+            value: sessionStats.averageSessionLabel,
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildStatRow(
+            context,
+            icon: Icons.speed_outlined,
+            label: 'Reading velocity',
+            value: sessionStats.velocityLabel,
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildStatRow(
+            context,
+            icon: Icons.repeat_outlined,
+            label: 'Total sessions',
+            value: '${sessionStats.totalSessions}',
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildStatRow(
+            context,
+            icon: Icons.show_chart_outlined,
+            label: 'Avg. daily reading',
+            value: provider.averageReadingLabel,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopGenreDistributionCard(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final genres = provider.genreDistribution;
+
+    if (genres.isEmpty) {
+      return StatSectionCard(
+        title: 'Books by genre',
+        isDesktop: true,
+        child: Center(
+          child: Text(
+            'No genre data available',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Harmonious color palette based on primary
+    final chartColors = [
+      colorScheme.primary,
+      colorScheme.primary.withValues(alpha: 0.7),
+      colorScheme.tertiary,
+      colorScheme.tertiary.withValues(alpha: 0.7),
+      colorScheme.secondary,
+      colorScheme.secondary.withValues(alpha: 0.7),
+    ];
+
+    final genreData = genres.asMap().entries.map((entry) {
+      return (
+        genre: entry.value.genre,
+        percentage: entry.value.percentage,
+        color: chartColors[entry.key % chartColors.length],
+      );
+    }).toList();
+
+    return StatSectionCard(
+      title: 'Books by genre',
+      isDesktop: true,
+      child: SizedBox(
+        height: 180,
+        child: Row(
+          children: [
+            GenrePieChart(genres: genreData, isDesktop: true),
+            const SizedBox(width: Spacing.xl),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: genreData.map((genre) {
+                  return _buildLegendItem(
+                    context,
+                    color: genre.color,
+                    label: genre.genre,
+                    percentage: (genre.percentage * 100).round(),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopStreakCard(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final streak = provider.streak;
+
+    return StatSectionCard(
+      title: 'Reading streaks',
+      isDesktop: true,
+      child: Column(
+        children: [
+          _buildStreakRow(
+            context,
+            icon: Icons.local_fire_department,
+            iconColor: streak.hasActiveStreak
+                ? colorScheme.tertiary
+                : colorScheme.onSurfaceVariant,
+            label: 'Current streak',
+            value: '${streak.currentStreak} days',
+            isHighlighted: streak.isCurrentBest,
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildStreakRow(
+            context,
+            icon: Icons.emoji_events_outlined,
+            iconColor: colorScheme.primary,
+            label: 'Best streak',
+            value: '${streak.bestStreak} days',
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildStreakRow(
+            context,
+            icon: Icons.calendar_month_outlined,
+            iconColor: colorScheme.onSurfaceVariant,
+            label: 'Days this month',
+            value: '${streak.daysThisMonth} of ${streak.totalDaysInMonth}',
+          ),
+        ],
+      ),
     );
   }
 
@@ -309,24 +905,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 // Summary section
                 _buildEinkSummary(context, provider),
                 const SizedBox(height: Spacing.lg),
-                // Reading time chart
-                ReadingTimeChart(
-                  activities: provider.readingTimeData,
-                  isWeekly: provider.selectedPeriod == StatsPeriod.week,
-                  isEinkMode: true,
-                ),
+                // Reading time chart (text-based)
+                _buildEinkReadingTime(context, provider),
+                const SizedBox(height: Spacing.lg),
+                // Session stats
+                _buildEinkSessionStats(context, provider),
                 const SizedBox(height: Spacing.lg),
                 // Genre distribution
-                GenreDistribution(
-                  genres: provider.genreDistribution,
-                  isEinkMode: true,
-                ),
+                _buildEinkGenreDistribution(context, provider),
                 const SizedBox(height: Spacing.lg),
                 // Streak widget
-                StreakWidget(
-                  streak: provider.streak,
-                  isEinkMode: true,
-                ),
+                _buildEinkStreak(context, provider),
               ],
             ),
           ),
@@ -336,6 +925,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Widget _buildEinkHeader(BuildContext context, StatisticsProvider provider) {
+    // Filter out custom from e-ink periods
+    final periods = StatsPeriod.values.where((p) => p != StatsPeriod.custom).toList();
+
     return Container(
       height: ComponentSizes.einkHeaderHeight,
       padding: const EdgeInsets.symmetric(horizontal: Spacing.pageMarginsEink),
@@ -351,7 +943,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             ),
           ),
           Row(
-            children: StatsPeriod.values.map((period) {
+            children: periods.map((period) {
               final isSelected = provider.selectedPeriod == period;
               return GestureDetector(
                 onTap: () => provider.setPeriod(period),
@@ -386,60 +978,189 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Widget _buildEinkSummary(BuildContext context, StatisticsProvider provider) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
+    return StatSectionCard(
+      title: 'Summary',
+      isEinkMode: true,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(Spacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
+          _buildEinkStatRow(context, 'Books read', provider.totalBooks.toString()),
+          _buildEinkStatRow(context, 'Pages read', provider.pagesRead.toString()),
+          _buildEinkStatRow(context, 'Total reading time', provider.totalReadingLabel),
+          _buildEinkStatRow(context, 'Goals completed', provider.goalsCompleted.toString()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEinkReadingTime(BuildContext context, StatisticsProvider provider) {
+    final textTheme = Theme.of(context).textTheme;
+    final activities = provider.readingTimeData;
+    final maxMinutes = activities.maxMinutes;
+    final isWeekly = provider.selectedPeriod == StatsPeriod.week;
+
+    return StatSectionCard(
+      title: 'Reading time ${isWeekly ? "this week" : ""}',
+      isEinkMode: true,
+      child: Column(
+        children: [
+          ...activities.map((activity) {
+            const maxChars = 30;
+            final barChars = maxMinutes > 0
+                ? (activity.readingMinutes / maxMinutes * maxChars).round().clamp(0, maxChars)
+                : 0;
+            final filledBar = String.fromCharCodes(List.filled(barChars, 0x2588));
+            final emptyBar = String.fromCharCodes(List.filled(maxChars - barChars, 0x2591));
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      isWeekly ? activity.dayLabel : _getMonthLabel(activity.date),
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: activity.isToday ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '$filledBar$emptyBar',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        letterSpacing: 0,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Spacing.sm),
+                  SizedBox(
+                    width: 50,
+                    child: Text(
+                      activity.readingTimeLabel,
+                      style: textTheme.bodyMedium?.copyWith(fontSize: 14),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            child: Text(
-              'SUMMARY',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
+            );
+          }),
+          const Divider(color: Colors.black26),
+          _buildEinkStatRow(context, 'Total', activities.totalTimeLabel),
+          _buildEinkStatRow(context, 'Average', '${activities.averageTimeLabel}/day'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEinkSessionStats(BuildContext context, StatisticsProvider provider) {
+    final sessionStats = provider.sessionStats;
+
+    return StatSectionCard(
+      title: 'Session statistics',
+      isEinkMode: true,
+      child: Column(
+        children: [
+          _buildEinkStatRow(context, 'Average session', sessionStats.averageSessionLabel),
+          _buildEinkStatRow(context, 'Reading velocity', sessionStats.velocityLabel),
+          _buildEinkStatRow(context, 'Total sessions', '${sessionStats.totalSessions}'),
+          _buildEinkStatRow(context, 'Avg. daily reading', provider.averageReadingLabel),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEinkGenreDistribution(BuildContext context, StatisticsProvider provider) {
+    final textTheme = Theme.of(context).textTheme;
+    final genres = provider.genreDistribution;
+
+    return StatSectionCard(
+      title: 'Books by genre',
+      isEinkMode: true,
+      child: Column(
+        children: genres.map((genre) {
+          const maxChars = 30;
+          final barChars = (genre.percentage * maxChars).round().clamp(0, maxChars);
+          final filledBar = String.fromCharCodes(List.filled(barChars, 0x2588));
+          final emptyBar = String.fromCharCodes(List.filled(maxChars - barChars, 0x2591));
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+            child: Row(
               children: [
-                SummaryStatCard(
-                  value: provider.totalBooks.toString(),
-                  label: 'Total books',
-                  isEinkMode: true,
+                SizedBox(
+                  width: 100,
+                  child: Text(
+                    genre.genre,
+                    style: textTheme.bodyMedium?.copyWith(fontSize: 14),
+                  ),
                 ),
-                SummaryStatCard(
-                  value: provider.goalsCompleted.toString(),
-                  label: 'Goals completed',
-                  isEinkMode: true,
+                Expanded(
+                  child: Text(
+                    '$filledBar$emptyBar',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 0,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ),
-                SummaryStatCard(
-                  value: provider.totalReadingLabel,
-                  label: 'Total reading time',
-                  isEinkMode: true,
-                ),
-                SummaryStatCard(
-                  value: provider.pagesRead.toString(),
-                  label: 'Pages read',
-                  isEinkMode: true,
+                const SizedBox(width: Spacing.sm),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    '${genre.percentageInt}%',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
                 ),
               ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildEinkStreak(BuildContext context, StatisticsProvider provider) {
+    final streak = provider.streak;
+
+    return StatSectionCard(
+      title: 'Reading streaks',
+      isEinkMode: true,
+      child: Column(
+        children: [
+          _buildEinkStatRow(context, 'Current streak', '${streak.currentStreak} days'),
+          _buildEinkStatRow(context, 'Best streak', '${streak.bestStreak} days'),
+          _buildEinkStatRow(context, 'Days this month', '${streak.daysThisMonth} of ${streak.totalDaysInMonth}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEinkStatRow(BuildContext context, String label, String value) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: textTheme.bodyMedium?.copyWith(fontSize: 16),
+          ),
+          Text(
+            value,
+            style: textTheme.bodyMedium?.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -461,6 +1182,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
         return 'Year';
       case StatsPeriod.allTime:
         return 'All time';
+      case StatsPeriod.custom:
+        return 'Custom';
     }
   }
 
@@ -474,6 +1197,62 @@ class _StatisticsPageState extends State<StatisticsPage> {
         return 'Y';
       case StatsPeriod.allTime:
         return 'All';
+      case StatsPeriod.custom:
+        return 'C';
+    }
+  }
+
+  String _getMonthLabel(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[date.month - 1];
+  }
+
+  Future<void> _showDateRangePicker(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) async {
+    final now = DateTime.now();
+    final initialRange = provider.hasCustomRange
+        ? DateTimeRange(
+            start: provider.customStartDate!,
+            end: provider.customEndDate!,
+          )
+        : DateTimeRange(
+            start: now.subtract(const Duration(days: 30)),
+            end: now,
+          );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      useRootNavigator: false,
+      initialDateRange: initialRange,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      helpText: 'Select date range',
+      cancelText: 'Cancel',
+      confirmText: 'Apply',
+      saveText: 'Apply',
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      builder: (context, child) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: Spacing.xl,
+            vertical: Spacing.xl,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: child,
+          ),
+        );
+      },
+    );
+
+    if (picked != null) {
+      provider.setCustomDateRange(picked.start, picked.end);
     }
   }
 }

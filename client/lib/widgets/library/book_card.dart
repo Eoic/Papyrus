@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/book_data.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
-import 'package:papyrus/widgets/context_menu/book_context_menu.dart';
+import 'package:papyrus/utils/book_actions.dart';
 import 'package:provider/provider.dart';
 
 /// Responsive book card for grid display.
@@ -31,37 +31,6 @@ class _BookCardState extends State<BookCard> {
   bool get _isDesktop =>
       MediaQuery.of(context).size.width >= Breakpoints.desktopSmall;
 
-  void _showContextMenu(Offset? position) {
-    final libraryProvider = context.read<LibraryProvider>();
-    final isFavorite =
-        libraryProvider.isBookFavorite(widget.book.id, widget.book.isFavorite);
-
-    BookContextMenu.show(
-      context: context,
-      book: widget.book,
-      isFavorite: isFavorite,
-      tapPosition: position,
-      onFavoriteToggle: () {
-        libraryProvider.toggleFavorite(widget.book.id, isFavorite);
-      },
-      onEdit: () {
-        // TODO: Implement edit
-      },
-      onMoveToShelf: () {
-        // TODO: Implement move to shelf
-      },
-      onManageTopics: () {
-        // TODO: Implement manage topics
-      },
-      onStatusChange: (status) {
-        // TODO: Implement status change
-      },
-      onDelete: () {
-        // TODO: Implement delete
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -75,11 +44,19 @@ class _BookCardState extends State<BookCard> {
       child: GestureDetector(
         onSecondaryTapUp: (details) {
           // Right-click for desktop
-          _showContextMenu(details.globalPosition);
+          showBookContextMenu(
+            context: context,
+            book: widget.book,
+            position: details.globalPosition,
+          );
         },
         onLongPressStart: (details) {
           // Long press for mobile
-          _showContextMenu(details.globalPosition);
+          showBookContextMenu(
+            context: context,
+            book: widget.book,
+            position: details.globalPosition,
+          );
         },
         child: Card(
           clipBehavior: Clip.antiAlias,
@@ -119,7 +96,10 @@ class _BookCardState extends State<BookCard> {
                             duration: const Duration(milliseconds: 150),
                             child: _CardIconButton(
                               icon: Icons.more_vert,
-                              onTap: () => _showContextMenu(null),
+                              onTap: () => showBookContextMenu(
+                                context: context,
+                                book: widget.book,
+                              ),
                             ),
                           ),
                         ),

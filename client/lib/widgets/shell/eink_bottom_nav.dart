@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/navigation_utils.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 
 /// E-ink optimized bottom navigation with text labels and high contrast.
@@ -19,7 +20,7 @@ class EinkBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Only show main nav items
-    final mainItems = items.where((item) => !_isChildPath(item.path)).toList();
+    final mainItems = items.where((item) => !isChildPath(item.path)).toList();
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -35,7 +36,7 @@ class EinkBottomNav extends StatelessWidget {
       ),
       child: Row(
         children: mainItems.map((item) {
-          final isSelected = _isItemSelected(item);
+          final isSelected = isNavItemSelected(currentPath, item);
           return Expanded(
             child: _buildNavItem(context, item, isSelected),
           );
@@ -88,19 +89,5 @@ class EinkBottomNav extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  bool _isChildPath(String path) {
-    final segments = path.split('/').where((s) => s.isNotEmpty).toList();
-    return segments.length > 1;
-  }
-
-  bool _isItemSelected(AppShellNavItem item) {
-    if (currentPath == item.path) return true;
-    if (currentPath.startsWith(item.path) && item.path != '/') return true;
-    if (item.children != null) {
-      return item.children!.any((child) => currentPath.startsWith(child.path));
-    }
-    return false;
   }
 }

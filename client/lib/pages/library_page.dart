@@ -13,8 +13,10 @@ import 'package:papyrus/widgets/library/advanced_search_bar.dart';
 import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/eink_tab_filter.dart';
+import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/search/mobile_search_bar.dart';
+import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
 
 /// Main library page with responsive layouts for all platforms.
@@ -29,6 +31,8 @@ class LibraryPage extends StatefulWidget {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
     final displayMode = context.watch<DisplayModeProvider>();
@@ -103,19 +107,37 @@ class _LibraryPageState extends State<LibraryPage> {
     final activeFilters = _buildActiveFilters(libraryProvider);
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const LibraryDrawer(),
       body: SafeArea(
         child: Column(
           children: [
-            // Search bar section
+            // Search bar section with drawer button
             Padding(
               padding: const EdgeInsets.all(Spacing.md),
-              child: MobileSearchBar(
-                initialQuery: libraryProvider.searchQuery,
-                activeFilterCount: activeFilters.length,
-                onQueryChanged: (query) {
-                  libraryProvider.setSearchQuery(query);
-                },
-                onFilterTap: () => _showFilterBottomSheet(context),
+              child: Row(
+                children: [
+                  // Drawer hamburger button
+                  IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () {
+                      _scaffoldKey.currentState?.openDrawer();
+                    },
+                    tooltip: 'Library sections',
+                  ),
+                  const SizedBox(width: Spacing.xs),
+                  // Search bar
+                  Expanded(
+                    child: MobileSearchBar(
+                      initialQuery: libraryProvider.searchQuery,
+                      activeFilterCount: activeFilters.length,
+                      onQueryChanged: (query) {
+                        libraryProvider.setSearchQuery(query);
+                      },
+                      onFilterTap: () => _showFilterBottomSheet(context),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -180,7 +202,7 @@ class _LibraryPageState extends State<LibraryPage> {
             // Book grid or list
             Expanded(
               child: books.isEmpty
-                  ? _buildEmptyState(context)
+                  ? _buildEmptyState()
                   : libraryProvider.isListView
                       ? _buildBookList(context, books)
                       : BookGrid(
@@ -489,7 +511,7 @@ class _LibraryPageState extends State<LibraryPage> {
           // Book grid or list
           Expanded(
             child: books.isEmpty
-                ? _buildEmptyState(context)
+                ? _buildEmptyState()
                 : libraryProvider.isListView
                     ? _buildBookList(context, books)
                     : BookGrid(
@@ -565,7 +587,7 @@ class _LibraryPageState extends State<LibraryPage> {
           // Book list
           Expanded(
             child: books.isEmpty
-                ? _buildEmptyState(context)
+                ? _buildEmptyState()
                 : ListView.builder(
                     itemCount: books.length,
                     itemBuilder: (context, index) {
@@ -582,42 +604,15 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  // ============================================================================
-  // SHARED WIDGETS
-  // ============================================================================
-
-  Widget _buildEmptyState(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.library_books_outlined,
-            size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: Spacing.md),
-          Text(
-            'No books found',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            'Try adjusting your filters or add some books',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _navigateToBookDetails(BuildContext context, BookData book) {
     context.go('/library/details/${book.id}');
+  }
+
+  Widget _buildEmptyState() {
+    return const EmptyState(
+      icon: Icons.library_books_outlined,
+      title: 'No books found',
+      subtitle: 'Try adjusting your filters or add some books',
+    );
   }
 }

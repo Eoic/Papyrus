@@ -31,6 +31,7 @@ class _RegisterForm extends State<RegisterForm> {
           return user;
         })
         .catchError((error) async {
+          if (!mounted) return error;
           var errorMessage = "Account creation failed.";
 
           if (error.code == "email-already-in-use") {
@@ -47,6 +48,37 @@ class _RegisterForm extends State<RegisterForm> {
 
           return error;
         });
+  }
+
+  Future<void> _handleRegister() async {
+    if (!formKey.currentState!.validate()) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    setState(() => isRegisterDisabled = true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: SizedBox(
+          width: 150,
+          height: 150,
+          child: CircularProgressIndicator(strokeWidth: 8),
+        ),
+      ),
+    );
+
+    try {
+      await signUp();
+      if (!mounted) return;
+      setState(() => isRegisterDisabled = false);
+      Navigator.of(context).pop();
+      context.goNamed("LIBRARY");
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => isRegisterDisabled = false);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -85,37 +117,7 @@ class _RegisterForm extends State<RegisterForm> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: isRegisterDisabled
-                  ? null
-                  : () {
-                      if (formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        setState(() => isRegisterDisabled = true);
-
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => const Center(
-                            child: SizedBox(
-                              width: 150,
-                              height: 150,
-                              child: CircularProgressIndicator(strokeWidth: 8),
-                            ),
-                          ),
-                        );
-
-                        signUp()
-                            .then((value) {
-                              setState(() => isRegisterDisabled = false);
-                              Navigator.of(context).pop();
-                              context.goNamed("LIBRARY");
-                            })
-                            .catchError((error) async {
-                              setState(() => isRegisterDisabled = false);
-                              Navigator.of(context).pop();
-                            });
-                      }
-                    },
+              onPressed: isRegisterDisabled ? null : _handleRegister,
               style: const ButtonStyle(
                 minimumSize: WidgetStatePropertyAll<Size>(Size.fromHeight(46)),
                 elevation: WidgetStatePropertyAll<double>(2.0),

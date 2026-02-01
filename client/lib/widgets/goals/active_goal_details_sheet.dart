@@ -54,18 +54,20 @@ class ActiveGoalDetailsSheet extends StatefulWidget {
 class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
   late TextEditingController _progressController;
   late TextEditingController _targetController;
+  late int _currentProgress;
+  late int _currentTarget;
   bool _isEditingProgress = false;
   bool _isEditingTarget = false;
 
   @override
   void initState() {
     super.initState();
+    _currentProgress = widget.goal.current;
+    _currentTarget = widget.goal.target;
     _progressController = TextEditingController(
-      text: widget.goal.current.toString(),
+      text: _currentProgress.toString(),
     );
-    _targetController = TextEditingController(
-      text: widget.goal.target.toString(),
-    );
+    _targetController = TextEditingController(text: _currentTarget.toString());
   }
 
   @override
@@ -287,7 +289,7 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                      suffixText: 'of ${widget.goal.target}',
+                      suffixText: 'of $_currentTarget',
                     ),
                   ),
                 ),
@@ -296,11 +298,12 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
                   onPressed: _saveProgress,
                   icon: const Icon(Icons.check, size: 20),
                 ),
+                const SizedBox(width: Spacing.xs),
                 IconButton.outlined(
                   onPressed: () {
                     setState(() {
                       _isEditingProgress = false;
-                      _progressController.text = widget.goal.current.toString();
+                      _progressController.text = _currentProgress.toString();
                     });
                   },
                   icon: const Icon(Icons.close, size: 20),
@@ -308,45 +311,56 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
               ],
             ),
           ] else ...[
-            // Progress display
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${widget.goal.current} of ${widget.goal.target} ${widget.goal.typeLabel}',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+            Builder(
+              builder: (context) {
+                final progress = (_currentProgress / _currentTarget).clamp(
+                  0.0,
+                  1.0,
+                );
+                final isCompleted = _currentProgress >= _currentTarget;
+                final progressLabel = '${(progress * 100).round()}%';
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$_currentProgress of $_currentTarget ${widget.goal.typeLabel}',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: Spacing.xs),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 8,
+                              backgroundColor:
+                                  colorScheme.surfaceContainerHighest,
+                              color: isCompleted
+                                  ? colorScheme.tertiary
+                                  : colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: Spacing.xs),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: LinearProgressIndicator(
-                          value: widget.goal.progress.clamp(0.0, 1.0),
-                          minHeight: 8,
-                          backgroundColor: colorScheme.surfaceContainerHighest,
-                          color: widget.goal.isCompleted
-                              ? colorScheme.tertiary
-                              : colorScheme.primary,
-                        ),
+                    ),
+                    const SizedBox(width: Spacing.md),
+                    Text(
+                      progressLabel,
+                      style: textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isCompleted
+                            ? colorScheme.tertiary
+                            : colorScheme.primary,
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: Spacing.md),
-                Text(
-                  widget.goal.progressLabel,
-                  style: textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: widget.goal.isCompleted
-                        ? colorScheme.tertiary
-                        : colorScheme.primary,
-                  ),
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ],
@@ -390,51 +404,57 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
             ],
           ),
           const SizedBox(height: Spacing.sm),
-          if (_isEditingTarget) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _targetController,
-                    keyboardType: TextInputType.number,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.sm,
-                        vertical: Spacing.sm,
+          // Fixed height container to prevent layout shifts
+          SizedBox(
+            height: 36,
+            child: _isEditingTarget
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _targetController,
+                          keyboardType: TextInputType.number,
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: Spacing.sm,
+                              vertical: Spacing.sm,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            suffixText: widget.goal.typeLabel,
+                          ),
+                        ),
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      const SizedBox(width: Spacing.sm),
+                      IconButton.filled(
+                        onPressed: _saveTarget,
+                        icon: const Icon(Icons.check, size: 20),
                       ),
-                      suffixText: widget.goal.typeLabel,
+                      const SizedBox(width: Spacing.xs),
+                      IconButton.outlined(
+                        onPressed: () {
+                          setState(() {
+                            _isEditingTarget = false;
+                            _targetController.text = _currentTarget.toString();
+                          });
+                        },
+                        icon: const Icon(Icons.close, size: 20),
+                      ),
+                    ],
+                  )
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '$_currentTarget ${widget.goal.typeLabel}',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: Spacing.sm),
-                IconButton.filled(
-                  onPressed: _saveTarget,
-                  icon: const Icon(Icons.check, size: 20),
-                ),
-                IconButton.outlined(
-                  onPressed: () {
-                    setState(() {
-                      _isEditingTarget = false;
-                      _targetController.text = widget.goal.target.toString();
-                    });
-                  },
-                  icon: const Icon(Icons.close, size: 20),
-                ),
-              ],
-            ),
-          ] else ...[
-            Text(
-              '${widget.goal.target} ${widget.goal.typeLabel}',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
@@ -476,7 +496,10 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
     final newProgress = int.tryParse(_progressController.text);
     if (newProgress != null && newProgress >= 0) {
       widget.onUpdateProgress?.call(newProgress);
-      Navigator.of(context).pop();
+      setState(() {
+        _currentProgress = newProgress;
+        _isEditingProgress = false;
+      });
     }
   }
 
@@ -484,7 +507,10 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
     final newTarget = int.tryParse(_targetController.text);
     if (newTarget != null && newTarget > 0) {
       widget.onEdit?.call(newTarget);
-      Navigator.of(context).pop();
+      setState(() {
+        _currentTarget = newTarget;
+        _isEditingTarget = false;
+      });
     }
   }
 
@@ -508,9 +534,7 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
               Navigator.of(context).pop();
               widget.onDelete?.call();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -564,16 +588,36 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   String _formatMonthYear(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.year}';
   }

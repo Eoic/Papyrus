@@ -60,24 +60,6 @@ class QuickFilterChips extends StatelessWidget {
             isSelected: selectedFilters.contains(LibraryFilterType.finished),
             onTap: () => onFilterToggled?.call(LibraryFilterType.finished),
           ),
-          if (showMoreChip) ...[
-            const SizedBox(width: Spacing.sm),
-            _QuickFilterChip(
-              label: 'Shelves',
-              icon: Icons.shelves,
-              hasDropdown: true,
-              isSelected: selectedFilters.contains(LibraryFilterType.shelves),
-              onTap: onMoreFilters,
-            ),
-            const SizedBox(width: Spacing.sm),
-            _QuickFilterChip(
-              label: 'Topics',
-              icon: Icons.topic,
-              hasDropdown: true,
-              isSelected: selectedFilters.contains(LibraryFilterType.topics),
-              onTap: onMoreFilters,
-            ),
-          ],
         ],
       ),
     );
@@ -88,14 +70,12 @@ class _QuickFilterChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
-  final bool hasDropdown;
   final VoidCallback? onTap;
 
   const _QuickFilterChip({
     required this.label,
     required this.icon,
     this.isSelected = false,
-    this.hasDropdown = false,
     this.onTap,
   });
 
@@ -140,16 +120,6 @@ class _QuickFilterChip extends StatelessWidget {
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
-              if (hasDropdown) ...[
-                const SizedBox(width: Spacing.xs),
-                Icon(
-                  Icons.expand_more,
-                  size: 18,
-                  color: isSelected
-                      ? colorScheme.onSecondaryContainer
-                      : colorScheme.onSurfaceVariant,
-                ),
-              ],
             ],
           ),
         ),

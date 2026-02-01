@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/utils/navigation_utils.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 
 /// Mobile bottom navigation bar with Material 3 styling.
@@ -17,7 +18,7 @@ class MobileBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Only show main nav items (no children in bottom nav)
-    final mainItems = items.where((item) => !_isChildPath(item.path)).toList();
+    final mainItems = items.where((item) => !isChildPath(item.path)).toList();
     final currentIndex = _getCurrentIndex(mainItems);
 
     return NavigationBar(
@@ -41,27 +42,12 @@ class MobileBottomNav extends StatelessWidget {
     );
   }
 
-  bool _isChildPath(String path) {
-    // Check if this is a child path (e.g., /library/books)
-    final segments = path.split('/').where((s) => s.isNotEmpty).toList();
-    return segments.length > 1;
-  }
-
   int _getCurrentIndex(List<AppShellNavItem> mainItems) {
     for (var i = 0; i < mainItems.length; i++) {
-      if (_isItemSelected(mainItems[i])) {
+      if (isNavItemSelected(currentPath, mainItems[i])) {
         return i;
       }
     }
     return 0;
-  }
-
-  bool _isItemSelected(AppShellNavItem item) {
-    if (currentPath == item.path) return true;
-    if (currentPath.startsWith(item.path) && item.path != '/') return true;
-    if (item.children != null) {
-      return item.children!.any((child) => currentPath.startsWith(child.path));
-    }
-    return false;
   }
 }

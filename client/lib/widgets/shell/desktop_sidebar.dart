@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:papyrus/providers/sidebar_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/navigation_utils.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 import 'package:provider/provider.dart';
 
@@ -122,7 +123,7 @@ class DesktopSidebar extends StatelessWidget {
     AppShellNavItem item,
     bool isCollapsed,
   ) {
-    final isSelected = _isItemSelected(item);
+    final isSelected = isNavItemSelected(currentPath, item);
     final hasChildren = item.children != null && item.children!.isNotEmpty;
     final sidebarProvider = context.read<SidebarProvider>();
 
@@ -200,7 +201,7 @@ class DesktopSidebar extends StatelessWidget {
     final sidebarProvider = context.watch<SidebarProvider>();
     final isExpanded =
         item.path == '/library' && sidebarProvider.isLibraryExpanded;
-    final isSelected = _isItemSelected(item);
+    final isSelected = isNavItemSelected(currentPath, item);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,14 +369,5 @@ class DesktopSidebar extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  bool _isItemSelected(AppShellNavItem item) {
-    if (currentPath == item.path) return true;
-    if (currentPath.startsWith(item.path) && item.path != '/') return true;
-    if (item.children != null) {
-      return item.children!.any((child) => currentPath.startsWith(child.path));
-    }
-    return false;
   }
 }

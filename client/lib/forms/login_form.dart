@@ -32,6 +32,7 @@ class _LoginForm extends State<LoginForm> {
           return user;
         })
         .catchError((error) async {
+          if (!mounted) return error;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(seconds: 5),
@@ -42,6 +43,37 @@ class _LoginForm extends State<LoginForm> {
 
           return error;
         });
+  }
+
+  Future<void> _handleLogin() async {
+    if (!formKey.currentState!.validate()) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    setState(() => isLoginDisabled = true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: SizedBox(
+          width: 150,
+          height: 150,
+          child: CircularProgressIndicator(strokeWidth: 8),
+        ),
+      ),
+    );
+
+    try {
+      await signIn();
+      if (!mounted) return;
+      setState(() => isLoginDisabled = false);
+      Navigator.of(context).pop();
+      context.goNamed('LIBRARY');
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => isLoginDisabled = false);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -76,38 +108,7 @@ class _LoginForm extends State<LoginForm> {
               ),
             ),
             ElevatedButton(
-              onPressed: isLoginDisabled
-                  ? null
-                  : () async {
-                      if (formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        setState(() => isLoginDisabled = true);
-
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => const Center(
-                            child: SizedBox(
-                              width: 150,
-                              height: 150,
-                              child: CircularProgressIndicator(strokeWidth: 8),
-                            ),
-                          ),
-                        );
-
-                        signIn()
-                            .then((value) {
-                              setState(() => isLoginDisabled = false);
-                              Navigator.of(context).pop();
-                              context.goNamed('LIBRARY');
-                            })
-                            .catchError((error) async {
-                              setState(() => isLoginDisabled = false);
-                              Navigator.of(context).pop();
-                              return error;
-                            });
-                      }
-                    },
+              onPressed: isLoginDisabled ? null : _handleLogin,
               style: const ButtonStyle(
                 minimumSize: WidgetStatePropertyAll<Size>(Size.fromHeight(50)),
                 elevation: WidgetStatePropertyAll<double>(2.0),

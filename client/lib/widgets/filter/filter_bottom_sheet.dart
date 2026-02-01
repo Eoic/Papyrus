@@ -280,7 +280,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
         // Header
         Padding(
-          padding: const EdgeInsets.all(Spacing.md),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.md,
+            vertical: Spacing.xs,
+          ),
           child: Row(
             children: [
               Text(
@@ -310,7 +313,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 const SizedBox(height: Spacing.sm),
                 _buildQuickFilters(),
 
-                const SizedBox(height: Spacing.lg),
+                const SizedBox(height: Spacing.md),
                 const Divider(),
                 const SizedBox(height: Spacing.md),
 
@@ -646,8 +649,8 @@ class _QuickFilterCheckbox extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: (MediaQuery.of(context).size.width - Spacing.md * 3) / 2,
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
         decoration: BoxDecoration(
           color: value
               ? colorScheme.secondaryContainer

@@ -33,16 +33,6 @@ class LibraryFilterChips extends StatelessWidget {
         label: 'Finished',
         icon: Icons.check_circle,
       ),
-      _FilterChipData(
-        type: LibraryFilterType.shelves,
-        label: 'Shelves',
-        icon: Icons.shelves,
-      ),
-      _FilterChipData(
-        type: LibraryFilterType.topics,
-        label: 'Topics',
-        icon: Icons.topic,
-      ),
     ];
 
     return SizedBox(
