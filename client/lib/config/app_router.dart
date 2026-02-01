@@ -1,14 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/pages/book_details_page.dart';
 import 'package:papyrus/pages/dashboard_page.dart';
+import 'package:papyrus/pages/developer_options_page.dart';
 import 'package:papyrus/pages/goals_page.dart';
 import 'package:papyrus/pages/library_page.dart';
 import 'package:papyrus/pages/login_page.dart';
 import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
 import 'package:papyrus/pages/search_options_page.dart';
+import 'package:papyrus/pages/settings_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
 import 'package:papyrus/pages/stub_page.dart';
 import 'package:papyrus/pages/welcome_page.dart';
@@ -172,6 +175,25 @@ class AppRouter {
               child: const ProfilePage(),
             ),
           ),
+          // Settings
+          GoRoute(
+            name: 'SETTINGS',
+            path: '/settings',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const SettingsPage(),
+            ),
+          ),
+          // Developer Options (debug only)
+          if (kDebugMode)
+            GoRoute(
+              name: 'DEVELOPER_OPTIONS',
+              path: '/developer-options',
+              pageBuilder: (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const DeveloperOptionsPage(),
+              ),
+            ),
         ],
       ),
     ],

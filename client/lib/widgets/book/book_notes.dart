@@ -4,18 +4,58 @@ import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/empty_notes_state.dart';
 import 'package:papyrus/widgets/book_details/note_card.dart';
+import 'package:papyrus/widgets/input/search_field.dart';
 import 'package:provider/provider.dart';
 
-/// Notes tab content for book details page.
-/// Shows a list of note cards with add and search functionality.
+/// Notes tab content for the book details page.
+///
+/// Displays a searchable list of notes associated with a book. Supports
+/// three display modes: desktop, mobile, and e-ink, each with optimized
+/// layouts and interactions.
+///
+/// ## Features
+///
+/// - **Search**: Filter notes by title, content, or tags
+/// - **Add note**: Button to create new notes (desktop/e-ink layouts)
+/// - **Responsive**: Adapts layout to screen size and display mode
+/// - **Empty states**: Shows helpful message when no notes exist
+///
+/// ## Layout Variants
+///
+/// - **Desktop** (>=840px): Search field and "Add Note" button in header row
+/// - **Mobile** (<840px): Full-width search field at top
+/// - **E-ink**: High-contrast styling with larger touch targets
+///
+/// ## Example
+///
+/// ```dart
+/// BookNotes(
+///   notes: bookProvider.notes,
+///   onAddNote: () => _showAddNoteDialog(context),
+///   onNoteTap: (note) => _showNoteDetail(note),
+///   onNoteActions: (note) => _showNoteActions(note),
+/// )
+/// ```
 class BookNotes extends StatefulWidget {
+  /// List of notes to display.
   final List<Note> notes;
+
+  /// Called when the user wants to add a new note.
   final VoidCallback? onAddNote;
+
+  /// Called when a note is tapped.
   final Function(Note)? onNoteTap;
+
+  /// Called when a note should be edited.
   final Function(Note)? onNoteEdit;
+
+  /// Called when a note should be deleted.
   final Function(Note)? onNoteDelete;
+
+  /// Called when the user requests actions menu for a note (long press).
   final Function(Note)? onNoteActions;
 
+  /// Creates a notes tab widget.
   const BookNotes({
     super.key,
     required this.notes,
@@ -40,10 +80,12 @@ class _BookNotesState extends State<BookNotes> {
     super.dispose();
   }
 
+  /// Returns notes filtered by the current search query.
+  ///
+  /// Matches against note title, content, and tags (case-insensitive).
   List<Note> get _filteredNotes {
-    if (_searchQuery.isEmpty) {
-      return widget.notes;
-    }
+    if (_searchQuery.isEmpty) return widget.notes;
+
     final query = _searchQuery.toLowerCase();
     return widget.notes.where((note) {
       return note.title.toLowerCase().contains(query) ||
@@ -53,9 +95,7 @@ class _BookNotesState extends State<BookNotes> {
   }
 
   void _onSearchChanged(String value) {
-    setState(() {
-      _searchQuery = value;
-    });
+    setState(() => _searchQuery = value);
   }
 
   void _clearSearch() {
@@ -80,262 +120,202 @@ class _BookNotesState extends State<BookNotes> {
       );
     }
 
-    if (displayMode.isEinkMode) {
-      return _buildEinkLayout(context);
-    }
-    if (isDesktop) {
-      return _buildDesktopLayout(context);
-    }
+    if (displayMode.isEinkMode) return _buildEinkLayout(context);
+    if (isDesktop) return _buildDesktopLayout(context);
     return _buildMobileLayout(context);
   }
 
+  /// Desktop layout with search field and add button in a header row.
   Widget _buildDesktopLayout(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final filteredNotes = _filteredNotes;
 
     return Column(
       children: [
-        // Header with search and add button
-        // +4 accounts for Card's default margin to align with card borders
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.lg + 4,
-            Spacing.lg,
-            Spacing.lg + 4,
-            Spacing.md,
-          ),
-          child: Row(
-            children: [
-              // Search field
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search notes...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: _clearSearch,
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.md,
-                      ),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: Spacing.md),
-              FilledButton.icon(
-                onPressed: widget.onAddNote,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Note'),
-              ),
-            ],
-          ),
-        ),
-        // Notes list or empty search result
+        _buildDesktopHeader(),
         Expanded(
           child: filteredNotes.isEmpty
               ? _buildNoResultsState(context, colorScheme)
-              : ListView.separated(
+              : _buildNotesList(
+                  filteredNotes,
                   padding: const EdgeInsets.fromLTRB(
                     Spacing.lg,
                     0,
                     Spacing.lg,
                     Spacing.lg,
                   ),
-                  itemCount: filteredNotes.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: Spacing.md),
-                  itemBuilder: (context, index) {
-                    final note = filteredNotes[index];
-                    return NoteCard(
-                      note: note,
-                      onTap: () => widget.onNoteTap?.call(note),
-                      onLongPress: () => widget.onNoteActions?.call(note),
-                    );
-                  },
+                  separatorHeight: Spacing.md,
                 ),
         ),
       ],
     );
   }
 
+  /// Desktop header with search field and "Add Note" button.
+  Widget _buildDesktopHeader() {
+    // +4 accounts for Card's default margin to align with card borders
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.lg + 4,
+        Spacing.lg,
+        Spacing.lg + 4,
+        Spacing.md,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SearchField(
+              controller: _searchController,
+              hintText: 'Search notes...',
+              onChanged: _onSearchChanged,
+              onClear: _clearSearch,
+            ),
+          ),
+          const SizedBox(width: Spacing.md),
+          FilledButton.icon(
+            onPressed: widget.onAddNote,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Note'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Mobile layout with full-width search field at top.
   Widget _buildMobileLayout(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final filteredNotes = _filteredNotes;
 
     return Column(
       children: [
-        // Search bar
-        // +4 accounts for Card's default margin to align with card borders
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.md + 4,
-            Spacing.md,
-            Spacing.md + 4,
-            Spacing.sm,
-          ),
-          child: SizedBox(
-            height: 40,
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Search notes...',
-                prefixIcon: const Icon(Icons.search, size: 20),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close, size: 20),
-                        onPressed: _clearSearch,
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.md,
-                ),
-                isDense: true,
-              ),
-            ),
-          ),
-        ),
-        // Notes list
+        _buildMobileSearchBar(),
         Expanded(
           child: filteredNotes.isEmpty
               ? _buildNoResultsState(context, colorScheme)
-              : ListView.separated(
+              : _buildNotesList(
+                  filteredNotes,
                   padding: const EdgeInsets.fromLTRB(
                     Spacing.md,
                     0,
                     Spacing.md,
                     Spacing.md,
                   ),
-                  itemCount: filteredNotes.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: Spacing.sm),
-                  itemBuilder: (context, index) {
-                    final note = filteredNotes[index];
-                    return NoteCard(
-                      note: note,
-                      onTap: () => widget.onNoteTap?.call(note),
-                      onLongPress: () => widget.onNoteActions?.call(note),
-                    );
-                  },
+                  separatorHeight: Spacing.sm,
                 ),
         ),
       ],
     );
   }
 
+  /// Mobile search bar section.
+  Widget _buildMobileSearchBar() {
+    // +4 accounts for Card's default margin to align with card borders
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.md + 4,
+        Spacing.md,
+        Spacing.md + 4,
+        Spacing.sm,
+      ),
+      child: SearchField(
+        controller: _searchController,
+        hintText: 'Search notes...',
+        onChanged: _onSearchChanged,
+        onClear: _clearSearch,
+      ),
+    );
+  }
+
+  /// E-ink optimized layout with high-contrast styling.
   Widget _buildEinkLayout(BuildContext context) {
     final filteredNotes = _filteredNotes;
 
     return Column(
       children: [
-        // Header with search and add button
-        Padding(
-          padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-          child: Row(
-            children: [
-              // Search field
-              Expanded(
-                child: SizedBox(
-                  height: TouchTargets.einkMin,
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search notes...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: _clearSearch,
-                            )
-                          : null,
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.zero,
-                        borderSide: BorderSide(
-                          color: Colors.black,
-                          width: BorderWidths.einkDefault,
-                        ),
-                      ),
-                      enabledBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.zero,
-                        borderSide: BorderSide(
-                          color: Colors.black,
-                          width: BorderWidths.einkDefault,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.md,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: Spacing.md),
-              SizedBox(
-                height: TouchTargets.einkMin,
-                child: OutlinedButton.icon(
-                  onPressed: widget.onAddNote,
-                  icon: const Icon(Icons.add),
-                  label: const Text('ADD NOTE'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(
-                      color: Colors.black,
-                      width: BorderWidths.einkDefault,
-                    ),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Notes list
+        _buildEinkHeader(),
         Expanded(
           child: filteredNotes.isEmpty
               ? _buildEinkNoResultsState(context)
-              : ListView.separated(
+              : _buildNotesList(
+                  filteredNotes,
                   padding: EdgeInsets.fromLTRB(
                     Spacing.pageMarginsEink,
                     0,
                     Spacing.pageMarginsEink,
                     Spacing.pageMarginsEink,
                   ),
-                  itemCount: filteredNotes.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: Spacing.md),
-                  itemBuilder: (context, index) {
-                    final note = filteredNotes[index];
-                    return NoteCard(
-                      note: note,
-                      isEinkMode: true,
-                      onTap: () => widget.onNoteTap?.call(note),
-                      onLongPress: () => widget.onNoteActions?.call(note),
-                    );
-                  },
+                  separatorHeight: Spacing.md,
+                  isEinkMode: true,
                 ),
         ),
       ],
     );
   }
 
+  /// E-ink header with search field and add button.
+  Widget _buildEinkHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(Spacing.pageMarginsEink),
+      child: Row(
+        children: [
+          Expanded(
+            child: SearchField(
+              controller: _searchController,
+              hintText: 'Search notes...',
+              isEinkMode: true,
+              onChanged: _onSearchChanged,
+              onClear: _clearSearch,
+            ),
+          ),
+          const SizedBox(width: Spacing.md),
+          SizedBox(
+            height: TouchTargets.einkMin,
+            child: OutlinedButton.icon(
+              onPressed: widget.onAddNote,
+              icon: const Icon(Icons.add),
+              label: const Text('ADD NOTE'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.black,
+                side: const BorderSide(
+                  color: Colors.black,
+                  width: BorderWidths.einkDefault,
+                ),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the scrollable notes list.
+  Widget _buildNotesList(
+    List<Note> notes, {
+    required EdgeInsets padding,
+    required double separatorHeight,
+    bool isEinkMode = false,
+  }) {
+    return ListView.separated(
+      padding: padding,
+      itemCount: notes.length,
+      separatorBuilder: (_, _) => SizedBox(height: separatorHeight),
+      itemBuilder: (context, index) {
+        final note = notes[index];
+        return NoteCard(
+          note: note,
+          isEinkMode: isEinkMode,
+          onTap: () => widget.onNoteTap?.call(note),
+          onLongPress: () => widget.onNoteActions?.call(note),
+        );
+      },
+    );
+  }
+
+  /// Empty state shown when search yields no results (standard mode).
   Widget _buildNoResultsState(BuildContext context, ColorScheme colorScheme) {
     return Center(
       child: Column(
@@ -365,6 +345,7 @@ class _BookNotesState extends State<BookNotes> {
     );
   }
 
+  /// Empty state shown when search yields no results (e-ink mode).
   Widget _buildEinkNoResultsState(BuildContext context) {
     return Center(
       child: Column(
