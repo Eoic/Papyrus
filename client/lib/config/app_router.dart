@@ -12,6 +12,7 @@ import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
 import 'package:papyrus/pages/search_options_page.dart';
 import 'package:papyrus/pages/settings_page.dart';
+import 'package:papyrus/pages/shelves_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
 import 'package:papyrus/pages/stub_page.dart';
 import 'package:papyrus/pages/welcome_page.dart';
@@ -92,7 +93,7 @@ class AppRouter {
                 path: 'shelves',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const StubPage(title: 'Shelves'),
+                  child: const ShelvesPage(),
                 ),
               ),
               GoRoute(
