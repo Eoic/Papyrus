@@ -64,7 +64,9 @@ class _LibraryPageState extends State<LibraryPage> {
     // Apply category filters (quick filters from chips)
     if (!provider.isFilterActive(LibraryFilterType.all)) {
       if (provider.isFilterActive(LibraryFilterType.favorites)) {
-        books = books.where((book) => book.isFavorite).toList();
+        books = books
+            .where((book) => provider.isBookFavorite(book.id, book.isFavorite))
+            .toList();
       }
       if (provider.isFilterActive(LibraryFilterType.reading)) {
         books = books.where((book) => book.isReading).toList();

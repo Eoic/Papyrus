@@ -1,0 +1,299 @@
+import 'package:flutter/material.dart';
+import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/book_details/book_action_buttons.dart';
+import 'package:papyrus/widgets/book_details/book_cover_image.dart';
+import 'package:papyrus/widgets/book_details/book_progress_bar.dart';
+
+/// Header section for book details page.
+/// Contains cover image, title, author, metadata, progress bar, and action buttons.
+class BookHeader extends StatelessWidget {
+  final BookData book;
+  final bool isEinkMode;
+  final bool isDesktop;
+  final VoidCallback? onContinueReading;
+  final VoidCallback? onAddToShelf;
+  final VoidCallback? onEdit;
+
+  const BookHeader({
+    super.key,
+    required this.book,
+    this.isEinkMode = false,
+    this.isDesktop = false,
+    this.onContinueReading,
+    this.onAddToShelf,
+    this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isEinkMode) {
+      return _buildEinkHeader(context);
+    }
+    if (isDesktop) {
+      return _buildDesktopHeader(context);
+    }
+    return _buildMobileHeader(context);
+  }
+
+  Widget _buildDesktopHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Cover image
+        BookCoverImage(
+          imageUrl: book.coverURL,
+          bookTitle: book.title,
+          size: BookCoverSize.large,
+          isEinkMode: false,
+        ),
+        const SizedBox(width: Spacing.xl),
+
+        // Book info
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                book.title,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: Spacing.xs),
+
+              // Author
+              Text(
+                book.author,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: Spacing.md),
+
+              // Meta row: rating, format, topics
+              _buildMetaRow(context, colorScheme),
+              const SizedBox(height: Spacing.lg),
+
+              // Progress bar
+              if (book.progress > 0) ...[
+                BookProgressBar(
+                  progress: book.progress,
+                  currentPage: book.currentPage,
+                  totalPages: book.totalPages,
+                  isEinkMode: false,
+                ),
+                const SizedBox(height: Spacing.lg),
+              ],
+
+              // Action buttons
+              BookActionButtons(
+                book: book,
+                isDesktop: true,
+                onContinueReading: onContinueReading,
+                onAddToShelf: onAddToShelf,
+                onEdit: onEdit,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+      child: Column(
+        children: [
+          const SizedBox(height: Spacing.lg),
+
+          // Cover image (centered)
+          BookCoverImage(
+            imageUrl: book.coverURL,
+            bookTitle: book.title,
+            size: BookCoverSize.medium,
+            isEinkMode: false,
+          ),
+          const SizedBox(height: Spacing.md),
+
+          // Title (centered)
+          Text(
+            book.title,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: Spacing.xs),
+
+          // Author (centered)
+          Text(
+            book.author,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: Spacing.md),
+
+          // Meta row: rating, format, pages
+          _buildMobileMetaRow(context, colorScheme),
+          const SizedBox(height: Spacing.md),
+
+          // Progress bar
+          if (book.progress > 0) ...[
+            BookProgressBar(
+              progress: book.progress,
+              currentPage: book.currentPage,
+              totalPages: book.totalPages,
+              isEinkMode: false,
+              height: 4,
+            ),
+            const SizedBox(height: Spacing.md),
+          ],
+
+          // Action buttons
+          BookActionButtons(
+            book: book,
+            isDesktop: false,
+            onContinueReading: onContinueReading,
+            onAddToShelf: onAddToShelf,
+            onEdit: onEdit,
+          ),
+          const SizedBox(height: Spacing.md),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEinkHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(Spacing.pageMarginsEink),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cover and info row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Cover image
+              BookCoverImage(
+                imageUrl: book.coverURL,
+                bookTitle: book.title,
+                size: BookCoverSize.eink,
+                isEinkMode: true,
+              ),
+              const SizedBox(width: Spacing.xl),
+
+              // Book info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title (uppercase)
+                    Text(
+                      book.title.toUpperCase(),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                    ),
+                    const SizedBox(height: Spacing.sm),
+
+                    // Author
+                    Text(
+                      book.author,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.lg),
+
+          // Progress bar (segmented)
+          BookProgressBar(
+            progress: book.progress,
+            currentPage: book.currentPage,
+            totalPages: book.totalPages,
+            isEinkMode: true,
+          ),
+          const SizedBox(height: Spacing.lg),
+
+          // Action buttons
+          BookActionButtons(
+            book: book,
+            isEinkMode: true,
+            onContinueReading: onContinueReading,
+            onAddToShelf: onAddToShelf,
+            onEdit: onEdit,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetaRow(BuildContext context, ColorScheme colorScheme) {
+    return Wrap(
+      spacing: Spacing.sm,
+      runSpacing: Spacing.xs,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        // Format badge
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sm,
+            vertical: 2,
+          ),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Text(
+            book.formatLabel,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+        // Topics (first 2)
+        ...book.topics.take(2).map((topic) => Chip(
+              label: Text(topic),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              labelPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+            )),
+      ],
+    );
+  }
+
+  Widget _buildMobileMetaRow(BuildContext context, ColorScheme colorScheme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          book.formatLabel,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        if (book.totalPages != null) ...[
+          Text(
+            '  •  ',
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
+          ),
+          Text(
+            '${book.totalPages} pages',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ],
+    );
+  }
+
+}

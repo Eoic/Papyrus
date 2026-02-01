@@ -24,6 +24,10 @@ class LibraryProvider extends ChangeNotifier {
   String? _selectedShelf;
   String? _selectedTopic;
 
+  /// Track favorite status overrides for books.
+  /// Key is book ID, value is the overridden favorite status.
+  final Map<String, bool> _favoriteOverrides = {};
+
   /// Current view mode (grid or list).
   LibraryViewMode get viewMode => _viewMode;
 
@@ -158,5 +162,21 @@ class LibraryProvider extends ChangeNotifier {
     _selectedShelf = null;
     _selectedTopic = null;
     notifyListeners();
+  }
+
+  /// Check if a book is favorited (considering overrides).
+  bool isBookFavorite(String bookId, bool originalFavorite) {
+    return _favoriteOverrides[bookId] ?? originalFavorite;
+  }
+
+  /// Toggle the favorite status of a book.
+  void toggleFavorite(String bookId, bool currentFavorite) {
+    _favoriteOverrides[bookId] = !currentFavorite;
+    notifyListeners();
+  }
+
+  /// Get the effective favorite status for a book.
+  bool? getFavoriteOverride(String bookId) {
+    return _favoriteOverrides[bookId];
   }
 }

@@ -70,6 +70,39 @@ class BookData {
   /// Get progress as percentage string.
   String get progressLabel => '${(progress * 100).round()}%';
 
+  /// Create a copy with updated fields.
+  BookData copyWith({
+    String? id,
+    String? title,
+    String? author,
+    String? coverURL,
+    bool? isFinished,
+    double? progress,
+    List<String>? shelves,
+    List<String>? topics,
+    BookFormat? format,
+    bool? isFavorite,
+    DateTime? lastReadAt,
+    int? totalPages,
+    int? currentPage,
+  }) {
+    return BookData(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      coverURL: coverURL ?? this.coverURL,
+      isFinished: isFinished ?? this.isFinished,
+      progress: progress ?? this.progress,
+      shelves: shelves ?? this.shelves,
+      topics: topics ?? this.topics,
+      format: format ?? this.format,
+      isFavorite: isFavorite ?? this.isFavorite,
+      lastReadAt: lastReadAt ?? this.lastReadAt,
+      totalPages: totalPages ?? this.totalPages,
+      currentPage: currentPage ?? this.currentPage,
+    );
+  }
+
   /// Sample books for development and testing.
   static List<BookData> get sampleBooks => [
         BookData(
