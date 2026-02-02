@@ -1,7 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
-import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:provider/provider.dart';
@@ -14,12 +14,14 @@ class BookListItem extends StatefulWidget {
   final BookData book;
   final VoidCallback? onTap;
   final bool showProgress;
+  final bool isFavorite;
 
   const BookListItem({
     super.key,
     required this.book,
     this.onTap,
     this.showProgress = true,
+    required this.isFavorite,
   });
 
   @override
@@ -35,13 +37,10 @@ class _BookListItemState extends State<BookListItem> {
   @override
   Widget build(BuildContext context) {
     final isEink = context.watch<DisplayModeProvider>().isEinkMode;
-    final libraryProvider = context.watch<LibraryProvider>();
     final colorScheme = Theme.of(context).colorScheme;
     final itemHeight = isEink ? 96.0 : 80.0;
     final thumbnailWidth = isEink ? 64.0 : 54.0;
     final thumbnailHeight = isEink ? 96.0 : 80.0;
-    final isFavorite =
-        libraryProvider.isBookFavorite(widget.book.id, widget.book.isFavorite);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -182,9 +181,9 @@ class _BookListItemState extends State<BookListItem> {
                       const SizedBox(width: Spacing.sm),
                       // Favorite indicator
                       Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        widget.isFavorite ? Icons.favorite : Icons.favorite_border,
                         size: IconSizes.indicator,
-                        color: isFavorite
+                        color: widget.isFavorite
                             ? colorScheme.error
                             : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
@@ -217,10 +216,11 @@ class _BookListItemState extends State<BookListItem> {
 
   Widget _buildCover(BuildContext context) {
     if (widget.book.coverURL != null && widget.book.coverURL!.isNotEmpty) {
-      return Image.network(
-        widget.book.coverURL!,
+      return CachedNetworkImage(
+        imageUrl: widget.book.coverURL!,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
+        errorWidget: (context, url, error) => _buildPlaceholder(context),
+        placeholder: (context, url) => _buildPlaceholder(context),
       );
     }
 

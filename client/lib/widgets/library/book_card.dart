@@ -1,9 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
-import 'package:papyrus/providers/library_provider.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
-import 'package:provider/provider.dart';
 
 /// Responsive book card for grid display.
 /// - Mobile: 171×256 with 8px gap
@@ -13,12 +12,16 @@ class BookCard extends StatefulWidget {
   final BookData book;
   final VoidCallback? onTap;
   final bool showProgress;
+  final bool isFavorite;
+  final void Function(bool)? onToggleFavorite;
 
   const BookCard({
     super.key,
     required this.book,
     this.onTap,
     this.showProgress = true,
+    required this.isFavorite,
+    this.onToggleFavorite,
   });
 
   @override
@@ -34,9 +37,6 @@ class _BookCardState extends State<BookCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final libraryProvider = context.watch<LibraryProvider>();
-    final isFavorite =
-        libraryProvider.isBookFavorite(widget.book.id, widget.book.isFavorite);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -77,13 +77,15 @@ class _BookCardState extends State<BookCard> {
                         top: Spacing.xs,
                         left: Spacing.xs,
                         child: _CardIconButton(
-                          icon:
-                              isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? colorScheme.error : Colors.white,
-                          onTap: () {
-                            libraryProvider.toggleFavorite(
-                                widget.book.id, isFavorite);
-                          },
+                          icon: widget.isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color:
+                              widget.isFavorite ? colorScheme.error : Colors.white,
+                          onTap: widget.onToggleFavorite != null
+                              ? () =>
+                                  widget.onToggleFavorite!(widget.isFavorite)
+                              : null,
                         ),
                       ),
                       // Overflow menu button - show on hover (desktop only)
@@ -176,25 +178,16 @@ class _BookCardState extends State<BookCard> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (widget.book.coverURL != null && widget.book.coverURL!.isNotEmpty) {
-      return Image.network(
-        widget.book.coverURL!,
+      return CachedNetworkImage(
+        imageUrl: widget.book.coverURL!,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(context),
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: colorScheme.surfaceContainerHighest,
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-                strokeWidth: 2,
-              ),
-            ),
-          );
-        },
+        errorWidget: (context, url, error) => _buildPlaceholder(context),
+        placeholder: (context, url) => Container(
+          color: colorScheme.surfaceContainerHighest,
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
       );
     }
 

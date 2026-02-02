@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Action buttons for book details page.

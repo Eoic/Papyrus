@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/book_action_buttons.dart';
 import 'package:papyrus/widgets/book_details/book_cover_image.dart';

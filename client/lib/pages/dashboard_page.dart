@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/providers/dashboard_provider.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -30,7 +31,14 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _provider = DashboardProvider();
-    _provider.loadDashboardData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Connect to DataStore for persistent storage
+    final dataStore = context.read<DataStore>();
+    _provider.attach(dataStore);
   }
 
   @override

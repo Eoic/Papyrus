@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:papyrus/models/book_data.dart';
-import 'package:papyrus/models/shelf_data.dart';
+import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 

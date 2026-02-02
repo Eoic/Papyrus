@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
+import 'package:provider/provider.dart';
 
 /// Responsive grid for displaying books.
 /// - Mobile: 2 columns with 8px gap
@@ -46,8 +48,11 @@ class BookGrid extends StatelessWidget {
       childAspectRatio = 0.58;
     }
 
+    final libraryProvider = context.watch<LibraryProvider>();
+
     return GridView.builder(
       padding: padding ?? const EdgeInsets.all(Spacing.md),
+      cacheExtent: 200,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         mainAxisSpacing: spacing,
@@ -57,8 +62,13 @@ class BookGrid extends StatelessWidget {
       itemCount: books.length,
       itemBuilder: (context, index) {
         final book = books[index];
+        final isFavorite =
+            libraryProvider.isBookFavorite(book.id, book.isFavorite);
         return BookCard(
           book: book,
+          isFavorite: isFavorite,
+          onToggleFavorite: (current) =>
+              libraryProvider.toggleFavorite(book.id, current),
           onTap: onBookTap != null ? () => onBookTap!(book) : null,
         );
       },

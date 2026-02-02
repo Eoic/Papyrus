@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
@@ -11,6 +12,7 @@ import 'package:papyrus/widgets/book_details/book_header.dart';
 import 'package:papyrus/widgets/book_details/eink_book_details_tab_bar.dart';
 import 'package:papyrus/widgets/book_details/note_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_dialog.dart';
+import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:provider/provider.dart';
 
 /// Book details page with responsive layouts for desktop, mobile, and e-ink.
@@ -34,8 +36,17 @@ class _BookDetailsPageState extends State<BookDetailsPage>
     _provider = BookDetailsProvider();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+  }
 
-    if (widget.id != null) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Connect to DataStore for persistent storage
+    final dataStore = context.read<DataStore>();
+    _provider.setDataStore(dataStore);
+
+    // Load book if ID is provided and not currently loading
+    if (widget.id != null && !_provider.isLoading) {
       _provider.loadBook(widget.id!);
     }
   }
@@ -451,17 +462,45 @@ class _BookDetailsPageState extends State<BookDetailsPage>
   }
 
   void _onAddToShelf() {
-    // TODO: Show shelf selection dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add to shelf functionality coming soon')),
+    final book = _provider.book;
+    if (book == null) return;
+
+    final dataStore = context.read<DataStore>();
+    final currentShelfIds = dataStore.getShelfIdsForBook(book.id).toSet();
+
+    MoveToShelfSheet.show(
+      context,
+      book: book,
+      onSave: (newShelfIds) {
+        final newShelfSet = newShelfIds.toSet();
+
+        // Remove book from shelves it was removed from
+        for (final shelfId in currentShelfIds) {
+          if (!newShelfSet.contains(shelfId)) {
+            dataStore.removeBookFromShelf(book.id, shelfId);
+          }
+        }
+
+        // Add book to new shelves
+        for (final shelfId in newShelfIds) {
+          if (!currentShelfIds.contains(shelfId)) {
+            dataStore.addBookToShelf(book.id, shelfId);
+          }
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Shelves updated')),
+          );
+        }
+      },
     );
   }
 
   void _onEdit() {
-    // TODO: Navigate to edit page
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit functionality coming soon')),
-    );
+    if (_provider.book != null) {
+      context.pushNamed('BOOK_EDIT', pathParameters: {'bookId': _provider.book!.id});
+    }
   }
 
   void _onAddNote() async {

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/pages/book_details_page.dart';
+import 'package:papyrus/pages/book_edit_page.dart';
 import 'package:papyrus/pages/dashboard_page.dart';
 import 'package:papyrus/pages/developer_options_page.dart';
 import 'package:papyrus/pages/goals_page.dart';
@@ -144,6 +145,17 @@ class AppRouter {
                   return NoTransitionPage(
                     key: state.pageKey,
                     child: BookDetailsPage(id: bookId),
+                  );
+                },
+              ),
+              GoRoute(
+                name: 'BOOK_EDIT',
+                path: 'edit/:bookId',
+                pageBuilder: (context, state) {
+                  var bookId = state.pathParameters['bookId'];
+                  return NoTransitionPage(
+                    key: state.pageKey,
+                    child: BookEditPage(id: bookId),
                   );
                 },
               ),

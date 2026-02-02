@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/widgets/book/book.dart';
+import 'package:papyrus/data/sample_data.dart';
+import 'package:papyrus/models/book.dart' as models;
+import 'package:papyrus/widgets/book/book.dart' as widgets;
 import 'package:papyrus/widgets/search.dart';
-
-import '../models/book_data.dart';
 
 class BooksPage extends StatefulWidget {
   const BooksPage({super.key});
@@ -14,85 +14,13 @@ class BooksPage extends StatefulWidget {
 class _AllBooksState extends State<BooksPage> {
   bool isSearchExpanded = false;
 
-  var books = [
-    BookData(
-      id: '1',
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: true,
-    ),
-    BookData(
-      id: '2',
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '3',
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '4',
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: true,
-    ),
-    BookData(
-      id: '5',
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: true,
-    ),
-    BookData(
-      id: '6',
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '7',
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '8',
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '9',
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '10',
-      title: "The Pillars of The Earth",
-      author: "Ken Follet",
-      coverURL: "assets/images/book_placeholder_2.jpg",
-      isFinished: false,
-    ),
-    BookData(
-      id: '11',
-      title: "The Lord of the Rings",
-      author: "J. R. R. Tolkien",
-      coverURL: "assets/images/book_placeholder.jpg",
-      isFinished: false,
-    ),
-  ];
+  late List<models.Book> books;
+
+  @override
+  void initState() {
+    super.initState();
+    books = SampleData.books;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +29,6 @@ class _AllBooksState extends State<BooksPage> {
         title: const Text("All books"),
         titleSpacing: 0,
         scrolledUnderElevation: 0,
-        // KEEP
         actions: [
           IconButton(
             onPressed: () {
@@ -110,16 +37,12 @@ class _AllBooksState extends State<BooksPage> {
             icon: const Icon(Icons.search),
           ),
         ],
-        // ENDKEEP
       ),
-      // KEEP
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         shape: const CircleBorder(),
         child: const Icon(Icons.cloud_upload_rounded, size: 32),
       ),
-      // ENDKEEP
-      // KEEP
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 4.0),
@@ -140,7 +63,7 @@ class _AllBooksState extends State<BooksPage> {
                         .map(
                           (index, data) => MapEntry(
                             index,
-                            Book(id: index.toString(), data: data),
+                            widgets.Book(id: index.toString(), data: data),
                           ),
                         )
                         .values,
@@ -151,7 +74,6 @@ class _AllBooksState extends State<BooksPage> {
           ),
         ),
       ),
-      // ENDKEEP
     );
   }
 }

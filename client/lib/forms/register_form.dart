@@ -113,6 +113,7 @@ class _RegisterForm extends State<RegisterForm> {
                 if (passwordController.text != repeatedPassword) {
                   return "Passwords do not match";
                 }
+                return null;
               },
             ),
             const SizedBox(height: 24),

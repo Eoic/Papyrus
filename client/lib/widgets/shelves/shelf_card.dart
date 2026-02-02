@@ -1,5 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/shelf_data.dart';
+import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Card widget for displaying a shelf in grid or list view.
@@ -200,16 +201,19 @@ class _ShelfCardState extends State<ShelfCard> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.network(
-                        covers[covers.length - 1 - i],
+                      child: CachedNetworkImage(
+                        imageUrl: covers[covers.length - 1 - i],
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        errorWidget: (context, url, error) => Container(
                           color: colorScheme.surfaceContainerHigh,
                           child: Icon(
                             Icons.menu_book,
                             size: 24,
                             color: colorScheme.onSurfaceVariant,
                           ),
+                        ),
+                        placeholder: (context, url) => Container(
+                          color: colorScheme.surfaceContainerHigh,
                         ),
                       ),
                     ),

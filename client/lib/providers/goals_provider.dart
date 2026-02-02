@@ -1,15 +1,35 @@
 import 'package:flutter/foundation.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/reading_goal.dart';
 
 /// Provider for goals page state management.
+/// Uses DataStore as the single source of truth.
 class GoalsProvider extends ChangeNotifier {
+  DataStore? _dataStore;
+
   // Loading state
   bool _isLoading = false;
   String? _error;
 
-  // Goals data
-  List<ReadingGoal> _activeGoals = [];
-  List<ReadingGoal> _completedGoals = [];
+  /// Attach to a DataStore instance.
+  void attach(DataStore dataStore) {
+    if (_dataStore != dataStore) {
+      _dataStore?.removeListener(_onDataStoreChanged);
+      _dataStore = dataStore;
+      _dataStore!.addListener(_onDataStoreChanged);
+      notifyListeners();
+    }
+  }
+
+  void _onDataStoreChanged() {
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _dataStore?.removeListener(_onDataStoreChanged);
+    super.dispose();
+  }
 
   // ============================================================================
   // GETTERS
@@ -18,36 +38,34 @@ class GoalsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  List<ReadingGoal> get activeGoals => _activeGoals;
-  List<ReadingGoal> get completedGoals => _completedGoals;
+  /// Get active goals from DataStore.
+  List<ReadingGoal> get activeGoals {
+    if (_dataStore == null) return [];
+    return _dataStore!.activeGoals;
+  }
 
-  bool get hasActiveGoals => _activeGoals.isNotEmpty;
-  bool get hasCompletedGoals => _completedGoals.isNotEmpty;
+  /// Get completed/archived goals from DataStore.
+  List<ReadingGoal> get completedGoals {
+    if (_dataStore == null) return [];
+    return _dataStore!.completedGoals;
+  }
+
+  bool get hasActiveGoals => activeGoals.isNotEmpty;
+  bool get hasCompletedGoals => completedGoals.isNotEmpty;
 
   // ============================================================================
   // METHODS
   // ============================================================================
 
-  /// Loads all goals data.
+  /// Loads all goals data. With DataStore, this is mainly for loading state UX.
   Future<void> loadGoals() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // Load sample data and separate by completion status
-      final allGoals = ReadingGoal.sampleGoals;
-      final archivedGoals = ReadingGoal.sampleCompletedGoals;
-
-      // Active goals: not archived AND not completed (current < target)
-      _activeGoals = allGoals.where((g) => !g.isArchived && !g.isCompleted).toList();
-
-      // Completed goals: archived OR completed (current >= target)
-      final completedFromActive = allGoals.where((g) => g.isCompleted && !g.isArchived).toList();
-      _completedGoals = [...completedFromActive, ...archivedGoals];
+      // Simulate network delay for realistic UX
+      await Future.delayed(const Duration(milliseconds: 100));
 
       _isLoading = false;
       notifyListeners();
@@ -58,7 +76,7 @@ class GoalsProvider extends ChangeNotifier {
     }
   }
 
-  /// Creates a new goal.
+  /// Creates a new goal. Persists to DataStore.
   Future<void> createGoal({
     required GoalType type,
     required int target,
@@ -67,6 +85,10 @@ class GoalsProvider extends ChangeNotifier {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+
     final now = DateTime.now();
 
     // Calculate dates based on period or use provided custom dates
@@ -84,75 +106,78 @@ class GoalsProvider extends ChangeNotifier {
     final newGoal = ReadingGoal(
       id: 'goal-${DateTime.now().millisecondsSinceEpoch}',
       type: type,
-      target: target,
-      current: 0,
+      targetValue: target,
+      currentValue: 0,
       period: period,
       startDate: goalStartDate,
       endDate: goalEndDate,
       isRecurring: isRecurring,
     );
 
-    _activeGoals = [..._activeGoals, newGoal];
-    notifyListeners();
+    _dataStore!.addReadingGoal(newGoal);
   }
 
-  /// Deletes a goal by ID.
+  /// Deletes a goal by ID. Persists to DataStore.
   Future<void> deleteGoal(String goalId) async {
-    _activeGoals = _activeGoals.where((g) => g.id != goalId).toList();
-    _completedGoals = _completedGoals.where((g) => g.id != goalId).toList();
-    notifyListeners();
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+    _dataStore!.deleteReadingGoal(goalId);
   }
 
-  /// Updates the progress of a goal.
+  /// Updates the progress of a goal. Persists to DataStore.
   Future<void> updateGoalProgress(String goalId, int newProgress) async {
-    final goalIndex = _activeGoals.indexWhere((g) => g.id == goalId);
-    if (goalIndex != -1) {
-      final goal = _activeGoals[goalIndex];
-      final updatedGoal = goal.copyWith(current: newProgress);
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+
+    final goal = _dataStore!.getReadingGoal(goalId);
+    if (goal != null) {
+      var updatedGoal = goal.copyWith(currentValue: newProgress);
 
       // Check if goal is now completed
-      if (updatedGoal.isCompleted) {
-        _activeGoals.removeAt(goalIndex);
-        _completedGoals = [
-          updatedGoal.copyWith(completedAt: DateTime.now()),
-          ..._completedGoals,
-        ];
-      } else {
-        _activeGoals[goalIndex] = updatedGoal;
+      if (updatedGoal.isCompleted && !goal.isArchived) {
+        updatedGoal = updatedGoal.copyWith(
+          completedAt: DateTime.now(),
+          isArchived: true,
+        );
       }
-      notifyListeners();
+
+      _dataStore!.updateReadingGoal(updatedGoal);
     }
   }
 
-  /// Updates a goal's properties.
+  /// Updates a goal's properties. Persists to DataStore.
   Future<void> updateGoal({
     required String goalId,
     int? target,
     GoalType? type,
   }) async {
-    final goalIndex = _activeGoals.indexWhere((g) => g.id == goalId);
-    if (goalIndex != -1) {
-      final goal = _activeGoals[goalIndex];
-      _activeGoals[goalIndex] = goal.copyWith(
-        target: target ?? goal.target,
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+
+    final goal = _dataStore!.getReadingGoal(goalId);
+    if (goal != null) {
+      _dataStore!.updateReadingGoal(goal.copyWith(
+        targetValue: target ?? goal.targetValue,
         type: type ?? goal.type,
-      );
-      notifyListeners();
+      ));
     }
   }
 
-  /// Archives (completes) a goal.
+  /// Archives (completes) a goal. Persists to DataStore.
   Future<void> archiveGoal(String goalId) async {
-    final goalIndex = _activeGoals.indexWhere((g) => g.id == goalId);
-    if (goalIndex != -1) {
-      final goal = _activeGoals[goalIndex];
-      final archivedGoal = goal.copyWith(
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+
+    final goal = _dataStore!.getReadingGoal(goalId);
+    if (goal != null) {
+      _dataStore!.updateReadingGoal(goal.copyWith(
         isArchived: true,
         completedAt: DateTime.now(),
-      );
-      _activeGoals.removeAt(goalIndex);
-      _completedGoals = [archivedGoal, ..._completedGoals];
-      notifyListeners();
+      ));
     }
   }
 

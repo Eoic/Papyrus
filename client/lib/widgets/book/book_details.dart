@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/book_info_grid.dart';
@@ -179,8 +179,7 @@ class _BookDetailsState extends State<BookDetails> {
 
   Widget _buildDescription(BuildContext context, {bool showFull = false}) {
     final colorScheme = Theme.of(context).colorScheme;
-    // Sample description - would come from book data in the future
-    final description = _getSampleDescription(widget.book.id);
+    final description = widget.book.description ?? '';
 
     if (description.isEmpty) {
       return Text(
@@ -320,18 +319,5 @@ class _BookDetailsState extends State<BookDetails> {
       const Color(0xFF6B4423),
     ];
     return colors[hash.abs() % colors.length];
-  }
-
-  String _getSampleDescription(String bookId) {
-    switch (bookId) {
-      case '1':
-        return 'The Pragmatic Programmer is one of those rare tech books you\'ll read, re-read, and read again over the years. Whether you\'re new to the field or an experienced practitioner, you\'ll come away with fresh insights each and every time.\n\nDave Thomas and Andy Hunt wrote the first edition of this influential book in 1999 to help their clients create better software and rediscover the joy of coding. These lessons have helped a generation of programmers examine the very essence of software development, independent of any particular language, framework, or methodology, and the Pragmatic philosophy has spawned hundreds of books, screencasts, and audio books, as well as thousands of careers and success stories.';
-      case '2':
-        return 'Even bad code can function. But if code isn\'t clean, it can bring a development organization to its knees. Every year, countless hours and significant resources are lost because of poorly written code. But it doesn\'t have to be that way.\n\nNoted software expert Robert C. Martin presents a revolutionary paradigm with Clean Code: A Handbook of Agile Software Craftsmanship. Martin has teamed up with his colleagues from Object Mentor to distill their best agile practice of cleaning code "on the fly" into a book that will instill within you the values of a software craftsman and make you a better programmer—but only if you work at it.';
-      case '3':
-        return 'Capturing a wealth of experience about the design of object-oriented software, four top-notch designers present a catalog of simple and succinct solutions to commonly occurring design problems. Previously undocumented, these 23 patterns allow designers to create more flexible, elegant, and ultimately reusable designs without having to rediscover the design solutions themselves.';
-      default:
-        return 'No description available for this book.';
-    }
   }
 }

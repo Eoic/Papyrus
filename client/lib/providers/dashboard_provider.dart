@@ -1,26 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/daily_activity.dart';
 import 'package:papyrus/models/reading_goal.dart';
 
 /// Provider for dashboard state management.
+/// Uses DataStore as the single source of truth.
 class DashboardProvider extends ChangeNotifier {
+  DataStore? _dataStore;
+
   // Loading state
   bool _isLoading = false;
   String? _error;
-
-  // Core dashboard data
-  BookData? _currentBook;
-  List<ReadingGoal> _activeGoals = [];
-  List<DailyActivity> _weeklyActivity = [];
-  List<BookData> _recentlyAdded = [];
-  int _todayReadingMinutes = 0;
-
-  // Quick stats
-  int _totalBooks = 0;
-  int _totalShelves = 0;
-  int _totalTopics = 0;
-  int _totalReadingMinutes = 0;
 
   // Activity period (for desktop toggle)
   ActivityPeriod _activityPeriod = ActivityPeriod.week;
@@ -29,6 +20,30 @@ class DashboardProvider extends ChangeNotifier {
   int _weekOffset = 0;
   int _monthOffset = 0;
 
+  // Cached activity data (recalculated on demand)
+  List<DailyActivity> _weeklyActivity = [];
+
+  /// Attach to a DataStore instance.
+  void attach(DataStore dataStore) {
+    if (_dataStore != dataStore) {
+      _dataStore?.removeListener(_onDataStoreChanged);
+      _dataStore = dataStore;
+      _dataStore!.addListener(_onDataStoreChanged);
+      _loadActivityData();
+      notifyListeners();
+    }
+  }
+
+  void _onDataStoreChanged() {
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _dataStore?.removeListener(_onDataStoreChanged);
+    super.dispose();
+  }
+
   // ============================================================================
   // GETTERS
   // ============================================================================
@@ -36,19 +51,61 @@ class DashboardProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  BookData? get currentBook => _currentBook;
-  List<ReadingGoal> get activeGoals => _activeGoals;
+  /// Get current book (most recently read with progress < 100%).
+  BookData? get currentBook {
+    if (_dataStore == null) return null;
+    final readingBooks = _dataStore!.books
+        .where((b) => b.isReading)
+        .toList()
+      ..sort((a, b) => (b.lastReadAt ?? DateTime(2000))
+          .compareTo(a.lastReadAt ?? DateTime(2000)));
+    return readingBooks.isNotEmpty ? readingBooks.first : null;
+  }
+
+  /// Get active reading goals from DataStore.
+  List<ReadingGoal> get activeGoals {
+    if (_dataStore == null) return [];
+    return _dataStore!.activeGoals;
+  }
+
   List<DailyActivity> get weeklyActivity => _weeklyActivity;
-  List<BookData> get recentlyAdded => _recentlyAdded;
-  int get todayReadingMinutes => _todayReadingMinutes;
+
+  /// Get recently added books (last 5).
+  List<BookData> get recentlyAdded {
+    if (_dataStore == null) return [];
+    final books = List<Book>.from(_dataStore!.books)
+      ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
+    return books.take(5).toList();
+  }
+
+  /// Today's reading minutes from reading sessions.
+  int get todayReadingMinutes {
+    if (_dataStore == null) return 0;
+    final today = DateTime.now();
+    final todayStart = DateTime(today.year, today.month, today.day);
+    final todaySessions = _dataStore!.readingSessions
+        .where((s) => s.startTime.isAfter(todayStart));
+    return todaySessions.fold(0, (sum, s) => sum + s.durationMinutes);
+  }
 
   int get weekOffset => _weekOffset;
   int get monthOffset => _monthOffset;
 
-  int get totalBooks => _totalBooks;
-  int get totalShelves => _totalShelves;
-  int get totalTopics => _totalTopics;
-  int get totalReadingMinutes => _totalReadingMinutes;
+  /// Total book count from DataStore.
+  int get totalBooks => _dataStore?.books.length ?? 0;
+
+  /// Total shelf count from DataStore.
+  int get totalShelves => _dataStore?.shelves.length ?? 0;
+
+  /// Total tag count from DataStore.
+  int get totalTopics => _dataStore?.tags.length ?? 0;
+
+  /// Total reading minutes from all sessions.
+  int get totalReadingMinutes {
+    if (_dataStore == null) return 0;
+    return _dataStore!.readingSessions
+        .fold(0, (sum, s) => sum + s.durationMinutes);
+  }
 
   ActivityPeriod get activityPeriod => _activityPeriod;
 
@@ -65,30 +122,31 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   /// Whether there's a book currently being read.
-  bool get hasCurrentBook => _currentBook != null;
+  bool get hasCurrentBook => currentBook != null;
 
   /// Whether there are active reading goals.
-  bool get hasActiveGoals => _activeGoals.isNotEmpty;
+  bool get hasActiveGoals => activeGoals.isNotEmpty;
 
   /// Today's reading time formatted.
   String get todayReadingLabel {
-    if (_todayReadingMinutes == 0) return '0 minutes';
-    if (_todayReadingMinutes == 1) return '1 minute';
-    if (_todayReadingMinutes < 60) return '$_todayReadingMinutes minutes';
+    final minutes = todayReadingMinutes;
+    if (minutes == 0) return '0 minutes';
+    if (minutes == 1) return '1 minute';
+    if (minutes < 60) return '$minutes minutes';
 
-    final hours = _todayReadingMinutes ~/ 60;
-    final minutes = _todayReadingMinutes % 60;
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
 
-    if (minutes == 0) {
+    if (mins == 0) {
       return hours == 1 ? '1 hour' : '$hours hours';
     }
-    return '${hours}h ${minutes}m';
+    return '${hours}h ${mins}m';
   }
 
   /// Total reading time formatted for quick stats.
   String get totalReadingLabel {
-    final hours = _totalReadingMinutes ~/ 60;
-    if (hours == 0) return '${_totalReadingMinutes}m';
+    final hours = totalReadingMinutes ~/ 60;
+    if (hours == 0) return '${totalReadingMinutes}m';
     return '${hours}h';
   }
 
@@ -96,18 +154,17 @@ class DashboardProvider extends ChangeNotifier {
   // METHODS
   // ============================================================================
 
-  /// Loads all dashboard data.
+  /// Loads all dashboard data. With DataStore, this is mainly for loading state UX.
   Future<void> loadDashboardData() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Simulate network delay for realistic UX
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      // Load sample data
-      _loadSampleData();
+      _loadActivityData();
 
       _isLoading = false;
       notifyListeners();
@@ -125,6 +182,7 @@ class DashboardProvider extends ChangeNotifier {
       // Reset offset when switching periods
       _weekOffset = 0;
       _monthOffset = 0;
+      _loadActivityData();
       notifyListeners();
     }
   }
@@ -136,7 +194,7 @@ class DashboardProvider extends ChangeNotifier {
     } else {
       _monthOffset--;
     }
-    _updateActivityForOffset();
+    _loadActivityData();
     notifyListeners();
   }
 
@@ -151,7 +209,7 @@ class DashboardProvider extends ChangeNotifier {
         _monthOffset++;
       }
     }
-    _updateActivityForOffset();
+    _loadActivityData();
     notifyListeners();
   }
 
@@ -185,62 +243,39 @@ class DashboardProvider extends ChangeNotifier {
   // PRIVATE METHODS
   // ============================================================================
 
-  void _loadSampleData() {
-    final allBooks = BookData.sampleBooks;
+  void _loadActivityData() {
+    if (_dataStore == null) {
+      _weeklyActivity = DailyActivity.sampleWeek;
+      return;
+    }
 
-    // Find current book (most recently read with progress < 100%)
-    final readingBooks = allBooks.where((b) => b.isReading).toList()
-      ..sort((a, b) => (b.lastReadAt ?? DateTime(2000))
-          .compareTo(a.lastReadAt ?? DateTime(2000)));
-    _currentBook = readingBooks.isNotEmpty ? readingBooks.first : null;
-
-    // Set active goals
-    _activeGoals = ReadingGoal.sampleGoals;
-
-    // Set weekly activity
-    _weeklyActivity = DailyActivity.sampleWeek;
-
-    // Get recently added books (last 5)
-    _recentlyAdded = allBooks.take(5).toList();
-
-    // Today's reading (from sample data)
-    final today = _weeklyActivity.where((a) => a.isToday).firstOrNull;
-    _todayReadingMinutes = today?.readingMinutes ?? 32;
-
-    // Quick stats
-    _totalBooks = allBooks.length;
-    _totalShelves = allBooks.expand((b) => b.shelves).toSet().length;
-    _totalTopics = allBooks.expand((b) => b.topics).toSet().length;
-    _totalReadingMinutes = 24 * 60; // 24 hours sample
+    final offset = _activityPeriod == ActivityPeriod.week ? _weekOffset : _monthOffset;
+    _weeklyActivity = _generateActivityFromSessions(offset);
   }
 
-  void _updateActivityForOffset() {
-    // In a real app, this would fetch data for the offset week/month
-    // For now, we generate sample data with reduced activity for past periods
-    if (_activityPeriod == ActivityPeriod.week) {
-      _weeklyActivity = _generateActivityForWeekOffset(_weekOffset);
-    } else {
-      // For month view, we'd generate monthly data
-      _weeklyActivity = _generateActivityForWeekOffset(_monthOffset);
-    }
-  }
+  List<DailyActivity> _generateActivityFromSessions(int offset) {
+    if (_dataStore == null) return [];
 
-  List<DailyActivity> _generateActivityForWeekOffset(int offset) {
-    if (offset == 0) {
-      return DailyActivity.sampleWeek;
-    }
-    // Generate sample data for past weeks (with somewhat different values)
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1 + (-offset * 7)));
+
     return List.generate(7, (i) {
       final date = weekStart.add(Duration(days: i));
-      // Pseudo-random values based on offset and day
-      final seed = (offset.abs() * 7 + i + 1);
-      final minutes = ((seed * 17) % 60) + 10;
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd = dayStart.add(const Duration(days: 1));
+
+      // Get sessions for this day
+      final daySessions = _dataStore!.readingSessions.where((s) =>
+          s.startTime.isAfter(dayStart.subtract(const Duration(seconds: 1))) &&
+          s.startTime.isBefore(dayEnd));
+
+      final minutes = daySessions.fold(0, (sum, s) => sum + s.durationMinutes);
+      final pages = daySessions.fold(0, (sum, s) => sum + (s.pagesRead ?? 0));
+
       return DailyActivity(
         date: date,
         readingMinutes: minutes,
-        pagesRead: minutes ~/ 2,
+        pagesRead: pages,
         booksRead: [],
       );
     });

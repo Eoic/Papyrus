@@ -119,7 +119,7 @@ class BookLocation {
 class Annotation {
   final String id;
   final String bookId;
-  final String highlightText;
+  final String selectedText;
   final HighlightColor color;
   final BookLocation location;
   final String? note;
@@ -129,7 +129,7 @@ class Annotation {
   const Annotation({
     required this.id,
     required this.bookId,
-    required this.highlightText,
+    required this.selectedText,
     this.color = HighlightColor.yellow,
     required this.location,
     this.note,
@@ -137,13 +137,16 @@ class Annotation {
     this.updatedAt,
   });
 
+  // Backwards compatibility alias
+  String get highlightText => selectedText;
+
   /// Whether this annotation has an attached note.
   bool get hasNote => note != null && note!.isNotEmpty;
 
   Annotation copyWith({
     String? id,
     String? bookId,
-    String? highlightText,
+    String? selectedText,
     HighlightColor? color,
     BookLocation? location,
     String? note,
@@ -153,12 +156,50 @@ class Annotation {
     return Annotation(
       id: id ?? this.id,
       bookId: bookId ?? this.bookId,
-      highlightText: highlightText ?? this.highlightText,
+      selectedText: selectedText ?? this.selectedText,
       color: color ?? this.color,
       location: location ?? this.location,
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  /// Convert to JSON for API/storage.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'book_id': bookId,
+      'selected_text': selectedText,
+      'color': color.name,
+      'chapter': location.chapter,
+      'chapter_title': location.chapterTitle,
+      'page_number': location.pageNumber,
+      'percentage': location.percentage,
+      'note': note,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+    };
+  }
+
+  /// Create from JSON.
+  factory Annotation.fromJson(Map<String, dynamic> json) {
+    return Annotation(
+      id: json['id'] as String,
+      bookId: json['book_id'] as String,
+      selectedText: json['selected_text'] as String,
+      color: HighlightColor.values.byName(json['color'] as String? ?? 'yellow'),
+      location: BookLocation(
+        chapter: json['chapter'] as int?,
+        chapterTitle: json['chapter_title'] as String?,
+        pageNumber: json['page_number'] as int,
+        percentage: (json['percentage'] as num?)?.toDouble(),
+      ),
+      note: json['note'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
     );
   }
 
@@ -173,7 +214,7 @@ class Annotation {
           Annotation(
             id: 'ann-1-1',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'There are two ways of constructing a software design: One way is to make it so simple that there are obviously no deficiencies, and the other way is to make it so complicated that there are no obvious deficiencies.',
             color: HighlightColor.yellow,
             location: const BookLocation(
@@ -188,7 +229,7 @@ class Annotation {
           Annotation(
             id: 'ann-1-2',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'Don\'t live with broken windows. Fix bad designs, wrong decisions, and poor code when you see them.',
             color: HighlightColor.green,
             location: const BookLocation(
@@ -202,7 +243,7 @@ class Annotation {
           Annotation(
             id: 'ann-1-3',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'Remember the big picture. Don\'t get so engrossed in the details that you forget to check what\'s happening around you.',
             color: HighlightColor.blue,
             location: const BookLocation(
@@ -217,7 +258,7 @@ class Annotation {
           Annotation(
             id: 'ann-1-4',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'DRY—Don\'t Repeat Yourself. Every piece of knowledge must have a single, unambiguous, authoritative representation within a system.',
             color: HighlightColor.pink,
             location: const BookLocation(
@@ -234,7 +275,7 @@ class Annotation {
           Annotation(
             id: 'ann-2-1',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'Clean code is simple and direct. Clean code reads like well-written prose.',
             color: HighlightColor.yellow,
             location: const BookLocation(
@@ -248,7 +289,7 @@ class Annotation {
           Annotation(
             id: 'ann-2-2',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'The ratio of time spent reading versus writing is well over 10 to 1.',
             color: HighlightColor.orange,
             location: const BookLocation(
@@ -266,7 +307,7 @@ class Annotation {
           Annotation(
             id: 'ann-3-1',
             bookId: bookId,
-            highlightText:
+            selectedText:
                 'Program to an interface, not an implementation.',
             color: HighlightColor.purple,
             location: const BookLocation(

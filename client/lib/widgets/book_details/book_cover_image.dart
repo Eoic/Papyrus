@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
@@ -73,15 +74,13 @@ class BookCoverImage extends StatelessWidget {
 
   Widget _buildImage(BuildContext context, ColorScheme colorScheme) {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return Image.network(
-        imageUrl!,
+      return CachedNetworkImage(
+        imageUrl: imageUrl!,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) =>
+        errorWidget: (context, url, error) =>
             _buildPlaceholder(context, colorScheme),
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return _buildLoadingIndicator(context, colorScheme, loadingProgress);
-        },
+        progressIndicatorBuilder: (context, url, progress) =>
+            _buildLoadingIndicator(context, colorScheme, progress),
       );
     }
     return _buildPlaceholder(context, colorScheme);
@@ -128,25 +127,24 @@ class BookCoverImage extends StatelessWidget {
   Widget _buildLoadingIndicator(
     BuildContext context,
     ColorScheme colorScheme,
-    ImageChunkEvent loadingProgress,
+    DownloadProgress progress,
   ) {
-    final progress = loadingProgress.expectedTotalBytes != null
-        ? loadingProgress.cumulativeBytesLoaded /
-            loadingProgress.expectedTotalBytes!
-        : null;
+    final progressValue = progress.progress;
 
     return Container(
       color: isEinkMode ? Colors.white : colorScheme.surfaceContainerHighest,
       child: Center(
         child: isEinkMode
             ? Text(
-                progress != null ? '${(progress * 100).toInt()}%' : '...',
+                progressValue != null
+                    ? '${(progressValue * 100).toInt()}%'
+                    : '...',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               )
             : CircularProgressIndicator(
-                value: progress,
+                value: progressValue,
                 strokeWidth: 2,
               ),
       ),

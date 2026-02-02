@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/sample_data.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/google_sign_in_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
@@ -23,6 +25,24 @@ class Papyrus extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Core data store - single source of truth
+        ChangeNotifierProvider(
+          create: (_) => DataStore()
+            ..loadData(
+              books: SampleData.books,
+              shelves: SampleData.shelves,
+              tags: SampleData.tags,
+              series: SampleData.seriesList,
+              annotations: SampleData.annotations,
+              notes: SampleData.notes,
+              bookmarks: SampleData.bookmarks,
+              readingSessions: SampleData.readingSessions,
+              readingGoals: SampleData.readingGoals,
+              bookShelfRelations: SampleData.bookShelfRelations,
+              bookTagRelations: SampleData.bookTagRelations,
+            ),
+        ),
+        // Auth and UI state providers
         ChangeNotifierProvider(create: (_) => GoogleSignInProvider()),
         ChangeNotifierProvider(create: (_) => DisplayModeProvider()),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),

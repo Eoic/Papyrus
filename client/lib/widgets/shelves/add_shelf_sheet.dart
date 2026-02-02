@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/shelf_data.dart';
+import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Bottom sheet for creating or editing a shelf.

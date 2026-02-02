@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/widgets/context_menu/book_context_menu.dart';
+import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:provider/provider.dart';
 
 /// Show the book context menu with standard actions.
@@ -29,7 +31,7 @@ void showBookContextMenu({
       // TODO: Implement edit
     },
     onMoveToShelf: () {
-      // TODO: Implement move to shelf
+      _showMoveToShelfSheet(context, book);
     },
     onManageTopics: () {
       // TODO: Implement manage topics
@@ -39,6 +41,34 @@ void showBookContextMenu({
     },
     onDelete: () {
       // TODO: Implement delete
+    },
+  );
+}
+
+/// Shows the move to shelf sheet and handles shelf assignments.
+void _showMoveToShelfSheet(BuildContext context, BookData book) {
+  final dataStore = context.read<DataStore>();
+  final currentShelfIds = dataStore.getShelfIdsForBook(book.id).toSet();
+
+  MoveToShelfSheet.show(
+    context,
+    book: book,
+    onSave: (newShelfIds) {
+      final newShelfSet = newShelfIds.toSet();
+
+      // Remove book from shelves it was removed from
+      for (final shelfId in currentShelfIds) {
+        if (!newShelfSet.contains(shelfId)) {
+          dataStore.removeBookFromShelf(book.id, shelfId);
+        }
+      }
+
+      // Add book to new shelves
+      for (final shelfId in newShelfIds) {
+        if (!currentShelfIds.contains(shelfId)) {
+          dataStore.addBookToShelf(book.id, shelfId);
+        }
+      }
     },
   );
 }

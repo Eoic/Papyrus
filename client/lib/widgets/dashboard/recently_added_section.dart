@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Section displaying recently added books in a horizontal scroll.

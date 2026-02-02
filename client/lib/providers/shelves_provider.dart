@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book_data.dart';
-import 'package:papyrus/models/shelf_data.dart';
+import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/shelf.dart';
 
 /// View mode for displaying shelves.
 enum ShelvesViewMode {
@@ -25,7 +26,10 @@ enum BookSortOption {
 }
 
 /// Provider for shelves page state management.
+/// Uses DataStore as the single source of truth.
 class ShelvesProvider extends ChangeNotifier {
+  DataStore? _dataStore;
+
   // Loading state
   bool _isLoading = false;
   String? _error;
@@ -33,11 +37,8 @@ class ShelvesProvider extends ChangeNotifier {
   // View mode
   ShelvesViewMode _viewMode = ShelvesViewMode.grid;
 
-  // Shelves data
-  List<ShelfData> _shelves = [];
-
   // Selected shelf for detail view
-  ShelfData? _selectedShelf;
+  Shelf? _selectedShelf;
 
   // Sorting state for shelves
   ShelfSortOption _shelfSortOption = ShelfSortOption.name;
@@ -46,6 +47,30 @@ class ShelvesProvider extends ChangeNotifier {
   // Sorting state for books within shelves
   BookSortOption _bookSortOption = BookSortOption.title;
   bool _bookSortAscending = true;
+
+  /// Attach to a DataStore instance.
+  void attach(DataStore dataStore) {
+    if (_dataStore != dataStore) {
+      _dataStore?.removeListener(_onDataStoreChanged);
+      _dataStore = dataStore;
+      _dataStore!.addListener(_onDataStoreChanged);
+      notifyListeners();
+    }
+  }
+
+  void _onDataStoreChanged() {
+    // Update selected shelf if it was modified
+    if (_selectedShelf != null) {
+      _selectedShelf = _dataStore?.getShelf(_selectedShelf!.id);
+    }
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _dataStore?.removeListener(_onDataStoreChanged);
+    super.dispose();
+  }
 
   // ============================================================================
   // GETTERS
@@ -58,18 +83,23 @@ class ShelvesProvider extends ChangeNotifier {
   bool get isGridView => _viewMode == ShelvesViewMode.grid;
   bool get isListView => _viewMode == ShelvesViewMode.list;
 
-  List<ShelfData> get shelves => _shelves;
-  bool get hasShelves => _shelves.isNotEmpty;
+  /// Get all shelves, sorted according to current settings.
+  List<Shelf> get shelves {
+    if (_dataStore == null) return [];
+    final list = List<Shelf>.from(_dataStore!.shelves);
+    _applySorting(list);
+    return list;
+  }
+
+  bool get hasShelves => shelves.isNotEmpty;
 
   /// Get default shelves (Currently Reading, Want to Read, Finished).
-  List<ShelfData> get defaultShelves =>
-      _shelves.where((s) => s.isDefault).toList();
+  List<Shelf> get defaultShelves => shelves.where((s) => s.isDefault).toList();
 
   /// Get user-created shelves.
-  List<ShelfData> get userShelves =>
-      _shelves.where((s) => !s.isDefault).toList();
+  List<Shelf> get userShelves => shelves.where((s) => !s.isDefault).toList();
 
-  ShelfData? get selectedShelf => _selectedShelf;
+  Shelf? get selectedShelf => _selectedShelf;
 
   ShelfSortOption get shelfSortOption => _shelfSortOption;
   bool get shelfSortAscending => _shelfSortAscending;
@@ -78,26 +108,27 @@ class ShelvesProvider extends ChangeNotifier {
   bool get bookSortAscending => _bookSortAscending;
 
   /// Get total book count across all shelves.
-  int get totalBookCount =>
-      _shelves.fold(0, (sum, shelf) => sum + shelf.bookCount);
+  int get totalBookCount {
+    if (_dataStore == null) return 0;
+    return _dataStore!.shelves.fold(
+      0,
+      (sum, shelf) => sum + _dataStore!.getBookCountForShelf(shelf.id),
+    );
+  }
 
   // ============================================================================
   // METHODS
   // ============================================================================
 
-  /// Loads all shelves data.
+  /// Loads all shelves data. With DataStore, this is instant since data is already loaded.
   Future<void> loadShelves() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // Load sample data
-      _shelves = ShelfData.sampleShelves;
-      _shelves.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      // Simulate network delay for realistic UX
+      await Future.delayed(const Duration(milliseconds: 100));
 
       _isLoading = false;
       notifyListeners();
@@ -132,19 +163,20 @@ class ShelvesProvider extends ChangeNotifier {
       _shelfSortOption = option;
       if (ascending != null) _shelfSortAscending = ascending;
     }
-    _applyShelvesSorting();
     notifyListeners();
   }
 
-  /// Applies the current sorting to the shelves list.
-  void _applyShelvesSorting() {
-    _shelves.sort((a, b) {
+  /// Applies the current sorting to a shelves list.
+  void _applySorting(List<Shelf> list) {
+    list.sort((a, b) {
       int result;
       switch (_shelfSortOption) {
         case ShelfSortOption.name:
           result = a.name.toLowerCase().compareTo(b.name.toLowerCase());
         case ShelfSortOption.bookCount:
-          result = a.bookCount.compareTo(b.bookCount);
+          final aCount = _dataStore?.getBookCountForShelf(a.id) ?? 0;
+          final bCount = _dataStore?.getBookCountForShelf(b.id) ?? 0;
+          result = aCount.compareTo(bCount);
         case ShelfSortOption.dateCreated:
           result = a.createdAt.compareTo(b.createdAt);
         case ShelfSortOption.dateModified:
@@ -166,8 +198,8 @@ class ShelvesProvider extends ChangeNotifier {
   }
 
   /// Sorts a list of books according to current book sort settings.
-  List<BookData> sortBooks(List<BookData> books) {
-    final sorted = List<BookData>.from(books);
+  List<Book> sortBooks(List<Book> books) {
+    final sorted = List<Book>.from(books);
     sorted.sort((a, b) {
       int result;
       switch (_bookSortOption) {
@@ -176,10 +208,9 @@ class ShelvesProvider extends ChangeNotifier {
         case BookSortOption.author:
           result = a.author.toLowerCase().compareTo(b.author.toLowerCase());
         case BookSortOption.progress:
-          result = a.progress.compareTo(b.progress);
+          result = a.currentPosition.compareTo(b.currentPosition);
         case BookSortOption.dateAdded:
-          // For sample data, use id as a proxy for date added
-          result = a.id.compareTo(b.id);
+          result = a.addedAt.compareTo(b.addedAt);
       }
       return _bookSortAscending ? result : -result;
     });
@@ -187,34 +218,35 @@ class ShelvesProvider extends ChangeNotifier {
   }
 
   /// Selects a shelf for detail view.
-  void selectShelf(ShelfData? shelf) {
+  void selectShelf(Shelf? shelf) {
     _selectedShelf = shelf;
     notifyListeners();
   }
 
   /// Creates a new shelf.
-  Future<ShelfData> createShelf({
+  Future<Shelf> createShelf({
     required String name,
     String? description,
     String? colorHex,
     IconData? icon,
   }) async {
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+
     final now = DateTime.now();
-    final newShelf = ShelfData(
+    final newShelf = Shelf(
       id: 'shelf-${now.millisecondsSinceEpoch}',
       name: name,
       description: description,
       colorHex: colorHex,
       icon: icon,
-      bookCount: 0,
-      coverPreviewUrls: [],
-      sortOrder: _shelves.length,
+      sortOrder: _dataStore!.shelves.length,
       createdAt: now,
       updatedAt: now,
     );
 
-    _shelves = [..._shelves, newShelf];
-    notifyListeners();
+    _dataStore!.addShelf(newShelf);
     return newShelf;
   }
 
@@ -226,80 +258,69 @@ class ShelvesProvider extends ChangeNotifier {
     String? colorHex,
     IconData? icon,
   }) async {
-    final index = _shelves.indexWhere((s) => s.id == shelfId);
-    if (index != -1) {
-      final shelf = _shelves[index];
-      _shelves[index] = shelf.copyWith(
-        name: name,
-        description: description,
-        colorHex: colorHex,
-        icon: icon,
-        updatedAt: DateTime.now(),
-      );
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
 
-      // Update selected shelf if it's the one being edited
-      if (_selectedShelf?.id == shelfId) {
-        _selectedShelf = _shelves[index];
-      }
+    final shelf = _dataStore!.getShelf(shelfId);
+    if (shelf == null) {
+      throw Exception('Shelf not found');
+    }
 
-      notifyListeners();
+    final updatedShelf = shelf.copyWith(
+      name: name,
+      description: description,
+      colorHex: colorHex,
+      icon: icon,
+      updatedAt: DateTime.now(),
+    );
+
+    _dataStore!.updateShelf(updatedShelf);
+
+    // Update selected shelf if it's the one being edited
+    if (_selectedShelf?.id == shelfId) {
+      _selectedShelf = updatedShelf;
     }
   }
 
   /// Deletes a shelf by ID.
   Future<void> deleteShelf(String shelfId) async {
-    // Don't allow deleting default shelves
-    final shelf = _shelves.firstWhere(
-      (s) => s.id == shelfId,
-      orElse: () => throw Exception('Shelf not found'),
-    );
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
+
+    final shelf = _dataStore!.getShelf(shelfId);
+    if (shelf == null) {
+      throw Exception('Shelf not found');
+    }
 
     if (shelf.isDefault) {
       throw Exception('Cannot delete default shelves');
     }
 
-    _shelves = _shelves.where((s) => s.id != shelfId).toList();
+    _dataStore!.deleteShelf(shelfId);
 
     // Clear selected shelf if it was deleted
     if (_selectedShelf?.id == shelfId) {
       _selectedShelf = null;
     }
-
-    notifyListeners();
   }
 
   /// Adds a book to a shelf.
   Future<void> addBookToShelf({
     required String shelfId,
-    required BookData book,
+    required String bookId,
   }) async {
-    final index = _shelves.indexWhere((s) => s.id == shelfId);
-    if (index != -1) {
-      final shelf = _shelves[index];
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
 
-      // Update cover previews (keep up to 4)
-      final newCovers = [...shelf.coverPreviewUrls];
-      if (book.coverURL != null &&
-          book.coverURL!.isNotEmpty &&
-          !newCovers.contains(book.coverURL)) {
-        newCovers.insert(0, book.coverURL!);
-        if (newCovers.length > 4) {
-          newCovers.removeLast();
-        }
-      }
+    _dataStore!.addBookToShelf(bookId, shelfId);
 
-      _shelves[index] = shelf.copyWith(
-        bookCount: shelf.bookCount + 1,
-        coverPreviewUrls: newCovers,
-        updatedAt: DateTime.now(),
-      );
-
-      // Update selected shelf if it's the one being modified
-      if (_selectedShelf?.id == shelfId) {
-        _selectedShelf = _shelves[index];
-      }
-
-      notifyListeners();
+    // Update the shelf's updatedAt timestamp
+    final shelf = _dataStore!.getShelf(shelfId);
+    if (shelf != null) {
+      _dataStore!.updateShelf(shelf.copyWith(updatedAt: DateTime.now()));
     }
   }
 
@@ -308,54 +329,56 @@ class ShelvesProvider extends ChangeNotifier {
     required String shelfId,
     required String bookId,
   }) async {
-    final index = _shelves.indexWhere((s) => s.id == shelfId);
-    if (index != -1) {
-      final shelf = _shelves[index];
+    if (_dataStore == null) {
+      throw Exception('DataStore not attached');
+    }
 
-      _shelves[index] = shelf.copyWith(
-        bookCount: (shelf.bookCount - 1).clamp(0, shelf.bookCount),
-        updatedAt: DateTime.now(),
-      );
+    _dataStore!.removeBookFromShelf(bookId, shelfId);
 
-      // Update selected shelf if it's the one being modified
-      if (_selectedShelf?.id == shelfId) {
-        _selectedShelf = _shelves[index];
-      }
-
-      notifyListeners();
+    // Update the shelf's updatedAt timestamp
+    final shelf = _dataStore!.getShelf(shelfId);
+    if (shelf != null) {
+      _dataStore!.updateShelf(shelf.copyWith(updatedAt: DateTime.now()));
     }
   }
 
   /// Reorders shelves (drag and drop).
   void reorderShelves(int oldIndex, int newIndex) {
+    if (_dataStore == null) return;
+
+    final shelfList = List<Shelf>.from(_dataStore!.shelves);
+    shelfList.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
-    final shelf = _shelves.removeAt(oldIndex);
-    _shelves.insert(newIndex, shelf);
+    final shelf = shelfList.removeAt(oldIndex);
+    shelfList.insert(newIndex, shelf);
 
-    // Update sort orders
-    for (var i = 0; i < _shelves.length; i++) {
-      _shelves[i] = _shelves[i].copyWith(sortOrder: i);
+    // Update sort orders in DataStore
+    for (var i = 0; i < shelfList.length; i++) {
+      _dataStore!.updateShelf(shelfList[i].copyWith(sortOrder: i));
     }
-
-    notifyListeners();
   }
 
   /// Gets books for a specific shelf, sorted according to current settings.
-  /// Note: In a real implementation, this would filter from actual book data.
-  List<BookData> getBooksForShelf(String shelfId) {
-    final shelf = _shelves.firstWhere(
-      (s) => s.id == shelfId,
-      orElse: () => throw Exception('Shelf not found'),
-    );
+  List<Book> getBooksForShelf(String shelfId) {
+    if (_dataStore == null) return [];
 
-    // For now, filter sample books that have this shelf name in their shelves list
-    final books = BookData.sampleBooks
-        .where((book) => book.shelves.contains(shelf.name))
-        .toList();
-
+    final books = _dataStore!.getBooksInShelf(shelfId);
     return sortBooks(books);
+  }
+
+  /// Get book count for a specific shelf.
+  int getBookCountForShelf(String shelfId) {
+    if (_dataStore == null) return 0;
+    return _dataStore!.getBookCountForShelf(shelfId);
+  }
+
+  /// Get cover preview URLs for a shelf.
+  List<String> getCoverPreviewsForShelf(String shelfId) {
+    if (_dataStore == null) return [];
+    return _dataStore!.getCoverPreviewsForShelf(shelfId);
   }
 
   /// Refreshes shelves data.

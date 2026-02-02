@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/active_filter.dart';
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -37,11 +38,12 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     final displayMode = context.watch<DisplayModeProvider>();
     final libraryProvider = context.watch<LibraryProvider>();
+    final dataStore = context.watch<DataStore>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
-    // Get filtered books
-    final books = _getFilteredBooks(libraryProvider);
+    // Get filtered books from DataStore (single source of truth)
+    final books = _getFilteredBooks(libraryProvider, dataStore);
 
     if (displayMode.isEinkMode) {
       return _buildEinkLayout(context, books, libraryProvider);
@@ -54,8 +56,8 @@ class _LibraryPageState extends State<LibraryPage> {
     return _buildMobileLayout(context, books, libraryProvider);
   }
 
-  List<BookData> _getFilteredBooks(LibraryProvider provider) {
-    var books = BookData.sampleBooks;
+  List<BookData> _getFilteredBooks(LibraryProvider provider, DataStore dataStore) {
+    var books = dataStore.books;
 
     // Apply search filter using query parser
     if (provider.searchQuery.isNotEmpty) {
@@ -326,7 +328,8 @@ class _LibraryPageState extends State<LibraryPage> {
   /// Show the filter bottom sheet.
   Future<void> _showFilterBottomSheet(BuildContext context) async {
     final libraryProvider = context.read<LibraryProvider>();
-    final filterOptions = FilterOptions.fromBooks(BookData.sampleBooks);
+    final dataStore = context.read<DataStore>();
+    final filterOptions = FilterOptions.fromBooks(dataStore.books);
 
     final result = await FilterBottomSheet.show(
       context,
@@ -526,13 +529,18 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildBookList(BuildContext context, List<BookData> books) {
+    final libraryProvider = context.read<LibraryProvider>();
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
       itemCount: books.length,
       itemBuilder: (context, index) {
         final book = books[index];
+        final isFavorite =
+            libraryProvider.isBookFavorite(book.id, book.isFavorite);
         return BookListItem(
           book: book,
+          isFavorite: isFavorite,
           onTap: () => _navigateToBookDetails(context, book),
         );
       },
@@ -592,8 +600,11 @@ class _LibraryPageState extends State<LibraryPage> {
                     itemCount: books.length,
                     itemBuilder: (context, index) {
                       final book = books[index];
+                      final isFavorite =
+                          libraryProvider.isBookFavorite(book.id, book.isFavorite);
                       return BookListItem(
                         book: book,
+                        isFavorite: isFavorite,
                         onTap: () => _navigateToBookDetails(context, book),
                       );
                     },

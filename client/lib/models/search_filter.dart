@@ -1,4 +1,4 @@
-import 'package:papyrus/models/book_data.dart';
+import 'package:papyrus/models/book.dart';
 
 /// Represents a search filter condition.
 class SearchFilter {

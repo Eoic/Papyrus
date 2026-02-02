@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/daily_activity.dart';
 import 'package:papyrus/models/genre_stats.dart';
 import 'package:papyrus/models/reading_streak.dart';
@@ -80,7 +81,10 @@ class SessionStats {
 }
 
 /// Provider for statistics page state management.
+/// Uses DataStore as the single source of truth.
 class StatisticsProvider extends ChangeNotifier {
+  DataStore? _dataStore;
+
   // Loading state
   bool _isLoading = false;
   String? _error;
@@ -92,25 +96,34 @@ class StatisticsProvider extends ChangeNotifier {
   DateTime? _customStartDate;
   DateTime? _customEndDate;
 
-  // Summary statistics
-  int _totalBooks = 0;
-  int _goalsCompleted = 0;
-  int _totalReadingMinutes = 0;
-  int _pagesRead = 0;
-
-  // Enhanced statistics
-  SessionStats _sessionStats = const SessionStats(
-    totalSessions: 0,
-    totalMinutes: 0,
-    totalPages: 0,
-  );
-
   // Chart data
   List<DailyActivity> _readingTimeData = [];
   List<DailyActivity> _pagesReadData = [];
   List<MonthlyStats> _monthlyStats = [];
   List<GenreStats> _genreDistribution = [];
   ReadingStreak _streak = ReadingStreak.empty;
+
+  /// Attach to a DataStore instance.
+  void attach(DataStore dataStore) {
+    if (_dataStore != dataStore) {
+      _dataStore?.removeListener(_onDataStoreChanged);
+      _dataStore = dataStore;
+      _dataStore!.addListener(_onDataStoreChanged);
+      _updateDataForPeriod();
+      notifyListeners();
+    }
+  }
+
+  void _onDataStoreChanged() {
+    _updateDataForPeriod();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _dataStore?.removeListener(_onDataStoreChanged);
+    super.dispose();
+  }
 
   // ============================================================================
   // GETTERS
@@ -123,12 +136,72 @@ class StatisticsProvider extends ChangeNotifier {
   DateTime? get customStartDate => _customStartDate;
   DateTime? get customEndDate => _customEndDate;
 
-  int get totalBooks => _totalBooks;
-  int get goalsCompleted => _goalsCompleted;
-  int get totalReadingMinutes => _totalReadingMinutes;
-  int get pagesRead => _pagesRead;
+  /// Total books completed in the selected period.
+  int get totalBooks {
+    if (_dataStore == null) return 0;
+    final range = _getDateRangeForPeriod();
+    return _dataStore!.books
+        .where((b) =>
+            b.completedAt != null &&
+            b.completedAt!.isAfter(range.start) &&
+            b.completedAt!.isBefore(range.end))
+        .length;
+  }
 
-  SessionStats get sessionStats => _sessionStats;
+  /// Goals completed in the selected period.
+  int get goalsCompleted {
+    if (_dataStore == null) return 0;
+    final range = _getDateRangeForPeriod();
+    return _dataStore!.readingGoals
+        .where((g) =>
+            g.completedAt != null &&
+            g.completedAt!.isAfter(range.start) &&
+            g.completedAt!.isBefore(range.end))
+        .length;
+  }
+
+  /// Total reading minutes in the selected period.
+  int get totalReadingMinutes {
+    if (_dataStore == null) return 0;
+    final range = _getDateRangeForPeriod();
+    return _dataStore!.readingSessions
+        .where((s) =>
+            s.startTime.isAfter(range.start) && s.startTime.isBefore(range.end))
+        .fold(0, (sum, s) => sum + s.durationMinutes);
+  }
+
+  /// Pages read in the selected period.
+  int get pagesRead {
+    if (_dataStore == null) return 0;
+    final range = _getDateRangeForPeriod();
+    return _dataStore!.readingSessions
+        .where((s) =>
+            s.startTime.isAfter(range.start) && s.startTime.isBefore(range.end))
+        .fold(0, (sum, s) => sum + (s.pagesRead ?? 0));
+  }
+
+  /// Session statistics for the selected period.
+  SessionStats get sessionStats {
+    if (_dataStore == null) {
+      return const SessionStats(
+        totalSessions: 0,
+        totalMinutes: 0,
+        totalPages: 0,
+      );
+    }
+    final range = _getDateRangeForPeriod();
+    final sessions = _dataStore!.readingSessions
+        .where((s) =>
+            s.startTime.isAfter(range.start) && s.startTime.isBefore(range.end))
+        .toList();
+
+    return SessionStats(
+      totalSessions: sessions.length,
+      totalMinutes: sessions.fold(0, (sum, s) => sum + s.durationMinutes),
+      totalPages: sessions.fold(0, (sum, s) => sum + (s.pagesRead ?? 0)),
+    );
+  }
+
   List<DailyActivity> get readingTimeData => _readingTimeData;
   List<DailyActivity> get pagesReadData => _pagesReadData;
   List<MonthlyStats> get monthlyStats => _monthlyStats;
@@ -141,8 +214,8 @@ class StatisticsProvider extends ChangeNotifier {
 
   /// Total reading time formatted (e.g., "3.5h").
   String get totalReadingLabel {
-    final hours = _totalReadingMinutes / 60;
-    if (hours < 1) return '${_totalReadingMinutes}m';
+    final hours = totalReadingMinutes / 60;
+    if (hours < 1) return '${totalReadingMinutes}m';
     if (hours == hours.truncate()) return '${hours.truncate()}h';
     return '${hours.toStringAsFixed(1)}h';
   }
@@ -207,18 +280,17 @@ class StatisticsProvider extends ChangeNotifier {
   // METHODS
   // ============================================================================
 
-  /// Loads statistics data.
+  /// Loads statistics data. With DataStore, this is mainly for loading state UX.
   Future<void> loadStatistics() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Simulate network delay for realistic UX
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      // Load sample data
-      _loadSampleData();
+      _updateDataForPeriod();
 
       _isLoading = false;
       notifyListeners();
@@ -260,11 +332,46 @@ class StatisticsProvider extends ChangeNotifier {
   // PRIVATE METHODS
   // ============================================================================
 
-  void _loadSampleData() {
-    // Summary stats (varies by period)
-    _updateDataForPeriod();
+  ({DateTime start, DateTime end}) _getDateRangeForPeriod() {
+    final now = DateTime.now();
+    switch (_selectedPeriod) {
+      case StatsPeriod.week:
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        return (
+          start: DateTime(weekStart.year, weekStart.month, weekStart.day),
+          end: now.add(const Duration(days: 1)),
+        );
+      case StatsPeriod.month:
+        return (
+          start: DateTime(now.year, now.month, 1),
+          end: now.add(const Duration(days: 1)),
+        );
+      case StatsPeriod.year:
+        return (
+          start: DateTime(now.year, 1, 1),
+          end: now.add(const Duration(days: 1)),
+        );
+      case StatsPeriod.allTime:
+        return (
+          start: DateTime(2000),
+          end: now.add(const Duration(days: 1)),
+        );
+      case StatsPeriod.custom:
+        if (_customStartDate != null && _customEndDate != null) {
+          return (
+            start: _customStartDate!,
+            end: _customEndDate!.add(const Duration(days: 1)),
+          );
+        }
+        return (
+          start: now.subtract(const Duration(days: 7)),
+          end: now.add(const Duration(days: 1)),
+        );
+    }
+  }
 
-    // Genre distribution (constant)
+  void _updateDataForPeriod() {
+    // Genre distribution (constant for now)
     _genreDistribution = GenreStats.sample;
 
     // Streak
@@ -272,132 +379,35 @@ class StatisticsProvider extends ChangeNotifier {
 
     // Monthly stats
     _monthlyStats = _generateMonthlyStats();
+
+    // Daily activity data
+    _readingTimeData = _generateActivityData();
+    _pagesReadData = _readingTimeData;
   }
 
-  void _updateDataForPeriod() {
-    switch (_selectedPeriod) {
-      case StatsPeriod.week:
-        _totalBooks = 2;
-        _goalsCompleted = 1;
-        _totalReadingMinutes = 210; // 3.5 hours
-        _pagesRead = 89;
-        _readingTimeData = DailyActivity.sampleWeek;
-        _pagesReadData = DailyActivity.sampleWeek;
-        _sessionStats = const SessionStats(
-          totalSessions: 8,
-          totalMinutes: 210,
-          totalPages: 89,
-        );
-        break;
+  List<DailyActivity> _generateActivityData() {
+    if (_dataStore == null) return DailyActivity.sampleWeek;
 
-      case StatsPeriod.month:
-        _totalBooks = 8;
-        _goalsCompleted = 4;
-        _totalReadingMinutes = 900; // 15 hours
-        _pagesRead = 380;
-        _readingTimeData = _generateMonthlyData();
-        _pagesReadData = _generateMonthlyData();
-        _sessionStats = const SessionStats(
-          totalSessions: 32,
-          totalMinutes: 900,
-          totalPages: 380,
-        );
-        break;
+    final range = _getDateRangeForPeriod();
+    final days = range.end.difference(range.start).inDays;
 
-      case StatsPeriod.year:
-        _totalBooks = 45;
-        _goalsCompleted = 12;
-        _totalReadingMinutes = 2730; // 45.5 hours
-        _pagesRead = 4230;
-        _readingTimeData = _generateYearlyData();
-        _pagesReadData = _generateYearlyData();
-        _sessionStats = const SessionStats(
-          totalSessions: 156,
-          totalMinutes: 2730,
-          totalPages: 4230,
-        );
-        break;
+    // Limit to 60 days for performance
+    final dataPoints = days.clamp(1, 60);
 
-      case StatsPeriod.allTime:
-        _totalBooks = 135;
-        _goalsCompleted = 24;
-        _totalReadingMinutes = 8100; // 135 hours
-        _pagesRead = 12500;
-        _readingTimeData = _generateYearlyData();
-        _pagesReadData = _generateYearlyData();
-        _sessionStats = const SessionStats(
-          totalSessions: 520,
-          totalMinutes: 8100,
-          totalPages: 12500,
-        );
-        break;
+    return List.generate(dataPoints, (i) {
+      final date = range.start.add(Duration(days: i));
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd = dayStart.add(const Duration(days: 1));
 
-      case StatsPeriod.custom:
-        // Use custom range if set, otherwise use default
-        if (_customStartDate != null && _customEndDate != null) {
-          final days = _customEndDate!.difference(_customStartDate!).inDays + 1;
-          _totalBooks = (days / 7 * 2).round().clamp(1, 50);
-          _goalsCompleted = (days / 30).round().clamp(0, 10);
-          _totalReadingMinutes = (days * 30).clamp(0, 5000);
-          _pagesRead = (days * 13).clamp(0, 8000);
-          _readingTimeData = _generateCustomRangeData(days);
-          _pagesReadData = _generateCustomRangeData(days);
-          _sessionStats = SessionStats(
-            totalSessions: (days * 1.5).round(),
-            totalMinutes: _totalReadingMinutes,
-            totalPages: _pagesRead,
-          );
-        }
-        break;
-    }
-  }
+      final daySessions = _dataStore!.readingSessions.where((s) =>
+          s.startTime.isAfter(dayStart.subtract(const Duration(seconds: 1))) &&
+          s.startTime.isBefore(dayEnd));
 
-  List<DailyActivity> _generateMonthlyData() {
-    // Generate 4 weeks of sample data
-    final now = DateTime.now();
-    return List.generate(28, (i) {
-      final date = now.subtract(Duration(days: 27 - i));
-      final seed = (i * 17) % 60;
       return DailyActivity(
         date: date,
-        readingMinutes: seed + 10,
-        pagesRead: (seed + 10) ~/ 2,
-        booksRead: [],
-      );
-    });
-  }
-
-  List<DailyActivity> _generateYearlyData() {
-    // Generate monthly averages as daily activity (12 entries)
-    final now = DateTime.now();
-    const monthlyMinutes = [180, 210, 150, 240, 200, 120, 180, 220, 190, 160, 140, 0];
-    return List.generate(12, (i) {
-      if (i >= now.month) {
-        return DailyActivity(
-          date: DateTime(now.year, i + 1, 1),
-          readingMinutes: 0,
-          pagesRead: 0,
-          booksRead: [],
-        );
-      }
-      return DailyActivity(
-        date: DateTime(now.year, i + 1, 1),
-        readingMinutes: monthlyMinutes[i],
-        pagesRead: monthlyMinutes[i] ~/ 2,
-        booksRead: [],
-      );
-    });
-  }
-
-  List<DailyActivity> _generateCustomRangeData(int days) {
-    final now = DateTime.now();
-    return List.generate(days.clamp(1, 60), (i) {
-      final date = now.subtract(Duration(days: days - 1 - i));
-      final seed = (i * 13 + 7) % 55;
-      return DailyActivity(
-        date: date,
-        readingMinutes: seed + 15,
-        pagesRead: (seed + 15) ~/ 2,
+        readingMinutes:
+            daySessions.fold(0, (sum, s) => sum + s.durationMinutes),
+        pagesRead: daySessions.fold(0, (sum, s) => sum + (s.pagesRead ?? 0)),
         booksRead: [],
       );
     });
@@ -408,13 +418,39 @@ class StatisticsProvider extends ChangeNotifier {
     return List.generate(12, (i) {
       final month = ((now.month - 1 - i) % 12) + 1;
       final year = now.year - ((now.month - 1 - i) < 0 ? 1 : 0);
-      final seed = (i * 7 + 3) % 5;
+
+      if (_dataStore == null) {
+        final seed = (i * 7 + 3) % 5;
+        return MonthlyStats(
+          month: month,
+          year: year,
+          booksRead: seed + 2,
+          pagesRead: (seed + 2) * 150,
+          readingMinutes: (seed + 2) * 120,
+        );
+      }
+
+      final monthStart = DateTime(year, month, 1);
+      final monthEnd = DateTime(year, month + 1, 1);
+
+      final monthSessions = _dataStore!.readingSessions.where((s) =>
+          s.startTime.isAfter(monthStart.subtract(const Duration(seconds: 1))) &&
+          s.startTime.isBefore(monthEnd));
+
+      final booksCompleted = _dataStore!.books
+          .where((b) =>
+              b.completedAt != null &&
+              b.completedAt!.isAfter(monthStart) &&
+              b.completedAt!.isBefore(monthEnd))
+          .length;
+
       return MonthlyStats(
         month: month,
         year: year,
-        booksRead: seed + 2,
-        pagesRead: (seed + 2) * 150,
-        readingMinutes: (seed + 2) * 120,
+        booksRead: booksCompleted,
+        pagesRead: monthSessions.fold(0, (sum, s) => sum + (s.pagesRead ?? 0)),
+        readingMinutes:
+            monthSessions.fold(0, (sum, s) => sum + s.durationMinutes),
       );
     }).reversed.toList();
   }

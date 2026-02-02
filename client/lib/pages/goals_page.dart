@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/goals_provider.dart';
@@ -27,7 +28,14 @@ class _GoalsPageState extends State<GoalsPage> {
   void initState() {
     super.initState();
     _provider = GoalsProvider();
-    _provider.loadGoals();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Connect to DataStore for persistent storage
+    final dataStore = context.read<DataStore>();
+    _provider.attach(dataStore);
   }
 
   @override

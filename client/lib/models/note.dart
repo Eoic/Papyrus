@@ -8,6 +8,7 @@ class Note {
   final String content;
   final BookLocation? location;
   final List<String> tags;
+  final bool isPinned;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -18,6 +19,7 @@ class Note {
     required this.content,
     this.location,
     this.tags = const [],
+    this.isPinned = false,
     required this.createdAt,
     this.updatedAt,
   });
@@ -59,6 +61,7 @@ class Note {
     String? content,
     BookLocation? location,
     List<String>? tags,
+    bool? isPinned,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -69,8 +72,55 @@ class Note {
       content: content ?? this.content,
       location: location ?? this.location,
       tags: tags ?? this.tags,
+      isPinned: isPinned ?? this.isPinned,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  /// Convert to JSON for API/storage.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'book_id': bookId,
+      'title': title,
+      'content': content,
+      'chapter': location?.chapter,
+      'chapter_title': location?.chapterTitle,
+      'page_number': location?.pageNumber,
+      'percentage': location?.percentage,
+      'tags': tags,
+      'is_pinned': isPinned,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+    };
+  }
+
+  /// Create from JSON.
+  factory Note.fromJson(Map<String, dynamic> json) {
+    final hasLocation = json['page_number'] != null;
+    return Note(
+      id: json['id'] as String,
+      bookId: json['book_id'] as String,
+      title: json['title'] as String,
+      content: json['content'] as String,
+      location: hasLocation
+          ? BookLocation(
+              chapter: json['chapter'] as int?,
+              chapterTitle: json['chapter_title'] as String?,
+              pageNumber: json['page_number'] as int,
+              percentage: (json['percentage'] as num?)?.toDouble(),
+            )
+          : null,
+      tags: (json['tags'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      isPinned: json['is_pinned'] as bool? ?? false,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
     );
   }
 
