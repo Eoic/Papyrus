@@ -31,17 +31,17 @@ class ReadingStreak {
 
   /// Sample streak data for development and testing.
   static ReadingStreak get sample => const ReadingStreak(
-        currentStreak: 5,
-        bestStreak: 21,
-        daysThisMonth: 18,
-        totalDaysInMonth: 26,
-      );
+    currentStreak: 5,
+    bestStreak: 21,
+    daysThisMonth: 18,
+    totalDaysInMonth: 26,
+  );
 
   /// Empty streak (no reading activity).
   static ReadingStreak get empty => const ReadingStreak(
-        currentStreak: 0,
-        bestStreak: 0,
-        daysThisMonth: 0,
-        totalDaysInMonth: 30,
-      );
+    currentStreak: 0,
+    bestStreak: 0,
+    daysThisMonth: 0,
+    totalDaysInMonth: 30,
+  );
 }

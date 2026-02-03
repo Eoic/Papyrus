@@ -116,9 +116,7 @@ class QuickStatsWidget extends StatelessWidget {
         ),
         Text(
           value,
-          style: textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -196,17 +194,12 @@ class QuickStatsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(
-                bottom: BorderSide(color: Colors.black26),
-              ),
+            : const Border(bottom: BorderSide(color: Colors.black26)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(fontSize: 16),
-          ),
+          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 16)),
           Text(
             value,
             style: textTheme.bodyMedium?.copyWith(

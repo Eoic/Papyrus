@@ -286,10 +286,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ),
           child: Row(
             children: [
-              Text(
-                'Filters',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('Filters', style: Theme.of(context).textTheme.titleLarge),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -344,15 +341,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     expandedInsets: EdgeInsets.zero,
                     hintText: 'Any format',
                     dropdownMenuEntries: [
-                      const DropdownMenuEntry(
-                        value: '',
-                        label: 'Any format',
-                      ),
+                      const DropdownMenuEntry(value: '', label: 'Any format'),
                       ...widget.filterOptions.formats.map(
-                        (f) => DropdownMenuEntry(
-                          value: f,
-                          label: f.toUpperCase(),
-                        ),
+                        (f) =>
+                            DropdownMenuEntry(value: f, label: f.toUpperCase()),
                       ),
                     ],
                     onSelected: (v) => setState(
@@ -370,10 +362,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     expandedInsets: EdgeInsets.zero,
                     hintText: 'Any shelf',
                     dropdownMenuEntries: [
-                      const DropdownMenuEntry(
-                        value: '',
-                        label: 'Any shelf',
-                      ),
+                      const DropdownMenuEntry(value: '', label: 'Any shelf'),
                       ...widget.filterOptions.shelves.map(
                         (s) => DropdownMenuEntry(value: s, label: s),
                       ),
@@ -393,10 +382,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     expandedInsets: EdgeInsets.zero,
                     hintText: 'Any topic',
                     dropdownMenuEntries: [
-                      const DropdownMenuEntry(
-                        value: '',
-                        label: 'Any topic',
-                      ),
+                      const DropdownMenuEntry(value: '', label: 'Any topic'),
                       ...widget.filterOptions.topics.map(
                         (t) => DropdownMenuEntry(value: t, label: t),
                       ),
@@ -421,10 +407,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         value: 'reading',
                         label: 'Currently reading',
                       ),
-                      DropdownMenuEntry(
-                        value: 'finished',
-                        label: 'Finished',
-                      ),
+                      DropdownMenuEntry(value: 'finished', label: 'Finished'),
                       DropdownMenuEntry(value: 'unread', label: 'Unread'),
                     ],
                     onSelected: (v) => setState(
@@ -474,9 +457,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           padding: const EdgeInsets.all(Spacing.md),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            border: Border(
-              top: BorderSide(color: colorScheme.outlineVariant),
-            ),
+            border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
           ),
           child: SafeArea(
             child: Row(
@@ -525,10 +506,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Text(
       title,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
+        color: colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.2,
+      ),
     );
   }
 
@@ -588,8 +569,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -609,17 +590,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       children: [
         Text(
           'Query: ',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         Expanded(
           child: Text(
             preview,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              fontFamily: 'monospace',
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -656,9 +637,7 @@ class _QuickFilterCheckbox extends StatelessWidget {
               ? colorScheme.secondaryContainer
               : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: value
-              ? null
-              : Border.all(color: colorScheme.outlineVariant),
+          border: value ? null : Border.all(color: colorScheme.outlineVariant),
         ),
         child: Row(
           children: [

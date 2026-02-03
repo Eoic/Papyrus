@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SearchOptionsPage extends StatelessWidget {
-  const SearchOptionsPage({ super.key });
+  const SearchOptionsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

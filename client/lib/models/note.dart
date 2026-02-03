@@ -40,8 +40,18 @@ class Note {
   String get formattedDate {
     final date = updatedAt ?? createdAt;
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -112,9 +122,8 @@ class Note {
               percentage: (json['percentage'] as num?)?.toDouble(),
             )
           : null,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           [],
       isPinned: json['is_pinned'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -156,10 +165,7 @@ class Note {
                 '3. Create reusable components\n'
                 '4. Avoid copy-paste coding\n'
                 '5. Document decisions in one place',
-            location: const BookLocation(
-              chapter: 2,
-              pageNumber: 58,
-            ),
+            location: const BookLocation(chapter: 2, pageNumber: 58),
             tags: ['principle', 'practice'],
             createdAt: now.subtract(const Duration(days: 2)),
           ),

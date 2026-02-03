@@ -60,9 +60,7 @@ class SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode
-        ? _buildEinkRow(context)
-        : _buildStandardRow(context);
+    return isEinkMode ? _buildEinkRow(context) : _buildStandardRow(context);
   }
 
   Widget _buildStandardRow(BuildContext context) {
@@ -153,10 +151,7 @@ class SettingsRow extends StatelessWidget {
             if (showChevron && onTap != null)
               const Text(
                 '>',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
           ],
         ),
@@ -205,13 +200,8 @@ class SettingsToggleRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Text(label, style: textTheme.bodyLarge),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-          ),
+          Expanded(child: Text(label, style: textTheme.bodyLarge)),
+          Switch(value: value, onChanged: onChanged),
         ],
       ),
     );

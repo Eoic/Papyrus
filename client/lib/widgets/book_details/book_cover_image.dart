@@ -48,10 +48,7 @@ class BookCoverImage extends StatelessWidget {
           isEinkMode ? AppRadius.einkCard : AppRadius.lg,
         ),
         border: isEinkMode
-            ? Border.all(
-                color: Colors.black,
-                width: BorderWidths.einkDefault,
-              )
+            ? Border.all(color: Colors.black, width: BorderWidths.einkDefault)
             : null,
         boxShadow: isEinkMode
             ? null
@@ -109,10 +106,10 @@ class BookCoverImage extends StatelessWidget {
               child: Text(
                 bookTitle!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isEinkMode
-                          ? Colors.black54
-                          : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
+                  color: isEinkMode
+                      ? Colors.black54
+                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -139,14 +136,11 @@ class BookCoverImage extends StatelessWidget {
                 progressValue != null
                     ? '${(progressValue * 100).toInt()}%'
                     : '...',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               )
-            : CircularProgressIndicator(
-                value: progressValue,
-                strokeWidth: 2,
-              ),
+            : CircularProgressIndicator(value: progressValue, strokeWidth: 2),
       ),
     );
   }

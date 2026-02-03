@@ -10,10 +10,7 @@ class LibraryDrawer extends StatelessWidget {
   /// The current route path, used to determine which item is selected.
   final String currentPath;
 
-  const LibraryDrawer({
-    super.key,
-    this.currentPath = '/library',
-  });
+  const LibraryDrawer({super.key, this.currentPath = '/library'});
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +32,7 @@ class LibraryDrawer extends StatelessWidget {
                 ),
               ),
             ),
-            Divider(
-              height: 1,
-              color: colorScheme.outlineVariant,
-            ),
+            Divider(height: 1, color: colorScheme.outlineVariant),
             const SizedBox(height: Spacing.sm),
             // Navigation items with horizontal padding for rounded corners
             Padding(
@@ -48,7 +42,8 @@ class LibraryDrawer extends StatelessWidget {
                   _DrawerNavItem(
                     icon: Icons.book,
                     label: 'Books',
-                    isSelected: currentPath == '/library' ||
+                    isSelected:
+                        currentPath == '/library' ||
                         currentPath == '/library/books',
                     onTap: () {
                       Navigator.of(context).pop();
@@ -146,9 +141,7 @@ class _DrawerNavItem extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: Spacing.md,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.md),
       visualDensity: VisualDensity.compact,
       onTap: onTap,
     );

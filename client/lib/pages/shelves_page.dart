@@ -61,7 +61,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
             return _buildLoadingState(context);
           }
 
-          if (displayMode.isEinkMode) return _buildEinkLayout(context, provider);
+          if (displayMode.isEinkMode)
+            return _buildEinkLayout(context, provider);
           if (isDesktop) return _buildDesktopLayout(context, provider);
           return _buildMobileLayout(context, provider);
         },
@@ -74,11 +75,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 
   // ============================================================================
@@ -108,8 +105,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
                   Text(
                     'Shelves',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const Spacer(),
                   // View toggle
@@ -144,8 +141,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
                   Text(
                     '${provider.shelves.length} ${provider.shelves.length == 1 ? 'shelf' : 'shelves'}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -155,8 +152,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
             Expanded(
               child: provider.hasShelves
                   ? provider.isListView
-                      ? _buildShelfList(context, provider)
-                      : _buildShelfGrid(context, provider)
+                        ? _buildShelfList(context, provider)
+                        : _buildShelfGrid(context, provider)
                   : _buildEmptyState(context),
             ),
           ],
@@ -186,10 +183,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
             padding: const EdgeInsets.all(Spacing.lg),
             child: Row(
               children: [
-                Text(
-                  'Shelves',
-                  style: textTheme.headlineMedium,
-                ),
+                Text('Shelves', style: textTheme.headlineMedium),
                 const SizedBox(width: Spacing.lg),
                 Text(
                   '${provider.shelves.length} ${provider.shelves.length == 1 ? 'shelf' : 'shelves'}',
@@ -217,8 +211,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
           Expanded(
             child: provider.hasShelves
                 ? provider.isListView
-                    ? _buildShelfList(context, provider)
-                    : _buildShelfGrid(context, provider)
+                      ? _buildShelfList(context, provider)
+                      : _buildShelfGrid(context, provider)
                 : _buildEmptyState(context),
           ),
         ],
@@ -235,9 +229,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -253,14 +245,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
           },
           borderRadius: BorderRadius.circular(AppRadius.lg),
           renderBorder: false,
-          constraints: BoxConstraints(
-            minHeight: height,
-            minWidth: height,
-          ),
-          children: const [
-            Icon(Icons.grid_view),
-            Icon(Icons.view_list),
-          ],
+          constraints: BoxConstraints(minHeight: height, minWidth: height),
+          children: const [Icon(Icons.grid_view), Icon(Icons.view_list)],
         ),
       ),
     );
@@ -496,10 +482,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
       onEdit: () => _showEditShelfSheet(context, shelf),
       onDelete: () => _provider.deleteShelf(shelf.id),
       onRemoveBook: (book) {
-        _provider.removeBookFromShelf(
-          shelfId: shelf.id,
-          bookId: book.id,
-        );
+        _provider.removeBookFromShelf(shelfId: shelf.id, bookId: book.id);
       },
     );
   }
@@ -533,9 +516,9 @@ class _ShelvesPageState extends State<ShelvesPage> {
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
                 child: Text(
                   shelf.name,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: Spacing.md),
@@ -585,9 +568,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete shelf'),
-        content: Text(
-          'Delete "${shelf.name}"? Books will not be deleted.',
-        ),
+        content: Text('Delete "${shelf.name}"? Books will not be deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -598,9 +579,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
               Navigator.of(context).pop();
               _provider.deleteShelf(shelf.id);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Delete'),
           ),
         ],

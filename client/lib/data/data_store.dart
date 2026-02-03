@@ -41,13 +41,13 @@ class DataStore extends ChangeNotifier {
 
   /// Get all shelves with computed bookCount and coverPreviewUrls.
   List<Shelf> get shelves => _shelves.values.map((shelf) {
-        final bookCount = getBookCountForShelf(shelf.id);
-        final coverPreviews = getCoverPreviewsForShelf(shelf.id);
-        return shelf.copyWith(
-          bookCount: bookCount,
-          coverPreviewUrls: coverPreviews,
-        );
-      }).toList();
+    final bookCount = getBookCountForShelf(shelf.id);
+    final coverPreviews = getCoverPreviewsForShelf(shelf.id);
+    return shelf.copyWith(
+      bookCount: bookCount,
+      coverPreviewUrls: coverPreviews,
+    );
+  }).toList();
 
   List<Tag> get tags => _tags.values.toList();
   List<Series> get seriesList => _series.values.toList();
@@ -121,8 +121,9 @@ class DataStore extends ChangeNotifier {
 
   /// Get all books in a shelf.
   List<Book> getBooksInShelf(String shelfId) {
-    final bookIds =
-        _bookShelfRelations.where((r) => r.shelfId == shelfId).map((r) => r.bookId);
+    final bookIds = _bookShelfRelations
+        .where((r) => r.shelfId == shelfId)
+        .map((r) => r.bookId);
     return bookIds.map((id) => _books[id]).whereType<Book>().toList();
   }
 
@@ -165,8 +166,9 @@ class DataStore extends ChangeNotifier {
 
   /// Get all books with a tag.
   List<Book> getBooksWithTag(String tagId) {
-    final bookIds =
-        _bookTagRelations.where((r) => r.tagId == tagId).map((r) => r.bookId);
+    final bookIds = _bookTagRelations
+        .where((r) => r.tagId == tagId)
+        .map((r) => r.bookId);
     return bookIds.map((id) => _books[id]).whereType<Book>().toList();
   }
 
@@ -202,9 +204,7 @@ class DataStore extends ChangeNotifier {
 
   /// Get all books in a series.
   List<Book> getBooksInSeries(String seriesId) {
-    return _books.values
-        .where((b) => b.seriesId == seriesId)
-        .toList()
+    return _books.values.where((b) => b.seriesId == seriesId).toList()
       ..sort((a, b) => (a.seriesNumber ?? 0).compareTo(b.seriesNumber ?? 0));
   }
 
@@ -293,12 +293,13 @@ class DataStore extends ChangeNotifier {
     return _readingSessions.values.where((s) => s.bookId == bookId).toList();
   }
 
-  List<ReadingSession> getReadingSessionsInRange(
-      DateTime start, DateTime end) {
+  List<ReadingSession> getReadingSessionsInRange(DateTime start, DateTime end) {
     return _readingSessions.values
-        .where((s) =>
-            s.startTime.isAfter(start.subtract(const Duration(seconds: 1))) &&
-            s.startTime.isBefore(end.add(const Duration(seconds: 1))))
+        .where(
+          (s) =>
+              s.startTime.isAfter(start.subtract(const Duration(seconds: 1))) &&
+              s.startTime.isBefore(end.add(const Duration(seconds: 1))),
+        )
         .toList();
   }
 
@@ -353,21 +354,25 @@ class DataStore extends ChangeNotifier {
   // ============================================================
 
   void addBookToShelf(String bookId, String shelfId) {
-    final exists = _bookShelfRelations
-        .any((r) => r.bookId == bookId && r.shelfId == shelfId);
+    final exists = _bookShelfRelations.any(
+      (r) => r.bookId == bookId && r.shelfId == shelfId,
+    );
     if (!exists) {
-      _bookShelfRelations.add(BookShelfRelation(
-        bookId: bookId,
-        shelfId: shelfId,
-        addedAt: DateTime.now(),
-      ));
+      _bookShelfRelations.add(
+        BookShelfRelation(
+          bookId: bookId,
+          shelfId: shelfId,
+          addedAt: DateTime.now(),
+        ),
+      );
       notifyListeners();
     }
   }
 
   void removeBookFromShelf(String bookId, String shelfId) {
-    _bookShelfRelations
-        .removeWhere((r) => r.bookId == bookId && r.shelfId == shelfId);
+    _bookShelfRelations.removeWhere(
+      (r) => r.bookId == bookId && r.shelfId == shelfId,
+    );
     notifyListeners();
   }
 
@@ -380,10 +385,7 @@ class DataStore extends ChangeNotifier {
 
   List<Shelf> getShelvesForBook(String bookId) {
     final shelfIds = getShelfIdsForBook(bookId);
-    return shelfIds
-        .map((id) => getShelf(id))
-        .whereType<Shelf>()
-        .toList();
+    return shelfIds.map((id) => getShelf(id)).whereType<Shelf>().toList();
   }
 
   // ============================================================
@@ -391,21 +393,25 @@ class DataStore extends ChangeNotifier {
   // ============================================================
 
   void addTagToBook(String bookId, String tagId) {
-    final exists =
-        _bookTagRelations.any((r) => r.bookId == bookId && r.tagId == tagId);
+    final exists = _bookTagRelations.any(
+      (r) => r.bookId == bookId && r.tagId == tagId,
+    );
     if (!exists) {
-      _bookTagRelations.add(BookTagRelation(
-        bookId: bookId,
-        tagId: tagId,
-        createdAt: DateTime.now(),
-      ));
+      _bookTagRelations.add(
+        BookTagRelation(
+          bookId: bookId,
+          tagId: tagId,
+          createdAt: DateTime.now(),
+        ),
+      );
       notifyListeners();
     }
   }
 
   void removeTagFromBook(String bookId, String tagId) {
-    _bookTagRelations
-        .removeWhere((r) => r.bookId == bookId && r.tagId == tagId);
+    _bookTagRelations.removeWhere(
+      (r) => r.bookId == bookId && r.tagId == tagId,
+    );
     notifyListeners();
   }
 

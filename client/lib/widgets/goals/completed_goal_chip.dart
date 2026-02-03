@@ -51,10 +51,7 @@ class CompletedGoalChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: colorScheme.outlineVariant,
-            width: 1,
-          ),
+          border: Border.all(color: colorScheme.outlineVariant, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,10 +142,7 @@ class CompletedGoalChip extends StatelessWidget {
           padding: const EdgeInsets.all(Spacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: colorScheme.outlineVariant,
-              width: 1,
-            ),
+            border: Border.all(color: colorScheme.outlineVariant, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,18 +276,13 @@ class CompletedGoalChip extends StatelessWidget {
           vertical: Spacing.sm,
         ),
         decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.black26),
-          ),
+          border: Border(bottom: BorderSide(color: Colors.black26)),
         ),
         child: Row(
           children: [
             const Text(
               '[X]',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: Spacing.sm),
             Expanded(
@@ -331,10 +320,8 @@ class CompletedGoalChip extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (context) => _CompletedGoalDetailsSheet(
-        goal: goal,
-        onDelete: onDelete,
-      ),
+      builder: (context) =>
+          _CompletedGoalDetailsSheet(goal: goal, onDelete: onDelete),
     );
   }
 
@@ -376,8 +363,18 @@ class CompletedGoalChip extends StatelessWidget {
 
   String _formatShortDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
@@ -397,10 +394,7 @@ class _CompletedGoalDetailsSheet extends StatelessWidget {
   final ReadingGoal goal;
   final VoidCallback? onDelete;
 
-  const _CompletedGoalDetailsSheet({
-    required this.goal,
-    this.onDelete,
-  });
+  const _CompletedGoalDetailsSheet({required this.goal, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -590,9 +584,7 @@ class _CompletedGoalDetailsSheet extends StatelessWidget {
               Navigator.of(context).pop();
               onDelete?.call();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -651,16 +643,36 @@ class _CompletedGoalDetailsSheet extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   String _formatMonthYear(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.year}';
   }

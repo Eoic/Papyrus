@@ -228,9 +228,7 @@ class RecentlyAddedSection extends StatelessWidget {
           vertical: Spacing.sm,
         ),
         decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.black26),
-          ),
+          border: Border(bottom: BorderSide(color: Colors.black26)),
         ),
         child: Row(
           children: [
@@ -259,10 +257,7 @@ class RecentlyAddedSection extends StatelessWidget {
             ),
             const Text(
               '>',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -316,9 +311,7 @@ class RecentlyAddedSection extends StatelessWidget {
           const SizedBox(height: Spacing.sm),
           Text(
             'NO BOOKS ADDED RECENTLY',
-            style: textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

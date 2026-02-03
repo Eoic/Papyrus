@@ -42,8 +42,8 @@ class DeveloperOptionsPage extends StatelessWidget {
                 'Enable high-contrast mode optimized for e-ink displays. '
                 'Removes animations and increases touch targets.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -78,12 +78,16 @@ class DeveloperOptionsPage extends StatelessWidget {
                   onTap: () => displayMode.toggleEinkMode(),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    constraints:
-                        const BoxConstraints(minHeight: TouchTargets.einkMin),
+                    constraints: const BoxConstraints(
+                      minHeight: TouchTargets.einkMin,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
                     child: Row(
                       children: [
-                        const Icon(Icons.tablet_android, size: IconSizes.medium),
+                        const Icon(
+                          Icons.tablet_android,
+                          size: IconSizes.medium,
+                        ),
                         const SizedBox(width: Spacing.md),
                         Expanded(
                           child: Column(
@@ -118,10 +122,7 @@ class DeveloperOptionsPage extends StatelessWidget {
                 const Text(
                   'Enable high-contrast mode optimized for e-ink displays. '
                   'Removes animations and increases touch targets.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ],
             ),
@@ -145,10 +146,7 @@ class DeveloperOptionsPage extends StatelessWidget {
               child: Center(
                 child: Text(
                   '<',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

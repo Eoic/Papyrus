@@ -13,13 +13,10 @@ class AddShelfSheet extends StatefulWidget {
     String? description,
     String? colorHex,
     IconData? icon,
-  )? onSave;
+  )?
+  onSave;
 
-  const AddShelfSheet({
-    super.key,
-    this.shelf,
-    this.onSave,
-  });
+  const AddShelfSheet({super.key, this.shelf, this.onSave});
 
   /// Shows the add/edit shelf sheet.
   static Future<void> show(
@@ -30,7 +27,8 @@ class AddShelfSheet extends StatefulWidget {
       String? description,
       String? colorHex,
       IconData? icon,
-    )? onSave,
+    )?
+    onSave,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -38,10 +36,7 @@ class AddShelfSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (context) => AddShelfSheet(
-        shelf: shelf,
-        onSave: onSave,
-      ),
+      builder: (context) => AddShelfSheet(shelf: shelf, onSave: onSave),
     );
   }
 
@@ -61,8 +56,9 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.shelf?.name ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.shelf?.description ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.shelf?.description ?? '',
+    );
     _selectedColorHex = widget.shelf?.colorHex ?? ShelfData.availableColors[5];
     _selectedIcon = widget.shelf?.icon ?? Icons.folder_outlined;
   }
@@ -224,10 +220,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
               color: color,
               shape: BoxShape.circle,
               border: isSelected
-                  ? Border.all(
-                      color: colorScheme.primary,
-                      width: 3,
-                    )
+                  ? Border.all(color: colorScheme.primary, width: 3)
                   : null,
               boxShadow: isSelected
                   ? [
@@ -240,11 +233,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
                   : null,
             ),
             child: isSelected
-                ? Icon(
-                    Icons.check,
-                    size: 18,
-                    color: _getContrastColor(color),
-                  )
+                ? Icon(Icons.check, size: 18, color: _getContrastColor(color))
                 : null,
           ),
         );
@@ -254,8 +243,9 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
 
   Widget _buildIconPicker(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final selectedColor =
-        _selectedColorHex != null ? _parseColor(_selectedColorHex!) : colorScheme.primary;
+    final selectedColor = _selectedColorHex != null
+        ? _parseColor(_selectedColorHex!)
+        : colorScheme.primary;
 
     return Wrap(
       spacing: Spacing.sm,
@@ -275,10 +265,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: isSelected
                   ? Border.all(color: selectedColor, width: 2)
-                  : Border.all(
-                      color: colorScheme.outlineVariant,
-                      width: 1,
-                    ),
+                  : Border.all(color: colorScheme.outlineVariant, width: 1),
             ),
             child: Icon(
               icon,
@@ -303,9 +290,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -316,9 +301,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
             decoration: BoxDecoration(
               color: shelfColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: shelfColor.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: shelfColor.withValues(alpha: 0.3)),
             ),
             child: Icon(
               _selectedIcon ?? Icons.folder_outlined,
@@ -360,10 +343,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
           ),
           // Preview label
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(AppRadius.full),

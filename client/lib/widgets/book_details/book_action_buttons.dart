@@ -46,7 +46,9 @@ class BookActionButtons extends StatelessWidget {
             height: buttonHeight,
             child: FilledButton.icon(
               onPressed: onContinueReading,
-              icon: Icon(book.progress > 0 ? Icons.play_arrow : Icons.menu_book),
+              icon: Icon(
+                book.progress > 0 ? Icons.play_arrow : Icons.menu_book,
+              ),
               label: Text(book.progress > 0 ? 'Continue' : 'Start Reading'),
             ),
           )
@@ -57,8 +59,9 @@ class BookActionButtons extends StatelessWidget {
               height: buttonHeight,
               child: FilledButton.icon(
                 onPressed: onContinueReading,
-                icon:
-                    Icon(book.progress > 0 ? Icons.play_arrow : Icons.menu_book),
+                icon: Icon(
+                  book.progress > 0 ? Icons.play_arrow : Icons.menu_book,
+                ),
                 label: Text(book.progress > 0 ? 'Continue' : 'Read'),
               ),
             ),
@@ -77,10 +80,7 @@ class BookActionButtons extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.button),
               ),
             ),
-            child: Icon(
-              Icons.library_add_outlined,
-              color: colorScheme.primary,
-            ),
+            child: Icon(Icons.library_add_outlined, color: colorScheme.primary),
           ),
         ),
         const SizedBox(width: Spacing.sm),
@@ -97,10 +97,7 @@ class BookActionButtons extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.button),
               ),
             ),
-            child: Icon(
-              Icons.edit_outlined,
-              color: colorScheme.primary,
-            ),
+            child: Icon(Icons.edit_outlined, color: colorScheme.primary),
           ),
         ),
       ],

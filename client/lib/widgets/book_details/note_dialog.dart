@@ -9,11 +9,7 @@ class NoteDialog extends StatelessWidget {
   final String bookId;
   final Note? existingNote;
 
-  const NoteDialog({
-    super.key,
-    required this.bookId,
-    this.existingNote,
-  });
+  const NoteDialog({super.key, required this.bookId, this.existingNote});
 
   bool get isEditing => existingNote != null;
 
@@ -28,10 +24,8 @@ class NoteDialog extends StatelessWidget {
     if (displayMode.isEinkMode) {
       return showDialog<Note>(
         context: context,
-        builder: (context) => _EinkNoteDialog(
-          bookId: bookId,
-          existingNote: existingNote,
-        ),
+        builder: (context) =>
+            _EinkNoteDialog(bookId: bookId, existingNote: existingNote),
       );
     }
 
@@ -39,10 +33,8 @@ class NoteDialog extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => _BottomSheetNote(
-        bookId: bookId,
-        existingNote: existingNote,
-      ),
+      builder: (context) =>
+          _BottomSheetNote(bookId: bookId, existingNote: existingNote),
     );
   }
 
@@ -57,10 +49,7 @@ class _BottomSheetNote extends StatefulWidget {
   final String bookId;
   final Note? existingNote;
 
-  const _BottomSheetNote({
-    required this.bookId,
-    this.existingNote,
-  });
+  const _BottomSheetNote({required this.bookId, this.existingNote});
 
   @override
   State<_BottomSheetNote> createState() => _BottomSheetNoteState();
@@ -124,7 +113,8 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
   void _save() {
     if (_formKey.currentState?.validate() ?? false) {
       final note = Note(
-        id: widget.existingNote?.id ??
+        id:
+            widget.existingNote?.id ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         bookId: widget.bookId,
         title: _titleController.text.trim(),
@@ -190,14 +180,10 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
                       ),
                       Text(
                         isEditing ? 'Edit Note' : 'New Note',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      TextButton(
-                        onPressed: _save,
-                        child: const Text('Save'),
-                      ),
+                      TextButton(onPressed: _save, child: const Text('Save')),
                     ],
                   ),
                 ),
@@ -317,10 +303,7 @@ class _EinkNoteDialog extends StatefulWidget {
   final String bookId;
   final Note? existingNote;
 
-  const _EinkNoteDialog({
-    required this.bookId,
-    this.existingNote,
-  });
+  const _EinkNoteDialog({required this.bookId, this.existingNote});
 
   @override
   State<_EinkNoteDialog> createState() => _EinkNoteDialogState();
@@ -375,7 +358,8 @@ class _EinkNoteDialogState extends State<_EinkNoteDialog> {
   void _save() {
     if (_formKey.currentState?.validate() ?? false) {
       final note = Note(
-        id: widget.existingNote?.id ??
+        id:
+            widget.existingNote?.id ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         bookId: widget.bookId,
         title: _titleController.text.trim(),
@@ -413,18 +397,18 @@ class _EinkNoteDialogState extends State<_EinkNoteDialog> {
               Text(
                 isEditing ? 'EDIT NOTE' : 'ADD NOTE',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
               ),
               const SizedBox(height: Spacing.md),
 
               // Title field
               Text(
                 'TITLE',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: Spacing.xs),
               TextFormField(
@@ -468,9 +452,9 @@ class _EinkNoteDialogState extends State<_EinkNoteDialog> {
               // Content field
               Text(
                 'CONTENT',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: Spacing.xs),
               TextFormField(
@@ -516,9 +500,9 @@ class _EinkNoteDialogState extends State<_EinkNoteDialog> {
               // Tags section
               Text(
                 'TAGS',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: Spacing.xs),
 
@@ -579,9 +563,7 @@ class _EinkNoteDialogState extends State<_EinkNoteDialog> {
                       ),
                       child: const Text(
                         'ADD',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

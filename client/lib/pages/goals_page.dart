@@ -58,7 +58,8 @@ class _GoalsPageState extends State<GoalsPage> {
             return _buildLoadingState(context);
           }
 
-          if (displayMode.isEinkMode) return _buildEinkLayout(context, provider);
+          if (displayMode.isEinkMode)
+            return _buildEinkLayout(context, provider);
           if (isDesktop) return _buildDesktopLayout(context, provider);
           return _buildMobileLayout(context, provider);
         },
@@ -71,11 +72,7 @@ class _GoalsPageState extends State<GoalsPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 
   // ============================================================================
@@ -105,13 +102,15 @@ class _GoalsPageState extends State<GoalsPage> {
               if (provider.hasActiveGoals) ...[
                 Text('Active goals', style: textTheme.titleMedium),
                 const SizedBox(height: Spacing.sm),
-                ...provider.activeGoals.map((goal) => Padding(
-                      padding: const EdgeInsets.only(bottom: Spacing.md),
-                      child: GoalCard(
-                        goal: goal,
-                        onTap: () => _showGoalDetails(context, goal),
-                      ),
-                    )),
+                ...provider.activeGoals.map(
+                  (goal) => Padding(
+                    padding: const EdgeInsets.only(bottom: Spacing.md),
+                    child: GoalCard(
+                      goal: goal,
+                      onTap: () => _showGoalDetails(context, goal),
+                    ),
+                  ),
+                ),
               ],
               // Empty state
               if (!provider.hasActiveGoals) _buildEmptyState(context),
@@ -122,10 +121,7 @@ class _GoalsPageState extends State<GoalsPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Completed goals', style: textTheme.titleMedium),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('See all'),
-                    ),
+                    TextButton(onPressed: () {}, child: const Text('See all')),
                   ],
                 ),
                 const SizedBox(height: Spacing.sm),
@@ -134,7 +130,8 @@ class _GoalsPageState extends State<GoalsPage> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: provider.completedGoals.length,
-                    separatorBuilder: (_, index) => const SizedBox(width: Spacing.sm),
+                    separatorBuilder: (_, index) =>
+                        const SizedBox(width: Spacing.sm),
                     itemBuilder: (context, index) {
                       final goal = provider.completedGoals[index];
                       return CompletedGoalChip(
@@ -197,11 +194,13 @@ class _GoalsPageState extends State<GoalsPage> {
                   spacing: Spacing.md,
                   runSpacing: Spacing.md,
                   children: provider.completedGoals
-                      .map((goal) => CompletedGoalChip(
-                            goal: goal,
-                            isExpanded: true,
-                            onDelete: () => _provider.deleteGoal(goal.id),
-                          ))
+                      .map(
+                        (goal) => CompletedGoalChip(
+                          goal: goal,
+                          isExpanded: true,
+                          onDelete: () => _provider.deleteGoal(goal.id),
+                        ),
+                      )
                       .toList(),
                 ),
               ],
@@ -270,14 +269,16 @@ class _GoalsPageState extends State<GoalsPage> {
                 if (provider.hasActiveGoals) ...[
                   _buildEinkSectionHeader(context, 'ACTIVE GOALS'),
                   const SizedBox(height: Spacing.md),
-                  ...provider.activeGoals.map((goal) => Padding(
-                        padding: const EdgeInsets.only(bottom: Spacing.md),
-                        child: GoalCard(
-                          goal: goal,
-                          isEinkMode: true,
-                          onTap: () => _showGoalDetails(context, goal),
-                        ),
-                      )),
+                  ...provider.activeGoals.map(
+                    (goal) => Padding(
+                      padding: const EdgeInsets.only(bottom: Spacing.md),
+                      child: GoalCard(
+                        goal: goal,
+                        isEinkMode: true,
+                        onTap: () => _showGoalDetails(context, goal),
+                      ),
+                    ),
+                  ),
                 ],
                 // Empty state
                 if (!provider.hasActiveGoals) _buildEinkEmptyState(context),
@@ -295,11 +296,13 @@ class _GoalsPageState extends State<GoalsPage> {
                     ),
                     child: Column(
                       children: provider.completedGoals
-                          .map((goal) => CompletedGoalChip(
-                                goal: goal,
-                                isEinkMode: true,
-                                onDelete: () => _provider.deleteGoal(goal.id),
-                              ))
+                          .map(
+                            (goal) => CompletedGoalChip(
+                              goal: goal,
+                              isEinkMode: true,
+                              onDelete: () => _provider.deleteGoal(goal.id),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -335,10 +338,7 @@ class _GoalsPageState extends State<GoalsPage> {
               alignment: Alignment.center,
               child: const Text(
                 '+',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
             ),
           ),

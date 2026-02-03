@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Highlight color options for annotations.
-enum HighlightColor {
-  yellow,
-  green,
-  blue,
-  pink,
-  purple,
-  orange,
-}
+enum HighlightColor { yellow, green, blue, pink, purple, orange }
 
 /// Extension to get color values for highlight colors.
 extension HighlightColorExtension on HighlightColor {
@@ -307,8 +300,7 @@ class Annotation {
           Annotation(
             id: 'ann-3-1',
             bookId: bookId,
-            selectedText:
-                'Program to an interface, not an implementation.',
+            selectedText: 'Program to an interface, not an implementation.',
             color: HighlightColor.purple,
             location: const BookLocation(
               chapter: 1,

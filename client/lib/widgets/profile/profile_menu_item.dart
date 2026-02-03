@@ -80,8 +80,9 @@ class ProfileMenuItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final contentColor =
-        isDestructive ? colorScheme.error : colorScheme.onSurface;
+    final contentColor = isDestructive
+        ? colorScheme.error
+        : colorScheme.onSurface;
     final iconContainerColor = isDestructive
         ? colorScheme.errorContainer
         : colorScheme.surfaceContainerHighest;
@@ -128,10 +129,7 @@ class ProfileMenuItem extends StatelessWidget {
     return Container(
       width: 40,
       height: 40,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: backgroundColor, shape: BoxShape.circle),
       child: Icon(icon, color: iconColor, size: IconSizes.medium),
     );
   }
@@ -146,10 +144,7 @@ class ProfileMenuItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: textTheme.bodyLarge?.copyWith(color: labelColor),
-        ),
+        Text(label, style: textTheme.bodyLarge?.copyWith(color: labelColor)),
         Text(
           subtitle!,
           style: textTheme.bodyMedium?.copyWith(
@@ -201,10 +196,7 @@ class ProfileMenuItem extends StatelessWidget {
             if (showChevron)
               const Text(
                 '>',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
           ],
         ),

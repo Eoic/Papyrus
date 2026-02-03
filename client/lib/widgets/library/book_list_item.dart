@@ -103,24 +103,21 @@ class _BookListItemState extends State<BookListItem> {
                       children: [
                         Text(
                           widget.book.title,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           widget.book.author,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (widget.showProgress && widget.book.progress > 0) ...[
+                        if (widget.showProgress &&
+                            widget.book.progress > 0) ...[
                           const SizedBox(height: Spacing.xs),
                           Row(
                             children: [
@@ -138,9 +135,7 @@ class _BookListItemState extends State<BookListItem> {
                               const SizedBox(width: Spacing.sm),
                               Text(
                                 widget.book.progressLabel,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
+                                style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(
                                       color: colorScheme.onSurfaceVariant,
                                     ),
@@ -171,21 +166,25 @@ class _BookListItemState extends State<BookListItem> {
                         ),
                         child: Text(
                           widget.book.formatLabel,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
                       const SizedBox(width: Spacing.sm),
                       // Favorite indicator
                       Icon(
-                        widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        widget.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
                         size: IconSizes.indicator,
                         color: widget.isFavorite
                             ? colorScheme.error
-                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            : colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.5,
+                              ),
                       ),
                       // Overflow menu - show on hover (desktop only)
                       if (_isDesktop)

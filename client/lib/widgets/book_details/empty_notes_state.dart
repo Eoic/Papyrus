@@ -6,11 +6,7 @@ class EmptyNotesState extends StatelessWidget {
   final VoidCallback? onAddNote;
   final bool isEinkMode;
 
-  const EmptyNotesState({
-    super.key,
-    this.onAddNote,
-    this.isEinkMode = false,
-  });
+  const EmptyNotesState({super.key, this.onAddNote, this.isEinkMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -29,33 +25,33 @@ class EmptyNotesState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-          Icon(
-            Icons.note_outlined,
-            size: 64,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: Spacing.md),
-          Text(
-            'No notes yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            'Create notes to capture your thoughts about this book.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: Spacing.lg),
-          FilledButton.icon(
-            onPressed: onAddNote,
-            icon: const Icon(Icons.add),
-            label: const Text('Add Note'),
-          ),
-        ],
+            Icon(
+              Icons.note_outlined,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: Spacing.md),
+            Text(
+              'No notes yet',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: Spacing.sm),
+            Text(
+              'Create notes to capture your thoughts about this book.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: Spacing.lg),
+            FilledButton.icon(
+              onPressed: onAddNote,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Note'),
+            ),
+          ],
         ),
       ),
     );
@@ -70,9 +66,9 @@ class EmptyNotesState extends StatelessWidget {
           Text(
             'NO NOTES',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
           ),
           const SizedBox(height: Spacing.md),
           Text(

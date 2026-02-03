@@ -12,11 +12,7 @@ class EinkPageHeader extends StatelessWidget {
   /// Optional widget to display on the right side of the header.
   final Widget? trailing;
 
-  const EinkPageHeader({
-    super.key,
-    required this.title,
-    this.trailing,
-  });
+  const EinkPageHeader({super.key, required this.title, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +33,9 @@ class EinkPageHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const Spacer(),
           if (trailing != null) trailing!,

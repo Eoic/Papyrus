@@ -57,8 +57,8 @@ class BookProgressBar extends StatelessWidget {
               Text(
                 _getProgressLabel(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ],
@@ -81,9 +81,9 @@ class BookProgressBar extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: Spacing.xs),
             child: Text(
               'Progress: ${_getProgressLabel()}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         SizedBox(

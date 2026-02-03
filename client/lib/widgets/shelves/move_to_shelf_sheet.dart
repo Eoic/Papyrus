@@ -14,11 +14,7 @@ class MoveToShelfSheet extends StatefulWidget {
   /// Called when shelf assignments change.
   final void Function(List<String> shelfIds)? onSave;
 
-  const MoveToShelfSheet({
-    super.key,
-    required this.book,
-    this.onSave,
-  });
+  const MoveToShelfSheet({super.key, required this.book, this.onSave});
 
   /// Shows the move to shelf sheet.
   static Future<void> show(
@@ -32,10 +28,7 @@ class MoveToShelfSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (context) => MoveToShelfSheet(
-        book: book,
-        onSave: onSave,
-      ),
+      builder: (context) => MoveToShelfSheet(book: book, onSave: onSave),
     );
   }
 
@@ -111,10 +104,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Add to shelves',
-                        style: textTheme.titleLarge,
-                      ),
+                      Text('Add to shelves', style: textTheme.titleLarge),
                       const SizedBox(height: 2),
                       Text(
                         widget.book.title,
@@ -139,14 +129,18 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                   // Default shelves section
                   if (defaultShelves.isNotEmpty) ...[
                     _buildSectionHeader(context, 'Default shelves'),
-                    ...defaultShelves.map((shelf) => _buildShelfTile(context, shelf)),
+                    ...defaultShelves.map(
+                      (shelf) => _buildShelfTile(context, shelf),
+                    ),
                     const SizedBox(height: Spacing.md),
                   ],
 
                   // User shelves section
                   if (userShelves.isNotEmpty) ...[
                     _buildSectionHeader(context, 'Your shelves'),
-                    ...userShelves.map((shelf) => _buildShelfTile(context, shelf)),
+                    ...userShelves.map(
+                      (shelf) => _buildShelfTile(context, shelf),
+                    ),
                     const SizedBox(height: Spacing.md),
                   ],
 
@@ -219,10 +213,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: Spacing.sm,
-        bottom: Spacing.xs,
-      ),
+      padding: const EdgeInsets.only(left: Spacing.sm, bottom: Spacing.xs),
       child: Text(
         title,
         style: textTheme.labelMedium?.copyWith(
@@ -269,11 +260,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                   color: shelfColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(
-                  shelf.displayIcon,
-                  color: shelfColor,
-                  size: 20,
-                ),
+                child: Icon(shelf.displayIcon, color: shelfColor, size: 20),
               ),
               const SizedBox(width: Spacing.md),
               // Shelf info

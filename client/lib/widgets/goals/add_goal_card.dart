@@ -100,10 +100,7 @@ class AddGoalCard extends StatelessWidget {
               children: [
                 const Text(
                   '+',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: Spacing.sm),
                 Text(

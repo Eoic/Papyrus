@@ -267,15 +267,15 @@ class _BookAnnotationsState extends State<BookAnnotations> {
           Text(
             'No annotations found',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: Spacing.xs),
           Text(
             'Try a different search term',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -290,9 +290,9 @@ class _BookAnnotationsState extends State<BookAnnotations> {
         children: [
           Text(
             'NO ANNOTATIONS FOUND',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: Spacing.sm),
           Text(

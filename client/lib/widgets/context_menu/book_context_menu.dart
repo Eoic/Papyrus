@@ -91,10 +91,7 @@ class BookContextMenu {
         const PopupMenuItem(
           value: 'edit',
           height: 40,
-          child: _MenuItemRow(
-            icon: Icons.edit_outlined,
-            label: 'Edit details',
-          ),
+          child: _MenuItemRow(icon: Icons.edit_outlined, label: 'Edit details'),
         ),
         const PopupMenuItem(
           value: 'shelf',
@@ -261,11 +258,7 @@ class _MenuItemRow extends StatelessWidget {
           child: Text(label, style: TextStyle(color: color)),
         ),
         if (isSelected)
-          Icon(
-            Icons.check,
-            size: IconSizes.small,
-            color: colorScheme.primary,
-          ),
+          Icon(Icons.check, size: IconSizes.small, color: colorScheme.primary),
       ],
     );
   }
@@ -342,8 +335,8 @@ class _BookContextBottomSheet extends StatelessWidget {
                       Text(
                         book.author,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -400,8 +393,8 @@ class _BookContextBottomSheet extends StatelessWidget {
               child: Text(
                 'Reading status',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             _BottomSheetItem(
@@ -464,20 +457,14 @@ class _BookContextBottomSheet extends StatelessWidget {
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: colorScheme.surfaceContainerHighest,
-          child: Icon(
-            Icons.menu_book,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          child: Icon(Icons.menu_book, color: colorScheme.onSurfaceVariant),
         ),
       );
     }
 
     return Container(
       color: colorScheme.surfaceContainerHighest,
-      child: Icon(
-        Icons.menu_book,
-        color: colorScheme.onSurfaceVariant,
-      ),
+      child: Icon(Icons.menu_book, color: colorScheme.onSurfaceVariant),
     );
   }
 }

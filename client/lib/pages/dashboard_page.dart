@@ -61,7 +61,8 @@ class _DashboardPageState extends State<DashboardPage> {
             return _buildLoadingState(context);
           }
 
-          if (displayMode.isEinkMode) return _buildEinkLayout(context, provider);
+          if (displayMode.isEinkMode)
+            return _buildEinkLayout(context, provider);
           if (isDesktop) return _buildDesktopLayout(context, provider);
           return _buildMobileLayout(context, provider);
         },
@@ -74,11 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 
   // ============================================================================
@@ -111,17 +108,13 @@ class _DashboardPageState extends State<DashboardPage> {
               // Continue Reading
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-                child: ContinueReadingCard(
-                  book: provider.currentBook,
-                ),
+                child: ContinueReadingCard(book: provider.currentBook),
               ),
               const SizedBox(height: Spacing.md),
               // Reading Goals
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-                child: ReadingGoalCard(
-                  goals: provider.activeGoals,
-                ),
+                child: ReadingGoalCard(goals: provider.activeGoals),
               ),
               const SizedBox(height: Spacing.md),
               // Weekly Activity
@@ -137,9 +130,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: Spacing.lg),
               // Recently Added
-              RecentlyAddedSection(
-                books: provider.recentlyAdded,
-              ),
+              RecentlyAddedSection(books: provider.recentlyAdded),
               const SizedBox(height: Spacing.lg),
             ],
           ),
@@ -229,7 +220,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildRecentlyAddedCard(
-      BuildContext context, DashboardProvider provider) {
+    BuildContext context,
+    DashboardProvider provider,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -273,10 +266,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: Spacing.lg),
                 // Reading Goals
-                ReadingGoalCard(
-                  goals: provider.activeGoals,
-                  isEinkMode: true,
-                ),
+                ReadingGoalCard(goals: provider.activeGoals, isEinkMode: true),
                 const SizedBox(height: Spacing.lg),
                 // Weekly Activity
                 WeeklyActivityChart(

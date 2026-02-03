@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class StubPage extends StatelessWidget {
   final String title;
 
-  const StubPage({ super.key, required this.title });
+  const StubPage({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -23,4 +23,3 @@ class StubPage extends StatelessWidget {
     // return ;
   }
 }
-

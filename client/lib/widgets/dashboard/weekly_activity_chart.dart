@@ -151,7 +151,10 @@ class WeeklyActivityChart extends StatelessWidget {
     // Calculate bar height (max 40px)
     final maxHeight = 40.0;
     final barHeight = maxMinutes > 0
-        ? (activity.readingMinutes / maxMinutes * maxHeight).clamp(2.0, maxHeight)
+        ? (activity.readingMinutes / maxMinutes * maxHeight).clamp(
+            2.0,
+            maxHeight,
+          )
         : 2.0;
 
     return Padding(
@@ -186,7 +189,9 @@ class WeeklyActivityChart extends StatelessWidget {
           Text(
             activity.dayInitial,
             style: textTheme.labelSmall?.copyWith(
-              fontWeight: activity.isToday ? FontWeight.bold : FontWeight.normal,
+              fontWeight: activity.isToday
+                  ? FontWeight.bold
+                  : FontWeight.normal,
               color: activity.isToday
                   ? colorScheme.primary
                   : colorScheme.onSurfaceVariant,
@@ -200,14 +205,8 @@ class WeeklyActivityChart extends StatelessWidget {
   Widget _buildPeriodToggle(BuildContext context) {
     return SegmentedButton<ActivityPeriod>(
       segments: const [
-        ButtonSegment(
-          value: ActivityPeriod.week,
-          label: Text('Week'),
-        ),
-        ButtonSegment(
-          value: ActivityPeriod.month,
-          label: Text('Month'),
-        ),
+        ButtonSegment(value: ActivityPeriod.week, label: Text('Week')),
+        ButtonSegment(value: ActivityPeriod.month, label: Text('Month')),
       ],
       selected: {activityPeriod},
       onSelectionChanged: (selected) {
@@ -216,9 +215,7 @@ class WeeklyActivityChart extends StatelessWidget {
       style: ButtonStyle(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: WidgetStateProperty.all(
-          const TextStyle(fontSize: 12),
-        ),
+        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12)),
       ),
     );
   }
@@ -280,7 +277,9 @@ class WeeklyActivityChart extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: canGoToNextPeriod ? Colors.black : Colors.black26,
+                          color: canGoToNextPeriod
+                              ? Colors.black
+                              : Colors.black26,
                         ),
                       ),
                     ),
@@ -317,8 +316,9 @@ class WeeklyActivityChart extends StatelessWidget {
                 child: Text(
                   activity.dayLabel.toUpperCase(),
                   style: textTheme.labelMedium?.copyWith(
-                    fontWeight:
-                        activity.isToday ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: activity.isToday
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     fontSize: 14,
                   ),
                 ),

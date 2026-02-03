@@ -70,9 +70,7 @@ class AnnotationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode
-        ? _buildEinkCard(context)
-        : _buildStandardCard(context);
+    return isEinkMode ? _buildEinkCard(context) : _buildStandardCard(context);
   }
 
   /// Builds the standard Material Design 3 card with colored accent.
@@ -92,9 +90,7 @@ class AnnotationCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: accentColor, width: 4),
-            ),
+            border: Border(left: BorderSide(color: accentColor, width: 4)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(Spacing.md),
@@ -143,10 +139,7 @@ class AnnotationCard extends StatelessWidget {
     return Container(
       width: 8,
       height: 8,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 
@@ -279,8 +272,18 @@ class AnnotationCard extends StatelessWidget {
   /// Formats a date as "Mon DD, YYYY".
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

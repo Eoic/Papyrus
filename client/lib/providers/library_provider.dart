@@ -1,20 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 /// View mode for displaying books in the library.
-enum LibraryViewMode {
-  grid,
-  list,
-}
+enum LibraryViewMode { grid, list }
 
 /// Active filter type for library content.
-enum LibraryFilterType {
-  all,
-  shelves,
-  topics,
-  favorites,
-  reading,
-  finished,
-}
+enum LibraryFilterType { all, shelves, topics, favorites, reading, finished }
 
 /// Provider for managing library view state.
 class LibraryProvider extends ChangeNotifier {

@@ -330,15 +330,15 @@ class _BookNotesState extends State<BookNotes> {
           Text(
             'No notes found',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: Spacing.xs),
           Text(
             'Try a different search term',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -353,9 +353,9 @@ class _BookNotesState extends State<BookNotes> {
         children: [
           Text(
             'NO NOTES FOUND',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: Spacing.sm),
           Text(

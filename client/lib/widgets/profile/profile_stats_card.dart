@@ -13,11 +13,7 @@ class ProfileStat {
   final IconData? icon;
 
   /// Creates a profile stat item.
-  const ProfileStat({
-    required this.label,
-    required this.value,
-    this.icon,
-  });
+  const ProfileStat({required this.label, required this.value, this.icon});
 }
 
 /// A card displaying reading statistics on the profile page.
@@ -78,9 +74,7 @@ class ProfileStatsCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: Spacing.md),
           ...stats.map((stat) => _buildStatRow(context, stat)),
@@ -135,9 +129,7 @@ class ProfileStatsCard extends StatelessWidget {
           ),
           Text(
             stat.value,
-            style: textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),

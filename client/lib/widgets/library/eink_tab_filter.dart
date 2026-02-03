@@ -41,24 +41,23 @@ class EinkTabFilter extends StatelessWidget {
                 onTap: () => libraryProvider.setFilter(tab.type),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary : Colors.transparent,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : Colors.transparent,
                     border: Border(
-                      right: BorderSide(
-                        color: colorScheme.outline,
-                        width: 1,
-                      ),
+                      right: BorderSide(color: colorScheme.outline, width: 1),
                     ),
                   ),
                   child: Center(
                     child: Text(
                       tab.label,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: isSelected
-                                ? colorScheme.onPrimary
-                                : colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
+                        color: isSelected
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ),
                 ),
@@ -75,8 +74,5 @@ class _TabData {
   final LibraryFilterType type;
   final String label;
 
-  const _TabData({
-    required this.type,
-    required this.label,
-  });
+  const _TabData({required this.type, required this.label});
 }

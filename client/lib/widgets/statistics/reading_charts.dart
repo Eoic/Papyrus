@@ -172,7 +172,6 @@ class ReadingTimeBarChart extends StatelessWidget {
       ),
     );
   }
-
 }
 
 /// A line chart displaying pages read trends using fl_chart.

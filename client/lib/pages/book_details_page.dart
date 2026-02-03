@@ -109,9 +109,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
         child: displayMode.isEinkMode
             ? Text(
                 'LOADING...',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               )
             : const CircularProgressIndicator(),
       ),
@@ -120,10 +120,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
 
   Widget _buildErrorState(BuildContext context, String error) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Error'),
-      ),
+      appBar: AppBar(leading: const BackButton(), title: const Text('Error')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -179,7 +176,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
   }
 
   Widget _buildDesktopLayout(
-      BuildContext context, BookDetailsProvider provider) {
+    BuildContext context,
+    BookDetailsProvider provider,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
@@ -191,9 +190,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
           padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
           decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(
-                color: colorScheme.outlineVariant,
-              ),
+              bottom: BorderSide(color: colorScheme.outlineVariant),
             ),
           ),
           child: Row(
@@ -229,10 +226,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                 const SizedBox(height: Spacing.md),
 
                 // Tab content (embedded, not TabBarView)
-                SizedBox(
-                  height: 600,
-                  child: _buildTabContent(provider),
-                ),
+                SizedBox(height: 600, child: _buildTabContent(provider)),
               ],
             ),
           ),
@@ -242,16 +236,14 @@ class _BookDetailsPageState extends State<BookDetailsPage>
   }
 
   Widget _buildDesktopTabBar(
-      BuildContext context, BookDetailsProvider provider) {
+    BuildContext context,
+    BookDetailsProvider provider,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: colorScheme.outlineVariant,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: TabBar(
         controller: _tabController,
@@ -267,31 +259,24 @@ class _BookDetailsPageState extends State<BookDetailsPage>
   }
 
   Widget _buildMobileLayout(
-      BuildContext context, BookDetailsProvider provider) {
+    BuildContext context,
+    BookDetailsProvider provider,
+  ) {
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
-        title: Text(
-          provider.book!.title,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(provider.book!.title, overflow: TextOverflow.ellipsis),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: _onMenuAction,
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'share',
-                child: Text('Share'),
-              ),
+              const PopupMenuItem(value: 'share', child: Text('Share')),
               const PopupMenuItem(
                 value: 'favorite',
                 child: Text('Add to Favorites'),
               ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('Delete'),
-              ),
+              const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],
           ),
         ],
@@ -329,9 +314,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                     isDescriptionExpanded: provider.isDescriptionExpanded,
                     onToggleDescription: provider.toggleDescriptionExpanded,
                   ),
-                  BookAnnotations(
-                    annotations: provider.annotations,
-                  ),
+                  BookAnnotations(annotations: provider.annotations),
                   BookNotes(
                     notes: provider.notes,
                     onAddNote: _onAddNote,
@@ -379,9 +362,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                 Text(
                   'BOOK DETAILS',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
                 ),
               ],
             ),
@@ -442,9 +425,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
           onToggleDescription: provider.toggleDescriptionExpanded,
         );
       case BookDetailsTab.annotations:
-        return BookAnnotations(
-          annotations: provider.annotations,
-        );
+        return BookAnnotations(annotations: provider.annotations);
       case BookDetailsTab.notes:
         return BookNotes(
           notes: provider.notes,
@@ -456,9 +437,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
 
   void _onContinueReading() {
     // TODO: Navigate to reader
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening book reader...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Opening book reader...')));
   }
 
   void _onAddToShelf() {
@@ -489,9 +470,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Shelves updated')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Shelves updated')));
         }
       },
     );
@@ -499,31 +480,28 @@ class _BookDetailsPageState extends State<BookDetailsPage>
 
   void _onEdit() {
     if (_provider.book != null) {
-      context.pushNamed('BOOK_EDIT', pathParameters: {'bookId': _provider.book!.id});
+      context.pushNamed(
+        'BOOK_EDIT',
+        pathParameters: {'bookId': _provider.book!.id},
+      );
     }
   }
 
   void _onAddNote() async {
     if (_provider.book == null) return;
 
-    final note = await NoteDialog.show(
-      context,
-      bookId: _provider.book!.id,
-    );
+    final note = await NoteDialog.show(context, bookId: _provider.book!.id);
 
     if (note != null && mounted) {
       _provider.addNote(note);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note added')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Note added')));
     }
   }
 
   void _onNoteActions(Note note) async {
-    final action = await NoteActionSheet.show(
-      context,
-      note: note,
-    );
+    final action = await NoteActionSheet.show(context, note: note);
 
     if (action == null || !mounted) return;
 
@@ -546,23 +524,20 @@ class _BookDetailsPageState extends State<BookDetailsPage>
 
     if (updatedNote != null && mounted) {
       _provider.updateNote(note.id, updatedNote);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Note updated')));
     }
   }
 
   void _onDeleteNote(Note note) async {
-    final confirmed = await DeleteNoteDialog.show(
-      context,
-      note: note,
-    );
+    final confirmed = await DeleteNoteDialog.show(context, note: note);
 
     if (confirmed && mounted) {
       _provider.deleteNote(note.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Note deleted')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Note deleted')));
     }
   }
 

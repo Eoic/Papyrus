@@ -2,10 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// Source for fetching book metadata.
-enum MetadataSource {
-  openLibrary,
-  googleBooks,
-}
+enum MetadataSource { openLibrary, googleBooks }
 
 /// Result from a metadata search.
 class BookMetadataResult {
@@ -218,7 +215,8 @@ class MetadataService {
     String? coverUrl;
     final imageLinks = volumeInfo['imageLinks'] as Map<String, dynamic>?;
     if (imageLinks != null) {
-      coverUrl = imageLinks['large'] as String? ??
+      coverUrl =
+          imageLinks['large'] as String? ??
           imageLinks['medium'] as String? ??
           imageLinks['thumbnail'] as String?;
       // Convert HTTP to HTTPS

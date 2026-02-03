@@ -5,10 +5,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 class EmptyAnnotationsState extends StatelessWidget {
   final bool isEinkMode;
 
-  const EmptyAnnotationsState({
-    super.key,
-    this.isEinkMode = false,
-  });
+  const EmptyAnnotationsState({super.key, this.isEinkMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +33,15 @@ class EmptyAnnotationsState extends StatelessWidget {
             Text(
               'No annotations yet',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: Spacing.sm),
             Text(
               'Highlight text while reading to create annotations.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                color: colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -62,9 +59,9 @@ class EmptyAnnotationsState extends StatelessWidget {
           Text(
             'NO ANNOTATIONS',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
           ),
           const SizedBox(height: Spacing.md),
           Text(

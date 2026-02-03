@@ -102,9 +102,9 @@ class ProfilePage extends StatelessWidget {
   }
 
   void _navigateToEditProfile(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit profile coming soon')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Edit profile coming soon')));
   }
 
   // ============================================================================
@@ -417,8 +417,9 @@ class ProfilePage extends StatelessWidget {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final iconColor =
-        isDestructive ? colorScheme.error : colorScheme.onSurfaceVariant;
+    final iconColor = isDestructive
+        ? colorScheme.error
+        : colorScheme.onSurfaceVariant;
     final textColor = isDestructive ? colorScheme.error : null;
 
     return Material(
@@ -493,10 +494,7 @@ class ProfilePage extends StatelessWidget {
             if (showChevron)
               const Text(
                 '>',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
           ],
         ),

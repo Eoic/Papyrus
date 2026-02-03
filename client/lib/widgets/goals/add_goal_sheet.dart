@@ -4,9 +4,9 @@ import 'package:papyrus/themes/design_tokens.dart';
 
 /// The type of goal scheduling.
 enum GoalScheduleType {
-  recurring,  // Repeats periodically (daily, weekly, monthly, yearly)
-  oneOff,     // Single occurrence with a preset period
-  custom,     // Custom date range
+  recurring, // Repeats periodically (daily, weekly, monthly, yearly)
+  oneOff, // Single occurrence with a preset period
+  custom, // Custom date range
 }
 
 /// Bottom sheet for creating a new goal.
@@ -19,12 +19,10 @@ class AddGoalSheet extends StatefulWidget {
     bool isRecurring,
     DateTime? startDate,
     DateTime? endDate,
-  )? onCreate;
+  )?
+  onCreate;
 
-  const AddGoalSheet({
-    super.key,
-    this.onCreate,
-  });
+  const AddGoalSheet({super.key, this.onCreate});
 
   /// Shows the add goal sheet.
   static Future<void> show(
@@ -36,7 +34,8 @@ class AddGoalSheet extends StatefulWidget {
       bool isRecurring,
       DateTime? startDate,
       DateTime? endDate,
-    )? onCreate,
+    )?
+    onCreate,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -98,10 +97,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
             ),
             const SizedBox(height: Spacing.lg),
             // Title
-            Text(
-              'Create new goal',
-              style: textTheme.headlineSmall,
-            ),
+            Text('Create new goal', style: textTheme.headlineSmall),
             const SizedBox(height: Spacing.lg),
 
             // Schedule type selection
@@ -134,9 +130,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
               onSelectionChanged: (selected) {
                 setState(() => _scheduleType = selected.first);
               },
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-              ),
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
             ),
             const SizedBox(height: Spacing.md),
 
@@ -238,24 +232,23 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
               ),
               const SizedBox(height: Spacing.sm),
               SegmentedButton<GoalPeriod>(
-                segments: [
-                  GoalPeriod.daily,
-                  GoalPeriod.weekly,
-                  GoalPeriod.monthly,
-                  GoalPeriod.yearly,
-                ].map((period) {
-                  return ButtonSegment(
-                    value: period,
-                    label: Text(_getPeriodLabel(period)),
-                  );
-                }).toList(),
+                segments:
+                    [
+                      GoalPeriod.daily,
+                      GoalPeriod.weekly,
+                      GoalPeriod.monthly,
+                      GoalPeriod.yearly,
+                    ].map((period) {
+                      return ButtonSegment(
+                        value: period,
+                        label: Text(_getPeriodLabel(period)),
+                      );
+                    }).toList(),
                 selected: {_selectedPeriod},
                 onSelectionChanged: (selected) {
                   setState(() => _selectedPeriod = selected.first);
                 },
-                style: const ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: const ButtonStyle(visualDensity: VisualDensity.compact),
               ),
               const SizedBox(height: Spacing.lg),
             ],
@@ -354,10 +347,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                   color: colorScheme.primary,
                 ),
                 const SizedBox(width: Spacing.sm),
-                Text(
-                  _formatDate(date),
-                  style: textTheme.bodyMedium,
-                ),
+                Text(_formatDate(date), style: textTheme.bodyMedium),
               ],
             ),
           ],
@@ -494,8 +484,18 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

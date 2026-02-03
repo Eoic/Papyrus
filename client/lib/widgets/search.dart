@@ -17,16 +17,17 @@ class _SearchState extends State<Search> {
       children: <Widget>[
         TextFormField(
           decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              labelText: "Search...",
-              isDense: true,
-              // prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.tune_rounded),
-                onPressed: () {
-                  context.pushNamed('SEARCH_OPTIONS');
-                },
-              )),
+            border: const OutlineInputBorder(),
+            labelText: "Search...",
+            isDense: true,
+            // prefixIcon: const Icon(Icons.search),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.tune_rounded),
+              onPressed: () {
+                context.pushNamed('SEARCH_OPTIONS');
+              },
+            ),
+          ),
           onSaved: (value) => {},
           // controller: controller,
         ),

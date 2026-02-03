@@ -77,9 +77,7 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode
-        ? _buildEinkCard(context)
-        : _buildStandardCard(context);
+    return isEinkMode ? _buildEinkCard(context) : _buildStandardCard(context);
   }
 
   /// Builds the standard Material Design 3 card.
@@ -229,7 +227,11 @@ class NoteCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildEinkTitle(textTheme),
-            const Divider(height: Spacing.md, thickness: 1, color: Colors.black),
+            const Divider(
+              height: Spacing.md,
+              thickness: 1,
+              color: Colors.black,
+            ),
             _buildEinkContent(textTheme),
             if (note.hasTags) _buildEinkTags(textTheme),
             const SizedBox(height: Spacing.sm),

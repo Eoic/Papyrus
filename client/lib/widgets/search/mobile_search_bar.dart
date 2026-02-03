@@ -163,7 +163,9 @@ class _MobileSearchBarState extends State<MobileSearchBar> {
                   decoration: InputDecoration(
                     hintText: 'Search books...',
                     hintStyle: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
@@ -176,19 +178,13 @@ class _MobileSearchBarState extends State<MobileSearchBar> {
               ),
               if (_controller.text.isNotEmpty)
                 IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant),
                   onPressed: _clearSearch,
                   tooltip: 'Clear',
                 ),
               if (widget.showVoiceSearch)
                 IconButton(
-                  icon: Icon(
-                    Icons.mic,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  icon: Icon(Icons.mic, color: colorScheme.onSurfaceVariant),
                   onPressed: () {
                     // Voice search not implemented
                   },
@@ -278,10 +274,7 @@ class _SuggestionTile extends StatelessWidget {
   final String suggestion;
   final VoidCallback onTap;
 
-  const _SuggestionTile({
-    required this.suggestion,
-    required this.onTap,
-  });
+  const _SuggestionTile({required this.suggestion, required this.onTap});
 
   IconData _getIconForSuggestion(String suggestion) {
     if (suggestion.startsWith('author:')) return Icons.person_outline;

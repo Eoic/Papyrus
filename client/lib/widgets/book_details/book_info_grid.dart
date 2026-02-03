@@ -8,11 +8,7 @@ class BookInfoGrid extends StatelessWidget {
   final BookData book;
   final bool isEinkMode;
 
-  const BookInfoGrid({
-    super.key,
-    required this.book,
-    this.isEinkMode = false,
-  });
+  const BookInfoGrid({super.key, required this.book, this.isEinkMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +39,8 @@ class BookInfoGrid extends StatelessWidget {
                 child: Text(
                   entry.label,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               Expanded(
@@ -83,10 +79,7 @@ class BookInfoGrid extends StatelessWidget {
               border: isLast
                   ? null
                   : const Border(
-                      bottom: BorderSide(
-                        color: Colors.black,
-                        width: 1,
-                      ),
+                      bottom: BorderSide(color: Colors.black, width: 1),
                     ),
             ),
             child: Row(
@@ -97,17 +90,17 @@ class BookInfoGrid extends StatelessWidget {
                   child: Text(
                     entry.label.toUpperCase(),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black54,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     entry.value,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],

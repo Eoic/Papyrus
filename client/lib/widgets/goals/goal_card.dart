@@ -51,10 +51,7 @@ class GoalCard extends StatelessWidget {
           padding: EdgeInsets.all(isDesktop ? Spacing.lg : Spacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(
-              color: colorScheme.outlineVariant,
-              width: 1,
-            ),
+            border: Border.all(color: colorScheme.outlineVariant, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,9 +100,7 @@ class GoalCard extends StatelessWidget {
         Expanded(
           child: Text(
             goal.description,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -123,11 +118,7 @@ class GoalCard extends StatelessWidget {
         // Completed checkmark
         if (goal.isCompleted) ...[
           const SizedBox(width: Spacing.sm),
-          Icon(
-            Icons.check_circle,
-            size: 24,
-            color: colorScheme.tertiary,
-          ),
+          Icon(Icons.check_circle, size: 24, color: colorScheme.tertiary),
         ],
       ],
     );
@@ -206,7 +197,9 @@ class GoalCard extends StatelessWidget {
           goal.progressLabel,
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: goal.isCompleted ? colorScheme.tertiary : colorScheme.primary,
+            color: goal.isCompleted
+                ? colorScheme.tertiary
+                : colorScheme.primary,
           ),
         ),
       ],
@@ -395,8 +388,18 @@ class GoalCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

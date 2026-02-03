@@ -67,10 +67,7 @@ class ReadingGoalCard extends StatelessWidget {
                     color: colorScheme.primary,
                   ),
                   const SizedBox(width: Spacing.sm),
-                  Text(
-                    'Reading goals',
-                    style: textTheme.titleMedium,
-                  ),
+                  Text('Reading goals', style: textTheme.titleMedium),
                 ],
               ),
               TextButton(
@@ -189,9 +186,7 @@ class ReadingGoalCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.black26),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.black26)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -37,9 +37,7 @@ class EinkBottomNav extends StatelessWidget {
       child: Row(
         children: mainItems.map((item) {
           final isSelected = isNavItemSelected(currentPath, item);
-          return Expanded(
-            child: _buildNavItem(context, item, isSelected),
-          );
+          return Expanded(child: _buildNavItem(context, item, isSelected));
         }).toList(),
       ),
     );
@@ -67,22 +65,19 @@ class EinkBottomNav extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? colorScheme.primary : Colors.transparent,
             border: Border(
-              left: BorderSide(
-                color: colorScheme.outline,
-                width: 1,
-              ),
+              left: BorderSide(color: colorScheme.outline, width: 1),
             ),
           ),
           child: Center(
             child: Text(
               item.label.toUpperCase(),
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: isSelected
-                        ? colorScheme.onPrimary
-                        : colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
+                color: isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
               textAlign: TextAlign.center,
             ),
           ),

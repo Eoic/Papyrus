@@ -21,8 +21,8 @@ class TextInput extends StatelessWidget {
         border: const OutlineInputBorder(),
         labelText: labelText,
         isDense: isDense,
-    ),
-      onSaved: (value) => { },
+      ),
+      onSaved: (value) => {},
       controller: controller,
     );
   }

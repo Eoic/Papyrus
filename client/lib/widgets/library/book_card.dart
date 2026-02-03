@@ -80,11 +80,12 @@ class _BookCardState extends State<BookCard> {
                           icon: widget.isFavorite
                               ? Icons.favorite
                               : Icons.favorite_border,
-                          color:
-                              widget.isFavorite ? colorScheme.error : Colors.white,
+                          color: widget.isFavorite
+                              ? colorScheme.error
+                              : Colors.white,
                           onTap: widget.onToggleFavorite != null
                               ? () =>
-                                  widget.onToggleFavorite!(widget.isFavorite)
+                                    widget.onToggleFavorite!(widget.isFavorite)
                               : null,
                         ),
                       ),
@@ -121,11 +122,11 @@ class _BookCardState extends State<BookCard> {
                           ),
                           child: Text(
                             widget.book.formatLabel,
-                            style:
-                                Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
                       ),
@@ -158,8 +159,8 @@ class _BookCardState extends State<BookCard> {
                       Text(
                         widget.book.author,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -184,9 +185,7 @@ class _BookCardState extends State<BookCard> {
         errorWidget: (context, url, error) => _buildPlaceholder(context),
         placeholder: (context, url) => Container(
           color: colorScheme.surfaceContainerHighest,
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         ),
       );
     }
@@ -213,8 +212,8 @@ class _BookCardState extends State<BookCard> {
             child: Text(
               widget.book.title,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -232,11 +231,7 @@ class _CardIconButton extends StatelessWidget {
   final Color? color;
   final VoidCallback? onTap;
 
-  const _CardIconButton({
-    required this.icon,
-    this.color,
-    this.onTap,
-  });
+  const _CardIconButton({required this.icon, this.color, this.onTap});
 
   @override
   Widget build(BuildContext context) {

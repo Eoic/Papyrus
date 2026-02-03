@@ -78,11 +78,7 @@ class ProfileHeader extends StatelessWidget {
 
     return Column(
       children: [
-        _buildAvatar(
-          context,
-          size: 128,
-          borderRadius: 64,
-        ),
+        _buildAvatar(context, size: 128, borderRadius: 64),
         const SizedBox(height: Spacing.md),
         Text(
           displayName,
@@ -168,11 +164,7 @@ class ProfileHeader extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: Spacing.xs),
-        Text(
-          email,
-          style: textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
+        Text(email, style: textTheme.bodyMedium, textAlign: TextAlign.center),
         const SizedBox(height: Spacing.md),
         SizedBox(
           width: double.infinity,
@@ -222,12 +214,8 @@ class ProfileHeader extends StatelessWidget {
           ? Image.network(
               avatarUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _buildInitialsAvatar(
-                context,
-                colorScheme,
-                textTheme,
-                size,
-              ),
+              errorBuilder: (_, _, _) =>
+                  _buildInitialsAvatar(context, colorScheme, textTheme, size),
             )
           : _buildInitialsAvatar(context, colorScheme, textTheme, size),
     );

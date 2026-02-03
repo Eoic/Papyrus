@@ -132,9 +132,7 @@ class StreakWidget extends StatelessWidget {
         children: [
           Text(
             'READING STREAK',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: Spacing.md),
           const Divider(color: Colors.black, height: 1),
@@ -174,17 +172,12 @@ class StreakWidget extends StatelessWidget {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(
-                bottom: BorderSide(color: Colors.black26),
-              ),
+            : const Border(bottom: BorderSide(color: Colors.black26)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(fontSize: 16),
-          ),
+          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 16)),
           Text(
             value,
             style: textTheme.bodyMedium?.copyWith(

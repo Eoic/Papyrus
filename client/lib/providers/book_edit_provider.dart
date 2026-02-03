@@ -6,12 +6,7 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/metadata_service.dart';
 
 /// State for metadata fetch operations.
-enum MetadataFetchState {
-  idle,
-  loading,
-  success,
-  error,
-}
+enum MetadataFetchState { idle, loading, success, error }
 
 /// Provider for book edit page state management.
 class BookEditProvider extends ChangeNotifier {
@@ -35,7 +30,7 @@ class BookEditProvider extends ChangeNotifier {
   Uint8List? _coverImageBytes;
 
   BookEditProvider({MetadataService? metadataService})
-      : _metadataService = metadataService ?? MetadataService();
+    : _metadataService = metadataService ?? MetadataService();
 
   // ============================================================================
   // GETTERS
@@ -140,11 +135,17 @@ class BookEditProvider extends ChangeNotifier {
     // Detect image type from magic bytes
     String mimeType = 'image/jpeg'; // default
     if (bytes.length >= 8) {
-      if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+      if (bytes[0] == 0x89 &&
+          bytes[1] == 0x50 &&
+          bytes[2] == 0x4E &&
+          bytes[3] == 0x47) {
         mimeType = 'image/png';
       } else if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
         mimeType = 'image/gif';
-      } else if (bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46) {
+      } else if (bytes[0] == 0x52 &&
+          bytes[1] == 0x49 &&
+          bytes[2] == 0x46 &&
+          bytes[3] == 0x46) {
         mimeType = 'image/webp';
       }
     }
@@ -173,7 +174,9 @@ class BookEditProvider extends ChangeNotifier {
 
   void updateSubtitle(String? value) {
     if (_editedBook == null) return;
-    _editedBook = _editedBook!.copyWith(subtitle: value?.isEmpty == true ? null : value);
+    _editedBook = _editedBook!.copyWith(
+      subtitle: value?.isEmpty == true ? null : value,
+    );
     notifyListeners();
   }
 
@@ -191,13 +194,17 @@ class BookEditProvider extends ChangeNotifier {
 
   void updatePublisher(String? value) {
     if (_editedBook == null) return;
-    _editedBook = _editedBook!.copyWith(publisher: value?.isEmpty == true ? null : value);
+    _editedBook = _editedBook!.copyWith(
+      publisher: value?.isEmpty == true ? null : value,
+    );
     notifyListeners();
   }
 
   void updateLanguage(String? value) {
     if (_editedBook == null) return;
-    _editedBook = _editedBook!.copyWith(language: value?.isEmpty == true ? null : value);
+    _editedBook = _editedBook!.copyWith(
+      language: value?.isEmpty == true ? null : value,
+    );
     notifyListeners();
   }
 
@@ -209,19 +216,25 @@ class BookEditProvider extends ChangeNotifier {
 
   void updateIsbn(String? value) {
     if (_editedBook == null) return;
-    _editedBook = _editedBook!.copyWith(isbn: value?.isEmpty == true ? null : value);
+    _editedBook = _editedBook!.copyWith(
+      isbn: value?.isEmpty == true ? null : value,
+    );
     notifyListeners();
   }
 
   void updateIsbn13(String? value) {
     if (_editedBook == null) return;
-    _editedBook = _editedBook!.copyWith(isbn13: value?.isEmpty == true ? null : value);
+    _editedBook = _editedBook!.copyWith(
+      isbn13: value?.isEmpty == true ? null : value,
+    );
     notifyListeners();
   }
 
   void updateDescription(String? value) {
     if (_editedBook == null) return;
-    _editedBook = _editedBook!.copyWith(description: value?.isEmpty == true ? null : value);
+    _editedBook = _editedBook!.copyWith(
+      description: value?.isEmpty == true ? null : value,
+    );
     notifyListeners();
   }
 
@@ -277,8 +290,9 @@ class BookEditProvider extends ChangeNotifier {
     try {
       final results = await _metadataService.search(query, _selectedSource);
       _fetchedResults = results;
-      _fetchState =
-          results.isEmpty ? MetadataFetchState.error : MetadataFetchState.success;
+      _fetchState = results.isEmpty
+          ? MetadataFetchState.error
+          : MetadataFetchState.success;
       if (results.isEmpty) {
         _fetchError = 'No results found';
       }
@@ -300,10 +314,14 @@ class BookEditProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final results = await _metadataService.searchByIsbn(isbn, _selectedSource);
+      final results = await _metadataService.searchByIsbn(
+        isbn,
+        _selectedSource,
+      );
       _fetchedResults = results;
-      _fetchState =
-          results.isEmpty ? MetadataFetchState.error : MetadataFetchState.success;
+      _fetchState = results.isEmpty
+          ? MetadataFetchState.error
+          : MetadataFetchState.success;
       if (results.isEmpty) {
         _fetchError = 'No results found for ISBN';
       }

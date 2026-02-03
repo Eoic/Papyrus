@@ -44,11 +44,12 @@ class SummaryStatCard extends StatelessWidget {
         children: [
           Text(
             value,
-            style: (isDesktop ? textTheme.headlineMedium : textTheme.headlineSmall)
-                ?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+            style:
+                (isDesktop ? textTheme.headlineMedium : textTheme.headlineSmall)
+                    ?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
           ),
           const SizedBox(height: Spacing.xs),
           Text(
@@ -74,10 +75,7 @@ class SummaryStatCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(fontSize: 16),
-          ),
+          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 16)),
           Text(
             value,
             style: textTheme.bodyMedium?.copyWith(

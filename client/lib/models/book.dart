@@ -4,13 +4,7 @@ import 'package:papyrus/data/sample_data.dart';
 typedef BookData = Book;
 
 /// Reading status of a book.
-enum ReadingStatus {
-  notStarted,
-  inProgress,
-  completed,
-  paused,
-  abandoned,
-}
+enum ReadingStatus { notStarted, inProgress, completed, paused, abandoned }
 
 /// Extension to get display labels for reading status.
 extension ReadingStatusExtension on ReadingStatus {
@@ -46,15 +40,7 @@ extension ReadingStatusExtension on ReadingStatus {
 }
 
 /// Format of the book file.
-enum BookFormat {
-  epub,
-  pdf,
-  mobi,
-  azw3,
-  txt,
-  cbr,
-  cbz,
-}
+enum BookFormat { epub, pdf, mobi, azw3, txt, cbr, cbz }
 
 /// Extension to get display labels for book format.
 extension BookFormatExtension on BookFormat {
@@ -331,7 +317,8 @@ class Book {
       title: json['title'] as String,
       subtitle: json['subtitle'] as String?,
       author: json['author'] as String,
-      coAuthors: (json['co_authors'] as List<dynamic>?)
+      coAuthors:
+          (json['co_authors'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],

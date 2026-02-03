@@ -131,11 +131,7 @@ class SearchQueryParser {
 
       final field = _parseField(fieldName);
 
-      return SearchFilter(
-        field: field,
-        operator: operator,
-        value: value,
-      );
+      return SearchFilter(field: field, operator: operator, value: value);
     }
 
     // Simple text search - search title and author
@@ -175,28 +171,28 @@ class SearchQueryParser {
 
   /// Get suggestions for field names.
   static List<String> get fieldSuggestions => [
-        'title:',
-        'author:',
-        'format:',
-        'shelf:',
-        'topic:',
-        'status:',
-        'progress:',
-      ];
+    'title:',
+    'author:',
+    'format:',
+    'shelf:',
+    'topic:',
+    'status:',
+    'progress:',
+  ];
 
   /// Get suggestions for status values.
   static List<String> get statusSuggestions => [
-        'status:reading',
-        'status:finished',
-        'status:unread',
-      ];
+    'status:reading',
+    'status:finished',
+    'status:unread',
+  ];
 
   /// Get suggestions for format values.
   static List<String> get formatSuggestions => [
-        'format:epub',
-        'format:pdf',
-        'format:mobi',
-        'format:physical',
-        'format:txt',
-      ];
+    'format:epub',
+    'format:pdf',
+    'format:mobi',
+    'format:physical',
+    'format:txt',
+  ];
 }

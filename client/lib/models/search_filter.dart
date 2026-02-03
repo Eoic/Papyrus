@@ -83,31 +83,13 @@ class SearchFilter {
 }
 
 /// Searchable fields in the library.
-enum SearchField {
-  any,
-  title,
-  author,
-  format,
-  shelf,
-  topic,
-  status,
-  progress,
-}
+enum SearchField { any, title, author, format, shelf, topic, status, progress }
 
 /// Search operators for filter conditions.
-enum SearchOperator {
-  equals,
-  contains,
-  greaterThan,
-  lessThan,
-  notEquals,
-}
+enum SearchOperator { equals, contains, greaterThan, lessThan, notEquals }
 
 /// Logical operators for combining filters.
-enum LogicalOperator {
-  and,
-  or,
-}
+enum LogicalOperator { and, or }
 
 /// A composite search query with multiple filters.
 class SearchQuery {
@@ -136,7 +118,9 @@ class SearchQuery {
 
     for (int i = 1; i < filters.length; i++) {
       final filterResult = filters[i].matches(book);
-      final op = i - 1 < operators.length ? operators[i - 1] : LogicalOperator.and;
+      final op = i - 1 < operators.length
+          ? operators[i - 1]
+          : LogicalOperator.and;
 
       if (op == LogicalOperator.and) {
         result = result && filterResult;

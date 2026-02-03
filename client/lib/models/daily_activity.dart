@@ -24,7 +24,15 @@ class DailyActivity {
   /// Full day name (e.g., "Monday", "Tuesday").
   String get dayName => _weekdayFull[date.weekday - 1];
 
-  static const _weekdayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _weekdayShort = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
   static const _weekdayInitial = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   static const _weekdayFull = [
     'Monday',
@@ -167,6 +175,7 @@ extension WeeklyActivityStats on List<DailyActivity> {
   }
 
   /// Maximum reading minutes in a single day.
-  int get maxMinutes =>
-      isEmpty ? 0 : map((a) => a.readingMinutes).reduce((a, b) => a > b ? a : b);
+  int get maxMinutes => isEmpty
+      ? 0
+      : map((a) => a.readingMinutes).reduce((a, b) => a > b ? a : b);
 }

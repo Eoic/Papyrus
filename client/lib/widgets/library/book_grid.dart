@@ -62,8 +62,10 @@ class BookGrid extends StatelessWidget {
       itemCount: books.length,
       itemBuilder: (context, index) {
         final book = books[index];
-        final isFavorite =
-            libraryProvider.isBookFavorite(book.id, book.isFavorite);
+        final isFavorite = libraryProvider.isBookFavorite(
+          book.id,
+          book.isFavorite,
+        );
         return BookCard(
           book: book,
           isFavorite: isFavorite,

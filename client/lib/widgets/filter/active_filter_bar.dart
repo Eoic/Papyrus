@@ -71,10 +71,7 @@ class _ActiveFilterChip extends StatelessWidget {
   final ActiveFilter filter;
   final VoidCallback? onRemoved;
 
-  const _ActiveFilterChip({
-    required this.filter,
-    this.onRemoved,
-  });
+  const _ActiveFilterChip({required this.filter, this.onRemoved});
 
   @override
   Widget build(BuildContext context) {
@@ -100,9 +97,9 @@ class _ActiveFilterChip extends StatelessWidget {
 
   Widget _buildLabel(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: colorScheme.onSecondaryContainer,
-        );
+    final textStyle = Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(color: colorScheme.onSecondaryContainer);
 
     if (filter.type == ActiveFilterType.quick) {
       return Text(filter.label, style: textStyle);
@@ -119,10 +116,7 @@ class _ActiveFilterChip extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          TextSpan(
-            text: filter.value,
-            style: textStyle,
-          ),
+          TextSpan(text: filter.value, style: textStyle),
         ],
       ),
     );

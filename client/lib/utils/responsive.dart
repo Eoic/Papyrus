@@ -4,11 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Device form factor categories
-enum DeviceType {
-  mobile,
-  tablet,
-  desktop,
-}
+enum DeviceType { mobile, tablet, desktop }
 
 /// Utility class for responsive design and platform detection.
 class Responsive {
@@ -206,11 +202,7 @@ class ResponsiveValue<T> {
   final T? tablet;
   final T? desktop;
 
-  const ResponsiveValue({
-    required this.mobile,
-    this.tablet,
-    this.desktop,
-  });
+  const ResponsiveValue({required this.mobile, this.tablet, this.desktop});
 
   T get(BuildContext context) {
     final deviceType = Responsive.getDeviceType(context);

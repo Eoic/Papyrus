@@ -113,10 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
           value: _selectedFont,
           onTap: () => _showFontPicker(context),
         ),
-        SettingsRow(
-          label: 'Reading profiles',
-          onTap: () {},
-        ),
+        SettingsRow(label: 'Reading profiles', onTap: () {}),
       ],
     );
   }
@@ -131,10 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
           value: _storageBackend,
           onTap: () => _showStoragePicker(context),
         ),
-        SettingsRow(
-          label: 'Sync settings',
-          onTap: () {},
-        ),
+        SettingsRow(label: 'Sync settings', onTap: () {}),
       ],
     );
   }
@@ -163,15 +157,8 @@ class _SettingsPageState extends State<SettingsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SettingsSectionHeader(title: 'About'),
-        SettingsRow(
-          label: 'Version',
-          value: '1.0.0',
-          showChevron: false,
-        ),
-        SettingsRow(
-          label: 'Licenses',
-          onTap: () => _showLicenses(context),
-        ),
+        SettingsRow(label: 'Version', value: '1.0.0', showChevron: false),
+        SettingsRow(label: 'Licenses', onTap: () => _showLicenses(context)),
       ],
     );
   }
@@ -223,13 +210,9 @@ class _SettingsPageState extends State<SettingsPage> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _buildDesktopAppearanceCard(context, displayMode),
-            ),
+            Expanded(child: _buildDesktopAppearanceCard(context, displayMode)),
             const SizedBox(width: Spacing.lg),
-            Expanded(
-              child: _buildDesktopReadingCard(context),
-            ),
+            Expanded(child: _buildDesktopReadingCard(context)),
           ],
         ),
         const SizedBox(height: Spacing.lg),
@@ -237,13 +220,9 @@ class _SettingsPageState extends State<SettingsPage> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _buildDesktopStorageCard(context),
-            ),
+            Expanded(child: _buildDesktopStorageCard(context)),
             const SizedBox(width: Spacing.lg),
-            Expanded(
-              child: _buildDesktopNotificationsCard(context),
-            ),
+            Expanded(child: _buildDesktopNotificationsCard(context)),
           ],
         ),
         const SizedBox(height: Spacing.lg),
@@ -278,8 +257,8 @@ class _SettingsPageState extends State<SettingsPage> {
         Text(
           'Theme',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: Spacing.sm),
         _buildRadioTile('Light', 'light'),
@@ -352,9 +331,12 @@ class _SettingsPageState extends State<SettingsPage> {
             DropdownMenu<String>(
               initialSelection: _selectedFont,
               expandedInsets: EdgeInsets.zero,
-              dropdownMenuEntries: ['Georgia', 'Literata', 'Bookerly', 'Open Dyslexic']
-                  .map((font) => DropdownMenuEntry(value: font, label: font))
-                  .toList(),
+              dropdownMenuEntries:
+                  ['Georgia', 'Literata', 'Bookerly', 'Open Dyslexic']
+                      .map(
+                        (font) => DropdownMenuEntry(value: font, label: font),
+                      )
+                      .toList(),
               onSelected: (value) {
                 if (value != null) {
                   setState(() => _selectedFont = value);
@@ -397,10 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
         const SizedBox(height: Spacing.sm),
-        SettingsRow(
-          label: 'Reading profiles',
-          onTap: () {},
-        ),
+        SettingsRow(label: 'Reading profiles', onTap: () {}),
       ],
     );
   }
@@ -426,8 +405,10 @@ class _SettingsPageState extends State<SettingsPage> {
               initialSelection: _storageBackend,
               expandedInsets: EdgeInsets.zero,
               dropdownMenuEntries: ['Local', 'Cloud', 'Self-hosted']
-                  .map((backend) =>
-                      DropdownMenuEntry(value: backend, label: backend))
+                  .map(
+                    (backend) =>
+                        DropdownMenuEntry(value: backend, label: backend),
+                  )
                   .toList(),
               onSelected: (value) {
                 if (value != null) {
@@ -438,10 +419,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
         const SizedBox(height: Spacing.md),
-        SettingsRow(
-          label: 'Sync server',
-          onTap: () {},
-        ),
+        SettingsRow(label: 'Sync server', onTap: () {}),
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Spacing.sm,
@@ -514,10 +492,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             Expanded(
-              child: SettingsRow(
-                label: 'Support',
-                onTap: () {},
-              ),
+              child: SettingsRow(label: 'Support', onTap: () {}),
             ),
           ],
         ),
@@ -570,10 +545,7 @@ class _SettingsPageState extends State<SettingsPage> {
               alignment: Alignment.center,
               child: const Text(
                 '<',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -645,10 +617,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(width: Spacing.md),
             Text(
               label.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -675,9 +644,7 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsCard(
           isEinkMode: true,
           title: 'Font size',
-          children: [
-            _buildEinkFontSizeControl(),
-          ],
+          children: [_buildEinkFontSizeControl()],
         ),
       ],
     );
@@ -716,10 +683,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(width: Spacing.md),
             Text(
               font.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -756,10 +720,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           Text(
             '${_fontSize.toInt()}px',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: Spacing.md),
           _buildEinkSizeButton(

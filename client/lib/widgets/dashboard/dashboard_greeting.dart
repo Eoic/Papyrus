@@ -51,10 +51,7 @@ class DashboardGreeting extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$greeting, $_userName!',
-            style: textTheme.headlineMedium,
-          ),
+          Text('$greeting, $_userName!', style: textTheme.headlineMedium),
           const SizedBox(height: Spacing.xs),
           Text(
             "You've read $todayReadingLabel today",
@@ -74,10 +71,7 @@ class DashboardGreeting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$greeting, $_userName!',
-          style: textTheme.displaySmall,
-        ),
+        Text('$greeting, $_userName!', style: textTheme.displaySmall),
         const SizedBox(height: Spacing.xs),
         Text(
           "You've read $todayReadingLabel today",
@@ -107,13 +101,10 @@ class DashboardGreeting extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           Text(
             "You've read $todayReadingLabel today",
-            style: textTheme.bodyLarge?.copyWith(
-              fontSize: 18,
-            ),
+            style: textTheme.bodyLarge?.copyWith(fontSize: 18),
           ),
         ],
       ),
     );
   }
-
 }

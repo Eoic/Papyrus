@@ -137,7 +137,10 @@ class ReadingTimeChart extends StatelessWidget {
 
     return activities.map((activity) {
       final barHeight = maxMinutes > 0
-          ? (activity.readingMinutes / maxMinutes * maxHeight).clamp(2.0, maxHeight)
+          ? (activity.readingMinutes / maxMinutes * maxHeight).clamp(
+              2.0,
+              maxHeight,
+            )
           : 2.0;
 
       return Expanded(
@@ -164,8 +167,9 @@ class ReadingTimeChart extends StatelessWidget {
                 isWeekly ? activity.dayInitial : _getMonthLabel(activity.date),
                 style: textTheme.labelSmall?.copyWith(
                   fontSize: 10,
-                  fontWeight:
-                      activity.isToday ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: activity.isToday
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                   color: activity.isToday
                       ? colorScheme.primary
                       : colorScheme.onSurfaceVariant,
@@ -199,19 +203,15 @@ class ReadingTimeChart extends StatelessWidget {
         children: [
           Text(
             'READING TIME ${isWeekly ? "THIS WEEK" : ""}',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: Spacing.md),
           const Divider(color: Colors.black, height: 1),
           const SizedBox(height: Spacing.md),
           // Horizontal bars
-          ...activities.map((activity) => _buildEinkBarRow(
-                context,
-                activity,
-                maxMinutes,
-              )),
+          ...activities.map(
+            (activity) => _buildEinkBarRow(context, activity, maxMinutes),
+          ),
           const SizedBox(height: Spacing.md),
           // Summary
           Text(
@@ -233,7 +233,10 @@ class ReadingTimeChart extends StatelessWidget {
     // Calculate bar width as character count (max 30)
     const maxChars = 30;
     final barChars = maxMinutes > 0
-        ? (activity.readingMinutes / maxMinutes * maxChars).round().clamp(0, maxChars)
+        ? (activity.readingMinutes / maxMinutes * maxChars).round().clamp(
+            0,
+            maxChars,
+          )
         : 0;
 
     final filledBar = '█' * barChars;
@@ -249,8 +252,9 @@ class ReadingTimeChart extends StatelessWidget {
               isWeekly ? activity.dayLabel : _getMonthLabel(activity.date),
               style: textTheme.bodyMedium?.copyWith(
                 fontSize: 14,
-                fontWeight:
-                    activity.isToday ? FontWeight.bold : FontWeight.normal,
+                fontWeight: activity.isToday
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
           ),
@@ -298,9 +302,7 @@ class ReadingTimeChart extends StatelessWidget {
         child: Center(
           child: Text(
             'NO READING DATA',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
       );

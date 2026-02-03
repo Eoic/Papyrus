@@ -195,7 +195,8 @@ class _AdvancedSearchBarState extends State<AdvancedSearchBar> {
     final libraryProvider = context.watch<LibraryProvider>();
 
     // Sync controller with provider if needed
-    if (_controller.text != libraryProvider.searchQuery && !_focusNode.hasFocus) {
+    if (_controller.text != libraryProvider.searchQuery &&
+        !_focusNode.hasFocus) {
       _controller.text = libraryProvider.searchQuery;
     }
 
@@ -212,10 +213,7 @@ class _AdvancedSearchBarState extends State<AdvancedSearchBar> {
             hintStyle: TextStyle(
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
             ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -297,9 +295,15 @@ class _FilterBuilderDialogState extends State<_FilterBuilderDialog> {
   void _loadCurrentFilters() {
     final libraryProvider = context.read<LibraryProvider>();
     setState(() {
-      _filterReading = libraryProvider.isFilterActive(LibraryFilterType.reading);
-      _filterFavorites = libraryProvider.isFilterActive(LibraryFilterType.favorites);
-      _filterFinished = libraryProvider.isFilterActive(LibraryFilterType.finished);
+      _filterReading = libraryProvider.isFilterActive(
+        LibraryFilterType.reading,
+      );
+      _filterFavorites = libraryProvider.isFilterActive(
+        LibraryFilterType.favorites,
+      );
+      _filterFinished = libraryProvider.isFilterActive(
+        LibraryFilterType.finished,
+      );
       _selectedShelf = libraryProvider.selectedShelf;
       _selectedTopic = libraryProvider.selectedTopic;
     });
@@ -394,9 +398,9 @@ class _FilterBuilderDialogState extends State<_FilterBuilderDialog> {
               Text(
                 'Quick filters',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: Spacing.sm),
               Wrap(
@@ -434,9 +438,9 @@ class _FilterBuilderDialogState extends State<_FilterBuilderDialog> {
               Text(
                 'Advanced filters',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: Spacing.md),
 
@@ -459,9 +463,15 @@ class _FilterBuilderDialogState extends State<_FilterBuilderDialog> {
                   prefixIcon: Icon(Icons.book_outlined),
                 ),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('Any format')),
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('Any format'),
+                  ),
                   ...formats.map(
-                    (f) => DropdownMenuItem(value: f.toLowerCase(), child: Text(f)),
+                    (f) => DropdownMenuItem(
+                      value: f.toLowerCase(),
+                      child: Text(f),
+                    ),
                   ),
                 ],
                 onChanged: (v) => setState(() => _selectedFormat = v),
@@ -511,7 +521,10 @@ class _FilterBuilderDialogState extends State<_FilterBuilderDialog> {
                 ),
                 items: const [
                   DropdownMenuItem(value: null, child: Text('Any status')),
-                  DropdownMenuItem(value: 'reading', child: Text('Currently reading')),
+                  DropdownMenuItem(
+                    value: 'reading',
+                    child: Text('Currently reading'),
+                  ),
                   DropdownMenuItem(value: 'finished', child: Text('Finished')),
                   DropdownMenuItem(value: 'unread', child: Text('Unread')),
                 ],
@@ -522,10 +535,7 @@ class _FilterBuilderDialogState extends State<_FilterBuilderDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _clearFilters,
-          child: const Text('Clear all'),
-        ),
+        TextButton(onPressed: _clearFilters, child: const Text('Clear all')),
         const Spacer(),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

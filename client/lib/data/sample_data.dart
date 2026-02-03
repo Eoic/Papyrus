@@ -598,81 +598,174 @@ class SampleData {
     return [
       // Currently reading (shelf-1)
       BookShelfRelation(
-          bookId: 'book-1', shelfId: 'shelf-1', addedAt: _daysAgo(30)),
+        bookId: 'book-1',
+        shelfId: 'shelf-1',
+        addedAt: _daysAgo(30),
+      ),
       BookShelfRelation(
-          bookId: 'book-3', shelfId: 'shelf-1', addedAt: _daysAgo(14)),
+        bookId: 'book-3',
+        shelfId: 'shelf-1',
+        addedAt: _daysAgo(14),
+      ),
       BookShelfRelation(
-          bookId: 'book-7', shelfId: 'shelf-1', addedAt: _daysAgo(30)),
+        bookId: 'book-7',
+        shelfId: 'shelf-1',
+        addedAt: _daysAgo(30),
+      ),
       BookShelfRelation(
-          bookId: 'book-8', shelfId: 'shelf-1', addedAt: _daysAgo(21)),
+        bookId: 'book-8',
+        shelfId: 'shelf-1',
+        addedAt: _daysAgo(21),
+      ),
 
       // Want to read (shelf-2)
       BookShelfRelation(
-          bookId: 'book-6', shelfId: 'shelf-2', addedAt: _daysAgo(30)),
+        bookId: 'book-6',
+        shelfId: 'shelf-2',
+        addedAt: _daysAgo(30),
+      ),
       BookShelfRelation(
-          bookId: 'book-9', shelfId: 'shelf-2', addedAt: _daysAgo(14)),
+        bookId: 'book-9',
+        shelfId: 'shelf-2',
+        addedAt: _daysAgo(14),
+      ),
       BookShelfRelation(
-          bookId: 'book-12', shelfId: 'shelf-2', addedAt: _daysAgo(7)),
+        bookId: 'book-12',
+        shelfId: 'shelf-2',
+        addedAt: _daysAgo(7),
+      ),
       BookShelfRelation(
-          bookId: 'book-13', shelfId: 'shelf-2', addedAt: _daysAgo(7)),
+        bookId: 'book-13',
+        shelfId: 'shelf-2',
+        addedAt: _daysAgo(7),
+      ),
       BookShelfRelation(
-          bookId: 'book-14', shelfId: 'shelf-2', addedAt: _daysAgo(7)),
+        bookId: 'book-14',
+        shelfId: 'shelf-2',
+        addedAt: _daysAgo(7),
+      ),
       BookShelfRelation(
-          bookId: 'book-15', shelfId: 'shelf-2', addedAt: _daysAgo(30)),
+        bookId: 'book-15',
+        shelfId: 'shelf-2',
+        addedAt: _daysAgo(30),
+      ),
 
       // Finished (shelf-3)
       BookShelfRelation(
-          bookId: 'book-2', shelfId: 'shelf-3', addedAt: _daysAgo(60)),
+        bookId: 'book-2',
+        shelfId: 'shelf-3',
+        addedAt: _daysAgo(60),
+      ),
       BookShelfRelation(
-          bookId: 'book-4', shelfId: 'shelf-3', addedAt: _daysAgo(280)),
+        bookId: 'book-4',
+        shelfId: 'shelf-3',
+        addedAt: _daysAgo(280),
+      ),
       BookShelfRelation(
-          bookId: 'book-10', shelfId: 'shelf-3', addedAt: _daysAgo(150)),
+        bookId: 'book-10',
+        shelfId: 'shelf-3',
+        addedAt: _daysAgo(150),
+      ),
 
       // Technical (shelf-4)
       BookShelfRelation(
-          bookId: 'book-1', shelfId: 'shelf-4', addedAt: _daysAgo(90)),
+        bookId: 'book-1',
+        shelfId: 'shelf-4',
+        addedAt: _daysAgo(90),
+      ),
       BookShelfRelation(
-          bookId: 'book-2', shelfId: 'shelf-4', addedAt: _daysAgo(180)),
+        bookId: 'book-2',
+        shelfId: 'shelf-4',
+        addedAt: _daysAgo(180),
+      ),
       BookShelfRelation(
-          bookId: 'book-5', shelfId: 'shelf-4', addedAt: _daysAgo(45)),
+        bookId: 'book-5',
+        shelfId: 'shelf-4',
+        addedAt: _daysAgo(45),
+      ),
       BookShelfRelation(
-          bookId: 'book-7', shelfId: 'shelf-4', addedAt: _daysAgo(60)),
+        bookId: 'book-7',
+        shelfId: 'shelf-4',
+        addedAt: _daysAgo(60),
+      ),
       BookShelfRelation(
-          bookId: 'book-11', shelfId: 'shelf-4', addedAt: _daysAgo(90)),
+        bookId: 'book-11',
+        shelfId: 'shelf-4',
+        addedAt: _daysAgo(90),
+      ),
 
       // Fiction (shelf-5)
       BookShelfRelation(
-          bookId: 'book-3', shelfId: 'shelf-5', addedAt: _daysAgo(60)),
+        bookId: 'book-3',
+        shelfId: 'shelf-5',
+        addedAt: _daysAgo(60),
+      ),
       BookShelfRelation(
-          bookId: 'book-4', shelfId: 'shelf-5', addedAt: _daysAgo(365)),
+        bookId: 'book-4',
+        shelfId: 'shelf-5',
+        addedAt: _daysAgo(365),
+      ),
       BookShelfRelation(
-          bookId: 'book-6', shelfId: 'shelf-5', addedAt: _daysAgo(30)),
+        bookId: 'book-6',
+        shelfId: 'shelf-5',
+        addedAt: _daysAgo(30),
+      ),
       BookShelfRelation(
-          bookId: 'book-15', shelfId: 'shelf-5', addedAt: _daysAgo(30)),
+        bookId: 'book-15',
+        shelfId: 'shelf-5',
+        addedAt: _daysAgo(30),
+      ),
 
       // Sci-Fi (shelf-6)
       BookShelfRelation(
-          bookId: 'book-3', shelfId: 'shelf-6', addedAt: _daysAgo(60)),
+        bookId: 'book-3',
+        shelfId: 'shelf-6',
+        addedAt: _daysAgo(60),
+      ),
       BookShelfRelation(
-          bookId: 'book-9', shelfId: 'shelf-6', addedAt: _daysAgo(14)),
+        bookId: 'book-9',
+        shelfId: 'shelf-6',
+        addedAt: _daysAgo(14),
+      ),
       BookShelfRelation(
-          bookId: 'book-12', shelfId: 'shelf-6', addedAt: _daysAgo(7)),
+        bookId: 'book-12',
+        shelfId: 'shelf-6',
+        addedAt: _daysAgo(7),
+      ),
       BookShelfRelation(
-          bookId: 'book-13', shelfId: 'shelf-6', addedAt: _daysAgo(7)),
+        bookId: 'book-13',
+        shelfId: 'shelf-6',
+        addedAt: _daysAgo(7),
+      ),
       BookShelfRelation(
-          bookId: 'book-14', shelfId: 'shelf-6', addedAt: _daysAgo(7)),
+        bookId: 'book-14',
+        shelfId: 'shelf-6',
+        addedAt: _daysAgo(7),
+      ),
 
       // Non-Fiction (shelf-7)
       BookShelfRelation(
-          bookId: 'book-8', shelfId: 'shelf-7', addedAt: _daysAgo(45)),
+        bookId: 'book-8',
+        shelfId: 'shelf-7',
+        addedAt: _daysAgo(45),
+      ),
       BookShelfRelation(
-          bookId: 'book-10', shelfId: 'shelf-7', addedAt: _daysAgo(200)),
+        bookId: 'book-10',
+        shelfId: 'shelf-7',
+        addedAt: _daysAgo(200),
+      ),
 
       // Reference (shelf-8)
       BookShelfRelation(
-          bookId: 'book-5', shelfId: 'shelf-8', addedAt: _daysAgo(45)),
+        bookId: 'book-5',
+        shelfId: 'shelf-8',
+        addedAt: _daysAgo(45),
+      ),
       BookShelfRelation(
-          bookId: 'book-11', shelfId: 'shelf-8', addedAt: _daysAgo(90)),
+        bookId: 'book-11',
+        shelfId: 'shelf-8',
+        addedAt: _daysAgo(90),
+      ),
     ];
   }
 
@@ -684,47 +777,98 @@ class SampleData {
     return [
       // Programming (tag-1)
       BookTagRelation(
-          bookId: 'book-1', tagId: 'tag-1', createdAt: _daysAgo(90)),
+        bookId: 'book-1',
+        tagId: 'tag-1',
+        createdAt: _daysAgo(90),
+      ),
       BookTagRelation(
-          bookId: 'book-2', tagId: 'tag-1', createdAt: _daysAgo(180)),
+        bookId: 'book-2',
+        tagId: 'tag-1',
+        createdAt: _daysAgo(180),
+      ),
       BookTagRelation(
-          bookId: 'book-5', tagId: 'tag-1', createdAt: _daysAgo(45)),
+        bookId: 'book-5',
+        tagId: 'tag-1',
+        createdAt: _daysAgo(45),
+      ),
       BookTagRelation(
-          bookId: 'book-7', tagId: 'tag-1', createdAt: _daysAgo(60)),
+        bookId: 'book-7',
+        tagId: 'tag-1',
+        createdAt: _daysAgo(60),
+      ),
       BookTagRelation(
-          bookId: 'book-11', tagId: 'tag-1', createdAt: _daysAgo(90)),
+        bookId: 'book-11',
+        tagId: 'tag-1',
+        createdAt: _daysAgo(90),
+      ),
 
       // Science Fiction (tag-2)
       BookTagRelation(
-          bookId: 'book-3', tagId: 'tag-2', createdAt: _daysAgo(60)),
+        bookId: 'book-3',
+        tagId: 'tag-2',
+        createdAt: _daysAgo(60),
+      ),
       BookTagRelation(
-          bookId: 'book-9', tagId: 'tag-2', createdAt: _daysAgo(14)),
+        bookId: 'book-9',
+        tagId: 'tag-2',
+        createdAt: _daysAgo(14),
+      ),
       BookTagRelation(
-          bookId: 'book-12', tagId: 'tag-2', createdAt: _daysAgo(7)),
+        bookId: 'book-12',
+        tagId: 'tag-2',
+        createdAt: _daysAgo(7),
+      ),
       BookTagRelation(
-          bookId: 'book-13', tagId: 'tag-2', createdAt: _daysAgo(7)),
+        bookId: 'book-13',
+        tagId: 'tag-2',
+        createdAt: _daysAgo(7),
+      ),
       BookTagRelation(
-          bookId: 'book-14', tagId: 'tag-2', createdAt: _daysAgo(7)),
+        bookId: 'book-14',
+        tagId: 'tag-2',
+        createdAt: _daysAgo(7),
+      ),
 
       // Classic (tag-3)
       BookTagRelation(
-          bookId: 'book-3', tagId: 'tag-3', createdAt: _daysAgo(60)),
+        bookId: 'book-3',
+        tagId: 'tag-3',
+        createdAt: _daysAgo(60),
+      ),
       BookTagRelation(
-          bookId: 'book-4', tagId: 'tag-3', createdAt: _daysAgo(365)),
+        bookId: 'book-4',
+        tagId: 'tag-3',
+        createdAt: _daysAgo(365),
+      ),
       BookTagRelation(
-          bookId: 'book-6', tagId: 'tag-3', createdAt: _daysAgo(30)),
+        bookId: 'book-6',
+        tagId: 'tag-3',
+        createdAt: _daysAgo(30),
+      ),
       BookTagRelation(
-          bookId: 'book-12', tagId: 'tag-3', createdAt: _daysAgo(7)),
+        bookId: 'book-12',
+        tagId: 'tag-3',
+        createdAt: _daysAgo(7),
+      ),
 
       // Productivity (tag-4)
       BookTagRelation(
-          bookId: 'book-10', tagId: 'tag-4', createdAt: _daysAgo(200)),
+        bookId: 'book-10',
+        tagId: 'tag-4',
+        createdAt: _daysAgo(200),
+      ),
 
       // Fantasy (tag-5)
       BookTagRelation(
-          bookId: 'book-6', tagId: 'tag-5', createdAt: _daysAgo(30)),
+        bookId: 'book-6',
+        tagId: 'tag-5',
+        createdAt: _daysAgo(30),
+      ),
       BookTagRelation(
-          bookId: 'book-15', tagId: 'tag-5', createdAt: _daysAgo(30)),
+        bookId: 'book-15',
+        tagId: 'tag-5',
+        createdAt: _daysAgo(30),
+      ),
     ];
   }
 
@@ -851,16 +995,14 @@ class SampleData {
         id: 'note-2',
         bookId: 'book-1',
         title: 'DRY Principle Applications',
-        content: 'Ways to apply the DRY principle in daily coding:\n\n'
+        content:
+            'Ways to apply the DRY principle in daily coding:\n\n'
             '1. Extract common logic into functions\n'
             '2. Use configuration files instead of hardcoded values\n'
             '3. Create reusable components\n'
             '4. Avoid copy-paste coding\n'
             '5. Document decisions in one place',
-        location: const BookLocation(
-          chapter: 2,
-          pageNumber: 58,
-        ),
+        location: const BookLocation(chapter: 2, pageNumber: 58),
         tags: ['principle', 'practice'],
         createdAt: _daysAgo(20),
       ),
@@ -868,7 +1010,8 @@ class SampleData {
         id: 'note-3',
         bookId: 'book-2',
         title: 'Naming Conventions Checklist',
-        content: 'When naming variables, functions, and classes:\n\n'
+        content:
+            'When naming variables, functions, and classes:\n\n'
             '□ Use intention-revealing names\n'
             '□ Avoid disinformation\n'
             '□ Make meaningful distinctions\n'
@@ -935,35 +1078,39 @@ class SampleData {
       // Morning session (book-1 or book-8)
       if (day % 2 == 0) {
         final startTime = DateTime(date.year, date.month, date.day, 7, 30);
-        sessions.add(ReadingSession(
-          id: 'session-${sessionId++}',
-          bookId: day % 4 == 0 ? 'book-8' : 'book-1',
-          startTime: startTime,
-          endTime: startTime.add(Duration(minutes: 25 + (day % 15))),
-          startPosition: 0.6 + (day * 0.005),
-          endPosition: 0.62 + (day * 0.005),
-          pagesRead: 8 + (day % 5),
-          deviceType: 'tablet',
-          deviceName: 'iPad',
-          createdAt: startTime,
-        ));
+        sessions.add(
+          ReadingSession(
+            id: 'session-${sessionId++}',
+            bookId: day % 4 == 0 ? 'book-8' : 'book-1',
+            startTime: startTime,
+            endTime: startTime.add(Duration(minutes: 25 + (day % 15))),
+            startPosition: 0.6 + (day * 0.005),
+            endPosition: 0.62 + (day * 0.005),
+            pagesRead: 8 + (day % 5),
+            deviceType: 'tablet',
+            deviceName: 'iPad',
+            createdAt: startTime,
+          ),
+        );
       }
 
       // Evening session (book-3 or book-7)
       if (day < 20) {
         final startTime = DateTime(date.year, date.month, date.day, 21, 0);
-        sessions.add(ReadingSession(
-          id: 'session-${sessionId++}',
-          bookId: day % 3 == 0 ? 'book-7' : 'book-3',
-          startTime: startTime,
-          endTime: startTime.add(Duration(minutes: 35 + (day % 20))),
-          startPosition: 0.3 + (day * 0.007),
-          endPosition: 0.32 + (day * 0.007),
-          pagesRead: 12 + (day % 8),
-          deviceType: 'phone',
-          deviceName: 'Pixel',
-          createdAt: startTime,
-        ));
+        sessions.add(
+          ReadingSession(
+            id: 'session-${sessionId++}',
+            bookId: day % 3 == 0 ? 'book-7' : 'book-3',
+            startTime: startTime,
+            endTime: startTime.add(Duration(minutes: 35 + (day % 20))),
+            startPosition: 0.3 + (day * 0.007),
+            endPosition: 0.32 + (day * 0.007),
+            pagesRead: 12 + (day % 8),
+            deviceType: 'phone',
+            deviceName: 'Pixel',
+            createdAt: startTime,
+          ),
+        );
       }
     }
 

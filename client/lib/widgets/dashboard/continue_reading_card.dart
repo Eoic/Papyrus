@@ -421,10 +421,7 @@ class ContinueReadingCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
         ),
-        child: Icon(
-          Icons.play_arrow,
-          color: colorScheme.onPrimary,
-        ),
+        child: Icon(Icons.play_arrow, color: colorScheme.onPrimary),
       ),
     );
   }

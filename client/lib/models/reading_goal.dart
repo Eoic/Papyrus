@@ -1,9 +1,5 @@
 /// Type of reading goal.
-enum GoalType {
-  books,
-  pages,
-  minutes,
-}
+enum GoalType { books, pages, minutes }
 
 /// Period for the reading goal.
 enum GoalPeriod {

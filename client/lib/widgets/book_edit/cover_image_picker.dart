@@ -39,7 +39,8 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     _imageUrl = widget.initialUrl;
     _imageBytes = widget.initialBytes;
     _urlController.text = widget.initialUrl ?? '';
-    _showUrlInput = widget.initialUrl?.isNotEmpty == true && widget.initialBytes == null;
+    _showUrlInput =
+        widget.initialUrl?.isNotEmpty == true && widget.initialBytes == null;
   }
 
   @override
@@ -121,7 +122,8 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
               SizedBox(width: widget.isDesktop ? Spacing.xs : Spacing.md),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => setState(() => _showUrlInput = !_showUrlInput),
+                  onPressed: () =>
+                      setState(() => _showUrlInput = !_showUrlInput),
                   icon: const Icon(Icons.link, size: 18),
                   label: const Text('URL'),
                   style: OutlinedButton.styleFrom(
@@ -176,10 +178,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
           _wrapWithWidth(
             Text(
               _error!,
-              style: TextStyle(
-                color: colorScheme.error,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: colorScheme.error, fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ),
@@ -230,11 +229,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
             fit: BoxFit.cover,
             errorBuilder: (_, e, s) => _buildPlaceholder(context),
           ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: _buildRemoveButton(context),
-          ),
+          Positioned(top: 8, right: 8, child: _buildRemoveButton(context)),
         ],
       );
     }
@@ -252,11 +247,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
               return const Center(child: CircularProgressIndicator());
             },
           ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: _buildRemoveButton(context),
-          ),
+          Positioned(top: 8, right: 8, child: _buildRemoveButton(context)),
         ],
       );
     }

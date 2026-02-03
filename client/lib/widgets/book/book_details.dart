@@ -143,16 +143,12 @@ class _BookDetailsState extends State<BookDetails> {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        Divider(
-          height: 1,
-          thickness: 1,
-          color: colorScheme.outlineVariant,
-        ),
+        Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
       ],
     );
   }
@@ -164,15 +160,11 @@ class _BookDetailsState extends State<BookDetails> {
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
         ),
-        const Divider(
-          height: Spacing.sm,
-          thickness: 2,
-          color: Colors.black,
-        ),
+        const Divider(height: Spacing.sm, thickness: 2, color: Colors.black),
       ],
     );
   }
@@ -185,9 +177,9 @@ class _BookDetailsState extends State<BookDetails> {
       return Text(
         'No description available.',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontStyle: FontStyle.italic,
-              color: colorScheme.onSurfaceVariant,
-            ),
+          fontStyle: FontStyle.italic,
+          color: colorScheme.onSurfaceVariant,
+        ),
       );
     }
 
@@ -199,9 +191,7 @@ class _BookDetailsState extends State<BookDetails> {
       children: [
         Text(
           description,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                height: 1.6,
-              ),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6),
           maxLines: maxLines,
           overflow: shouldTruncate ? TextOverflow.ellipsis : null,
         ),
@@ -212,9 +202,9 @@ class _BookDetailsState extends State<BookDetails> {
             child: Text(
               widget.isDescriptionExpanded ? 'Show less' : 'Read more',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -228,9 +218,9 @@ class _BookDetailsState extends State<BookDetails> {
     if (widget.book.shelves.isEmpty) {
       return Text(
         'Not assigned to any shelf.',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
       );
     }
 
@@ -255,9 +245,9 @@ class _BookDetailsState extends State<BookDetails> {
     if (widget.book.topics.isEmpty) {
       return Text(
         'No topics assigned.',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
       );
     }
 

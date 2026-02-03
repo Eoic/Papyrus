@@ -24,31 +24,31 @@ class GenreStats {
 
   /// Sample genre statistics for development and testing.
   static List<GenreStats> get sample => const [
-        GenreStats(
-          genre: 'Fiction',
-          bookCount: 45,
-          percentage: 0.45,
-          colorHex: '#5654A8',
-        ),
-        GenreStats(
-          genre: 'Non-fiction',
-          bookCount: 30,
-          percentage: 0.30,
-          colorHex: '#7A5368',
-        ),
-        GenreStats(
-          genre: 'History',
-          bookCount: 15,
-          percentage: 0.15,
-          colorHex: '#006B5B',
-        ),
-        GenreStats(
-          genre: 'Other',
-          bookCount: 10,
-          percentage: 0.10,
-          colorHex: '#8B8B8B',
-        ),
-      ];
+    GenreStats(
+      genre: 'Fiction',
+      bookCount: 45,
+      percentage: 0.45,
+      colorHex: '#5654A8',
+    ),
+    GenreStats(
+      genre: 'Non-fiction',
+      bookCount: 30,
+      percentage: 0.30,
+      colorHex: '#7A5368',
+    ),
+    GenreStats(
+      genre: 'History',
+      bookCount: 15,
+      percentage: 0.15,
+      colorHex: '#006B5B',
+    ),
+    GenreStats(
+      genre: 'Other',
+      bookCount: 10,
+      percentage: 0.10,
+      colorHex: '#8B8B8B',
+    ),
+  ];
 
   /// Empty list for no data.
   static List<GenreStats> get empty => const [];

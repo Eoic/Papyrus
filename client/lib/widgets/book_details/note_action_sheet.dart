@@ -11,10 +11,7 @@ enum NoteAction { edit, delete }
 class NoteActionSheet extends StatelessWidget {
   final Note note;
 
-  const NoteActionSheet({
-    super.key,
-    required this.note,
-  });
+  const NoteActionSheet({super.key, required this.note});
 
   /// Shows the action sheet and returns the selected action.
   static Future<NoteAction?> show(
@@ -62,9 +59,9 @@ class NoteActionSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
               child: Text(
                 note.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -74,20 +71,14 @@ class NoteActionSheet extends StatelessWidget {
 
             // Edit action
             ListTile(
-              leading: Icon(
-                Icons.edit_outlined,
-                color: colorScheme.onSurface,
-              ),
+              leading: Icon(Icons.edit_outlined, color: colorScheme.onSurface),
               title: const Text('Edit note'),
               onTap: () => Navigator.of(context).pop(NoteAction.edit),
             ),
 
             // Delete action
             ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: colorScheme.error,
-              ),
+              leading: Icon(Icons.delete_outline, color: colorScheme.error),
               title: Text(
                 'Delete note',
                 style: TextStyle(color: colorScheme.error),
@@ -131,9 +122,9 @@ class _EinkNoteActionDialog extends StatelessWidget {
             Text(
               note.title.toUpperCase(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -200,9 +191,7 @@ class _EinkNoteActionDialog extends StatelessWidget {
               height: TouchTargets.einkMin,
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black54,
-                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.black54),
                 child: const Text(
                   'CANCEL',
                   style: TextStyle(
@@ -223,16 +212,10 @@ class _EinkNoteActionDialog extends StatelessWidget {
 class DeleteNoteDialog extends StatelessWidget {
   final Note note;
 
-  const DeleteNoteDialog({
-    super.key,
-    required this.note,
-  });
+  const DeleteNoteDialog({super.key, required this.note});
 
   /// Shows the delete confirmation dialog.
-  static Future<bool> show(
-    BuildContext context, {
-    required Note note,
-  }) async {
+  static Future<bool> show(BuildContext context, {required Note note}) async {
     final displayMode = context.read<DisplayModeProvider>();
 
     if (displayMode.isEinkMode) {
@@ -266,9 +249,7 @@ class DeleteNoteDialog extends StatelessWidget {
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          style: TextButton.styleFrom(
-            foregroundColor: colorScheme.error,
-          ),
+          style: TextButton.styleFrom(foregroundColor: colorScheme.error),
           child: const Text('Delete'),
         ),
       ],
@@ -304,9 +285,9 @@ class _EinkDeleteNoteDialog extends StatelessWidget {
             Text(
               'DELETE NOTE',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
             ),
             const SizedBox(height: Spacing.md),
 

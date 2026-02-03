@@ -54,11 +54,12 @@ class DashboardProvider extends ChangeNotifier {
   /// Get current book (most recently read with progress < 100%).
   BookData? get currentBook {
     if (_dataStore == null) return null;
-    final readingBooks = _dataStore!.books
-        .where((b) => b.isReading)
-        .toList()
-      ..sort((a, b) => (b.lastReadAt ?? DateTime(2000))
-          .compareTo(a.lastReadAt ?? DateTime(2000)));
+    final readingBooks = _dataStore!.books.where((b) => b.isReading).toList()
+      ..sort(
+        (a, b) => (b.lastReadAt ?? DateTime(2000)).compareTo(
+          a.lastReadAt ?? DateTime(2000),
+        ),
+      );
     return readingBooks.isNotEmpty ? readingBooks.first : null;
   }
 
@@ -83,8 +84,9 @@ class DashboardProvider extends ChangeNotifier {
     if (_dataStore == null) return 0;
     final today = DateTime.now();
     final todayStart = DateTime(today.year, today.month, today.day);
-    final todaySessions = _dataStore!.readingSessions
-        .where((s) => s.startTime.isAfter(todayStart));
+    final todaySessions = _dataStore!.readingSessions.where(
+      (s) => s.startTime.isAfter(todayStart),
+    );
     return todaySessions.fold(0, (sum, s) => sum + s.durationMinutes);
   }
 
@@ -103,8 +105,10 @@ class DashboardProvider extends ChangeNotifier {
   /// Total reading minutes from all sessions.
   int get totalReadingMinutes {
     if (_dataStore == null) return 0;
-    return _dataStore!.readingSessions
-        .fold(0, (sum, s) => sum + s.durationMinutes);
+    return _dataStore!.readingSessions.fold(
+      0,
+      (sum, s) => sum + s.durationMinutes,
+    );
   }
 
   ActivityPeriod get activityPeriod => _activityPeriod;
@@ -249,7 +253,9 @@ class DashboardProvider extends ChangeNotifier {
       return;
     }
 
-    final offset = _activityPeriod == ActivityPeriod.week ? _weekOffset : _monthOffset;
+    final offset = _activityPeriod == ActivityPeriod.week
+        ? _weekOffset
+        : _monthOffset;
     _weeklyActivity = _generateActivityFromSessions(offset);
   }
 
@@ -257,7 +263,9 @@ class DashboardProvider extends ChangeNotifier {
     if (_dataStore == null) return [];
 
     final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday - 1 + (-offset * 7)));
+    final weekStart = now.subtract(
+      Duration(days: now.weekday - 1 + (-offset * 7)),
+    );
 
     return List.generate(7, (i) {
       final date = weekStart.add(Duration(days: i));
@@ -265,9 +273,13 @@ class DashboardProvider extends ChangeNotifier {
       final dayEnd = dayStart.add(const Duration(days: 1));
 
       // Get sessions for this day
-      final daySessions = _dataStore!.readingSessions.where((s) =>
-          s.startTime.isAfter(dayStart.subtract(const Duration(seconds: 1))) &&
-          s.startTime.isBefore(dayEnd));
+      final daySessions = _dataStore!.readingSessions.where(
+        (s) =>
+            s.startTime.isAfter(
+              dayStart.subtract(const Duration(seconds: 1)),
+            ) &&
+            s.startTime.isBefore(dayEnd),
+      );
 
       final minutes = daySessions.fold(0, (sum, s) => sum + s.durationMinutes);
       final pages = daySessions.fold(0, (sum, s) => sum + (s.pagesRead ?? 0));
@@ -283,11 +295,25 @@ class DashboardProvider extends ChangeNotifier {
 
   String _getWeekRangeLabel(int offset) {
     final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday - 1 + (-offset * 7)));
+    final weekStart = now.subtract(
+      Duration(days: now.weekday - 1 + (-offset * 7)),
+    );
     final weekEnd = weekStart.add(const Duration(days: 6));
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
     if (weekStart.month == weekEnd.month) {
       return '${months[weekStart.month - 1]} ${weekStart.day}-${weekEnd.day}';
@@ -308,15 +334,24 @@ class DashboardProvider extends ChangeNotifier {
       year++;
     }
 
-    const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
 
     return '${months[month - 1]} $year';
   }
 }
 
 /// Activity period for chart display.
-enum ActivityPeriod {
-  week,
-  month,
-}
+enum ActivityPeriod { week, month }

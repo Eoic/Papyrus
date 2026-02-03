@@ -56,7 +56,10 @@ class _LibraryPageState extends State<LibraryPage> {
     return _buildMobileLayout(context, books, libraryProvider);
   }
 
-  List<BookData> _getFilteredBooks(LibraryProvider provider, DataStore dataStore) {
+  List<BookData> _getFilteredBooks(
+    LibraryProvider provider,
+    DataStore dataStore,
+  ) {
     var books = dataStore.books;
 
     // Apply search filter using query parser
@@ -174,8 +177,8 @@ class _LibraryPageState extends State<LibraryPage> {
                   Text(
                     '${books.length} ${books.length == 1 ? 'book' : 'books'}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   SegmentedButton<LibraryViewMode>(
                     segments: const [
@@ -206,12 +209,12 @@ class _LibraryPageState extends State<LibraryPage> {
               child: books.isEmpty
                   ? _buildEmptyState()
                   : libraryProvider.isListView
-                      ? _buildBookList(context, books)
-                      : BookGrid(
-                          books: books,
-                          onBookTap: (book) =>
-                              _navigateToBookDetails(context, book),
-                        ),
+                  ? _buildBookList(context, books)
+                  : BookGrid(
+                      books: books,
+                      onBookTap: (book) =>
+                          _navigateToBookDetails(context, book),
+                    ),
             ),
           ],
         ),
@@ -232,41 +235,51 @@ class _LibraryPageState extends State<LibraryPage> {
 
     // Add quick filters
     if (provider.isFilterActive(LibraryFilterType.reading)) {
-      filters.add(const ActiveFilter(
-        type: ActiveFilterType.quick,
-        label: 'Reading',
-        value: 'reading',
-      ));
+      filters.add(
+        const ActiveFilter(
+          type: ActiveFilterType.quick,
+          label: 'Reading',
+          value: 'reading',
+        ),
+      );
     }
     if (provider.isFilterActive(LibraryFilterType.favorites)) {
-      filters.add(const ActiveFilter(
-        type: ActiveFilterType.quick,
-        label: 'Favorites',
-        value: 'favorites',
-      ));
+      filters.add(
+        const ActiveFilter(
+          type: ActiveFilterType.quick,
+          label: 'Favorites',
+          value: 'favorites',
+        ),
+      );
     }
     if (provider.isFilterActive(LibraryFilterType.finished)) {
-      filters.add(const ActiveFilter(
-        type: ActiveFilterType.quick,
-        label: 'Finished',
-        value: 'finished',
-      ));
+      filters.add(
+        const ActiveFilter(
+          type: ActiveFilterType.quick,
+          label: 'Finished',
+          value: 'finished',
+        ),
+      );
     }
     if (provider.selectedShelf != null) {
-      filters.add(ActiveFilter(
-        type: ActiveFilterType.query,
-        label: 'shelf',
-        value: provider.selectedShelf!,
-        queryString: 'shelf:"${provider.selectedShelf}"',
-      ));
+      filters.add(
+        ActiveFilter(
+          type: ActiveFilterType.query,
+          label: 'shelf',
+          value: provider.selectedShelf!,
+          queryString: 'shelf:"${provider.selectedShelf}"',
+        ),
+      );
     }
     if (provider.selectedTopic != null) {
-      filters.add(ActiveFilter(
-        type: ActiveFilterType.query,
-        label: 'topic',
-        value: provider.selectedTopic!,
-        queryString: 'topic:"${provider.selectedTopic}"',
-      ));
+      filters.add(
+        ActiveFilter(
+          type: ActiveFilterType.query,
+          label: 'topic',
+          value: provider.selectedTopic!,
+          queryString: 'topic:"${provider.selectedTopic}"',
+        ),
+      );
     }
 
     // Parse search query into individual filters
@@ -282,12 +295,14 @@ class _LibraryPageState extends State<LibraryPage> {
           if (filter.field.name == 'topic' && provider.selectedTopic != null) {
             continue;
           }
-          filters.add(ActiveFilter(
-            type: ActiveFilterType.query,
-            label: filter.field.name,
-            value: filter.value,
-            queryString: '${filter.field.name}:${filter.value}',
-          ));
+          filters.add(
+            ActiveFilter(
+              type: ActiveFilterType.query,
+              label: filter.field.name,
+              value: filter.value,
+              queryString: '${filter.field.name}:${filter.value}',
+            ),
+          );
         }
       }
     }
@@ -335,11 +350,15 @@ class _LibraryPageState extends State<LibraryPage> {
       context,
       filterOptions: filterOptions,
       initialFilters: AppliedFilters(
-        filterReading: libraryProvider.isFilterActive(LibraryFilterType.reading),
-        filterFavorites:
-            libraryProvider.isFilterActive(LibraryFilterType.favorites),
-        filterFinished:
-            libraryProvider.isFilterActive(LibraryFilterType.finished),
+        filterReading: libraryProvider.isFilterActive(
+          LibraryFilterType.reading,
+        ),
+        filterFavorites: libraryProvider.isFilterActive(
+          LibraryFilterType.favorites,
+        ),
+        filterFinished: libraryProvider.isFilterActive(
+          LibraryFilterType.finished,
+        ),
         shelf: libraryProvider.selectedShelf,
         topic: libraryProvider.selectedTopic,
       ),
@@ -390,9 +409,7 @@ class _LibraryPageState extends State<LibraryPage> {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -408,14 +425,8 @@ class _LibraryPageState extends State<LibraryPage> {
           },
           borderRadius: BorderRadius.circular(AppRadius.lg),
           renderBorder: false,
-          constraints: BoxConstraints(
-            minHeight: height,
-            minWidth: height,
-          ),
-          children: const [
-            Icon(Icons.grid_view),
-            Icon(Icons.view_list),
-          ],
+          constraints: BoxConstraints(minHeight: height, minWidth: height),
+          children: const [Icon(Icons.grid_view), Icon(Icons.view_list)],
         ),
       ),
     );
@@ -428,9 +439,7 @@ class _LibraryPageState extends State<LibraryPage> {
       },
       icon: const Icon(Icons.add),
       label: const Text('Add book'),
-      style: FilledButton.styleFrom(
-        minimumSize: Size(0, height),
-      ),
+      style: FilledButton.styleFrom(minimumSize: Size(0, height)),
     );
   }
 
@@ -468,16 +477,18 @@ class _LibraryPageState extends State<LibraryPage> {
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const Spacer(),
-                          _buildViewToggle(context, libraryProvider, controlHeight),
+                          _buildViewToggle(
+                            context,
+                            libraryProvider,
+                            controlHeight,
+                          ),
                           const SizedBox(width: Spacing.sm),
                           _buildAddBookButton(controlHeight),
                         ],
                       ),
                       const SizedBox(height: Spacing.md),
                       // Second row: search bar full width
-                      AdvancedSearchBar(
-                        height: controlHeight,
-                      ),
+                      AdvancedSearchBar(height: controlHeight),
                     ],
                   );
                 }
@@ -494,11 +505,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                     ),
                     // Search bar - fills available space
-                    Expanded(
-                      child: AdvancedSearchBar(
-                        height: controlHeight,
-                      ),
-                    ),
+                    Expanded(child: AdvancedSearchBar(height: controlHeight)),
                     const SizedBox(width: Spacing.md),
                     _buildViewToggle(context, libraryProvider, controlHeight),
                     const SizedBox(width: Spacing.md),
@@ -516,12 +523,11 @@ class _LibraryPageState extends State<LibraryPage> {
             child: books.isEmpty
                 ? _buildEmptyState()
                 : libraryProvider.isListView
-                    ? _buildBookList(context, books)
-                    : BookGrid(
-                        books: books,
-                        onBookTap: (book) =>
-                            _navigateToBookDetails(context, book),
-                      ),
+                ? _buildBookList(context, books)
+                : BookGrid(
+                    books: books,
+                    onBookTap: (book) => _navigateToBookDetails(context, book),
+                  ),
           ),
         ],
       ),
@@ -536,8 +542,10 @@ class _LibraryPageState extends State<LibraryPage> {
       itemCount: books.length,
       itemBuilder: (context, index) {
         final book = books[index];
-        final isFavorite =
-            libraryProvider.isBookFavorite(book.id, book.isFavorite);
+        final isFavorite = libraryProvider.isBookFavorite(
+          book.id,
+          book.isFavorite,
+        );
         return BookListItem(
           book: book,
           isFavorite: isFavorite,
@@ -579,8 +587,8 @@ class _LibraryPageState extends State<LibraryPage> {
                 Text(
                   'Library',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -600,8 +608,10 @@ class _LibraryPageState extends State<LibraryPage> {
                     itemCount: books.length,
                     itemBuilder: (context, index) {
                       final book = books[index];
-                      final isFavorite =
-                          libraryProvider.isBookFavorite(book.id, book.isFavorite);
+                      final isFavorite = libraryProvider.isBookFavorite(
+                        book.id,
+                        book.isFavorite,
+                      );
                       return BookListItem(
                         book: book,
                         isFavorite: isFavorite,

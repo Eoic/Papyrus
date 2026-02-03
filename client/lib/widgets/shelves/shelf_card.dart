@@ -162,8 +162,8 @@ class _ShelfCardState extends State<ShelfCard> {
               Text(
                 'No books',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
               ),
             ],
           ),
@@ -212,9 +212,8 @@ class _ShelfCardState extends State<ShelfCard> {
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        placeholder: (context, url) => Container(
-                          color: colorScheme.surfaceContainerHigh,
-                        ),
+                        placeholder: (context, url) =>
+                            Container(color: colorScheme.surfaceContainerHigh),
                       ),
                     ),
                   ),
@@ -270,14 +269,9 @@ class _ShelfCardState extends State<ShelfCard> {
                 decoration: BoxDecoration(
                   color: shelfColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: shelfColor.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: shelfColor.withValues(alpha: 0.3)),
                 ),
-                child: Icon(
-                  widget.shelf.displayIcon,
-                  color: shelfColor,
-                ),
+                child: Icon(widget.shelf.displayIcon, color: shelfColor),
               ),
               const SizedBox(width: Spacing.md),
               // Shelf info
@@ -367,10 +361,7 @@ class _ShelfCardState extends State<ShelfCard> {
                     width: BorderWidths.thin,
                   ),
                 ),
-                child: Icon(
-                  widget.shelf.displayIcon,
-                  size: 24,
-                ),
+                child: Icon(widget.shelf.displayIcon, size: 24),
               ),
               const SizedBox(width: Spacing.md),
               // Info

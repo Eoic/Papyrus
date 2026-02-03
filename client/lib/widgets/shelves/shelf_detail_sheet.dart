@@ -155,9 +155,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
                 decoration: BoxDecoration(
                   color: shelfColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: shelfColor.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: shelfColor.withValues(alpha: 0.3)),
                 ),
                 child: Icon(
                   widget.shelf.displayIcon,
@@ -446,10 +444,9 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.4),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -459,9 +456,9 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
                 child: Text(
                   'Sort by',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: Spacing.sm),
@@ -515,9 +512,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Remove from shelf'),
-        content: Text(
-          'Remove "${book.title}" from "${widget.shelf.name}"?',
-        ),
+        content: Text('Remove "${book.title}" from "${widget.shelf.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -533,9 +528,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
               // Notify parent to persist the change
               widget.onRemoveBook?.call(book);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Remove'),
           ),
         ],
@@ -564,9 +557,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
               Navigator.of(context).pop(); // Close sheet
               widget.onDelete?.call();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Delete'),
           ),
         ],

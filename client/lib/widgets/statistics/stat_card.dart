@@ -85,18 +85,16 @@ class StatCard extends StatelessWidget {
                 if (trend != null) _buildTrendBadge(context),
               ],
             ),
-          if (icon != null || trend != null)
-            const SizedBox(height: Spacing.sm),
+          if (icon != null || trend != null) const SizedBox(height: Spacing.sm),
           // Value
           Text(
             value,
-            style: (isDesktop
-                    ? textTheme.headlineMedium
-                    : textTheme.headlineSmall)
-                ?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
+            style:
+                (isDesktop ? textTheme.headlineMedium : textTheme.headlineSmall)
+                    ?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
           ),
           const SizedBox(height: Spacing.xs),
           // Label
@@ -244,13 +242,11 @@ class CompactStatCard extends StatelessWidget {
         children: [
           Text(
             value,
-            style: (isDesktop
-                    ? textTheme.titleLarge
-                    : textTheme.titleMedium)
+            style: (isDesktop ? textTheme.titleLarge : textTheme.titleMedium)
                 ?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 2),
           Text(
@@ -275,10 +271,7 @@ class CompactStatCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(fontSize: 14),
-          ),
+          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 14)),
           Text(
             value,
             style: textTheme.bodyMedium?.copyWith(
@@ -393,10 +386,7 @@ class StatSectionCard extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(Spacing.md), child: child),
         ],
       ),
     );

@@ -4,26 +4,13 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
 
 /// View mode for displaying shelves.
-enum ShelvesViewMode {
-  grid,
-  list,
-}
+enum ShelvesViewMode { grid, list }
 
 /// Sort options for shelves.
-enum ShelfSortOption {
-  name,
-  bookCount,
-  dateCreated,
-  dateModified,
-}
+enum ShelfSortOption { name, bookCount, dateCreated, dateModified }
 
 /// Sort options for books within a shelf.
-enum BookSortOption {
-  title,
-  author,
-  progress,
-  dateAdded,
-}
+enum BookSortOption { title, author, progress, dateAdded }
 
 /// Provider for shelves page state management.
 /// Uses DataStore as the single source of truth.

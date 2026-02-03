@@ -25,10 +25,7 @@ class SettingsSectionHeader extends StatelessWidget {
 
     if (isEinkMode) {
       return Padding(
-        padding: const EdgeInsets.only(
-          top: Spacing.lg,
-          bottom: Spacing.sm,
-        ),
+        padding: const EdgeInsets.only(top: Spacing.lg, bottom: Spacing.sm),
         child: Text(
           title.toUpperCase(),
           style: textTheme.labelLarge?.copyWith(
@@ -40,10 +37,7 @@ class SettingsSectionHeader extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(
-        top: Spacing.lg,
-        bottom: Spacing.sm,
-      ),
+      padding: const EdgeInsets.only(top: Spacing.lg, bottom: Spacing.sm),
       child: Text(
         title.toUpperCase(),
         style: textTheme.labelMedium?.copyWith(

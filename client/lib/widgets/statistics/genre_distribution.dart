@@ -102,10 +102,7 @@ class GenreDistribution extends StatelessWidget {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: Spacing.sm),
           Expanded(
@@ -118,9 +115,7 @@ class GenreDistribution extends StatelessWidget {
           ),
           Text(
             '$percentage%',
-            style: textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -147,9 +142,7 @@ class GenreDistribution extends StatelessWidget {
         children: [
           Text(
             'BOOKS BY GENRE',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: Spacing.md),
           const Divider(color: Colors.black, height: 1),
@@ -229,9 +222,7 @@ class GenreDistribution extends StatelessWidget {
         child: Center(
           child: Text(
             'NO GENRE DATA',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
       );
@@ -273,10 +264,7 @@ class _DonutChartPainter extends CustomPainter {
   final List<GenreStats> genres;
   final List<Color> colors;
 
-  _DonutChartPainter({
-    required this.genres,
-    required this.colors,
-  });
+  _DonutChartPainter({required this.genres, required this.colors});
 
   @override
   void paint(Canvas canvas, Size size) {

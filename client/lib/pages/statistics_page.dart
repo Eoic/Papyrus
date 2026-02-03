@@ -58,7 +58,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
             return _buildLoadingState(context);
           }
 
-          if (displayMode.isEinkMode) return _buildEinkLayout(context, provider);
+          if (displayMode.isEinkMode)
+            return _buildEinkLayout(context, provider);
           if (isDesktop) return _buildDesktopLayout(context, provider);
           return _buildMobileLayout(context, provider);
         },
@@ -71,11 +72,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 
   // ============================================================================
@@ -84,9 +81,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildMobileLayout(BuildContext context, StatisticsProvider provider) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Statistics'),
-      ),
+      appBar: AppBar(title: const Text('Statistics')),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: provider.refresh,
@@ -155,7 +150,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final periods = StatsPeriod.values.where((p) => p != StatsPeriod.custom).toList();
+    final periods = StatsPeriod.values
+        .where((p) => p != StatsPeriod.custom)
+        .toList();
     final selectedPeriod = provider.selectedPeriod == StatsPeriod.custom
         ? StatsPeriod.week
         : provider.selectedPeriod;
@@ -181,7 +178,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
                         child: GestureDetector(
                           onTap: () => provider.setPeriod(periods[i]),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: Spacing.sm,
+                            ),
                             color: selectedPeriod == periods[i]
                                 ? colorScheme.primaryContainer
                                 : colorScheme.surfaceContainerLow,
@@ -382,9 +381,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
         const Spacer(),
         Text(
           value,
-          style: textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -473,10 +470,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: Spacing.sm),
           Expanded(
@@ -489,19 +483,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           Text(
             '$percentage%',
-            style: textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStreakCard(
-    BuildContext context,
-    StatisticsProvider provider,
-  ) {
+  Widget _buildStreakCard(BuildContext context, StatisticsProvider provider) {
     final colorScheme = Theme.of(context).colorScheme;
     final streak = provider.streak;
 
@@ -577,7 +566,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
   // DESKTOP LAYOUT
   // ============================================================================
 
-  Widget _buildDesktopLayout(BuildContext context, StatisticsProvider provider) {
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -934,7 +926,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildEinkHeader(BuildContext context, StatisticsProvider provider) {
     // Filter out custom from e-ink periods
-    final periods = StatsPeriod.values.where((p) => p != StatsPeriod.custom).toList();
+    final periods = StatsPeriod.values
+        .where((p) => p != StatsPeriod.custom)
+        .toList();
 
     return Container(
       height: ComponentSizes.einkHeaderHeight,
@@ -991,16 +985,35 @@ class _StatisticsPageState extends State<StatisticsPage> {
       isEinkMode: true,
       child: Column(
         children: [
-          _buildEinkStatRow(context, 'Books read', provider.totalBooks.toString()),
-          _buildEinkStatRow(context, 'Pages read', provider.pagesRead.toString()),
-          _buildEinkStatRow(context, 'Total reading time', provider.totalReadingLabel),
-          _buildEinkStatRow(context, 'Goals completed', provider.goalsCompleted.toString()),
+          _buildEinkStatRow(
+            context,
+            'Books read',
+            provider.totalBooks.toString(),
+          ),
+          _buildEinkStatRow(
+            context,
+            'Pages read',
+            provider.pagesRead.toString(),
+          ),
+          _buildEinkStatRow(
+            context,
+            'Total reading time',
+            provider.totalReadingLabel,
+          ),
+          _buildEinkStatRow(
+            context,
+            'Goals completed',
+            provider.goalsCompleted.toString(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEinkReadingTime(BuildContext context, StatisticsProvider provider) {
+  Widget _buildEinkReadingTime(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
     final textTheme = Theme.of(context).textTheme;
     final activities = provider.readingTimeData;
     final maxMinutes = activities.maxMinutes;
@@ -1014,10 +1027,16 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ...activities.map((activity) {
             const maxChars = 30;
             final barChars = maxMinutes > 0
-                ? (activity.readingMinutes / maxMinutes * maxChars).round().clamp(0, maxChars)
+                ? (activity.readingMinutes / maxMinutes * maxChars)
+                      .round()
+                      .clamp(0, maxChars)
                 : 0;
-            final filledBar = String.fromCharCodes(List.filled(barChars, 0x2588));
-            final emptyBar = String.fromCharCodes(List.filled(maxChars - barChars, 0x2591));
+            final filledBar = String.fromCharCodes(
+              List.filled(barChars, 0x2588),
+            );
+            final emptyBar = String.fromCharCodes(
+              List.filled(maxChars - barChars, 0x2591),
+            );
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
@@ -1026,10 +1045,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   SizedBox(
                     width: 40,
                     child: Text(
-                      isWeekly ? activity.dayLabel : _getMonthLabel(activity.date),
+                      isWeekly
+                          ? activity.dayLabel
+                          : _getMonthLabel(activity.date),
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
-                        fontWeight: activity.isToday ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: activity.isToday
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -1058,13 +1081,20 @@ class _StatisticsPageState extends State<StatisticsPage> {
           }),
           const Divider(color: Colors.black26),
           _buildEinkStatRow(context, 'Total', activities.totalTimeLabel),
-          _buildEinkStatRow(context, 'Average', '${activities.averageTimeLabel}/day'),
+          _buildEinkStatRow(
+            context,
+            'Average',
+            '${activities.averageTimeLabel}/day',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEinkSessionStats(BuildContext context, StatisticsProvider provider) {
+  Widget _buildEinkSessionStats(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
     final sessionStats = provider.sessionStats;
 
     return StatSectionCard(
@@ -1072,16 +1102,35 @@ class _StatisticsPageState extends State<StatisticsPage> {
       isEinkMode: true,
       child: Column(
         children: [
-          _buildEinkStatRow(context, 'Average session', sessionStats.averageSessionLabel),
-          _buildEinkStatRow(context, 'Reading velocity', sessionStats.velocityLabel),
-          _buildEinkStatRow(context, 'Total sessions', '${sessionStats.totalSessions}'),
-          _buildEinkStatRow(context, 'Avg. daily reading', provider.averageReadingLabel),
+          _buildEinkStatRow(
+            context,
+            'Average session',
+            sessionStats.averageSessionLabel,
+          ),
+          _buildEinkStatRow(
+            context,
+            'Reading velocity',
+            sessionStats.velocityLabel,
+          ),
+          _buildEinkStatRow(
+            context,
+            'Total sessions',
+            '${sessionStats.totalSessions}',
+          ),
+          _buildEinkStatRow(
+            context,
+            'Avg. daily reading',
+            provider.averageReadingLabel,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEinkGenreDistribution(BuildContext context, StatisticsProvider provider) {
+  Widget _buildEinkGenreDistribution(
+    BuildContext context,
+    StatisticsProvider provider,
+  ) {
     final textTheme = Theme.of(context).textTheme;
     final genres = provider.genreDistribution;
 
@@ -1091,9 +1140,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
       child: Column(
         children: genres.map((genre) {
           const maxChars = 30;
-          final barChars = (genre.percentage * maxChars).round().clamp(0, maxChars);
+          final barChars = (genre.percentage * maxChars).round().clamp(
+            0,
+            maxChars,
+          );
           final filledBar = String.fromCharCodes(List.filled(barChars, 0x2588));
-          final emptyBar = String.fromCharCodes(List.filled(maxChars - barChars, 0x2591));
+          final emptyBar = String.fromCharCodes(
+            List.filled(maxChars - barChars, 0x2591),
+          );
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
@@ -1144,9 +1198,21 @@ class _StatisticsPageState extends State<StatisticsPage> {
       isEinkMode: true,
       child: Column(
         children: [
-          _buildEinkStatRow(context, 'Current streak', '${streak.currentStreak} days'),
-          _buildEinkStatRow(context, 'Best streak', '${streak.bestStreak} days'),
-          _buildEinkStatRow(context, 'Days this month', '${streak.daysThisMonth} of ${streak.totalDaysInMonth}'),
+          _buildEinkStatRow(
+            context,
+            'Current streak',
+            '${streak.currentStreak} days',
+          ),
+          _buildEinkStatRow(
+            context,
+            'Best streak',
+            '${streak.bestStreak} days',
+          ),
+          _buildEinkStatRow(
+            context,
+            'Days this month',
+            '${streak.daysThisMonth} of ${streak.totalDaysInMonth}',
+          ),
         ],
       ),
     );
@@ -1160,10 +1226,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(fontSize: 16),
-          ),
+          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 16)),
           Text(
             value,
             style: textTheme.bodyMedium?.copyWith(
@@ -1211,7 +1274,20 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   String _getMonthLabel(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[date.month - 1];
   }
 
