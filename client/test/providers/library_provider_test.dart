@@ -96,7 +96,9 @@ void main() {
 
         // Set uses unique values
         expect(
-          provider.activeFilters.where((f) => f == LibraryFilterType.reading).length,
+          provider.activeFilters
+              .where((f) => f == LibraryFilterType.reading)
+              .length,
           1,
         );
       });

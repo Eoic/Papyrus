@@ -88,15 +88,18 @@ void main() {
         expect(filter.toString(), 'author:"Tolkien"');
       });
 
-      test('should return label:value for query filters without queryString', () {
-        const filter = ActiveFilter(
-          type: ActiveFilterType.query,
-          label: 'author',
-          value: 'Tolkien',
-        );
+      test(
+        'should return label:value for query filters without queryString',
+        () {
+          const filter = ActiveFilter(
+            type: ActiveFilterType.query,
+            label: 'author',
+            value: 'Tolkien',
+          );
 
-        expect(filter.toString(), 'author:Tolkien');
-      });
+          expect(filter.toString(), 'author:Tolkien');
+        },
+      );
     });
   });
 
