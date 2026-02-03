@@ -87,6 +87,26 @@ Documentation is available at `http://127.0.0.1:8000` when running `mkdocs serve
 - Examples: "Apply filters" (not "Apply Filters"), "Quick filters" (not "QUICK FILTERS" or "Quick Filters")
 - Exception: Acronyms remain uppercase (e.g., "PDF", "EPUB")
 
+## Development Setup
+
+### Git Hooks
+
+Pre-commit hooks run quality checks (formatting, analysis) before each commit. To install:
+
+```bash
+# Option 1: Simple shell script (recommended)
+./scripts/setup-hooks.sh
+
+# Option 2: Using lefthook (if installed)
+lefthook install
+```
+
+The pre-commit hook runs:
+- `dart format --set-exit-if-changed` - Formatting check
+- `dart analyze --fatal-infos` - Static analysis
+
+To skip hooks temporarily: `git commit --no-verify`
+
 ## Project Resources
 
 - **Specification**: `/spec/` directory contains requirements, use cases, entities, database model

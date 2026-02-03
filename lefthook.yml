@@ -1,0 +1,24 @@
+# Lefthook configuration for git hooks
+# Install: https://github.com/evilmartians/lefthook
+# Run `lefthook install` after cloning the repository
+
+pre-commit:
+  parallel: false
+  commands:
+    format-check:
+      root: "client/"
+      run: dart format --set-exit-if-changed --output=none {staged_files}
+      glob: "*.dart"
+      stage_fixed: true
+
+    analyze:
+      root: "client/"
+      run: dart analyze --fatal-infos
+      glob: "*.dart"
+
+pre-push:
+  parallel: false
+  commands:
+    test:
+      root: "client/"
+      run: flutter test
