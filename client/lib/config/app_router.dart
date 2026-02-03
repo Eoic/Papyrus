@@ -27,7 +27,6 @@ class AppRouter {
     debugLogDiagnostics: true,
     navigatorKey: rootNavigatorKey,
     routes: [
-      // Auth routes (no shell)
       GoRoute(
         path: '/',
         builder: (BuildContext context, GoRouterState state) {
@@ -209,17 +208,6 @@ class AppRouter {
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {
-      // TODO: Remove this flag before production - bypasses authentication
-      const bypassAuth = true;
-
-      if (bypassAuth) {
-        // When bypassing auth, only redirect root to library
-        if (state.uri.toString() == '/') {
-          return '/library/books';
-        }
-        return null;
-      }
-
       if (FirebaseAuth.instance.currentUser == null) {
         if (state.uri.toString().contains('/login') ||
             state.uri.toString().contains('/register')) {

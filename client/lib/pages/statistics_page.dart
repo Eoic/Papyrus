@@ -58,9 +58,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
             return _buildLoadingState(context);
           }
 
-          if (displayMode.isEinkMode)
+          if (displayMode.isEinkMode) {
             return _buildEinkLayout(context, provider);
-          if (isDesktop) return _buildDesktopLayout(context, provider);
+          }
+
+          if (isDesktop) {
+            return _buildDesktopLayout(context, provider);
+          }
+
           return _buildMobileLayout(context, provider);
         },
       ),
