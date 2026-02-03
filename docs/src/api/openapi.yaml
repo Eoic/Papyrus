@@ -34,9 +34,24 @@ info:
 
     ## Rate Limiting
 
-    - Authentication endpoints: 5 requests per minute
-    - General API: 100 requests per minute
-    - File uploads: 10 requests per minute
+    Rate limits are enforced per user:
+
+    | Endpoint Category | Limit |
+    |-------------------|-------|
+    | Authentication | 5 requests/minute |
+    | General API | 100 requests/minute |
+    | File uploads | 10 requests/minute |
+    | Batch operations | 20 requests/minute |
+
+    Rate limit information is returned in response headers:
+
+    ```
+    X-RateLimit-Limit: 100
+    X-RateLimit-Remaining: 95
+    X-RateLimit-Reset: 1640000000
+    ```
+
+    When rate limited, the API returns HTTP 429 with a `Retry-After` header.
 
     ## Error Handling
 
@@ -972,6 +987,187 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
 
+  /books/batch:
+    post:
+      tags: [Books]
+      summary: Batch create books
+      description: |
+        Creates multiple books in a single request.
+        Useful for bulk imports. Maximum 50 books per request.
+      operationId: batchCreateBooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [books]
+              properties:
+                books:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CreateBookRequest'
+                  maxItems: 50
+      responses:
+        '201':
+          description: Books created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                          description: Index in the input array
+                        error:
+                          $ref: '#/components/schemas/Error'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    patch:
+      tags: [Books]
+      summary: Batch update books
+      description: |
+        Updates multiple books in a single request.
+        Useful for bulk tagging, shelf assignment, or status changes.
+      operationId: batchUpdateBooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_ids]
+              properties:
+                book_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  maxItems: 100
+                  description: Books to update
+                updates:
+                  type: object
+                  description: Fields to update on all books
+                  properties:
+                    reading_status:
+                      $ref: '#/components/schemas/ReadingStatus'
+                    is_favorite:
+                      type: boolean
+                    rating:
+                      type: integer
+                      minimum: 1
+                      maximum: 5
+                add_tag_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Tags to add to all books
+                remove_tag_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Tags to remove from all books
+                add_shelf_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Shelves to add books to
+                remove_shelf_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Shelves to remove books from
+      responses:
+        '200':
+          description: Books updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated_count:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        book_id:
+                          type: string
+                          format: uuid
+                        error:
+                          $ref: '#/components/schemas/Error'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      tags: [Books]
+      summary: Batch delete books
+      description: |
+        Deletes multiple books in a single request.
+        Optionally deletes associated files from storage.
+      operationId: batchDeleteBooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [book_ids]
+              properties:
+                book_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  maxItems: 100
+                delete_files:
+                  type: boolean
+                  default: false
+                  description: Also delete book files from storage
+      responses:
+        '200':
+          description: Books deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted_count:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        book_id:
+                          type: string
+                          format: uuid
+                        error:
+                          $ref: '#/components/schemas/Error'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
   /books/metadata/fetch:
     post:
       tags: [Books]
@@ -1199,7 +1395,11 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
 
-    delete:
+  /shelves/{shelf_id}/books/remove:
+    parameters:
+      - $ref: '#/components/parameters/ShelfIdParam'
+
+    post:
       tags: [Shelves]
       summary: Remove books from shelf
       description: Removes one or more books from the shelf.
@@ -1524,6 +1724,79 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
 
+  /annotations/export:
+    post:
+      tags: [Annotations]
+      summary: Export annotations
+      description: |
+        Exports annotations to a structured file format.
+        Can export all annotations or filter by book/color.
+      operationId: exportAnnotations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [format]
+              properties:
+                format:
+                  type: string
+                  enum: [markdown, pdf, txt, json, html]
+                  description: Export file format
+                book_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Filter to specific books (all if empty)
+                colors:
+                  type: array
+                  items:
+                    type: string
+                  description: Filter by highlight colors
+                include_notes:
+                  type: boolean
+                  default: true
+                  description: Include annotation notes
+                include_context:
+                  type: boolean
+                  default: false
+                  description: Include surrounding text context
+                group_by:
+                  type: string
+                  enum: [book, chapter, color, date]
+                  default: book
+                  description: How to group annotations in export
+      responses:
+        '200':
+          description: Export file
+          content:
+            text/markdown:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: string
+                format: binary
+            text/html:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
   /books/{book_id}/annotations:
     parameters:
       - $ref: '#/components/parameters/BookIdParam'
@@ -1553,6 +1826,63 @@ paths:
       summary: Create annotation
       description: Creates a new text highlight annotation.
       operationId: createAnnotation
+
+  /books/{book_id}/annotations/export:
+    parameters:
+      - $ref: '#/components/parameters/BookIdParam'
+
+    get:
+      tags: [Annotations]
+      summary: Export book annotations
+      description: Exports all annotations for a specific book.
+      operationId: exportBookAnnotations
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [markdown, pdf, txt, json, html]
+        - name: include_notes
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: include_context
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Export file
+          content:
+            text/markdown:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: string
+                format: binary
+            text/html:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /annotations/{annotation_id}:
       requestBody:
         required: true
         content:
@@ -1631,46 +1961,6 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '404':
           $ref: '#/components/responses/NotFoundError'
-
-  /annotations/export:
-    post:
-      tags: [Annotations]
-      summary: Export annotations
-      description: Exports annotations to a file format.
-      operationId: exportAnnotations
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [format]
-              properties:
-                format:
-                  type: string
-                  enum: [markdown, txt, pdf, html, json]
-                book_ids:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  description: Specific books to export (all if empty)
-                include_context:
-                  type: boolean
-                  default: true
-                  description: Include surrounding text context
-      responses:
-        '200':
-          description: Export file
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
 
   # ============================================================================
   # Notes
@@ -2299,6 +2589,102 @@ paths:
                 $ref: '#/components/schemas/SyncStatus'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+
+  # ============================================================================
+  # Metadata Server Configuration
+  # ============================================================================
+  /users/me/metadata-server:
+    get:
+      tags: [Sync]
+      summary: Get metadata server configuration
+      description: Returns the current metadata server connection configuration.
+      operationId: getMetadataServerConfig
+      responses:
+        '200':
+          description: Metadata server configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataServerConfig'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: No metadata server configured (local-only mode)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Sync]
+      summary: Configure metadata server connection
+      description: |
+        Sets up connection to a metadata server for cross-device sync.
+        Replaces any existing configuration.
+      operationId: setMetadataServerConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMetadataServerConfigRequest'
+      responses:
+        '200':
+          description: Configuration saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataServerConfig'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      tags: [Sync]
+      summary: Disconnect from metadata server
+      description: |
+        Removes metadata server configuration and switches to local-only mode.
+        Local data is preserved but will no longer sync.
+      operationId: deleteMetadataServerConfig
+      responses:
+        '204':
+          description: Disconnected from metadata server
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /users/me/metadata-server/test:
+    post:
+      tags: [Sync]
+      summary: Test metadata server connection
+      description: Tests connectivity to the configured metadata server.
+      operationId: testMetadataServerConnection
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  server_version:
+                    type: string
+                  latency_ms:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: No metadata server configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # ============================================================================
   # Storage
@@ -3342,6 +3728,9 @@ components:
           type: boolean
         ocr_confidence:
           type: number
+        updated_at:
+          type: string
+          format: date-time
         shelves:
           type: array
           items:
@@ -4063,6 +4452,8 @@ components:
           type: integer
         duration_minutes:
           type: integer
+          readOnly: true
+          description: Calculated from start_time and end_time
         device_type:
           type: string
         device_name:
@@ -4272,6 +4663,67 @@ components:
           format: date
         is_active:
           type: boolean
+
+    # ==========================================================================
+    # Metadata Server Config
+    # ==========================================================================
+    ServerType:
+      type: string
+      enum: [official, self_hosted]
+
+    MetadataServerConfig:
+      type: object
+      properties:
+        config_id:
+          type: string
+          format: uuid
+        server_url:
+          type: string
+          format: uri
+        server_type:
+          $ref: '#/components/schemas/ServerType'
+        is_connected:
+          type: boolean
+        sync_enabled:
+          type: boolean
+        sync_interval_seconds:
+          type: integer
+        last_sync_at:
+          type: string
+          format: date-time
+        sync_status:
+          type: string
+          enum: [idle, syncing, error]
+        sync_error_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateMetadataServerConfigRequest:
+      type: object
+      required: [server_url]
+      properties:
+        server_url:
+          type: string
+          format: uri
+          description: URL of the metadata server
+        server_type:
+          $ref: '#/components/schemas/ServerType'
+        sync_enabled:
+          type: boolean
+          default: true
+        sync_interval_seconds:
+          type: integer
+          default: 30
+          minimum: 10
+          maximum: 3600
+        auth_token:
+          type: string
+          description: JWT or API token for authentication
 
     # ==========================================================================
     # Sync
