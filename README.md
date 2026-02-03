@@ -90,7 +90,7 @@ Many reading applications offer partial solutions but fall short on essential fe
 
 ## Project structure
 
-```
+```text
 Papyrus/
 ├── client/                 # Flutter application
 │   ├── lib/
@@ -143,30 +143,67 @@ mkdocs build
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome!
 
-1. Fork the repository
-2. Create a feature branch:
+### Setup
+
+1. Fork and clone the repository
+2. Install git hooks for code quality checks:
+
+   ```bash
+   ./scripts/setup-hooks.sh
+   ```
+
+   This installs a pre-commit hook that runs `dart format` and `dart analyze` before each commit.
+
+### Development workflow
+
+1. Create a feature branch:
 
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
-3. Commit your changes:
+2. Make your changes and ensure quality checks pass:
+
+   ```bash
+   cd client
+   dart format .
+   dart analyze
+   flutter test
+   ```
+
+3. Commit your changes and push:
 
    ```bash
    git commit -m "Add: description of your changes"
-   ```
-
-4. Push to your branch:
-
-   ```bash
    git push origin feature/your-feature-name
    ```
 
-5. Open a pull request
+4. Open a pull request
 
-Please ensure your code follows the existing style and includes appropriate tests.
+### Code style
+
+- Run `dart format .` before committing
+- Ensure `dart analyze` passes with no issues
+- Use sentence case for UI text (e.g., "Apply filters" not "Apply Filters")
+
+## Releases
+
+Releases are automated via GitHub Actions. To create a new release:
+
+1. Ensure all changes are merged to `master`
+2. Create and push a version tag:
+
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+
+3. GitHub Actions will automatically:
+   - Build all platforms (Android, Web, Linux, Windows)
+   - Create a GitHub Release with auto-generated release notes
+   - Attach versioned artifacts to the release
 
 ## Resources
 
