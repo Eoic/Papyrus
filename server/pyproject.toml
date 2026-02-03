@@ -61,6 +61,10 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = ["jose.*", "passlib.*"]
+ignore_missing_imports = true
+
 [tool.coverage.run]
 source = ["src/papyrus"]
 branch = true

@@ -1,13 +1,13 @@
 """Reading profile schemas."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class TextAlign(str, Enum):
+class TextAlign(StrEnum):
     """Text alignment options."""
 
     LEFT = "left"
@@ -16,7 +16,7 @@ class TextAlign(str, Enum):
     JUSTIFY = "justify"
 
 
-class ThemeMode(str, Enum):
+class ThemeMode(StrEnum):
     """Reader theme modes."""
 
     LIGHT = "light"
@@ -25,7 +25,7 @@ class ThemeMode(str, Enum):
     CUSTOM = "custom"
 
 
-class ReadingMode(str, Enum):
+class ReadingMode(StrEnum):
     """Reading display modes."""
 
     PAGINATED = "paginated"

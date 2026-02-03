@@ -1,10 +1,8 @@
 """User routes."""
 
 from datetime import UTC, datetime
-from uuid import uuid4
 
 from fastapi import APIRouter, Response, status
-from pydantic import BaseModel
 
 from papyrus.api.deps import CurrentUserId
 from papyrus.schemas import UpdateUserRequest, User, UserPreferences

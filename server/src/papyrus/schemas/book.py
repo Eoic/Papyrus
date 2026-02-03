@@ -1,14 +1,14 @@
 """Book-related schemas."""
 
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
-class ReadingStatus(str, Enum):
+class ReadingStatus(StrEnum):
     """Book reading status."""
 
     NOT_STARTED = "not_started"
@@ -18,7 +18,7 @@ class ReadingStatus(str, Enum):
     ABANDONED = "abandoned"
 
 
-class FileFormat(str, Enum):
+class FileFormat(StrEnum):
     """Supported ebook file formats."""
 
     EPUB = "epub"

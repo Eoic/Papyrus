@@ -1,21 +1,21 @@
 """Sync-related schemas."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
-class ServerType(str, Enum):
+class ServerType(StrEnum):
     """Metadata server type."""
 
     OFFICIAL = "official"
     SELF_HOSTED = "self_hosted"
 
 
-class SyncStatusEnum(str, Enum):
+class SyncStatusEnum(StrEnum):
     """Sync status values."""
 
     IDLE = "idle"
@@ -23,7 +23,7 @@ class SyncStatusEnum(str, Enum):
     ERROR = "error"
 
 
-class ResolutionStrategy(str, Enum):
+class ResolutionStrategy(StrEnum):
     """Conflict resolution strategy."""
 
     LATEST_WINS = "latest_wins"
@@ -31,7 +31,7 @@ class ResolutionStrategy(str, Enum):
     MANUAL = "manual"
 
 
-class SyncOperation(str, Enum):
+class SyncOperation(StrEnum):
     """Sync operation type."""
 
     CREATE = "create"

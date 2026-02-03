@@ -1,13 +1,13 @@
 """Saved filter schemas."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class FilterType(str, Enum):
+class FilterType(StrEnum):
     """Filter type options."""
 
     SEARCH = "search"

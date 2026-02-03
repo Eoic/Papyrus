@@ -1,6 +1,11 @@
 """Pydantic schemas for request/response validation."""
 
-from papyrus.schemas.common import Error, ErrorDetail, Pagination
+from papyrus.schemas.annotation import (
+    Annotation,
+    AnnotationList,
+    CreateAnnotationRequest,
+    UpdateAnnotationRequest,
+)
 from papyrus.schemas.auth import (
     AuthTokens,
     GoogleOAuthRequest,
@@ -9,7 +14,6 @@ from papyrus.schemas.auth import (
     RegisterRequest,
     RegisterResponse,
 )
-from papyrus.schemas.user import User, UpdateUserRequest, UserPreferences
 from papyrus.schemas.book import (
     Book,
     BookCreate,
@@ -22,40 +26,14 @@ from papyrus.schemas.book import (
     ReadingStatus,
     UpdateProgressRequest,
 )
-from papyrus.schemas.shelf import (
-    CreateShelfRequest,
-    Shelf,
-    ShelfList,
-    ShelfSummary,
-    UpdateShelfRequest,
-)
-from papyrus.schemas.tag import CreateTagRequest, Tag, TagList, UpdateTagRequest
-from papyrus.schemas.series import (
-    CreateSeriesRequest,
-    Series,
-    SeriesList,
-    SeriesWithBooks,
-    UpdateSeriesRequest,
-)
-from papyrus.schemas.annotation import (
-    Annotation,
-    AnnotationList,
-    CreateAnnotationRequest,
-    UpdateAnnotationRequest,
-)
-from papyrus.schemas.note import CreateNoteRequest, Note, NoteList, UpdateNoteRequest
 from papyrus.schemas.bookmark import (
     Bookmark,
     BookmarkList,
     CreateBookmarkRequest,
     UpdateBookmarkRequest,
 )
-from papyrus.schemas.progress import (
-    CreateReadingSessionRequest,
-    ReadingSession,
-    ReadingSessionList,
-    ReadingStatistics,
-)
+from papyrus.schemas.common import Error, ErrorDetail, Pagination
+from papyrus.schemas.file import FileInfo
 from papyrus.schemas.goal import (
     CreateGoalRequest,
     Goal,
@@ -64,25 +42,13 @@ from papyrus.schemas.goal import (
     TimePeriod,
     UpdateGoalRequest,
 )
-from papyrus.schemas.sync import (
-    MetadataServerConfig,
-    CreateMetadataServerConfigRequest,
-    ServerType,
-    SyncChanges,
-    SyncConflictResponse,
-    SyncPushRequest,
-    SyncPushResponse,
-    SyncStatus,
+from papyrus.schemas.note import CreateNoteRequest, Note, NoteList, UpdateNoteRequest
+from papyrus.schemas.progress import (
+    CreateReadingSessionRequest,
+    ReadingSession,
+    ReadingSessionList,
+    ReadingStatistics,
 )
-from papyrus.schemas.storage import (
-    ConnectionStatus,
-    CreateStorageBackendRequest,
-    StorageBackend,
-    StorageBackendList,
-    StorageBackendType,
-    UpdateStorageBackendRequest,
-)
-from papyrus.schemas.file import FileInfo
 from papyrus.schemas.reading_profile import (
     CreateReadingProfileRequest,
     ReadingMode,
@@ -99,6 +65,40 @@ from papyrus.schemas.saved_filter import (
     SavedFilterList,
     UpdateSavedFilterRequest,
 )
+from papyrus.schemas.series import (
+    CreateSeriesRequest,
+    Series,
+    SeriesList,
+    SeriesWithBooks,
+    UpdateSeriesRequest,
+)
+from papyrus.schemas.shelf import (
+    CreateShelfRequest,
+    Shelf,
+    ShelfList,
+    ShelfSummary,
+    UpdateShelfRequest,
+)
+from papyrus.schemas.storage import (
+    ConnectionStatus,
+    CreateStorageBackendRequest,
+    StorageBackend,
+    StorageBackendList,
+    StorageBackendType,
+    UpdateStorageBackendRequest,
+)
+from papyrus.schemas.sync import (
+    CreateMetadataServerConfigRequest,
+    MetadataServerConfig,
+    ServerType,
+    SyncChanges,
+    SyncConflictResponse,
+    SyncPushRequest,
+    SyncPushResponse,
+    SyncStatus,
+)
+from papyrus.schemas.tag import CreateTagRequest, Tag, TagList, UpdateTagRequest
+from papyrus.schemas.user import UpdateUserRequest, User, UserPreferences
 
 __all__ = [
     # Common

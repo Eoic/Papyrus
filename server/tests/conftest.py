@@ -1,6 +1,5 @@
 """Pytest configuration and fixtures."""
 
-from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest

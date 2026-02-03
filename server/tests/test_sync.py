@@ -1,9 +1,8 @@
 """Tests for sync endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -26,7 +25,7 @@ def test_pull_changes(client: TestClient, auth_headers: dict[str, str]):
 
 def test_push_changes(client: TestClient, auth_headers: dict[str, str]):
     """Test pushing changes to server."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     response = client.post(
         "/v1/sync/changes",
         headers=auth_headers,

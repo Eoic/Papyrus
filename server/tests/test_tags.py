@@ -1,6 +1,5 @@
 """Tests for tag endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

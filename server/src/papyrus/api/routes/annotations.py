@@ -1,11 +1,10 @@
 """Annotation routes."""
 
 from datetime import UTC, datetime
-from enum import Enum
-from typing import Annotated
+from enum import StrEnum
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 
 from papyrus.api.deps import CurrentUserId, Pagination
@@ -13,14 +12,16 @@ from papyrus.schemas import (
     Annotation,
     AnnotationList,
     CreateAnnotationRequest,
-    Pagination as PaginationSchema,
     UpdateAnnotationRequest,
+)
+from papyrus.schemas import (
+    Pagination as PaginationSchema,
 )
 
 router = APIRouter()
 
 
-class ExportFormat(str, Enum):
+class ExportFormat(StrEnum):
     """Annotation export formats."""
 
     JSON = "json"
@@ -46,7 +47,9 @@ class ExportAnnotationsResponse(BaseModel):
     filename: str
 
 
-def _example_annotation(annotation_id: UUID | None = None, book_id: UUID | None = None) -> Annotation:
+def _example_annotation(
+    annotation_id: UUID | None = None, book_id: UUID | None = None
+) -> Annotation:
     """Create an example annotation for responses."""
     return Annotation(
         annotation_id=annotation_id or uuid4(),
@@ -105,7 +108,7 @@ async def export_annotations(
         content = "# Annotations\n\n## Example Book\n\n> This is a highlighted text passage.\n\n_Note: My note about this passage._\n"
         filename = "annotations.md"
     elif request.format == ExportFormat.CSV:
-        content = "book_title,selected_text,note,highlight_color,page_number\nExample Book,\"This is a highlighted text passage.\",\"My note about this passage.\",#FFEB3B,10\n"
+        content = 'book_title,selected_text,note,highlight_color,page_number\nExample Book,"This is a highlighted text passage.","My note about this passage.",#FFEB3B,10\n'
         filename = "annotations.csv"
     elif request.format == ExportFormat.HTML:
         content = "<html><body><h1>Annotations</h1><h2>Example Book</h2><blockquote>This is a highlighted text passage.</blockquote><p><em>Note: My note about this passage.</em></p></body></html>"

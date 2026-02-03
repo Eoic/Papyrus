@@ -1,10 +1,10 @@
 """File upload and download routes."""
 
 from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, File, Response, UploadFile, status
-from fastapi.responses import StreamingResponse
 
 from papyrus.api.deps import CurrentUserId
 from papyrus.schemas import FileInfo
@@ -20,7 +20,7 @@ router = APIRouter()
 )
 async def upload_file(
     user_id: CurrentUserId,
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
     storage_backend_id: UUID | None = None,
 ) -> FileInfo:
     """Upload a book file to storage."""

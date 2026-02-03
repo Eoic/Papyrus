@@ -1,13 +1,13 @@
 """Goal-related schemas."""
 
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class GoalType(str, Enum):
+class GoalType(StrEnum):
     """Type of reading goal."""
 
     BOOKS_COUNT = "books_count"
@@ -15,7 +15,7 @@ class GoalType(str, Enum):
     READING_TIME = "reading_time"
 
 
-class TimePeriod(str, Enum):
+class TimePeriod(StrEnum):
     """Goal time period."""
 
     DAILY = "daily"

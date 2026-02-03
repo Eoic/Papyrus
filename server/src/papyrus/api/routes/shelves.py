@@ -11,10 +11,12 @@ from papyrus.api.deps import CurrentUserId, Pagination
 from papyrus.schemas import (
     BookList,
     CreateShelfRequest,
-    Pagination as PaginationSchema,
     Shelf,
     ShelfList,
     UpdateShelfRequest,
+)
+from papyrus.schemas import (
+    Pagination as PaginationSchema,
 )
 
 router = APIRouter()

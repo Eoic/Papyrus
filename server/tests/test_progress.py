@@ -1,8 +1,7 @@
 """Tests for reading progress and statistics endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -17,7 +16,7 @@ def test_list_reading_sessions(client: TestClient, auth_headers: dict[str, str])
 
 def test_create_reading_session(client: TestClient, auth_headers: dict[str, str], book_id: str):
     """Test creating a reading session."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     response = client.post(
         "/v1/progress/sessions",
         headers=auth_headers,

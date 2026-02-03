@@ -1,7 +1,7 @@
 """FastAPI application factory and configuration."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,13 +9,13 @@ from fastapi.responses import JSONResponse
 
 from papyrus.api.routes import api_router
 from papyrus.config import get_settings
-from papyrus.core.exceptions import AppException
+from papyrus.core.exceptions import AppError
 
 settings = get_settings()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan events."""
     # Startup
     yield
@@ -89,8 +89,8 @@ Rate limits are enforced per user:
     )
 
     # Exception handlers
-    @app.exception_handler(AppException)
-    async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
+    @app.exception_handler(AppError)
+    async def app_exception_handler(request: Request, exc: AppError) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content={

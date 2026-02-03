@@ -2,7 +2,6 @@
 
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -59,7 +58,5 @@ def test_delete_reading_profile(client: TestClient, auth_headers: dict[str, str]
 def test_set_default_reading_profile(client: TestClient, auth_headers: dict[str, str]):
     """Test setting default reading profile."""
     profile_id = str(uuid4())
-    response = client.post(
-        f"/v1/reading-profiles/{profile_id}/set-default", headers=auth_headers
-    )
+    response = client.post(f"/v1/reading-profiles/{profile_id}/set-default", headers=auth_headers)
     assert response.status_code == 200

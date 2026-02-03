@@ -1,6 +1,5 @@
 """Tests for goal endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

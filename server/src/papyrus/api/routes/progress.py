@@ -1,18 +1,20 @@
 """Reading progress and statistics routes."""
 
 from datetime import UTC, date, datetime
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Query
-from typing import Annotated
 
 from papyrus.api.deps import CurrentUserId, Pagination
 from papyrus.schemas import (
     CreateReadingSessionRequest,
-    Pagination as PaginationSchema,
     ReadingSession,
     ReadingSessionList,
     ReadingStatistics,
+)
+from papyrus.schemas import (
+    Pagination as PaginationSchema,
 )
 from papyrus.schemas.progress import (
     BookBreakdown,
@@ -104,7 +106,9 @@ async def create_reading_session(
 )
 async def get_reading_statistics(
     user_id: CurrentUserId,
-    start_date: Annotated[date | None, Query(description="Start date for statistics period")] = None,
+    start_date: Annotated[
+        date | None, Query(description="Start date for statistics period")
+    ] = None,
     end_date: Annotated[date | None, Query(description="End date for statistics period")] = None,
 ) -> ReadingStatistics:
     """Return reading statistics for the specified period."""

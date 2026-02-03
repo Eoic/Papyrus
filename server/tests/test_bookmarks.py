@@ -1,6 +1,5 @@
 """Tests for bookmark endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

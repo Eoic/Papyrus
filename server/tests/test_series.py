@@ -1,6 +1,5 @@
 """Tests for series endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 

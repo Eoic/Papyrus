@@ -1,14 +1,14 @@
 """Storage backend schemas."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class StorageBackendType(str, Enum):
+class StorageBackendType(StrEnum):
     """Supported storage backend types."""
 
     LOCAL = "local"
@@ -21,7 +21,7 @@ class StorageBackendType(str, Enum):
     PAPYRUS_SERVER = "papyrus_server"
 
 
-class ConnectionStatus(str, Enum):
+class ConnectionStatus(StrEnum):
     """Storage backend connection status."""
 
     CONNECTED = "connected"
@@ -64,9 +64,7 @@ class CreateStorageBackendRequest(BaseModel):
     connection_config: dict[str, Any] | None = Field(
         None, description="Type-specific connection settings"
     )
-    credentials: dict[str, Any] | None = Field(
-        None, description="OAuth tokens or API keys"
-    )
+    credentials: dict[str, Any] | None = Field(None, description="OAuth tokens or API keys")
     base_path: str | None = None
 
 

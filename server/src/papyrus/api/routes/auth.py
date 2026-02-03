@@ -15,7 +15,6 @@ from papyrus.schemas import (
     User,
 )
 from papyrus.schemas.auth import (
-    ChangePasswordRequest,
     ForgotPasswordRequest,
     LogoutRequest,
     ResetPasswordRequest,
@@ -136,9 +135,7 @@ async def verify_email(request: VerifyEmailRequest) -> MessageResponse:
 )
 async def resend_verification(email: str) -> MessageResponse:
     """Send a new verification email to the user's registered address."""
-    return MessageResponse(
-        message="If the email is registered, a verification link has been sent"
-    )
+    return MessageResponse(message="If the email is registered, a verification link has been sent")
 
 
 @router.post(
@@ -148,9 +145,7 @@ async def resend_verification(email: str) -> MessageResponse:
 )
 async def forgot_password(request: ForgotPasswordRequest) -> MessageResponse:
     """Send a password reset link to the user's email."""
-    return MessageResponse(
-        message="If the email is registered, a reset link has been sent"
-    )
+    return MessageResponse(message="If the email is registered, a reset link has been sent")
 
 
 @router.post(

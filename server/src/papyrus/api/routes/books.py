@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, File, Query, Response, UploadFile, status
+from fastapi import APIRouter, Query, Response, UploadFile, status
 from pydantic import BaseModel
 
 from papyrus.api.deps import CurrentUserId, Pagination
@@ -14,12 +14,14 @@ from papyrus.schemas import (
     BookList,
     BookUpdate,
     MetadataSearchResult,
-    Pagination as PaginationSchema,
     ReadingProgress,
     ReadingStatus,
     Shelf,
     Tag,
     UpdateProgressRequest,
+)
+from papyrus.schemas import (
+    Pagination as PaginationSchema,
 )
 
 router = APIRouter()

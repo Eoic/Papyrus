@@ -1,7 +1,7 @@
 """Sync routes."""
 
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import APIRouter, Response, status
 

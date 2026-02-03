@@ -44,6 +44,29 @@ ruff format .
 ruff check .
 ```
 
+## CI/CD
+
+Quality checks run automatically on every push and pull request to the `server/` directory.
+
+### Creating a release
+
+The server uses independent versioning from the client with `server-v*` tags:
+
+```bash
+# Ensure you're on master with latest changes
+git checkout master
+git pull
+
+# Create and push a version tag
+git tag server-v1.0.0
+git push origin server-v1.0.0
+```
+
+This triggers the release workflow which:
+
+1. Runs all quality checks (format, lint, type check, tests)
+2. Creates a GitHub Release with auto-generated release notes
+
 ## API Documentation
 
 When the server is running, visit:

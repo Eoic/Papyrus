@@ -40,6 +40,4 @@ api_router.include_router(files.router, prefix="/files", tags=["Files"])
 api_router.include_router(
     reading_profiles.router, prefix="/reading-profiles", tags=["Reading Profiles"]
 )
-api_router.include_router(
-    saved_filters.router, prefix="/saved-filters", tags=["Saved Filters"]
-)
+api_router.include_router(saved_filters.router, prefix="/saved-filters", tags=["Saved Filters"])

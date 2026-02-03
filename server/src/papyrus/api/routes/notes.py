@@ -10,8 +10,10 @@ from papyrus.schemas import (
     CreateNoteRequest,
     Note,
     NoteList,
-    Pagination as PaginationSchema,
     UpdateNoteRequest,
+)
+from papyrus.schemas import (
+    Pagination as PaginationSchema,
 )
 
 router = APIRouter()

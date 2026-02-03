@@ -3,22 +3,42 @@
 # Run `lefthook install` after cloning the repository
 
 pre-commit:
-  parallel: false
+  parallel: true
   commands:
-    format-check:
+    # Client checks
+    client-format:
       root: "client/"
       run: dart format --set-exit-if-changed --output=none {staged_files}
       glob: "*.dart"
       stage_fixed: true
 
-    analyze:
+    client-analyze:
       root: "client/"
       run: dart analyze --fatal-infos
       glob: "*.dart"
 
+    # Server checks
+    server-format:
+      root: "server/"
+      run: ruff format --check .
+      glob: "*.py"
+
+    server-lint:
+      root: "server/"
+      run: ruff check .
+      glob: "*.py"
+
 pre-push:
-  parallel: false
+  parallel: true
   commands:
-    test:
+    client-test:
       root: "client/"
       run: flutter test
+
+    server-typecheck:
+      root: "server/"
+      run: mypy src/
+
+    server-test:
+      root: "server/"
+      run: pytest -q
