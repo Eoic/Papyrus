@@ -78,9 +78,6 @@ jobs:
       - name: Create google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 
-      - name: Create firebase_options.dart
-        run: echo '${{ secrets.FIREBASE_OPTIONS_DART }}' | base64 -d > lib/firebase_options.dart
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -111,9 +108,6 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-
-      - name: Create firebase_options.dart
-        run: echo '${{ secrets.FIREBASE_OPTIONS_DART }}' | base64 -d > lib/firebase_options.dart
 
       - name: Install dependencies
         run: flutter pub get
@@ -151,9 +145,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Create firebase_options.dart
-        run: echo '${{ secrets.FIREBASE_OPTIONS_DART }}' | base64 -d > lib/firebase_options.dart
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -184,12 +175,6 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-
-      - name: Create firebase_options.dart
-        shell: pwsh
-        run: |
-          $content = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('${{ secrets.FIREBASE_OPTIONS_DART }}'))
-          Set-Content -Path "lib/firebase_options.dart" -Value $content -Encoding UTF8
 
       - name: Install dependencies
         run: flutter pub get
