@@ -23,25 +23,13 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return linux;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -50,20 +38,66 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyB-8hZptr95g6pacDck8I_48wAxyRGEjT4',
-    appId: '1:789494478936:web:ca0dcabe273e8a448b322d',
-    messagingSenderId: '789494478936',
-    projectId: 'papyrus-library-manager',
-    authDomain: 'papyrus-library-manager.firebaseapp.com',
-    storageBucket: 'papyrus-library-manager.appspot.com',
-    measurementId: 'G-4JXT4NE70Q',
+    apiKey: 'AIzaSyAnRI5eWvvfdyuRgW5HxedxSdHPc76ftp4',
+    appId: '1:344941864747:web:a807275c80e8066959876e',
+    messagingSenderId: '344941864747',
+    projectId: 'papyrus-6b9ba',
+    authDomain: 'papyrus-6b9ba.firebaseapp.com',
+    storageBucket: 'papyrus-6b9ba.firebasestorage.app',
+    measurementId: 'G-P0HMMVC1ZD',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyABqcOAVutKXuslOYo4ZcN_rklCMUaBD5M',
-    appId: '1:789494478936:android:1a5ded1a77cadbc08b322d',
-    messagingSenderId: '789494478936',
-    projectId: 'papyrus-library-manager',
-    storageBucket: 'papyrus-library-manager.appspot.com',
+    apiKey: 'AIzaSyCtl08RDSVubnlTOVb9y3KddUtPFn9j4VI',
+    appId: '1:344941864747:android:4aa61636fec0fbcd59876e',
+    messagingSenderId: '344941864747',
+    projectId: 'papyrus-6b9ba',
+    storageBucket: 'papyrus-6b9ba.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCqGr3it1tHnbacklPwgZX4l1g1u8-JDBM',
+    appId: '1:344941864747:ios:e9e3b80c426b52f459876e',
+    messagingSenderId: '344941864747',
+    projectId: 'papyrus-6b9ba',
+    storageBucket: 'papyrus-6b9ba.firebasestorage.app',
+    androidClientId:
+        '344941864747-86upqg83n160mjavogdkt5ust3u0hf9p.apps.googleusercontent.com',
+    iosClientId:
+        '344941864747-nvakkh3s8hdhd4gc452ope1vk550c6rj.apps.googleusercontent.com',
+    iosBundleId: 'com.papyrus.papyrus',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCqGr3it1tHnbacklPwgZX4l1g1u8-JDBM',
+    appId: '1:344941864747:ios:e9e3b80c426b52f459876e',
+    messagingSenderId: '344941864747',
+    projectId: 'papyrus-6b9ba',
+    storageBucket: 'papyrus-6b9ba.firebasestorage.app',
+    androidClientId:
+        '344941864747-86upqg83n160mjavogdkt5ust3u0hf9p.apps.googleusercontent.com',
+    iosClientId:
+        '344941864747-nvakkh3s8hdhd4gc452ope1vk550c6rj.apps.googleusercontent.com',
+    iosBundleId: 'com.papyrus.papyrus',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAnRI5eWvvfdyuRgW5HxedxSdHPc76ftp4',
+    appId: '1:344941864747:web:2e13e41050af3d8d59876e',
+    messagingSenderId: '344941864747',
+    projectId: 'papyrus-6b9ba',
+    authDomain: 'papyrus-6b9ba.firebaseapp.com',
+    storageBucket: 'papyrus-6b9ba.firebasestorage.app',
+    measurementId: 'G-BLJLRW8T4R',
+  );
+
+  static const FirebaseOptions linux = FirebaseOptions(
+    apiKey: 'AIzaSyAnRI5eWvvfdyuRgW5HxedxSdHPc76ftp4',
+    appId: '1:344941864747:web:b373710a395199e859876e',
+    messagingSenderId: '344941864747',
+    projectId: 'papyrus-6b9ba',
+    authDomain: 'papyrus-6b9ba.firebaseapp.com',
+    storageBucket: 'papyrus-6b9ba.firebasestorage.app',
+    measurementId: 'G-H2DBJRT8CV',
   );
 }

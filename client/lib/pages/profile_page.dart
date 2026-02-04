@@ -68,7 +68,7 @@ class ProfilePage extends StatelessWidget {
 
     for (var providerData in user.providerData) {
       if (providerData.providerId == 'google.com') {
-        await googleProvider.signOutWithGoogle();
+        await googleProvider.signOut();
         if (context.mounted) context.go('/login');
         return;
       }
