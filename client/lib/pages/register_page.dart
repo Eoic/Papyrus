@@ -277,7 +277,6 @@ class _RegisterForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inputHeight = isDesktop ? ComponentSizes.buttonHeightDesktop : null;
     final fieldSpacing = isEink ? Spacing.lg : Spacing.md;
 
     return Form(
@@ -287,101 +286,46 @@ class _RegisterForm extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Display name field
-          if (isDesktop && !isEink)
-            SizedBox(
-              height: inputHeight,
-              child: NameInput(
-                labelText: 'Display name',
-                controller: displayNameController,
-                focusNode: displayNameFocusNode,
-                isEink: isEink,
-                textInputAction: TextInputAction.next,
-                onEditingComplete: () => emailFocusNode.requestFocus(),
-              ),
-            )
-          else
-            NameInput(
-              labelText: 'Display name',
-              controller: displayNameController,
-              focusNode: displayNameFocusNode,
-              isEink: isEink,
-              textInputAction: TextInputAction.next,
-              onEditingComplete: () => emailFocusNode.requestFocus(),
-            ),
+          NameInput(
+            labelText: 'Display name',
+            controller: displayNameController,
+            focusNode: displayNameFocusNode,
+            isEink: isEink,
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () => emailFocusNode.requestFocus(),
+          ),
           SizedBox(height: fieldSpacing),
           // Email field
-          if (isDesktop && !isEink)
-            SizedBox(
-              height: inputHeight,
-              child: EmailInput(
-                labelText: 'Email address',
-                controller: emailController,
-                focusNode: emailFocusNode,
-                isEink: isEink,
-                textInputAction: TextInputAction.next,
-                onEditingComplete: () => passwordFocusNode.requestFocus(),
-              ),
-            )
-          else
-            EmailInput(
-              labelText: 'Email address',
-              controller: emailController,
-              focusNode: emailFocusNode,
-              isEink: isEink,
-              textInputAction: TextInputAction.next,
-              onEditingComplete: () => passwordFocusNode.requestFocus(),
-            ),
+          EmailInput(
+            labelText: 'Email address',
+            controller: emailController,
+            focusNode: emailFocusNode,
+            isEink: isEink,
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () => passwordFocusNode.requestFocus(),
+          ),
           SizedBox(height: fieldSpacing),
           // Password field
-          if (isDesktop && !isEink)
-            SizedBox(
-              height: inputHeight,
-              child: PasswordInput(
-                labelText: 'Password',
-                controller: passwordController,
-                focusNode: passwordFocusNode,
-                isEink: isEink,
-                textInputAction: TextInputAction.next,
-                onEditingComplete: () =>
-                    confirmPasswordFocusNode.requestFocus(),
-                extraValidator: validatePasswordStrength,
-              ),
-            )
-          else
-            PasswordInput(
-              labelText: 'Password',
-              controller: passwordController,
-              focusNode: passwordFocusNode,
-              isEink: isEink,
-              textInputAction: TextInputAction.next,
-              onEditingComplete: () => confirmPasswordFocusNode.requestFocus(),
-              extraValidator: validatePasswordStrength,
-            ),
+          PasswordInput(
+            labelText: 'Password',
+            controller: passwordController,
+            focusNode: passwordFocusNode,
+            isEink: isEink,
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () => confirmPasswordFocusNode.requestFocus(),
+            extraValidator: validatePasswordStrength,
+          ),
           SizedBox(height: fieldSpacing),
           // Confirm password field
-          if (isDesktop && !isEink)
-            SizedBox(
-              height: inputHeight,
-              child: PasswordInput(
-                labelText: 'Confirm password',
-                controller: confirmPasswordController,
-                focusNode: confirmPasswordFocusNode,
-                isEink: isEink,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => onRegister(),
-                extraValidator: validateConfirmPassword,
-              ),
-            )
-          else
-            PasswordInput(
-              labelText: 'Confirm password',
-              controller: confirmPasswordController,
-              focusNode: confirmPasswordFocusNode,
-              isEink: isEink,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => onRegister(),
-              extraValidator: validateConfirmPassword,
-            ),
+          PasswordInput(
+            labelText: 'Confirm password',
+            controller: confirmPasswordController,
+            focusNode: confirmPasswordFocusNode,
+            isEink: isEink,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => onRegister(),
+            extraValidator: validateConfirmPassword,
+          ),
           const SizedBox(height: Spacing.lg),
           // Continue button
           AuthContinueButton(

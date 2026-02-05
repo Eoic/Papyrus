@@ -15,12 +15,16 @@ class MobileAuthLayout extends StatelessWidget {
   /// Widgets placed below the form (divider, social button, switch link).
   final List<Widget> footer;
 
+  /// Whether to show branding, heading, and subtitle above the form.
+  final bool showHeader;
+
   const MobileAuthLayout({
     super.key,
     required this.heading,
     required this.subtitle,
     required this.form,
     required this.footer,
+    this.showHeader = true,
   });
 
   @override
@@ -47,22 +51,24 @@ class MobileAuthLayout extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: Spacing.xl),
-                        const AuthBranding(),
-                        const SizedBox(height: Spacing.md),
-                        Text(
-                          heading,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
+                        if (showHeader) ...[
+                          const AuthBranding(),
+                          const SizedBox(height: Spacing.md),
+                          Text(
+                            heading,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
                           ),
-                        ),
-                        Text(
-                          subtitle,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          Text(
+                            subtitle,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: Spacing.lg),
+                          const SizedBox(height: Spacing.lg),
+                        ],
                         form,
                         const Spacer(),
                         ...footer,
@@ -91,12 +97,16 @@ class DesktopAuthLayout extends StatelessWidget {
   /// Widgets placed below the form (divider, social button, switch link).
   final List<Widget> footer;
 
+  /// Whether to show branding, heading, and subtitle above the form.
+  final bool showHeader;
+
   const DesktopAuthLayout({
     super.key,
     required this.heading,
     required this.subtitle,
     required this.form,
     required this.footer,
+    this.showHeader = true,
   });
 
   @override
@@ -135,22 +145,24 @@ class DesktopAuthLayout extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AuthBranding(),
-                        const SizedBox(height: Spacing.md),
-                        Text(
-                          heading,
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
+                        if (showHeader) ...[
+                          const AuthBranding(),
+                          const SizedBox(height: Spacing.md),
+                          Text(
+                            heading,
+                            style: theme.textTheme.headlineLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
                           ),
-                        ),
-                        Text(
-                          subtitle,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          Text(
+                            subtitle,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: Spacing.xl),
+                          const SizedBox(height: Spacing.xl),
+                        ],
                         form,
                         ...footer,
                       ],

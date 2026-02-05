@@ -107,82 +107,79 @@ class _PasswordInputState extends State<PasswordInput> {
           ),
         ),
         // Input field with text toggle button
-        SizedBox(
-          height: ComponentSizes.inputHeightEink,
-          child: TextFormField(
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-              enabledBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-              focusedBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkFocused,
-                ),
-              ),
-              errorBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkError,
-                ),
-              ),
-              focusedErrorBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkError,
-                ),
-              ),
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Spacing.md,
-                vertical: Spacing.md,
-              ),
-              // No floating label for e-ink
-              floatingLabelBehavior: FloatingLabelBehavior.never,
-              hintText: 'Enter password',
-              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
-              // Text button instead of icon for e-ink
-              suffixIcon: TextButton(
-                onPressed: _toggleVisibility,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-                  foregroundColor: Colors.black,
-                  textStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                child: Text(_isTextHidden ? 'SHOW' : 'HIDE'),
+        TextFormField(
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkDefault,
               ),
             ),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            obscureText: _isTextHidden,
-            enableSuggestions: false,
-            autocorrect: false,
-            controller: widget.controller,
-            focusNode: widget.focusNode,
-            textInputAction: widget.textInputAction ?? TextInputAction.done,
-            onEditingComplete: widget.onEditingComplete,
-            onFieldSubmitted: widget.onFieldSubmitted,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: _validate,
+            enabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkDefault,
+              ),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkFocused,
+              ),
+            ),
+            errorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkError,
+              ),
+            ),
+            focusedErrorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkError,
+              ),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: Spacing.md,
+              vertical: Spacing.md,
+            ),
+            // No floating label for e-ink
+            floatingLabelBehavior: FloatingLabelBehavior.never,
+            hintText: 'Enter password',
+            hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
+            // Text button instead of icon for e-ink
+            suffixIcon: TextButton(
+              onPressed: _toggleVisibility,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+                foregroundColor: Colors.black,
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              child: Text(_isTextHidden ? 'SHOW' : 'HIDE'),
+            ),
           ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          obscureText: _isTextHidden,
+          enableSuggestions: false,
+          autocorrect: false,
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          textInputAction: widget.textInputAction ?? TextInputAction.done,
+          onEditingComplete: widget.onEditingComplete,
+          onFieldSubmitted: widget.onFieldSubmitted,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: _validate,
         ),
       ],
     );

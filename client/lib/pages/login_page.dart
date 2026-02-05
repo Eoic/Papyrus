@@ -241,8 +241,6 @@ class _LoginForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inputHeight = isDesktop ? ComponentSizes.buttonHeightDesktop : null;
-
     return Form(
       key: formKey,
       child: Column(
@@ -250,27 +248,14 @@ class _LoginForm extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Email field
-          if (isDesktop && !isEink)
-            SizedBox(
-              height: inputHeight,
-              child: EmailInput(
-                labelText: 'Email address',
-                controller: emailController,
-                focusNode: emailFocusNode,
-                isEink: isEink,
-                textInputAction: TextInputAction.next,
-                onEditingComplete: () => passwordFocusNode.requestFocus(),
-              ),
-            )
-          else
-            EmailInput(
-              labelText: 'Email address',
-              controller: emailController,
-              focusNode: emailFocusNode,
-              isEink: isEink,
-              textInputAction: TextInputAction.next,
-              onEditingComplete: () => passwordFocusNode.requestFocus(),
-            ),
+          EmailInput(
+            labelText: 'Email address',
+            controller: emailController,
+            focusNode: emailFocusNode,
+            isEink: isEink,
+            textInputAction: TextInputAction.next,
+            onEditingComplete: () => passwordFocusNode.requestFocus(),
+          ),
           SizedBox(height: isEink ? Spacing.lg : Spacing.md),
           // Password field
           PasswordInput(
@@ -288,7 +273,7 @@ class _LoginForm extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  // TODO: Implement forgot password flow
+                  context.go('/forgot-password');
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.primary,

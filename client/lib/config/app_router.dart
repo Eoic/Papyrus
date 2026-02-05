@@ -8,6 +8,7 @@ import 'package:papyrus/pages/dashboard_page.dart';
 import 'package:papyrus/pages/developer_options_page.dart';
 import 'package:papyrus/pages/goals_page.dart';
 import 'package:papyrus/pages/library_page.dart';
+import 'package:papyrus/pages/forgot_password_page.dart';
 import 'package:papyrus/pages/login_page.dart';
 import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
@@ -45,6 +46,14 @@ class AppRouter {
             pageBuilder: (context, state) => NoTransitionPage(
               key: state.pageKey,
               child: const RegisterPage(),
+            ),
+          ),
+          GoRoute(
+            name: 'FORGOT_PASSWORD',
+            path: 'forgot-password',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const ForgotPasswordPage(),
             ),
           ),
         ],
@@ -210,7 +219,8 @@ class AppRouter {
     redirect: (BuildContext context, GoRouterState state) {
       if (FirebaseAuth.instance.currentUser == null) {
         if (state.uri.toString().contains('/login') ||
-            state.uri.toString().contains('/register')) {
+            state.uri.toString().contains('/register') ||
+            state.uri.toString().contains('/forgot-password')) {
           return null;
         }
 

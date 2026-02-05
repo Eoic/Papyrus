@@ -82,67 +82,64 @@ class EmailInput extends StatelessWidget {
           ),
         ),
         // Input field
-        SizedBox(
-          height: ComponentSizes.inputHeightEink,
-          child: TextFormField(
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
+        TextFormField(
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkDefault,
               ),
-              enabledBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-              focusedBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkFocused,
-                ),
-              ),
-              errorBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkError,
-                ),
-              ),
-              focusedErrorBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.zero,
-                borderSide: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkError,
-                ),
-              ),
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Spacing.md,
-                vertical: Spacing.md,
-              ),
-              // No floating label for e-ink
-              floatingLabelBehavior: FloatingLabelBehavior.never,
-              hintText: 'Enter email address',
-              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
             ),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            controller: controller,
-            focusNode: focusNode,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: textInputAction ?? TextInputAction.next,
-            onEditingComplete: onEditingComplete,
-            autocorrect: false,
-            enableSuggestions: false,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: _validateEmail,
+            enabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkDefault,
+              ),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkFocused,
+              ),
+            ),
+            errorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkError,
+              ),
+            ),
+            focusedErrorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(
+                color: Colors.black,
+                width: BorderWidths.einkError,
+              ),
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: Spacing.md,
+              vertical: Spacing.md,
+            ),
+            // No floating label for e-ink
+            floatingLabelBehavior: FloatingLabelBehavior.never,
+            hintText: 'Enter email address',
+            hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
           ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          controller: controller,
+          focusNode: focusNode,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: textInputAction ?? TextInputAction.next,
+          onEditingComplete: onEditingComplete,
+          autocorrect: false,
+          enableSuggestions: false,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: _validateEmail,
         ),
       ],
     );
