@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
+import 'package:papyrus/widgets/auth/auth_hero_panel.dart';
 import 'package:papyrus/widgets/buttons/google_sign_in.dart';
 import 'package:papyrus/widgets/input/email_input.dart';
 import 'package:papyrus/widgets/input/password_input.dart';
@@ -221,96 +223,80 @@ class _MobileRegisterLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: Spacing.lg),
-                    // Logo and title
-                    _MobileHeader(theme: theme),
-                    const SizedBox(height: Spacing.xl),
-                    // Create account header
-                    Text(
-                      'Create account',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+      backgroundColor: theme.colorScheme.surface,
+      body: Column(
+        children: [
+          // Compact hero header with curved bottom
+          CompactAuthHeader(
+            isDark: isDark,
+            height: ComponentSizes.mobileHeroHeight,
+          ),
+          // Form content
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: Spacing.xl),
+                        // Branding
+                        const _AuthBranding(),
+                        const SizedBox(height: Spacing.xl),
+                        // Create account header
+                        Text(
+                          'Create account',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: Spacing.lg),
+                        // Register form
+                        _RegisterForm(
+                          formKey: formKey,
+                          emailController: emailController,
+                          passwordController: passwordController,
+                          confirmPasswordController: confirmPasswordController,
+                          emailFocusNode: emailFocusNode,
+                          passwordFocusNode: passwordFocusNode,
+                          confirmPasswordFocusNode: confirmPasswordFocusNode,
+                          isLoading: isLoading,
+                          onRegister: onRegister,
+                          isEink: false,
+                          isDesktop: false,
+                          validatePasswordStrength: validatePasswordStrength,
+                          validateConfirmPassword: validateConfirmPassword,
+                        ),
+                        const Spacer(),
+                        // Social sign-up section
+                        const TitledDivider(title: 'Or continue with'),
+                        const GoogleSignInButton(title: 'Sign up with Google'),
+                        const SizedBox(height: Spacing.md),
+                        // Sign in link
+                        _SignInLink(onLogin: onLogin, isEink: false),
+                        const SizedBox(height: Spacing.lg),
+                      ],
                     ),
-                    const SizedBox(height: Spacing.lg),
-                    // Register form
-                    _RegisterForm(
-                      formKey: formKey,
-                      emailController: emailController,
-                      passwordController: passwordController,
-                      confirmPasswordController: confirmPasswordController,
-                      emailFocusNode: emailFocusNode,
-                      passwordFocusNode: passwordFocusNode,
-                      confirmPasswordFocusNode: confirmPasswordFocusNode,
-                      isLoading: isLoading,
-                      onRegister: onRegister,
-                      isEink: false,
-                      isDesktop: false,
-                      validatePasswordStrength: validatePasswordStrength,
-                      validateConfirmPassword: validateConfirmPassword,
-                    ),
-                    const Spacer(),
-                    // Social sign-up section
-                    const TitledDivider(title: 'Or continue with'),
-                    const GoogleSignInButton(title: 'Sign up with Google'),
-                    const SizedBox(height: Spacing.md),
-                    // Sign in link
-                    _SignInLink(onLogin: onLogin, isEink: false),
-                    const SizedBox(height: Spacing.md),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Mobile header with small logo and title.
-class _MobileHeader extends StatelessWidget {
-  final ThemeData theme;
-
-  const _MobileHeader({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(
-          'assets/images/logo.png',
-          width: 80,
-          height: 80,
-          fit: BoxFit.contain,
-        ),
-        const SizedBox(width: Spacing.md),
-        Text(
-          'Papyrus',
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // =============================================================================
-// DESKTOP LAYOUT (840px+)
+// DESKTOP LAYOUT (840px+) - Split Screen
 // =============================================================================
 
 class _DesktopRegisterLayout extends StatelessWidget {
@@ -350,157 +336,81 @@ class _DesktopRegisterLayout extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Stack(
+      backgroundColor: theme.colorScheme.surface,
+      body: Row(
         children: [
-          // Background gradient
-          _BackgroundGradient(isDark: isDark, theme: theme),
-          // Content
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.pageMarginsDesktop,
-                  vertical: Spacing.xxl,
-                ),
-                child: _DesktopCard(
-                  theme: theme,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Logo and title in row
-                      _DesktopHeader(theme: theme),
-                      const SizedBox(height: Spacing.xl),
-                      // Create account header
-                      Text(
-                        'Create account',
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w500,
+          // Hero panel (60%)
+          Expanded(flex: 6, child: AuthHeroPanel(isDark: isDark)),
+          // Form panel (40%)
+          Expanded(
+            flex: 4,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 24,
+                    offset: const Offset(-4, 0),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(
+                    ComponentSizes.authFormPanelPadding,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: ComponentSizes.authFormPanelMaxWidth,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Branding
+                        const _AuthBranding(),
+                        const SizedBox(height: Spacing.xxl),
+                        // Create account header
+                        Text(
+                          'Create account',
+                          style: theme.textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: Spacing.lg),
-                      // Register form
-                      _RegisterForm(
-                        formKey: formKey,
-                        emailController: emailController,
-                        passwordController: passwordController,
-                        confirmPasswordController: confirmPasswordController,
-                        emailFocusNode: emailFocusNode,
-                        passwordFocusNode: passwordFocusNode,
-                        confirmPasswordFocusNode: confirmPasswordFocusNode,
-                        isLoading: isLoading,
-                        onRegister: onRegister,
-                        isEink: false,
-                        isDesktop: true,
-                        validatePasswordStrength: validatePasswordStrength,
-                        validateConfirmPassword: validateConfirmPassword,
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      // Social sign-up section
-                      const TitledDivider(title: 'Or continue with'),
-                      const GoogleSignInButton(title: 'Sign up with Google'),
-                      const SizedBox(height: Spacing.lg),
-                      // Sign in link
-                      _SignInLink(onLogin: onLogin, isEink: false),
-                    ],
+                        const SizedBox(height: Spacing.xl),
+                        // Register form
+                        _RegisterForm(
+                          formKey: formKey,
+                          emailController: emailController,
+                          passwordController: passwordController,
+                          confirmPasswordController: confirmPasswordController,
+                          emailFocusNode: emailFocusNode,
+                          passwordFocusNode: passwordFocusNode,
+                          confirmPasswordFocusNode: confirmPasswordFocusNode,
+                          isLoading: isLoading,
+                          onRegister: onRegister,
+                          isEink: false,
+                          isDesktop: true,
+                          validatePasswordStrength: validatePasswordStrength,
+                          validateConfirmPassword: validateConfirmPassword,
+                        ),
+                        const SizedBox(height: Spacing.lg),
+                        // Social sign-up section
+                        const TitledDivider(title: 'Or continue with'),
+                        const GoogleSignInButton(title: 'Sign up with Google'),
+                        const SizedBox(height: Spacing.xl),
+                        // Sign in link
+                        _SignInLink(onLogin: onLogin, isEink: false),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Desktop card container with shadow and border.
-class _DesktopCard extends StatelessWidget {
-  final ThemeData theme;
-  final Widget child;
-
-  const _DesktopCard({required this.theme, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: ComponentSizes.authCardWidth,
-      padding: const EdgeInsets.all(ComponentSizes.authCardPadding),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-/// Desktop header with logo and title in a row.
-class _DesktopHeader extends StatelessWidget {
-  final ThemeData theme;
-
-  const _DesktopHeader({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(
-          'assets/images/logo.png',
-          width: ComponentSizes.logoSmall,
-          height: ComponentSizes.logoSmall,
-          fit: BoxFit.contain,
-        ),
-        const SizedBox(width: Spacing.md),
-        Text(
-          'Papyrus',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Subtle background gradient for desktop layout.
-class _BackgroundGradient extends StatelessWidget {
-  final bool isDark;
-  final ThemeData theme;
-
-  const _BackgroundGradient({required this.isDark, required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(0, -0.3),
-          radius: 1.2,
-          colors: isDark
-              ? [
-                  theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
-                  theme.colorScheme.surface,
-                ]
-              : [
-                  theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                  theme.colorScheme.surface,
-                ],
-          stops: const [0.0, 1.0],
-        ),
       ),
     );
   }
@@ -961,6 +871,37 @@ class _SignInLink extends StatelessWidget {
             ),
           ),
           child: const Text('Sign in'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Branding element with logo and app name.
+/// Placed at the top of the form panel.
+class _AuthBranding extends StatelessWidget {
+  const _AuthBranding();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(
+          'assets/images/logo-icon-light.svg',
+          width: 48,
+          height: 48,
+        ),
+        const SizedBox(width: 16),
+        Text(
+          'Papyrus',
+          style: TextStyle(
+            fontFamily: 'MadimiOne',
+            fontSize: 32,
+            fontWeight: FontWeight.normal,
+            color: AuthColors.gradientStartLight,
+            letterSpacing: -0.5,
+          ),
         ),
       ],
     );

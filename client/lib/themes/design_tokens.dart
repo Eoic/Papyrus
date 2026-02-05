@@ -147,6 +147,12 @@ class ComponentSizes {
   static const double authCardWidth = 480.0;
   static const double authCardPadding = 48.0;
 
+  // Auth layout (split-screen)
+  static const double authHeroMinWidth = 400.0;
+  static const double authFormPanelMaxWidth = 400.0;
+  static const double authFormPanelPadding = 48.0;
+  static const double mobileHeroHeight = 200.0;
+
   // Book covers
   static const double bookCoverWidthGrid = 120.0;
   static const double bookCoverHeightGrid = 180.0;

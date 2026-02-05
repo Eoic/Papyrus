@@ -23,6 +23,7 @@ dependencies:
   http: ^1.2.0
   file_picker: ^8.0.0+1
   cached_network_image: ^3.3.1
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +42,7 @@ flutter:
     - assets/images/book_placeholder.jpg
     - assets/images/book_placeholder_2.jpg
     - assets/images/profile.png
+    - assets/images/auth-illustration.png
 
   fonts:
     - family: MadimiOne
