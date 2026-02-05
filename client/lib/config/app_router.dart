@@ -36,16 +36,16 @@ class AppRouter {
           GoRoute(
             name: 'LOGIN',
             path: 'login',
-            builder: (BuildContext context, GoRouterState state) {
-              return const LoginPage();
-            },
+            pageBuilder: (context, state) =>
+                NoTransitionPage(key: state.pageKey, child: const LoginPage()),
           ),
           GoRoute(
             name: 'REGISTER',
             path: 'register',
-            builder: (BuildContext context, GoRouterState state) {
-              return const RegisterPage();
-            },
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const RegisterPage(),
+            ),
           ),
         ],
       ),

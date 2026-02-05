@@ -60,6 +60,7 @@ class EmailInput extends StatelessWidget {
       onEditingComplete: onEditingComplete,
       autocorrect: false,
       enableSuggestions: false,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: _validateEmail,
     );
   }
@@ -139,6 +140,7 @@ class EmailInput extends StatelessWidget {
             onEditingComplete: onEditingComplete,
             autocorrect: false,
             enableSuggestions: false,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: _validateEmail,
           ),
         ),

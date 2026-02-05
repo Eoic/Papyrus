@@ -85,6 +85,7 @@ class _PasswordInputState extends State<PasswordInput> {
       textInputAction: widget.textInputAction ?? TextInputAction.done,
       onEditingComplete: widget.onEditingComplete,
       onFieldSubmitted: widget.onFieldSubmitted,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: _validate,
     );
   }
@@ -179,6 +180,7 @@ class _PasswordInputState extends State<PasswordInput> {
             textInputAction: widget.textInputAction ?? TextInputAction.done,
             onEditingComplete: widget.onEditingComplete,
             onFieldSubmitted: widget.onFieldSubmitted,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: _validate,
           ),
         ),
