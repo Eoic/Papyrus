@@ -5,13 +5,9 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:provider/provider.dart';
 
 /// A Google Sign-in button with loading state and error handling.
-/// Supports standard and e-ink display modes.
 class GoogleSignInButton extends StatefulWidget {
   /// Button text
   final String title;
-
-  /// Whether to display in e-ink optimized mode
-  final bool isEink;
 
   /// Optional callback when sign-in is successful
   final VoidCallback? onSuccess;
@@ -22,7 +18,6 @@ class GoogleSignInButton extends StatefulWidget {
   const GoogleSignInButton({
     super.key,
     required this.title,
-    this.isEink = false,
     this.onSuccess,
     this.onError,
   });
@@ -73,14 +68,6 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isEink) {
-      return _buildEinkButton(context);
-    }
-
-    return _buildStandardButton(context);
-  }
-
-  Widget _buildStandardButton(BuildContext context) {
     final theme = Theme.of(context);
 
     if (_isSigningIn) {
@@ -133,50 +120,6 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEinkButton(BuildContext context) {
-    if (_isSigningIn) {
-      return SizedBox(
-        height: ComponentSizes.buttonHeightEink,
-        child: const Center(
-          child: Text(
-            'SIGNING IN...',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(ComponentSizes.buttonHeightEink),
-        side: const BorderSide(
-          width: BorderWidths.einkDefault,
-          color: Colors.black,
-        ),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.lg,
-          vertical: Spacing.buttonPaddingVertical,
-        ),
-      ),
-      onPressed: _handleSignIn,
-      child: Text(
-        widget.title.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-        ),
       ),
     );
   }

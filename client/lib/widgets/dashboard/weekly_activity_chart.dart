@@ -65,6 +65,10 @@ class WeeklyActivityChart extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,7 +116,7 @@ class WeeklyActivityChart extends StatelessWidget {
           const SizedBox(height: Spacing.md),
           // Chart
           SizedBox(
-            height: 80,
+            height: 120,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: activities.map((activity) {
@@ -148,8 +152,8 @@ class WeeklyActivityChart extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Calculate bar height (max 40px)
-    final maxHeight = 40.0;
+    // Calculate bar height (max 80px)
+    final maxHeight = 80.0;
     final barHeight = maxMinutes > 0
         ? (activity.readingMinutes / maxMinutes * maxHeight).clamp(
             2.0,
@@ -187,7 +191,7 @@ class WeeklyActivityChart extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           // Day label
           Text(
-            activity.dayInitial,
+            activity.dayLabel,
             style: textTheme.labelSmall?.copyWith(
               fontWeight: activity.isToday
                   ? FontWeight.bold

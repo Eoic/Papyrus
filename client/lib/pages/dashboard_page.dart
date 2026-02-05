@@ -164,24 +164,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: Spacing.lg),
               // Row 1: Continue Reading + Reading Goal
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ContinueReadingCard(
-                      book: provider.currentBook,
-                      isDesktop: true,
-                    ),
-                  ),
-                  const SizedBox(width: Spacing.lg),
-                  Expanded(
-                    child: ReadingGoalCard(
-                      goals: provider.activeGoals,
-                      isDesktop: true,
-                    ),
-                  ),
-                ],
-              ),
+              _buildTopCards(context, provider),
               const SizedBox(height: Spacing.lg),
               // Row 2: Activity Chart (full width)
               WeeklyActivityChart(
@@ -224,6 +207,42 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildTopCards(BuildContext context, DashboardProvider provider) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 1024;
+
+    if (isWide) {
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ContinueReadingCard(
+                book: provider.currentBook,
+                isDesktop: true,
+              ),
+            ),
+            const SizedBox(width: Spacing.lg),
+            Expanded(
+              child: ReadingGoalCard(
+                goals: provider.activeGoals,
+                isDesktop: true,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        ContinueReadingCard(book: provider.currentBook, isDesktop: true),
+        const SizedBox(height: Spacing.lg),
+        ReadingGoalCard(goals: provider.activeGoals, isDesktop: true),
+      ],
+    );
+  }
+
   Widget _buildRecentlyAddedCard(
     BuildContext context,
     DashboardProvider provider,
@@ -235,6 +254,10 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: RecentlyAddedSection(
         books: provider.recentlyAdded,

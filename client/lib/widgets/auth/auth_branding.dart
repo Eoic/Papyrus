@@ -23,7 +23,7 @@ class AuthBranding extends StatelessWidget {
             fontFamily: 'MadimiOne',
             fontSize: 36,
             fontWeight: FontWeight.normal,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             letterSpacing: -0.5,
           ),
         ),

@@ -50,30 +50,31 @@ class RecentlyAddedSection extends StatelessWidget {
     final coverWidth = isDesktop ? 100.0 : 80.0;
     final coverHeight = isDesktop ? 150.0 : 120.0;
 
+    final horizontalPadding = isDesktop ? 0.0 : Spacing.md;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Recently added', style: textTheme.titleMedium),
-              TextButton(
+              _buildViewAllButton(
                 onPressed: onSeeAll ?? () => context.go('/library'),
-                child: const Text('See all'),
               ),
             ],
           ),
         ),
-        const SizedBox(height: Spacing.sm),
+        const SizedBox(height: Spacing.md),
         // Horizontal scroll
         SizedBox(
           height: coverHeight + 8, // Extra space for shadows
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             itemCount: books.length,
             separatorBuilder: (_, _) =>
                 const SizedBox(width: Spacing.sm + Spacing.xs),
@@ -100,31 +101,34 @@ class RecentlyAddedSection extends StatelessWidget {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTap: () => _onBookTap(context, book),
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => _onBookTap(context, book),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: book.coverURL != null && book.coverURL!.isNotEmpty
+              ? Image.network(
+                  book.coverURL!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) =>
+                      _buildCoverPlaceholder(context, book),
+                )
+              : _buildCoverPlaceholder(context, book),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: book.coverURL != null && book.coverURL!.isNotEmpty
-            ? Image.network(
-                book.coverURL!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    _buildCoverPlaceholder(context, book),
-              )
-            : _buildCoverPlaceholder(context, book),
       ),
     );
   }
@@ -155,6 +159,19 @@ class RecentlyAddedSection extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildViewAllButton({required VoidCallback onPressed}) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: const Text('View all'),
+      label: const Icon(Icons.arrow_forward, size: 16),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

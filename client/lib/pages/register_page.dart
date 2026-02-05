@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
 import 'package:papyrus/widgets/auth/auth_continue_button.dart';
@@ -15,7 +13,7 @@ import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
 
 /// Register page for the Papyrus book management application.
-/// Provides responsive layouts for mobile, desktop, and e-ink displays.
+/// Provides responsive layouts for mobile and desktop displays.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -114,10 +112,6 @@ class _RegisterPageState extends State<RegisterPage> {
     context.go('/login');
   }
 
-  void _navigateBack() {
-    context.go('/');
-  }
-
   String? _validateConfirmPassword(String? value) {
     if (value != _passwordController.text) {
       return 'Passwords do not match';
@@ -132,70 +126,42 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
+  List<Widget> _buildFooter() {
+    return [
+      const TitledDivider(title: 'Or continue with'),
+      const GoogleSignInButton(title: 'Sign up with Google'),
+      const SizedBox(height: Spacing.md),
+      AuthSwitchLink(
+        promptText: 'Already have an account?',
+        actionText: 'Sign in',
+        onPressed: _navigateToLogin,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
-    final isEink = displayMode.isEinkMode;
-
-    final registerForm = _RegisterForm(
-      formKey: _formKey,
-      displayNameController: _displayNameController,
-      emailController: _emailController,
-      passwordController: _passwordController,
-      confirmPasswordController: _confirmPasswordController,
-      displayNameFocusNode: _displayNameFocusNode,
-      emailFocusNode: _emailFocusNode,
-      passwordFocusNode: _passwordFocusNode,
-      confirmPasswordFocusNode: _confirmPasswordFocusNode,
-      isLoading: _isLoading,
-      onRegister: _handleRegister,
-      isEink: isEink,
-      isDesktop: false,
-      validatePasswordStrength: _validatePasswordStrength,
-      validateConfirmPassword: _validateConfirmPassword,
-    );
-
-    if (isEink) {
-      return EinkAuthLayout(
-        headerTitle: 'CREATE ACCOUNT',
-        onBack: _navigateBack,
-        form: registerForm,
-        footer: [
-          const SizedBox(height: Spacing.xl),
-          const TitledDivider(title: 'Or', isEink: true),
-          const SizedBox(height: Spacing.md),
-          const GoogleSignInButton(title: 'Sign up with Google', isEink: true),
-          const SizedBox(height: Spacing.xl),
-          AuthSwitchLink(
-            promptText: 'Already have an account?',
-            actionText: 'Sign in',
-            einkPromptText: 'ALREADY HAVE AN ACCOUNT?',
-            einkActionText: 'SIGN IN',
-            onPressed: _navigateToLogin,
-            isEink: true,
-          ),
-        ],
-      );
-    }
-
     return ResponsiveBuilder(
       mobile: (context) => MobileAuthLayout(
         heading: 'Create account',
         subtitle: 'Sign up for a new account to get started',
-        form: registerForm,
-        footer: [
-          const TitledDivider(title: 'Or continue with'),
-          const GoogleSignInButton(title: 'Sign up with Google'),
-          const SizedBox(height: Spacing.md),
-          AuthSwitchLink(
-            promptText: 'Already have an account?',
-            actionText: 'Sign in',
-            einkPromptText: 'ALREADY HAVE AN ACCOUNT?',
-            einkActionText: 'SIGN IN',
-            onPressed: _navigateToLogin,
-            isEink: false,
-          ),
-        ],
+        form: _RegisterForm(
+          formKey: _formKey,
+          displayNameController: _displayNameController,
+          emailController: _emailController,
+          passwordController: _passwordController,
+          confirmPasswordController: _confirmPasswordController,
+          displayNameFocusNode: _displayNameFocusNode,
+          emailFocusNode: _emailFocusNode,
+          passwordFocusNode: _passwordFocusNode,
+          confirmPasswordFocusNode: _confirmPasswordFocusNode,
+          isLoading: _isLoading,
+          onRegister: _handleRegister,
+          isDesktop: false,
+          validatePasswordStrength: _validatePasswordStrength,
+          validateConfirmPassword: _validateConfirmPassword,
+        ),
+        footer: _buildFooter(),
       ),
       desktop: (context) => DesktopAuthLayout(
         heading: 'Create account',
@@ -212,24 +178,11 @@ class _RegisterPageState extends State<RegisterPage> {
           confirmPasswordFocusNode: _confirmPasswordFocusNode,
           isLoading: _isLoading,
           onRegister: _handleRegister,
-          isEink: false,
           isDesktop: true,
           validatePasswordStrength: _validatePasswordStrength,
           validateConfirmPassword: _validateConfirmPassword,
         ),
-        footer: [
-          const TitledDivider(title: 'Or continue with'),
-          const GoogleSignInButton(title: 'Sign up with Google'),
-          const SizedBox(height: Spacing.md),
-          AuthSwitchLink(
-            promptText: 'Already have an account?',
-            actionText: 'Sign in',
-            einkPromptText: 'ALREADY HAVE AN ACCOUNT?',
-            einkActionText: 'SIGN IN',
-            onPressed: _navigateToLogin,
-            isEink: false,
-          ),
-        ],
+        footer: _buildFooter(),
       ),
     );
   }
@@ -252,7 +205,6 @@ class _RegisterForm extends StatelessWidget {
   final FocusNode confirmPasswordFocusNode;
   final bool isLoading;
   final VoidCallback onRegister;
-  final bool isEink;
   final bool isDesktop;
   final String? Function(String?) validatePasswordStrength;
   final String? Function(String?) validateConfirmPassword;
@@ -269,7 +221,6 @@ class _RegisterForm extends StatelessWidget {
     required this.confirmPasswordFocusNode,
     required this.isLoading,
     required this.onRegister,
-    required this.isEink,
     required this.isDesktop,
     required this.validatePasswordStrength,
     required this.validateConfirmPassword,
@@ -277,63 +228,50 @@ class _RegisterForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fieldSpacing = isEink ? Spacing.lg : Spacing.md;
-
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Display name field
           NameInput(
             labelText: 'Display name',
             controller: displayNameController,
             focusNode: displayNameFocusNode,
-            isEink: isEink,
             textInputAction: TextInputAction.next,
             onEditingComplete: () => emailFocusNode.requestFocus(),
           ),
-          SizedBox(height: fieldSpacing),
-          // Email field
+          const SizedBox(height: Spacing.md),
           EmailInput(
             labelText: 'Email address',
             controller: emailController,
             focusNode: emailFocusNode,
-            isEink: isEink,
             textInputAction: TextInputAction.next,
             onEditingComplete: () => passwordFocusNode.requestFocus(),
           ),
-          SizedBox(height: fieldSpacing),
-          // Password field
+          const SizedBox(height: Spacing.md),
           PasswordInput(
             labelText: 'Password',
             controller: passwordController,
             focusNode: passwordFocusNode,
-            isEink: isEink,
             textInputAction: TextInputAction.next,
             onEditingComplete: () => confirmPasswordFocusNode.requestFocus(),
             extraValidator: validatePasswordStrength,
           ),
-          SizedBox(height: fieldSpacing),
-          // Confirm password field
+          const SizedBox(height: Spacing.md),
           PasswordInput(
             labelText: 'Confirm password',
             controller: confirmPasswordController,
             focusNode: confirmPasswordFocusNode,
-            isEink: isEink,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => onRegister(),
             extraValidator: validateConfirmPassword,
           ),
           const SizedBox(height: Spacing.lg),
-          // Continue button
           AuthContinueButton(
             isLoading: isLoading,
             onPressed: onRegister,
-            isEink: isEink,
             isDesktop: isDesktop,
-            einkLoadingText: 'CREATING ACCOUNT...',
           ),
         ],
       ),

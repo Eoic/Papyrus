@@ -51,6 +51,10 @@ class ReadingGoalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,20 +63,16 @@ class ReadingGoalCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.flag_outlined,
-                    size: 20,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  Text('Reading goals', style: textTheme.titleMedium),
-                ],
-              ),
-              TextButton(
+              Text('Reading goals', style: textTheme.titleMedium),
+              TextButton.icon(
                 onPressed: onTap ?? () => context.go('/goals'),
-                child: const Text('View all'),
+                icon: const Text('View all'),
+                label: const Icon(Icons.arrow_forward, size: 16),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ],
           ),
@@ -272,10 +272,14 @@ class ReadingGoalCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(Spacing.lg),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -47,11 +47,30 @@ class QuickStatsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quick stats', style: textTheme.titleMedium),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Quick stats', style: textTheme.titleMedium),
+              TextButton.icon(
+                onPressed: () => context.go('/statistics'),
+                icon: const Text('View all'),
+                label: const Icon(Icons.arrow_forward, size: 16),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: Spacing.md),
           _buildStatRow(
             context,
@@ -79,14 +98,6 @@ class QuickStatsWidget extends StatelessWidget {
             icon: Icons.schedule_outlined,
             label: 'Total reading',
             value: totalReadingLabel,
-          ),
-          const Spacer(),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => context.go('/statistics'),
-              child: const Text('View stats →'),
-            ),
           ),
         ],
       ),

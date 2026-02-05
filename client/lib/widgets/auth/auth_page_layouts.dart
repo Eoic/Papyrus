@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/auth/auth_branding.dart';
 import 'package:papyrus/widgets/auth/auth_hero_panel.dart';
-import 'package:papyrus/widgets/auth/eink_auth_header_bar.dart';
 
 /// Mobile auth layout: compact hero header + scrollable form panel.
 class MobileAuthLayout extends StatelessWidget {
@@ -173,49 +172,6 @@ class DesktopAuthLayout extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// E-ink auth layout: header bar + scrollable content area.
-class EinkAuthLayout extends StatelessWidget {
-  final String headerTitle;
-  final VoidCallback onBack;
-
-  /// The form widget (login form, register form, etc.)
-  final Widget form;
-
-  /// Widgets placed below the form (divider, social button, switch link).
-  final List<Widget> footer;
-
-  const EinkAuthLayout({
-    super.key,
-    required this.headerTitle,
-    required this.onBack,
-    required this.form,
-    required this.footer,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            EinkAuthHeaderBar(title: headerTitle, onBack: onBack),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [form, ...footer],
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

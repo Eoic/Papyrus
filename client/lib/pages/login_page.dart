@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
 import 'package:papyrus/widgets/auth/auth_continue_button.dart';
@@ -14,7 +12,7 @@ import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
 
 /// Login page for the Papyrus book management application.
-/// Provides responsive layouts for mobile, desktop, and e-ink displays.
+/// Provides responsive layouts for mobile and desktop displays.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -108,48 +106,21 @@ class _LoginPageState extends State<LoginPage> {
     context.go('/register');
   }
 
-  void _navigateBack() {
-    context.go('/');
+  List<Widget> _buildFooter() {
+    return [
+      const TitledDivider(title: 'Or continue with'),
+      const GoogleSignInButton(title: 'Sign in with Google'),
+      const SizedBox(height: Spacing.md),
+      AuthSwitchLink(
+        promptText: "Don't have an account?",
+        actionText: 'Sign up',
+        onPressed: _navigateToRegister,
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
-    final isEink = displayMode.isEinkMode;
-
-    if (isEink) {
-      return EinkAuthLayout(
-        headerTitle: 'SIGN IN',
-        onBack: _navigateBack,
-        form: _LoginForm(
-          formKey: _formKey,
-          emailController: _emailController,
-          passwordController: _passwordController,
-          emailFocusNode: _emailFocusNode,
-          passwordFocusNode: _passwordFocusNode,
-          isLoading: _isLoading,
-          onLogin: _handleLogin,
-          isEink: true,
-          isDesktop: false,
-        ),
-        footer: [
-          const SizedBox(height: Spacing.xl),
-          const TitledDivider(title: 'Or', isEink: true),
-          const SizedBox(height: Spacing.md),
-          const GoogleSignInButton(title: 'Sign in with Google', isEink: true),
-          const SizedBox(height: Spacing.xl),
-          AuthSwitchLink(
-            promptText: "Don't have an account?",
-            actionText: 'Sign up',
-            einkPromptText: "DON'T HAVE AN ACCOUNT?",
-            einkActionText: 'SIGN UP',
-            onPressed: _navigateToRegister,
-            isEink: true,
-          ),
-        ],
-      );
-    }
-
     return ResponsiveBuilder(
       mobile: (context) => MobileAuthLayout(
         heading: 'Welcome back',
@@ -162,22 +133,9 @@ class _LoginPageState extends State<LoginPage> {
           passwordFocusNode: _passwordFocusNode,
           isLoading: _isLoading,
           onLogin: _handleLogin,
-          isEink: false,
           isDesktop: false,
         ),
-        footer: [
-          const TitledDivider(title: 'Or continue with'),
-          const GoogleSignInButton(title: 'Sign in with Google'),
-          const SizedBox(height: Spacing.md),
-          AuthSwitchLink(
-            promptText: "Don't have an account?",
-            actionText: 'Sign up',
-            einkPromptText: "DON'T HAVE AN ACCOUNT?",
-            einkActionText: 'SIGN UP',
-            onPressed: _navigateToRegister,
-            isEink: false,
-          ),
-        ],
+        footer: _buildFooter(),
       ),
       desktop: (context) => DesktopAuthLayout(
         heading: 'Welcome back',
@@ -190,22 +148,9 @@ class _LoginPageState extends State<LoginPage> {
           passwordFocusNode: _passwordFocusNode,
           isLoading: _isLoading,
           onLogin: _handleLogin,
-          isEink: false,
           isDesktop: true,
         ),
-        footer: [
-          const TitledDivider(title: 'Or continue with'),
-          const GoogleSignInButton(title: 'Sign in with Google'),
-          const SizedBox(height: Spacing.md),
-          AuthSwitchLink(
-            promptText: "Don't have an account?",
-            actionText: 'Sign up',
-            einkPromptText: "DON'T HAVE AN ACCOUNT?",
-            einkActionText: 'SIGN UP',
-            onPressed: _navigateToRegister,
-            isEink: false,
-          ),
-        ],
+        footer: _buildFooter(),
       ),
     );
   }
@@ -224,7 +169,6 @@ class _LoginForm extends StatelessWidget {
   final FocusNode passwordFocusNode;
   final bool isLoading;
   final VoidCallback onLogin;
-  final bool isEink;
   final bool isDesktop;
 
   const _LoginForm({
@@ -235,7 +179,6 @@ class _LoginForm extends StatelessWidget {
     required this.passwordFocusNode,
     required this.isLoading,
     required this.onLogin,
-    required this.isEink,
     required this.isDesktop,
   });
 
@@ -247,53 +190,42 @@ class _LoginForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Email field
           EmailInput(
             labelText: 'Email address',
             controller: emailController,
             focusNode: emailFocusNode,
-            isEink: isEink,
             textInputAction: TextInputAction.next,
             onEditingComplete: () => passwordFocusNode.requestFocus(),
           ),
-          SizedBox(height: isEink ? Spacing.lg : Spacing.md),
-          // Password field
+          const SizedBox(height: Spacing.md),
           PasswordInput(
             labelText: 'Password',
             controller: passwordController,
             focusNode: passwordFocusNode,
-            isEink: isEink,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => onLogin(),
           ),
-          // Forgot password link (not for e-ink)
-          if (!isEink) ...[
-            const SizedBox(height: Spacing.sm),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  context.go('/forgot-password');
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                ),
-                child: const Text(
-                  'Forgot password?',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
+          const SizedBox(height: Spacing.sm),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                context.go('/forgot-password');
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+              child: const Text(
+                'Forgot password?',
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
-            const SizedBox(height: Spacing.sm),
-          ] else
-            const SizedBox(height: Spacing.lg),
-          // Continue button
+          ),
+          const SizedBox(height: Spacing.sm),
           AuthContinueButton(
             isLoading: isLoading,
             onPressed: onLogin,
-            isEink: isEink,
             isDesktop: isDesktop,
-            einkLoadingText: 'SIGNING IN...',
           ),
         ],
       ),

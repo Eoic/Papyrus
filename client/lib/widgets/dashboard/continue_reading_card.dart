@@ -52,6 +52,10 @@ class ContinueReadingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Row(
         children: [
@@ -106,10 +110,14 @@ class ContinueReadingCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(Spacing.lg),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Row(
         children: [
@@ -252,10 +260,14 @@ class ContinueReadingCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(Spacing.lg),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

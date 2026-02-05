@@ -26,7 +26,7 @@ class DashboardGreeting extends StatelessWidget {
 
   String get _userName {
     final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName ?? 'Reader';
+    final displayName = user?.displayName ?? 'reader';
     // Get first name only
     final firstName = displayName.split(' ').first;
     return firstName;
@@ -48,17 +48,13 @@ class DashboardGreeting extends StatelessWidget {
         horizontal: Spacing.md,
         vertical: Spacing.sm,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text('$greeting, $_userName!', style: textTheme.headlineMedium),
-          const SizedBox(height: Spacing.xs),
-          Text(
-            "You've read $todayReadingLabel today",
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+          Expanded(
+            child: Text('$greeting, $_userName!', style: textTheme.titleLarge),
           ),
+          const SizedBox(width: Spacing.sm),
+          _buildTodayPill(context, textTheme, colorScheme),
         ],
       ),
     );
@@ -68,40 +64,65 @@ class DashboardGreeting extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text('$greeting, $_userName!', style: textTheme.displaySmall),
-        const SizedBox(height: Spacing.xs),
-        Text(
-          "You've read $todayReadingLabel today",
-          style: textTheme.titleMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+        Expanded(
+          child: Text(
+            '$greeting, $_userName!',
+            style: textTheme.headlineMedium,
           ),
         ),
+        const SizedBox(width: Spacing.md),
+        _buildTodayPill(context, textTheme, colorScheme),
       ],
     );
   }
 
   Widget _buildEinkGreeting(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Spacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            '$greeting, ${_userName.toUpperCase()}',
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
+          Expanded(
+            child: Text(
+              '$greeting, $_userName!',
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          const SizedBox(height: Spacing.xs),
+          const SizedBox(width: Spacing.sm),
+          _buildTodayPill(context, textTheme, colorScheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodayPill(
+    BuildContext context,
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.md,
+        vertical: Spacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            "You've read $todayReadingLabel today",
-            style: textTheme.bodyLarge?.copyWith(fontSize: 18),
+            'Read $todayReadingLabel today',
+            style: textTheme.labelLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
