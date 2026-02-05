@@ -36,6 +36,7 @@ class AppTheme {
     bottomNavigationBarTheme: _bottomNavTheme(lightColorScheme),
     dividerTheme: _dividerTheme(lightColorScheme),
     snackBarTheme: _snackBarTheme(lightColorScheme),
+    popupMenuTheme: _popupMenuTheme(lightColorScheme),
   );
 
   // ===========================================================================
@@ -57,6 +58,7 @@ class AppTheme {
     bottomNavigationBarTheme: _bottomNavTheme(darkColorScheme),
     dividerTheme: _dividerTheme(darkColorScheme),
     snackBarTheme: _snackBarTheme(darkColorScheme),
+    popupMenuTheme: _popupMenuTheme(darkColorScheme),
   );
 
   // ===========================================================================
@@ -387,6 +389,22 @@ class AppTheme {
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       behavior: SnackBarBehavior.floating,
+    );
+  }
+
+  static PopupMenuThemeData _popupMenuTheme(ColorScheme colors) {
+    return PopupMenuThemeData(
+      elevation: AppElevation.level3,
+      color: colors.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(
+          color: colors.outlineVariant,
+          width: BorderWidths.thin,
+        ),
+      ),
+      textStyle: TextStyle(color: colors.onSurface),
+      mouseCursor: WidgetStateMouseCursor.clickable,
     );
   }
 

@@ -281,10 +281,6 @@ class ShelvesProvider extends ChangeNotifier {
       throw Exception('Shelf not found');
     }
 
-    if (shelf.isDefault) {
-      throw Exception('Cannot delete default shelves');
-    }
-
     _dataStore!.deleteShelf(shelfId);
 
     // Clear selected shelf if it was deleted

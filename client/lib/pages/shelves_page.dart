@@ -353,19 +353,23 @@ class _ShelvesPageState extends State<ShelvesPage> {
     );
   }
 
-  void _showShelfDetail(BuildContext context, ShelfData shelf) {
+  void _showShelfDetail(BuildContext context, ShelfData shelf) async {
     final books = _provider.getBooksForShelf(shelf.id);
 
-    ShelfDetailSheet.show(
+    final result = await ShelfDetailSheet.show(
       context,
       shelf: shelf,
       books: books,
-      onEdit: () => _showEditShelfSheet(context, shelf),
       onDelete: () => _provider.deleteShelf(shelf.id),
       onRemoveBook: (book) {
         _provider.removeBookFromShelf(shelfId: shelf.id, bookId: book.id);
       },
     );
+
+    if (!mounted) return;
+    if (result == 'edit') {
+      _showEditShelfSheet(this.context, shelf);
+    }
   }
 
   void _showShelfOptions(BuildContext context, ShelfData shelf) {
@@ -420,21 +424,17 @@ class _ShelvesPageState extends State<ShelvesPage> {
                   _showEditShelfSheet(context, shelf);
                 },
               ),
-              if (!shelf.isDefault)
-                ListTile(
-                  leading: Icon(
-                    Icons.delete_outlined,
-                    color: colorScheme.error,
-                  ),
-                  title: Text(
-                    'Delete shelf',
-                    style: TextStyle(color: colorScheme.error),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _confirmDeleteShelf(context, shelf);
-                  },
+              ListTile(
+                leading: Icon(Icons.delete_outlined, color: colorScheme.error),
+                title: Text(
+                  'Delete shelf',
+                  style: TextStyle(color: colorScheme.error),
                 ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _confirmDeleteShelf(context, shelf);
+                },
+              ),
             ],
           ),
         ),

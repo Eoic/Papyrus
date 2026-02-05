@@ -233,7 +233,7 @@ class _ShelfCardState extends State<ShelfCard> {
           child: Icon(
             Icons.more_vert,
             size: IconSizes.small,
-            color: colorScheme.onInverseSurface,
+            color: Colors.white,
           ),
         ),
       ),

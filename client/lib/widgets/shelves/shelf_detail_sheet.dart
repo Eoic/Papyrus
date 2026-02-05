@@ -13,9 +13,6 @@ class ShelfDetailSheet extends StatefulWidget {
   /// The books in this shelf.
   final List<BookData> books;
 
-  /// Called when edit is tapped.
-  final VoidCallback? onEdit;
-
   /// Called when delete is tapped.
   final VoidCallback? onDelete;
 
@@ -26,7 +23,6 @@ class ShelfDetailSheet extends StatefulWidget {
     super.key,
     required this.shelf,
     required this.books,
-    this.onEdit,
     this.onDelete,
     this.onRemoveBook,
   });
@@ -35,15 +31,16 @@ class ShelfDetailSheet extends StatefulWidget {
   State<ShelfDetailSheet> createState() => _ShelfDetailSheetState();
 
   /// Shows the shelf detail sheet.
-  static Future<void> show(
+  ///
+  /// Returns `'edit'` if the user chose to edit the shelf.
+  static Future<String?> show(
     BuildContext context, {
     required ShelfData shelf,
     required List<BookData> books,
-    VoidCallback? onEdit,
     VoidCallback? onDelete,
     void Function(BookData book)? onRemoveBook,
   }) {
-    return showModalBottomSheet(
+    return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -58,7 +55,6 @@ class ShelfDetailSheet extends StatefulWidget {
         builder: (context, scrollController) => ShelfDetailSheet(
           shelf: shelf,
           books: books,
-          onEdit: onEdit,
           onDelete: onDelete,
           onRemoveBook: onRemoveBook,
         ),
@@ -195,8 +191,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
                 onSelected: (value) {
                   switch (value) {
                     case 'edit':
-                      Navigator.of(context).pop();
-                      widget.onEdit?.call();
+                      Navigator.of(context).pop('edit');
                     case 'delete':
                       _confirmDelete(context);
                   }
@@ -204,29 +199,31 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'edit',
-                    child: ListTile(
-                      leading: Icon(Icons.edit_outlined),
-                      title: Text('Edit shelf'),
-                      contentPadding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_outlined, size: IconSizes.small),
+                        SizedBox(width: Spacing.sm),
+                        Text('Edit shelf'),
+                      ],
                     ),
                   ),
-                  if (!widget.shelf.isDefault)
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: ListTile(
-                        leading: Icon(
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
                           Icons.delete_outlined,
+                          size: IconSizes.small,
                           color: colorScheme.error,
                         ),
-                        title: Text(
+                        const SizedBox(width: Spacing.sm),
+                        Text(
                           'Delete shelf',
                           style: TextStyle(color: colorScheme.error),
                         ),
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                      ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ],
