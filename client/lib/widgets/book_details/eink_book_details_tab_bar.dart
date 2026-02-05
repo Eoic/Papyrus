@@ -3,7 +3,7 @@ import 'package:papyrus/providers/book_details_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Custom e-ink tab bar for book details page.
-/// Uses inverted colors (black bg, white text) for selected tab.
+/// Uses inverted colors for the selected tab via colorScheme.
 class EinkBookDetailsTabBar extends StatelessWidget {
   final BookDetailsTab selectedTab;
   final int annotationCount;
@@ -20,11 +20,13 @@ class EinkBookDetailsTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       height: TouchTargets.einkMin,
       decoration: BoxDecoration(
         border: Border.all(
-          color: Colors.black,
+          color: colorScheme.outline,
           width: BorderWidths.einkDefault,
         ),
       ),
@@ -33,19 +35,20 @@ class EinkBookDetailsTabBar extends StatelessWidget {
           _buildTab(
             context,
             tab: BookDetailsTab.details,
-            label: 'DETAILS',
-            isFirst: true,
+            label: 'Details',
+            isLast: false,
           ),
           _buildTab(
             context,
             tab: BookDetailsTab.annotations,
-            label: 'ANNOTATIONS',
+            label: 'Annotations',
             count: annotationCount,
+            isLast: false,
           ),
           _buildTab(
             context,
             tab: BookDetailsTab.notes,
-            label: 'NOTES',
+            label: 'Notes',
             count: noteCount,
             isLast: true,
           ),
@@ -59,9 +62,9 @@ class EinkBookDetailsTabBar extends StatelessWidget {
     required BookDetailsTab tab,
     required String label,
     int? count,
-    bool isFirst = false,
-    bool isLast = false,
+    required bool isLast,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isSelected = selectedTab == tab;
     final displayLabel = count != null && count > 0 ? '$label ($count)' : label;
 
@@ -70,12 +73,12 @@ class EinkBookDetailsTabBar extends StatelessWidget {
         onTap: () => onTabChanged(tab),
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? Colors.black : Colors.white,
+            color: isSelected ? colorScheme.primary : colorScheme.surface,
             border: isLast
                 ? null
-                : const Border(
+                : Border(
                     right: BorderSide(
-                      color: Colors.black,
+                      color: colorScheme.outline,
                       width: BorderWidths.einkDefault,
                     ),
                   ),
@@ -84,7 +87,7 @@ class EinkBookDetailsTabBar extends StatelessWidget {
           child: Text(
             displayLabel,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
+              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
               fontWeight: FontWeight.bold,
               fontSize: 14,
               letterSpacing: 0.5,

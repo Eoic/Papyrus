@@ -13,99 +13,48 @@ class DashboardGreeting extends StatelessWidget {
   /// Whether to use desktop styling.
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const DashboardGreeting({
     super.key,
     required this.greeting,
     required this.todayReadingLabel,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
+  /// Returns the current user's first name, or "reader" as fallback.
   String get _userName {
     final user = FirebaseAuth.instance.currentUser;
     final displayName = user?.displayName ?? 'reader';
-    // Get first name only
-    final firstName = displayName.split(' ').first;
-    return firstName;
+    return displayName.split(' ').first;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkGreeting(context);
-    if (isDesktop) return _buildDesktopGreeting(context);
-    return _buildMobileGreeting(context);
-  }
-
-  Widget _buildMobileGreeting(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+
+    final greetingStyle = isDesktop
+        ? textTheme.headlineMedium
+        : textTheme.titleLarge;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.md,
-        vertical: Spacing.sm,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text('$greeting, $_userName!', style: textTheme.titleLarge),
-          ),
-          const SizedBox(width: Spacing.sm),
-          _buildTodayPill(context, textTheme, colorScheme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopGreeting(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            '$greeting, $_userName!',
-            style: textTheme.headlineMedium,
-          ),
-        ),
-        const SizedBox(width: Spacing.md),
-        _buildTodayPill(context, textTheme, colorScheme),
-      ],
-    );
-  }
-
-  Widget _buildEinkGreeting(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.md),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '$greeting, $_userName!',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+      padding: isDesktop
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(
+              horizontal: Spacing.md,
+              vertical: Spacing.sm,
             ),
-          ),
+      child: Row(
+        children: [
+          Expanded(child: Text('$greeting, $_userName!', style: greetingStyle)),
           const SizedBox(width: Spacing.sm),
-          _buildTodayPill(context, textTheme, colorScheme),
+          _buildTodayPill(textTheme, colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildTodayPill(
-    BuildContext context,
-    TextTheme textTheme,
-    ColorScheme colorScheme,
-  ) {
+  /// Builds the "Read X today" pill badge.
+  Widget _buildTodayPill(TextTheme textTheme, ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Spacing.md,
@@ -115,16 +64,11 @@ class DashboardGreeting extends StatelessWidget {
         color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Read $todayReadingLabel today',
-            style: textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+      child: Text(
+        'Read $todayReadingLabel today',
+        style: textTheme.labelLarge?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }

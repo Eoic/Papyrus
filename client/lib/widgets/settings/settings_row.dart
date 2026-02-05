@@ -19,8 +19,8 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// )
 ///
 /// // Toggle row
-/// SettingsRow.toggle(
-///   label: 'E-ink Mode',
+/// SettingsToggleRow(
+///   label: 'E-ink mode',
 ///   value: isEinkMode,
 ///   onChanged: (value) => _toggleEinkMode(value),
 /// )
@@ -45,9 +45,6 @@ class SettingsRow extends StatelessWidget {
   /// Whether to show the trailing chevron.
   final bool showChevron;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   /// Creates a settings row widget.
   const SettingsRow({
     super.key,
@@ -55,15 +52,10 @@ class SettingsRow extends StatelessWidget {
     this.value,
     this.onTap,
     this.showChevron = true,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode ? _buildEinkRow(context) : _buildStandardRow(context);
-  }
-
-  Widget _buildStandardRow(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -115,49 +107,6 @@ class SettingsRow extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildEinkRow(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: TouchTargets.einkMin),
-        padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label.toUpperCase(),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (value != null)
-                    Text(
-                      value!,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: Colors.black54,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            if (showChevron && onTap != null)
-              const Text(
-                '>',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// A toggle setting row with a switch.
@@ -171,26 +120,16 @@ class SettingsToggleRow extends StatelessWidget {
   /// Called when the toggle value changes.
   final ValueChanged<bool>? onChanged;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   /// Creates a settings toggle row widget.
   const SettingsToggleRow({
     super.key,
     required this.label,
     required this.value,
     this.onChanged,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode
-        ? _buildEinkToggle(context)
-        : _buildStandardToggle(context);
-  }
-
-  Widget _buildStandardToggle(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
@@ -202,69 +141,6 @@ class SettingsToggleRow extends StatelessWidget {
         children: [
           Expanded(child: Text(label, style: textTheme.bodyLarge)),
           Switch(value: value, onChanged: onChanged),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkToggle(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: () => onChanged?.call(!value),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: TouchTargets.einkMin),
-        padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label.toUpperCase(),
-                style: textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            _buildEinkSwitch(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEinkSwitch() {
-    return Container(
-      width: 56,
-      height: 32,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              color: value ? Colors.black : Colors.white,
-              child: Center(
-                child: value
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
-                    : null,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              color: value ? Colors.white : Colors.black,
-              child: Center(
-                child: !value
-                    ? const Icon(Icons.close, color: Colors.white, size: 16)
-                    : null,
-              ),
-            ),
-          ),
         ],
       ),
     );

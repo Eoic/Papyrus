@@ -1,30 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/note.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/empty_notes_state.dart';
 import 'package:papyrus/widgets/book_details/note_card.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
-import 'package:provider/provider.dart';
 
 /// Notes tab content for the book details page.
 ///
 /// Displays a searchable list of notes associated with a book. Supports
-/// three display modes: desktop, mobile, and e-ink, each with optimized
-/// layouts and interactions.
+/// desktop and mobile layouts with optimized interactions.
 ///
 /// ## Features
 ///
 /// - **Search**: Filter notes by title, content, or tags
-/// - **Add note**: Button to create new notes (desktop/e-ink layouts)
-/// - **Responsive**: Adapts layout to screen size and display mode
+/// - **Add note**: Button to create new notes (desktop layout)
+/// - **Responsive**: Adapts layout to screen size
 /// - **Empty states**: Shows helpful message when no notes exist
 ///
 /// ## Layout Variants
 ///
-/// - **Desktop** (>=840px): Search field and "Add Note" button in header row
+/// - **Desktop** (>=840px): Search field and "Add note" button in header row
 /// - **Mobile** (<840px): Full-width search field at top
-/// - **E-ink**: High-contrast styling with larger touch targets
 ///
 /// ## Example
 ///
@@ -107,20 +103,15 @@ class _BookNotesState extends State<BookNotes> {
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     if (widget.notes.isEmpty) {
       return SingleChildScrollView(
-        child: EmptyNotesState(
-          isEinkMode: displayMode.isEinkMode,
-          onAddNote: widget.onAddNote,
-        ),
+        child: EmptyNotesState(onAddNote: widget.onAddNote),
       );
     }
 
-    if (displayMode.isEinkMode) return _buildEinkLayout(context);
     if (isDesktop) return _buildDesktopLayout(context);
     return _buildMobileLayout(context);
   }
@@ -151,7 +142,7 @@ class _BookNotesState extends State<BookNotes> {
     );
   }
 
-  /// Desktop header with search field and "Add Note" button.
+  /// Desktop header with search field and "Add note" button.
   Widget _buildDesktopHeader() {
     // +4 accounts for Card's default margin to align with card borders
     return Padding(
@@ -175,7 +166,7 @@ class _BookNotesState extends State<BookNotes> {
           FilledButton.icon(
             onPressed: widget.onAddNote,
             icon: const Icon(Icons.add),
-            label: const Text('Add Note'),
+            label: const Text('Add note'),
           ),
         ],
       ),
@@ -227,77 +218,11 @@ class _BookNotesState extends State<BookNotes> {
     );
   }
 
-  /// E-ink optimized layout with high-contrast styling.
-  Widget _buildEinkLayout(BuildContext context) {
-    final filteredNotes = _filteredNotes;
-
-    return Column(
-      children: [
-        _buildEinkHeader(),
-        Expanded(
-          child: filteredNotes.isEmpty
-              ? _buildEinkNoResultsState(context)
-              : _buildNotesList(
-                  filteredNotes,
-                  padding: EdgeInsets.fromLTRB(
-                    Spacing.pageMarginsEink,
-                    0,
-                    Spacing.pageMarginsEink,
-                    Spacing.pageMarginsEink,
-                  ),
-                  separatorHeight: Spacing.md,
-                  isEinkMode: true,
-                ),
-        ),
-      ],
-    );
-  }
-
-  /// E-ink header with search field and add button.
-  Widget _buildEinkHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-      child: Row(
-        children: [
-          Expanded(
-            child: SearchField(
-              controller: _searchController,
-              hintText: 'Search notes...',
-              isEinkMode: true,
-              onChanged: _onSearchChanged,
-              onClear: _clearSearch,
-            ),
-          ),
-          const SizedBox(width: Spacing.md),
-          SizedBox(
-            height: TouchTargets.einkMin,
-            child: OutlinedButton.icon(
-              onPressed: widget.onAddNote,
-              icon: const Icon(Icons.add),
-              label: const Text('ADD NOTE'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black,
-                side: const BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Builds the scrollable notes list.
   Widget _buildNotesList(
     List<Note> notes, {
     required EdgeInsets padding,
     required double separatorHeight,
-    bool isEinkMode = false,
   }) {
     return ListView.separated(
       padding: padding,
@@ -307,7 +232,6 @@ class _BookNotesState extends State<BookNotes> {
         final note = notes[index];
         return NoteCard(
           note: note,
-          isEinkMode: isEinkMode,
           onTap: () => widget.onNoteTap?.call(note),
           onLongPress: () => widget.onNoteActions?.call(note),
         );
@@ -315,7 +239,7 @@ class _BookNotesState extends State<BookNotes> {
     );
   }
 
-  /// Empty state shown when search yields no results (standard mode).
+  /// Empty state shown when search yields no results.
   Widget _buildNoResultsState(BuildContext context, ColorScheme colorScheme) {
     return Center(
       child: Column(
@@ -339,28 +263,6 @@ class _BookNotesState extends State<BookNotes> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Empty state shown when search yields no results (e-ink mode).
-  Widget _buildEinkNoResultsState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'NO NOTES FOUND',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            'Try a different search term',
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),

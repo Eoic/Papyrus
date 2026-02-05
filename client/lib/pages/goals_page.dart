@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/reading_goal.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/goals_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/goals/active_goal_details_sheet.dart';
@@ -50,16 +49,11 @@ class _GoalsPageState extends State<GoalsPage> {
       value: _provider,
       child: Consumer<GoalsProvider>(
         builder: (context, provider, _) {
-          final displayMode = context.watch<DisplayModeProvider>();
           final screenWidth = MediaQuery.of(context).size.width;
           final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
           if (provider.isLoading) {
             return _buildLoadingState(context);
-          }
-
-          if (displayMode.isEinkMode) {
-            return _buildEinkLayout(context, provider);
           }
 
           if (isDesktop) {
@@ -257,115 +251,7 @@ class _GoalsPageState extends State<GoalsPage> {
   }
 
   // ============================================================================
-  // E-INK LAYOUT
-  // ============================================================================
-
-  Widget _buildEinkLayout(BuildContext context, GoalsProvider provider) {
-    return Scaffold(
-      body: Column(
-        children: [
-          _buildEinkHeader(context),
-          const Divider(color: Colors.black, height: 1),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-              children: [
-                // Active goals
-                if (provider.hasActiveGoals) ...[
-                  _buildEinkSectionHeader(context, 'ACTIVE GOALS'),
-                  const SizedBox(height: Spacing.md),
-                  ...provider.activeGoals.map(
-                    (goal) => Padding(
-                      padding: const EdgeInsets.only(bottom: Spacing.md),
-                      child: GoalCard(
-                        goal: goal,
-                        isEinkMode: true,
-                        onTap: () => _showGoalDetails(context, goal),
-                      ),
-                    ),
-                  ),
-                ],
-                // Empty state
-                if (!provider.hasActiveGoals) _buildEinkEmptyState(context),
-                // Completed goals
-                if (provider.hasCompletedGoals) ...[
-                  const SizedBox(height: Spacing.lg),
-                  _buildEinkSectionHeader(context, 'COMPLETED GOALS'),
-                  const SizedBox(height: Spacing.md),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.black,
-                        width: BorderWidths.einkDefault,
-                      ),
-                    ),
-                    child: Column(
-                      children: provider.completedGoals
-                          .map(
-                            (goal) => CompletedGoalChip(
-                              goal: goal,
-                              isEinkMode: true,
-                              onDelete: () => _provider.deleteGoal(goal.id),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkHeader(BuildContext context) {
-    return Container(
-      height: ComponentSizes.einkHeaderHeight,
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.pageMarginsEink),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'GOALS',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
-          GestureDetector(
-            onTap: () => _showAddGoalSheet(context),
-            child: Container(
-              width: TouchTargets.einkMin,
-              height: TouchTargets.einkMin,
-              alignment: Alignment.center,
-              child: const Text(
-                '+',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkSectionHeader(BuildContext context, String title) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Text(
-      title,
-      style: textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1,
-      ),
-    );
-  }
-
-  // ============================================================================
-  // EMPTY STATES
+  // EMPTY STATE
   // ============================================================================
 
   Widget _buildEmptyState(BuildContext context) {
@@ -401,39 +287,6 @@ class _GoalsPageState extends State<GoalsPage> {
             onPressed: () => _showAddGoalSheet(context),
             icon: const Icon(Icons.add),
             label: const Text('Create goal'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkEmptyState(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      padding: const EdgeInsets.all(Spacing.xl),
-      child: Column(
-        children: [
-          const Icon(Icons.flag_outlined, size: 64),
-          const SizedBox(height: Spacing.lg),
-          Text(
-            'NO GOALS YET',
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            'Tap + to create your first reading goal',
-            style: textTheme.bodyMedium,
-            textAlign: TextAlign.center,
           ),
         ],
       ),

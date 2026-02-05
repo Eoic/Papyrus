@@ -4,9 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 
 /// A card widget for displaying a book annotation (highlight).
 ///
-/// Supports two display modes:
-/// - **Standard**: Material Design 3 card with colored accent border
-/// - **E-ink**: High-contrast styling with sharp corners and thick borders
+/// Uses Material Design 3 card with colored accent border.
 ///
 /// ## Features
 ///
@@ -18,9 +16,9 @@ import 'package:papyrus/themes/design_tokens.dart';
 ///
 /// ## Visual Design
 ///
-/// The standard card includes a colored left border that matches the
-/// annotation's highlight color, providing visual categorization.
-/// A small color dot in the header reinforces the color association.
+/// The card includes a colored left border that matches the annotation's
+/// highlight color, providing visual categorization. A small color dot in
+/// the header reinforces the color association.
 ///
 /// ## Example
 ///
@@ -30,16 +28,6 @@ import 'package:papyrus/themes/design_tokens.dart';
 ///   onTap: () => _showAnnotationDetail(annotation),
 ///   onEdit: () => _editAnnotation(annotation),
 ///   onDelete: () => _deleteAnnotation(annotation),
-/// )
-/// ```
-///
-/// For e-ink displays:
-///
-/// ```dart
-/// AnnotationCard(
-///   annotation: annotation,
-///   isEinkMode: true,
-///   onTap: () => _showAnnotationDetail(annotation),
 /// )
 /// ```
 class AnnotationCard extends StatelessWidget {
@@ -55,9 +43,6 @@ class AnnotationCard extends StatelessWidget {
   /// Called when the delete action is triggered.
   final VoidCallback? onDelete;
 
-  /// Whether to use e-ink optimized styling.
-  final bool isEinkMode;
-
   /// Creates an annotation card widget.
   const AnnotationCard({
     super.key,
@@ -65,16 +50,10 @@ class AnnotationCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode ? _buildEinkCard(context) : _buildStandardCard(context);
-  }
-
-  /// Builds the standard Material Design 3 card with colored accent.
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final accentColor = annotation.color.accentColor;
@@ -199,72 +178,6 @@ class AnnotationCard extends StatelessWidget {
       _formatDate(annotation.createdAt),
       style: textTheme.labelSmall?.copyWith(
         color: colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-
-  /// Builds the e-ink optimized card with high-contrast styling.
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(Spacing.md),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEinkHighlightText(textTheme),
-            const SizedBox(height: Spacing.md),
-            _buildEinkLocation(textTheme),
-            _buildEinkDate(textTheme),
-            if (annotation.hasNote) _buildEinkNote(textTheme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// E-ink highlight text with bold styling.
-  Widget _buildEinkHighlightText(TextTheme textTheme) {
-    return Text(
-      '"${annotation.highlightText}"',
-      style: textTheme.bodyLarge?.copyWith(
-        fontStyle: FontStyle.italic,
-        fontWeight: FontWeight.w500,
-      ),
-    );
-  }
-
-  /// E-ink location display.
-  Widget _buildEinkLocation(TextTheme textTheme) {
-    return Text(
-      annotation.location.displayLocation,
-      style: textTheme.bodySmall?.copyWith(color: Colors.black54),
-    );
-  }
-
-  /// E-ink date display with prefix.
-  Widget _buildEinkDate(TextTheme textTheme) {
-    return Text(
-      'Highlighted ${_formatDate(annotation.createdAt)}',
-      style: textTheme.bodySmall?.copyWith(color: Colors.black54),
-    );
-  }
-
-  /// E-ink note display with prefix.
-  Widget _buildEinkNote(TextTheme textTheme) {
-    return Padding(
-      padding: const EdgeInsets.only(top: Spacing.md),
-      child: Text(
-        'NOTE: ${annotation.note}',
-        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }

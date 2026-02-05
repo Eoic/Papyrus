@@ -4,9 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 
 /// A card widget for displaying a note with title, content preview, and metadata.
 ///
-/// Supports two display modes:
-/// - **Standard**: Material Design 3 card with elevation and rounded corners
-/// - **E-ink**: High-contrast styling with sharp corners and thick borders
+/// Uses Material Design 3 card with elevation and rounded corners.
 ///
 /// ## Features
 ///
@@ -31,16 +29,6 @@ import 'package:papyrus/themes/design_tokens.dart';
 ///   onLongPress: () => _showNoteActions(note),
 /// )
 /// ```
-///
-/// For e-ink displays:
-///
-/// ```dart
-/// NoteCard(
-///   note: note,
-///   isEinkMode: true,
-///   onTap: () => _showNoteDetail(note),
-/// )
-/// ```
 class NoteCard extends StatelessWidget {
   /// The note data to display.
   final Note note;
@@ -57,9 +45,6 @@ class NoteCard extends StatelessWidget {
   /// Called when the card is long-pressed or menu icon is tapped.
   final VoidCallback? onLongPress;
 
-  /// Whether to use e-ink optimized styling.
-  final bool isEinkMode;
-
   /// Whether to show full content instead of preview.
   final bool showFullContent;
 
@@ -71,17 +56,11 @@ class NoteCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onLongPress,
-    this.isEinkMode = false,
     this.showFullContent = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode ? _buildEinkCard(context) : _buildStandardCard(context);
-  }
-
-  /// Builds the standard Material Design 3 card.
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -205,78 +184,6 @@ class NoteCard extends StatelessWidget {
         const SizedBox(width: 4),
         Text(note.dateLabel, style: metaStyle),
       ],
-    );
-  }
-
-  /// Builds the e-ink optimized card with high-contrast styling.
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        padding: const EdgeInsets.all(Spacing.md),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEinkTitle(textTheme),
-            const Divider(
-              height: Spacing.md,
-              thickness: 1,
-              color: Colors.black,
-            ),
-            _buildEinkContent(textTheme),
-            if (note.hasTags) _buildEinkTags(textTheme),
-            const SizedBox(height: Spacing.sm),
-            _buildEinkDate(textTheme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// E-ink title with uppercase styling.
-  Widget _buildEinkTitle(TextTheme textTheme) {
-    return Text(
-      note.title.toUpperCase(),
-      style: textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-
-  /// E-ink content with increased line height.
-  Widget _buildEinkContent(TextTheme textTheme) {
-    return Text(
-      showFullContent ? note.content : note.preview,
-      style: textTheme.bodyMedium?.copyWith(height: 1.5),
-    );
-  }
-
-  /// E-ink tags displayed as plain text.
-  Widget _buildEinkTags(TextTheme textTheme) {
-    return Padding(
-      padding: const EdgeInsets.only(top: Spacing.sm),
-      child: Text(
-        'Tags: ${note.tags.join(", ")}',
-        style: textTheme.bodySmall?.copyWith(color: Colors.black54),
-      ),
-    );
-  }
-
-  /// E-ink date display.
-  Widget _buildEinkDate(TextTheme textTheme) {
-    return Text(
-      note.dateLabel,
-      style: textTheme.bodySmall?.copyWith(color: Colors.black54),
     );
   }
 }

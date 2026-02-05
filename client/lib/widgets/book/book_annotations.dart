@@ -1,30 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/annotation.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/annotation_card.dart';
 import 'package:papyrus/widgets/book_details/empty_annotations_state.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
-import 'package:provider/provider.dart';
 
 /// Annotations tab content for the book details page.
 ///
 /// Displays a searchable list of annotations (highlights) associated with a book.
-/// Supports three display modes: desktop, mobile, and e-ink, each with
-/// optimized layouts and interactions.
+/// Supports desktop and mobile layouts with optimized interactions.
 ///
 /// ## Features
 ///
 /// - **Search**: Filter annotations by highlight text, notes, or location
 /// - **Color indicators**: Each annotation shows its highlight color
-/// - **Responsive**: Adapts layout to screen size and display mode
+/// - **Responsive**: Adapts layout to screen size
 /// - **Empty states**: Shows helpful message when no annotations exist
 ///
 /// ## Layout Variants
 ///
 /// - **Desktop** (>=840px): Full-width search field at top
 /// - **Mobile** (<840px): Full-width search field at top
-/// - **E-ink**: High-contrast styling with larger touch targets
 ///
 /// ## Example
 ///
@@ -99,17 +95,13 @@ class _BookAnnotationsState extends State<BookAnnotations> {
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     if (widget.annotations.isEmpty) {
-      return SingleChildScrollView(
-        child: EmptyAnnotationsState(isEinkMode: displayMode.isEinkMode),
-      );
+      return const SingleChildScrollView(child: EmptyAnnotationsState());
     }
 
-    if (displayMode.isEinkMode) return _buildEinkLayout(context);
     if (isDesktop) return _buildDesktopLayout(context);
     return _buildMobileLayout(context);
   }
@@ -182,46 +174,13 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     );
   }
 
-  /// E-ink optimized layout with high-contrast styling.
-  Widget _buildEinkLayout(BuildContext context) {
-    final filteredAnnotations = _filteredAnnotations;
-
-    return Column(
-      children: [
-        _buildSearchBar(
-          padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-          isEinkMode: true,
-        ),
-        Expanded(
-          child: filteredAnnotations.isEmpty
-              ? _buildEinkNoResultsState(context)
-              : _buildAnnotationsList(
-                  filteredAnnotations,
-                  padding: EdgeInsets.fromLTRB(
-                    Spacing.pageMarginsEink,
-                    0,
-                    Spacing.pageMarginsEink,
-                    Spacing.pageMarginsEink,
-                  ),
-                  separatorHeight: Spacing.md,
-                  isEinkMode: true,
-                ),
-        ),
-      ],
-    );
-  }
-
-  /// Builds the search bar with configurable padding and mode.
-  Widget _buildSearchBar({
-    required EdgeInsets padding,
-    bool isEinkMode = false,
-  }) {
+  /// Builds the search bar with configurable padding.
+  Widget _buildSearchBar({required EdgeInsets padding}) {
     return Padding(
       padding: padding,
       child: SearchField(
         controller: _searchController,
         hintText: 'Search annotations...',
-        isEinkMode: isEinkMode,
         onChanged: _onSearchChanged,
         onClear: _clearSearch,
       ),
@@ -233,7 +192,6 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     List<Annotation> annotations, {
     required EdgeInsets padding,
     required double separatorHeight,
-    bool isEinkMode = false,
   }) {
     return ListView.separated(
       padding: padding,
@@ -243,7 +201,6 @@ class _BookAnnotationsState extends State<BookAnnotations> {
         final annotation = annotations[index];
         return AnnotationCard(
           annotation: annotation,
-          isEinkMode: isEinkMode,
           onTap: () => widget.onAnnotationTap?.call(annotation),
           onEdit: () => widget.onAnnotationEdit?.call(annotation),
           onDelete: () => widget.onAnnotationDelete?.call(annotation),
@@ -252,7 +209,7 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     );
   }
 
-  /// Empty state shown when search yields no results (standard mode).
+  /// Empty state shown when search yields no results.
   Widget _buildNoResultsState(BuildContext context, ColorScheme colorScheme) {
     return Center(
       child: Column(
@@ -276,28 +233,6 @@ class _BookAnnotationsState extends State<BookAnnotations> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Empty state shown when search yields no results (e-ink mode).
-  Widget _buildEinkNoResultsState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'NO ANNOTATIONS FOUND',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            'Try a different search term',
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),

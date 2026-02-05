@@ -8,10 +8,9 @@ import 'package:provider/provider.dart';
 
 /// Settings page with app configuration options.
 ///
-/// Provides three responsive layouts:
+/// Provides two responsive layouts:
 /// - **Mobile**: Scrollable list with section headers
 /// - **Desktop**: Two-column grid of settings cards
-/// - **E-ink**: High-contrast vertical layout with larger touch targets
 ///
 /// ## Sections
 ///
@@ -40,23 +39,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
-    if (displayMode.isEinkMode) return _buildEinkLayout(context, displayMode);
-    if (isDesktop) return _buildDesktopLayout(context, displayMode);
-    return _buildMobileLayout(context, displayMode);
+    if (isDesktop) return _buildDesktopLayout(context);
+    return _buildMobileLayout(context);
   }
 
   // ============================================================================
   // MOBILE LAYOUT
   // ============================================================================
 
-  Widget _buildMobileLayout(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
+  Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -69,7 +63,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
           children: [
-            _buildAppearanceSection(context, displayMode),
+            _buildAppearanceSection(context),
             _buildReadingSection(context),
             _buildStorageSyncSection(context),
             _buildNotificationsSection(context),
@@ -81,10 +75,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildAppearanceSection(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
+  Widget _buildAppearanceSection(BuildContext context) {
+    final displayMode = context.watch<DisplayModeProvider>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -167,10 +160,7 @@ class _SettingsPageState extends State<SettingsPage> {
   // DESKTOP LAYOUT
   // ============================================================================
 
-  Widget _buildDesktopLayout(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
+  Widget _buildDesktopLayout(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -192,7 +182,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
               const SizedBox(height: Spacing.lg),
-              _buildDesktopGrid(context, displayMode),
+              _buildDesktopGrid(context),
             ],
           ),
         ),
@@ -200,17 +190,14 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDesktopGrid(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
+  Widget _buildDesktopGrid(BuildContext context) {
     return Column(
       children: [
         // First row: Appearance + Reading
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _buildDesktopAppearanceCard(context, displayMode)),
+            Expanded(child: _buildDesktopAppearanceCard(context)),
             const SizedBox(width: Spacing.lg),
             Expanded(child: _buildDesktopReadingCard(context)),
           ],
@@ -232,10 +219,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDesktopAppearanceCard(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
+  Widget _buildDesktopAppearanceCard(BuildContext context) {
+    final displayMode = context.watch<DisplayModeProvider>();
+
     return SettingsCard(
       title: 'Appearance',
       children: [
@@ -493,308 +479,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             Expanded(
               child: SettingsRow(label: 'Support', onTap: () {}),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ============================================================================
-  // E-INK LAYOUT
-  // ============================================================================
-
-  Widget _buildEinkLayout(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildEinkHeader(context),
-            const Divider(color: Colors.black, height: 1),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-                children: [
-                  _buildEinkAppearanceSection(context, displayMode),
-                  _buildEinkReadingSection(context),
-                  _buildEinkStorageSection(context),
-                  _buildEinkAboutSection(context),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEinkHeader(BuildContext context) {
-    return Container(
-      height: ComponentSizes.einkHeaderHeight,
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.pageMarginsEink),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: TouchTargets.einkMin,
-              height: TouchTargets.einkMin,
-              alignment: Alignment.center,
-              child: const Text(
-                '<',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          const SizedBox(width: Spacing.sm),
-          const Text(
-            'SETTINGS',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkAppearanceSection(
-    BuildContext context,
-    DisplayModeProvider displayMode,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SettingsSectionHeader(title: 'Appearance', isEinkMode: true),
-        SettingsCard(
-          isEinkMode: true,
-          title: 'Theme',
-          children: [
-            _buildEinkRadioOption('Light', 'light'),
-            _buildEinkRadioOption('Dark', 'dark'),
-            _buildEinkRadioOption('System', 'system'),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEinkRadioOption(String label, String value) {
-    final isSelected = _selectedTheme == value;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTheme = value),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: TouchTargets.einkMin,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-              child: isSelected
-                  ? const Center(
-                      child: CircleAvatar(
-                        radius: 6,
-                        backgroundColor: Colors.black,
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: Spacing.md),
-            Text(
-              label.toUpperCase(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEinkReadingSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SettingsSectionHeader(title: 'Reading', isEinkMode: true),
-        SettingsCard(
-          isEinkMode: true,
-          title: 'Default font',
-          children: [
-            _buildEinkRadioFontOption('Georgia'),
-            _buildEinkRadioFontOption('Literata'),
-            _buildEinkRadioFontOption('Bookerly'),
-            _buildEinkRadioFontOption('Open Dyslexic'),
-          ],
-        ),
-        const SizedBox(height: Spacing.md),
-        SettingsCard(
-          isEinkMode: true,
-          title: 'Font size',
-          children: [_buildEinkFontSizeControl()],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEinkRadioFontOption(String font) {
-    final isSelected = _selectedFont == font;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFont = font),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: TouchTargets.einkMin,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-              child: isSelected
-                  ? const Center(
-                      child: CircleAvatar(
-                        radius: 6,
-                        backgroundColor: Colors.black,
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: Spacing.md),
-            Text(
-              font.toUpperCase(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEinkFontSizeControl() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-      child: Row(
-        children: [
-          _buildEinkSizeButton(
-            icon: Icons.remove,
-            onTap: () {
-              if (_fontSize > 12) {
-                setState(() => _fontSize -= 1);
-              }
-            },
-          ),
-          Expanded(
-            child: Container(
-              height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: Spacing.md),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black),
-              ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: (_fontSize - 12) / 12,
-                child: Container(color: Colors.black),
-              ),
-            ),
-          ),
-          Text(
-            '${_fontSize.toInt()}px',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: Spacing.md),
-          _buildEinkSizeButton(
-            icon: Icons.add,
-            onTap: () {
-              if (_fontSize < 24) {
-                setState(() => _fontSize += 1);
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkSizeButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: TouchTargets.einkMin,
-        height: TouchTargets.einkMin,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        child: Icon(icon, size: 24),
-      ),
-    );
-  }
-
-  Widget _buildEinkStorageSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SettingsSectionHeader(title: 'Storage', isEinkMode: true),
-        SettingsCard(
-          isEinkMode: true,
-          children: [
-            SettingsRow(
-              label: 'Storage backend',
-              value: 'Currently: $_storageBackend',
-              isEinkMode: true,
-              onTap: () {},
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEinkAboutSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SettingsSectionHeader(title: 'About', isEinkMode: true),
-        SettingsCard(
-          isEinkMode: true,
-          children: [
-            SettingsRow(
-              label: 'Version',
-              value: '1.0.0',
-              isEinkMode: true,
-              showChevron: false,
-            ),
-            const Divider(color: Colors.black26, height: 1),
-            SettingsRow(
-              label: 'Licenses',
-              isEinkMode: true,
-              onTap: () => _showLicenses(context),
             ),
           ],
         ),

@@ -9,23 +9,10 @@ class AddGoalCard extends StatelessWidget {
   /// Whether to use desktop styling (larger).
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
-  const AddGoalCard({
-    super.key,
-    this.onTap,
-    this.isDesktop = false,
-    this.isEinkMode = false,
-  });
+  const AddGoalCard({super.key, this.onTap, this.isDesktop = false});
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -74,44 +61,6 @@ class AddGoalCard extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: TouchTargets.einkMin),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  '+',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: Spacing.sm),
-                Text(
-                  'ADD NEW GOAL',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/active_filter.dart';
 import 'package:papyrus/models/book.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
@@ -13,7 +12,6 @@ import 'package:papyrus/widgets/filter/quick_filter_chips.dart';
 import 'package:papyrus/widgets/library/advanced_search_bar.dart';
 import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
-import 'package:papyrus/widgets/library/eink_tab_filter.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/search/mobile_search_bar.dart';
@@ -23,7 +21,6 @@ import 'package:provider/provider.dart';
 /// Main library page with responsive layouts for all platforms.
 /// - Mobile: AppBar with search, filter chips, 2-column grid, FAB
 /// - Desktop: Header row, filter chips, 5-column grid or list view
-/// - E-ink: Header, tab filter, single-column list
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
 
@@ -36,7 +33,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
     final libraryProvider = context.watch<LibraryProvider>();
     final dataStore = context.watch<DataStore>();
     final screenWidth = MediaQuery.of(context).size.width;
@@ -44,10 +40,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
     // Get filtered books from DataStore (single source of truth)
     final books = _getFilteredBooks(libraryProvider, dataStore);
-
-    if (displayMode.isEinkMode) {
-      return _buildEinkLayout(context, books, libraryProvider);
-    }
 
     if (isDesktop) {
       return _buildDesktopLayout(context, books, libraryProvider);
@@ -552,76 +544,6 @@ class _LibraryPageState extends State<LibraryPage> {
           onTap: () => _navigateToBookDetails(context, book),
         );
       },
-    );
-  }
-
-  // ============================================================================
-  // E-INK LAYOUT
-  // ============================================================================
-
-  Widget _buildEinkLayout(
-    BuildContext context,
-    List<BookData> books,
-    LibraryProvider libraryProvider,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            height: ComponentSizes.einkHeaderHeight,
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outline,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Library',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${books.length} books',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
-            ),
-          ),
-          // Tab filter
-          const EinkTabFilter(),
-          // Book list
-          Expanded(
-            child: books.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    itemCount: books.length,
-                    itemBuilder: (context, index) {
-                      final book = books[index];
-                      final isFavorite = libraryProvider.isBookFavorite(
-                        book.id,
-                        book.isFavorite,
-                      );
-                      return BookListItem(
-                        book: book,
-                        isFavorite: isFavorite,
-                        onTap: () => _navigateToBookDetails(context, book),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
     );
   }
 

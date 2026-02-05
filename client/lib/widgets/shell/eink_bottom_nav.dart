@@ -70,7 +70,7 @@ class EinkBottomNav extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              item.label.toUpperCase(),
+              item.label,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: isSelected
                     ? colorScheme.onPrimary

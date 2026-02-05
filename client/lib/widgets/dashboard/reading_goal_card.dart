@@ -15,34 +15,25 @@ class ReadingGoalCard extends StatelessWidget {
   /// Whether to use desktop styling.
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const ReadingGoalCard({
     super.key,
     required this.goals,
     this.onTap,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (goals.isEmpty) {
-      return isEinkMode
-          ? _buildEinkEmptyState(context)
-          : _buildEmptyState(context);
-    }
-
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
+    if (goals.isEmpty) return _buildEmptyState(context);
+    return _buildCard(context);
   }
 
   // ============================================================================
-  // STANDARD LAYOUT (Mobile + Desktop)
+  // CARD WITH GOALS
   // ============================================================================
 
-  Widget _buildStandardCard(BuildContext context) {
+  /// Builds the card showing up to 3 active reading goals.
+  Widget _buildCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -59,7 +50,6 @@ class ReadingGoalCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -77,13 +67,13 @@ class ReadingGoalCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Spacing.sm),
-          // Goals list
           ...goals.take(3).map((goal) => _buildGoalRow(context, goal)),
         ],
       ),
     );
   }
 
+  /// Builds a single goal row with description, progress fraction, and bar.
   Widget _buildGoalRow(BuildContext context, ReadingGoal goal) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -130,143 +120,10 @@ class ReadingGoalCard extends StatelessWidget {
   }
 
   // ============================================================================
-  // E-INK LAYOUT
+  // EMPTY STATE
   // ============================================================================
 
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(Spacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'READING GOALS',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${goals.length} ${goals.length == 1 ? 'GOAL' : 'GOALS'}',
-                  style: textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-          // Goals list
-          ...goals.take(3).map((goal) => _buildEinkGoalRow(context, goal)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkGoalRow(BuildContext context, ReadingGoal goal) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(Spacing.md),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black26)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  goal.description.toUpperCase(),
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                '${goal.current}/${goal.target}',
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Spacing.sm),
-          _buildEinkProgressBar(context, goal),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkProgressBar(BuildContext context, ReadingGoal goal) {
-    // Use goal target as segment count (max 20)
-    final segmentCount = goal.target.clamp(1, 20);
-    final filledSegments = (goal.progress * segmentCount).round();
-
-    return SizedBox(
-      height: 12,
-      child: Row(
-        children: List.generate(segmentCount, (index) {
-          final isFilled = index < filledSegments;
-          final isFirst = index == 0;
-
-          return Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isFilled ? Colors.black : Colors.white,
-                border: Border(
-                  top: const BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                  bottom: const BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                  left: isFirst
-                      ? const BorderSide(
-                          color: Colors.black,
-                          width: BorderWidths.einkDefault,
-                        )
-                      : BorderSide.none,
-                  right: const BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  // ============================================================================
-  // EMPTY STATES
-  // ============================================================================
-
+  /// Builds the empty state when no reading goals are set.
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -307,63 +164,6 @@ class ReadingGoalCard extends StatelessWidget {
           TextButton(
             onPressed: () => context.go('/goals'),
             child: const Text('Set a goal'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkEmptyState(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(Spacing.lg),
-            child: Column(
-              children: [
-                const Icon(Icons.flag_outlined, size: 40),
-                const SizedBox(height: Spacing.md),
-                Text(
-                  'NO READING GOALS SET',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              width: double.infinity,
-              height: TouchTargets.einkMin,
-              decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  'SET A GOAL',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),

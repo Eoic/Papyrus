@@ -29,9 +29,6 @@ class WeeklyActivityChart extends StatelessWidget {
   /// Whether next period navigation is enabled.
   final bool canGoToNextPeriod;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const WeeklyActivityChart({
     super.key,
     required this.activities,
@@ -42,20 +39,19 @@ class WeeklyActivityChart extends StatelessWidget {
     this.onPreviousPeriod,
     this.onNextPeriod,
     this.canGoToNextPeriod = true,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkChart(context);
-    return _buildStandardChart(context);
+    return _buildChart(context);
   }
 
   // ============================================================================
-  // STANDARD LAYOUT
+  // CHART LAYOUT
   // ============================================================================
 
-  Widget _buildStandardChart(BuildContext context) {
+  /// Builds the chart container with header, bar chart, and optional summary.
+  Widget _buildChart(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final maxMinutes = activities.maxMinutes;
@@ -73,65 +69,10 @@ class WeeklyActivityChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with navigation
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Period label with navigation arrows
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, size: 20),
-                    onPressed: onPreviousPeriod,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                  ),
-                  Text(periodLabel, style: textTheme.titleMedium),
-                  IconButton(
-                    icon: Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                      color: canGoToNextPeriod
-                          ? null
-                          : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-                    ),
-                    onPressed: canGoToNextPeriod ? onNextPeriod : null,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                  ),
-                ],
-              ),
-              if (showPeriodToggle) _buildPeriodToggle(context),
-            ],
-          ),
+          _buildHeader(context, textTheme, colorScheme),
           const SizedBox(height: Spacing.md),
-          // Chart
-          SizedBox(
-            height: 120,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: activities.map((activity) {
-                return Expanded(
-                  child: _buildBar(
-                    context,
-                    activity: activity,
-                    maxMinutes: maxMinutes,
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+          _buildBarChart(context, textTheme, colorScheme, maxMinutes),
           const SizedBox(height: Spacing.sm),
-          // Summary
           if (showPeriodToggle)
             Text(
               'Total: ${activities.totalTimeLabel} • Avg: ${activities.averageTimeLabel}/day',
@@ -144,6 +85,71 @@ class WeeklyActivityChart extends StatelessWidget {
     );
   }
 
+  /// Builds the header row with period navigation and optional toggle.
+  Widget _buildHeader(
+    BuildContext context,
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left, size: 20),
+              onPressed: onPreviousPeriod,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+            Text(periodLabel, style: textTheme.titleMedium),
+            IconButton(
+              icon: Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: canGoToNextPeriod
+                    ? null
+                    : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+              ),
+              onPressed: canGoToNextPeriod ? onNextPeriod : null,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+          ],
+        ),
+        if (showPeriodToggle) _buildPeriodToggle(context),
+      ],
+    );
+  }
+
+  /// Builds the bar chart showing activity per day.
+  Widget _buildBarChart(
+    BuildContext context,
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+    int maxMinutes,
+  ) {
+    return SizedBox(
+      height: 120,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: activities.map((activity) {
+          return Expanded(
+            child: _buildBar(
+              context,
+              activity: activity,
+              maxMinutes: maxMinutes,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  /// Builds a single bar with time label and day label.
   Widget _buildBar(
     BuildContext context, {
     required DailyActivity activity,
@@ -152,7 +158,6 @@ class WeeklyActivityChart extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Calculate bar height (max 80px)
     final maxHeight = 80.0;
     final barHeight = maxMinutes > 0
         ? (activity.readingMinutes / maxMinutes * maxHeight).clamp(
@@ -166,7 +171,6 @@ class WeeklyActivityChart extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Time label (only if has activity)
           if (activity.hasActivity)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
@@ -178,7 +182,6 @@ class WeeklyActivityChart extends StatelessWidget {
                 ),
               ),
             ),
-          // Bar
           Container(
             height: activity.hasActivity ? barHeight : 2,
             decoration: BoxDecoration(
@@ -189,7 +192,6 @@ class WeeklyActivityChart extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Spacing.xs),
-          // Day label
           Text(
             activity.dayLabel,
             style: textTheme.labelSmall?.copyWith(
@@ -206,6 +208,7 @@ class WeeklyActivityChart extends StatelessWidget {
     );
   }
 
+  /// Builds the week/month segmented toggle button.
   Widget _buildPeriodToggle(BuildContext context) {
     return SegmentedButton<ActivityPeriod>(
       segments: const [
@@ -220,184 +223,6 @@ class WeeklyActivityChart extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 12)),
-      ),
-    );
-  }
-
-  // ============================================================================
-  // E-INK LAYOUT
-  // ============================================================================
-
-  Widget _buildEinkChart(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      padding: const EdgeInsets.all(Spacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with navigation
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: onPreviousPeriod,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      child: const Text(
-                        '<',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    periodLabel.toUpperCase(),
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: canGoToNextPeriod ? onNextPeriod : null,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      child: Text(
-                        '>',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: canGoToNextPeriod
-                              ? Colors.black
-                              : Colors.black26,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'Total: ${activities.totalTimeLabel}',
-                style: textTheme.bodyMedium?.copyWith(fontSize: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: Spacing.md),
-          const Divider(color: Colors.black, height: 1),
-          const SizedBox(height: Spacing.md),
-          // Chart rows
-          _buildEinkChartRows(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkChartRows(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final maxMinutes = activities.maxMinutes;
-
-    return Column(
-      children: [
-        // Day labels
-        Row(
-          children: activities.map((activity) {
-            return Expanded(
-              child: Center(
-                child: Text(
-                  activity.dayLabel.toUpperCase(),
-                  style: textTheme.labelMedium?.copyWith(
-                    fontWeight: activity.isToday
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: Spacing.sm),
-        // ASCII bars
-        Row(
-          children: activities.map((activity) {
-            return Expanded(
-              child: Center(
-                child: _buildEinkBar(
-                  context,
-                  activity: activity,
-                  maxMinutes: maxMinutes,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: Spacing.sm),
-        // Time labels
-        Row(
-          children: activities.map((activity) {
-            return Expanded(
-              child: Center(
-                child: Text(
-                  activity.readingTimeLabel,
-                  style: textTheme.labelMedium?.copyWith(fontSize: 14),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEinkBar(
-    BuildContext context, {
-    required DailyActivity activity,
-    required int maxMinutes,
-  }) {
-    // Calculate fill level (0-3 blocks)
-    final fillLevel = maxMinutes > 0
-        ? ((activity.readingMinutes / maxMinutes) * 3).round().clamp(0, 3)
-        : 0;
-
-    // Use Unicode block characters for ASCII-style bars
-    String barText;
-    switch (fillLevel) {
-      case 0:
-        barText = '░░░';
-        break;
-      case 1:
-        barText = '█░░';
-        break;
-      case 2:
-        barText = '██░';
-        break;
-      case 3:
-        barText = '███';
-        break;
-      default:
-        barText = '░░░';
-    }
-
-    return Text(
-      barText,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: activity.isToday ? FontWeight.bold : FontWeight.normal,
-        letterSpacing: 1,
       ),
     );
   }

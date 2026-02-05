@@ -14,10 +14,10 @@ class EinkTabFilter extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     final tabs = [
-      _TabData(type: LibraryFilterType.all, label: 'ALL'),
-      _TabData(type: LibraryFilterType.shelves, label: 'SHELVES'),
-      _TabData(type: LibraryFilterType.topics, label: 'TOPICS'),
-      _TabData(type: LibraryFilterType.favorites, label: 'FAVORITES'),
+      _TabData(type: LibraryFilterType.all, label: 'All'),
+      _TabData(type: LibraryFilterType.shelves, label: 'Shelves'),
+      _TabData(type: LibraryFilterType.topics, label: 'Topics'),
+      _TabData(type: LibraryFilterType.favorites, label: 'Favorites'),
     ];
 
     return Container(

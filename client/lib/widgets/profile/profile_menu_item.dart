@@ -3,10 +3,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 
 /// A menu item widget for the profile page navigation.
 ///
-/// Supports three display modes:
-/// - **Standard**: Material Design 3 styling with icon container
-/// - **Desktop**: Hover-aware styling for mouse interaction
-/// - **E-ink**: High-contrast styling with uppercase text
+/// Material Design 3 styling with icon container, label, and optional chevron.
 ///
 /// ## Features
 ///
@@ -53,9 +50,6 @@ class ProfileMenuItem extends StatelessWidget {
   /// Whether this is a destructive action (uses error color).
   final bool isDestructive;
 
-  /// Whether to use e-ink optimized styling.
-  final bool isEinkMode;
-
   /// Creates a profile menu item widget.
   const ProfileMenuItem({
     super.key,
@@ -65,18 +59,10 @@ class ProfileMenuItem extends StatelessWidget {
     this.onTap,
     this.showChevron = true,
     this.isDestructive = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return isEinkMode
-        ? _buildEinkMenuItem(context)
-        : _buildStandardMenuItem(context);
-  }
-
-  /// Standard Material Design 3 menu item.
-  Widget _buildStandardMenuItem(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -154,55 +140,6 @@ class ProfileMenuItem extends StatelessWidget {
       ],
     );
   }
-
-  /// E-ink optimized menu item.
-  Widget _buildEinkMenuItem(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 64,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-        child: Row(
-          children: [
-            Expanded(
-              child: subtitle != null
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          label.toUpperCase(),
-                          style: textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          subtitle!,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      label.toUpperCase(),
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-            ),
-            if (showChevron)
-              const Text(
-                '>',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// A card container for grouping profile menu items.
@@ -215,24 +152,11 @@ class ProfileMenuCard extends StatelessWidget {
   /// Child widgets (typically ProfileMenuItem widgets).
   final List<Widget> children;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   /// Creates a profile menu card widget.
-  const ProfileMenuCard({
-    super.key,
-    this.title,
-    required this.children,
-    this.isEinkMode = false,
-  });
+  const ProfileMenuCard({super.key, this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -262,21 +186,6 @@ class ProfileMenuCard extends StatelessWidget {
             ),
           ...children,
         ],
-      ),
-    );
-  }
-
-  Widget _buildEinkCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
       ),
     );
   }

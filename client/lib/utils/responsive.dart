@@ -146,17 +146,15 @@ class Responsive {
     }
   }
 
-  /// Get button height based on device type and e-ink mode
-  static double getButtonHeight(BuildContext context, {bool isEink = false}) {
-    if (isEink) return ComponentSizes.buttonHeightEink;
+  /// Get button height based on device type.
+  static double getButtonHeight(BuildContext context) {
     return isDesktop(context)
         ? ComponentSizes.buttonHeightDesktop
         : ComponentSizes.buttonHeightMobile;
   }
 
-  /// Get touch target size based on device type and e-ink mode
-  static double getTouchTarget(BuildContext context, {bool isEink = false}) {
-    if (isEink) return TouchTargets.einkMin;
+  /// Get touch target size based on device type.
+  static double getTouchTarget(BuildContext context) {
     return isDesktop(context)
         ? TouchTargets.desktopRecommended
         : TouchTargets.mobileRecommended;

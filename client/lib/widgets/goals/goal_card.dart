@@ -16,28 +16,15 @@ class GoalCard extends StatelessWidget {
   /// Whether to use desktop styling.
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const GoalCard({
     super.key,
     required this.goal,
     this.onTap,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  // ============================================================================
-  // STANDARD CARD (Mobile & Desktop)
-  // ============================================================================
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -56,17 +43,13 @@ class GoalCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Icon + Title + Streak badge
               _buildHeader(context, colorScheme, textTheme),
               const SizedBox(height: Spacing.md),
-              // Progress values: "8 of 12 books" and "67%"
               _buildProgressValues(context, colorScheme, textTheme),
               const SizedBox(height: Spacing.sm),
-              // Progress bar
-              _buildProgressBar(context, colorScheme),
+              _buildProgressBar(colorScheme),
               const SizedBox(height: Spacing.sm),
-              // Footer: Status + Time context
-              _buildFooter(context, colorScheme, textTheme),
+              _buildFooter(colorScheme, textTheme),
             ],
           ),
         ),
@@ -74,6 +57,11 @@ class GoalCard extends StatelessWidget {
     );
   }
 
+  // ============================================================================
+  // CARD SECTIONS
+  // ============================================================================
+
+  /// Builds the header with icon, title, and optional badges.
   Widget _buildHeader(
     BuildContext context,
     ColorScheme colorScheme,
@@ -81,7 +69,6 @@ class GoalCard extends StatelessWidget {
   ) {
     return Row(
       children: [
-        // Goal type icon
         Container(
           width: 36,
           height: 36,
@@ -96,7 +83,6 @@ class GoalCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: Spacing.sm),
-        // Title
         Expanded(
           child: Text(
             goal.description,
@@ -105,17 +91,14 @@ class GoalCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // Streak badge (recurring daily goals only)
         if (goal.isDaily && goal.isRecurring && goal.streak > 0) ...[
           const SizedBox(width: Spacing.sm),
-          _buildStreakBadge(context, colorScheme, textTheme),
+          _buildStreakBadge(colorScheme, textTheme),
         ],
-        // Recurrence indicator for non-recurring goals
         if (!goal.isRecurring && !goal.isCustomPeriod) ...[
           const SizedBox(width: Spacing.sm),
-          _buildOneOffBadge(context, colorScheme, textTheme),
+          _buildOneOffBadge(colorScheme, textTheme),
         ],
-        // Completed checkmark
         if (goal.isCompleted) ...[
           const SizedBox(width: Spacing.sm),
           Icon(Icons.check_circle, size: 24, color: colorScheme.tertiary),
@@ -124,11 +107,8 @@ class GoalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStreakBadge(
-    BuildContext context,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
+  /// Builds the streak badge for recurring daily goals.
+  Widget _buildStreakBadge(ColorScheme colorScheme, TextTheme textTheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -156,11 +136,8 @@ class GoalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildOneOffBadge(
-    BuildContext context,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
+  /// Builds the "One-off" badge for non-recurring goals.
+  Widget _buildOneOffBadge(ColorScheme colorScheme, TextTheme textTheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -177,6 +154,7 @@ class GoalCard extends StatelessWidget {
     );
   }
 
+  /// Builds the progress values row showing current/target and percentage.
   Widget _buildProgressValues(
     BuildContext context,
     ColorScheme colorScheme,
@@ -185,14 +163,12 @@ class GoalCard extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Current / Target
         Text(
           '${goal.current} of ${goal.target} ${goal.typeLabel}',
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
         ),
-        // Percentage
         Text(
           goal.progressLabel,
           style: textTheme.titleMedium?.copyWith(
@@ -206,7 +182,8 @@ class GoalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar(BuildContext context, ColorScheme colorScheme) {
+  /// Builds the linear progress bar.
+  Widget _buildProgressBar(ColorScheme colorScheme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: LinearProgressIndicator(
@@ -218,15 +195,11 @@ class GoalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(
-    BuildContext context,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
+  /// Builds the footer with status text and time context.
+  Widget _buildFooter(ColorScheme colorScheme, TextTheme textTheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Status text
         Text(
           goal.isCompleted
               ? 'Completed!'
@@ -238,7 +211,6 @@ class GoalCard extends StatelessWidget {
             fontWeight: goal.isCompleted ? FontWeight.w500 : FontWeight.normal,
           ),
         ),
-        // Time context
         Text(
           _getTimeContext(),
           style: textTheme.bodySmall?.copyWith(
@@ -246,120 +218,6 @@ class GoalCard extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  // ============================================================================
-  // E-INK CARD
-  // ============================================================================
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        padding: const EdgeInsets.all(Spacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title with streak
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    goal.description.toUpperCase(),
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                if (goal.isDaily && goal.streak > 0)
-                  Text(
-                    'STREAK: ${goal.streak}',
-                    style: textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: Spacing.sm),
-            // Progress text
-            Text(
-              '${goal.current} of ${goal.target} ${goal.typeLabel} (${goal.progressLabel})',
-              style: textTheme.bodyMedium?.copyWith(fontSize: 14),
-            ),
-            const SizedBox(height: Spacing.sm),
-            // Segmented progress bar
-            _buildEinkProgressBar(context),
-            const SizedBox(height: Spacing.sm),
-            // Footer
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  goal.statusText,
-                  style: textTheme.bodySmall?.copyWith(fontSize: 12),
-                ),
-                Text(
-                  _getTimeContext(),
-                  style: textTheme.bodySmall?.copyWith(fontSize: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEinkProgressBar(BuildContext context) {
-    const segmentCount = 20;
-    final filledSegments = (goal.progress * segmentCount).round().clamp(0, 20);
-
-    return SizedBox(
-      height: 16,
-      child: Row(
-        children: List.generate(segmentCount, (index) {
-          final isFilled = index < filledSegments;
-          final isFirst = index == 0;
-
-          return Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isFilled ? Colors.black : Colors.white,
-                border: Border(
-                  top: const BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                  bottom: const BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                  left: isFirst
-                      ? const BorderSide(
-                          color: Colors.black,
-                          width: BorderWidths.einkDefault,
-                        )
-                      : BorderSide.none,
-                  right: const BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
     );
   }
 

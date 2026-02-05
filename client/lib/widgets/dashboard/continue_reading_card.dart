@@ -15,26 +15,16 @@ class ContinueReadingCard extends StatelessWidget {
   /// Whether to use desktop styling (larger cover, different layout).
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const ContinueReadingCard({
     super.key,
     this.book,
     this.onContinue,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (book == null) {
-      return isEinkMode
-          ? _buildEinkEmptyState(context)
-          : _buildEmptyState(context);
-    }
-
-    if (isEinkMode) return _buildEinkCard(context);
+    if (book == null) return _buildEmptyState(context);
     if (isDesktop) return _buildDesktopCard(context);
     return _buildMobileCard(context);
   }
@@ -43,6 +33,7 @@ class ContinueReadingCard extends StatelessWidget {
   // MOBILE LAYOUT
   // ============================================================================
 
+  /// Builds the compact mobile card with cover, info, and play button.
   Widget _buildMobileCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -59,10 +50,8 @@ class ContinueReadingCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Cover
           _buildCover(context, width: 80, height: 120),
           const SizedBox(width: Spacing.md),
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +83,6 @@ class ContinueReadingCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Spacing.sm),
-          // Play button
           _buildPlayButton(context),
         ],
       ),
@@ -105,6 +93,7 @@ class ContinueReadingCard extends StatelessWidget {
   // DESKTOP LAYOUT
   // ============================================================================
 
+  /// Builds the larger desktop card with cover, info, and continue button.
   Widget _buildDesktopCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -121,10 +110,8 @@ class ContinueReadingCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Cover
           _buildCover(context, width: 120, height: 180),
           const SizedBox(width: Spacing.lg),
-          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,93 +155,10 @@ class ContinueReadingCard extends StatelessWidget {
   }
 
   // ============================================================================
-  // E-INK LAYOUT
+  // EMPTY STATE
   // ============================================================================
 
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Cover
-                _buildEinkCover(context),
-                const SizedBox(width: Spacing.md),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        book!.title.toUpperCase(),
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: Spacing.xs),
-                      Text(
-                        book!.author,
-                        style: textTheme.bodyMedium?.copyWith(fontSize: 16),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: Spacing.sm),
-                      BookProgressBar(
-                        progress: book!.progress,
-                        currentPage: book!.currentPage,
-                        totalPages: book!.totalPages,
-                        showLabel: true,
-                        isEinkMode: true,
-                        height: 12,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Continue button
-          GestureDetector(
-            onTap: onContinue ?? () => _navigateToBook(context),
-            child: Container(
-              width: double.infinity,
-              height: TouchTargets.einkRecommended,
-              color: Colors.black,
-              child: Center(
-                child: Text(
-                  'CONTINUE READING',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================================
-  // EMPTY STATES
-  // ============================================================================
-
+  /// Builds the empty state when no book is currently being read.
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -301,67 +205,11 @@ class ContinueReadingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEinkEmptyState(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(Spacing.lg),
-            child: Column(
-              children: [
-                const Icon(Icons.menu_book_outlined, size: 48),
-                const SizedBox(height: Spacing.md),
-                Text(
-                  "YOU'RE NOT READING ANYTHING",
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => context.go('/library'),
-            child: Container(
-              width: double.infinity,
-              height: TouchTargets.einkRecommended,
-              decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.black,
-                    width: BorderWidths.einkDefault,
-                  ),
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  'GO TO LIBRARY',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ============================================================================
   // SHARED WIDGETS
   // ============================================================================
 
+  /// Builds the book cover image with rounded corners.
   Widget _buildCover(
     BuildContext context, {
     required double width,
@@ -387,26 +235,7 @@ class ContinueReadingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEinkCover(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 120,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: book?.coverURL != null && book!.coverURL!.isNotEmpty
-          ? Image.network(
-              book!.coverURL!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _buildCoverPlaceholder(context),
-            )
-          : _buildCoverPlaceholder(context),
-    );
-  }
-
+  /// Builds a placeholder icon when no cover image is available.
   Widget _buildCoverPlaceholder(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -419,6 +248,7 @@ class ContinueReadingCard extends StatelessWidget {
     );
   }
 
+  /// Builds the circular play button for mobile layout.
   Widget _buildPlayButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 

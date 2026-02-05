@@ -12,24 +12,15 @@ class SummaryStatCard extends StatelessWidget {
   /// Whether to use desktop styling (larger).
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const SummaryStatCard({
     super.key,
     required this.value,
     required this.label,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -60,28 +51,6 @@ class SummaryStatCard extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    // E-ink uses label-value pairs, not cards
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 16)),
-          Text(
-            value,
-            style: textTheme.bodyMedium?.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
           ),
         ],
       ),

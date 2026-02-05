@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/book_info_grid.dart';
-import 'package:provider/provider.dart';
 
 /// Details tab content for book details page.
 /// Shows description, information grid, shelves, and topics.
@@ -26,13 +24,9 @@ class BookDetails extends StatefulWidget {
 class _BookDetailsState extends State<BookDetails> {
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
-    if (displayMode.isEinkMode) {
-      return _buildEinkLayout(context);
-    }
     if (isDesktop) {
       return _buildDesktopLayout(context);
     }
@@ -110,32 +104,6 @@ class _BookDetailsState extends State<BookDetails> {
     );
   }
 
-  Widget _buildEinkLayout(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildEinkSectionTitle(context, 'DESCRIPTION'),
-          const SizedBox(height: Spacing.sm),
-          _buildDescription(context, showFull: true),
-          const SizedBox(height: Spacing.xl),
-          _buildEinkSectionTitle(context, 'INFORMATION'),
-          const SizedBox(height: Spacing.sm),
-          BookInfoGrid(book: widget.book, isEinkMode: true),
-          const SizedBox(height: Spacing.xl),
-          _buildEinkSectionTitle(context, 'SHELVES'),
-          const SizedBox(height: Spacing.sm),
-          _buildShelvesText(context),
-          const SizedBox(height: Spacing.xl),
-          _buildEinkSectionTitle(context, 'TOPICS'),
-          const SizedBox(height: Spacing.sm),
-          _buildTopicsText(context),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSectionTitle(BuildContext context, String title) {
     final colorScheme = Theme.of(context).colorScheme;
     return Column(
@@ -149,22 +117,6 @@ class _BookDetailsState extends State<BookDetails> {
         ),
         const SizedBox(height: 4),
         Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
-      ],
-    );
-  }
-
-  Widget _buildEinkSectionTitle(BuildContext context, String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-        const Divider(height: Spacing.sm, thickness: 2, color: Colors.black),
       ],
     );
   }
@@ -267,34 +219,6 @@ class _BookDetailsState extends State<BookDetails> {
           label: Text(topic),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildShelvesText(BuildContext context) {
-    if (widget.book.shelves.isEmpty) {
-      return Text(
-        'Not assigned to any shelf.',
-        style: Theme.of(context).textTheme.bodyLarge,
-      );
-    }
-
-    return Text(
-      widget.book.shelves.join(', '),
-      style: Theme.of(context).textTheme.bodyLarge,
-    );
-  }
-
-  Widget _buildTopicsText(BuildContext context) {
-    if (widget.book.topics.isEmpty) {
-      return Text(
-        'No topics assigned.',
-        style: Theme.of(context).textTheme.bodyLarge,
-      );
-    }
-
-    return Text(
-      widget.book.topics.join(', '),
-      style: Theme.of(context).textTheme.bodyLarge,
     );
   }
 

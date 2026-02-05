@@ -11,14 +11,11 @@ class RecentlyAddedSection extends StatelessWidget {
   /// Called when a book is tapped.
   final void Function(BookData book)? onBookTap;
 
-  /// Called when "See all" is tapped.
+  /// Called when "View all" is tapped.
   final VoidCallback? onSeeAll;
 
   /// Whether to use desktop styling (larger covers).
   final bool isDesktop;
-
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
 
   const RecentlyAddedSection({
     super.key,
@@ -26,36 +23,28 @@ class RecentlyAddedSection extends StatelessWidget {
     this.onBookTap,
     this.onSeeAll,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (books.isEmpty) {
-      return isEinkMode
-          ? _buildEinkEmptyState(context)
-          : _buildEmptyState(context);
-    }
-
-    if (isEinkMode) return _buildEinkSection(context);
-    return _buildStandardSection(context);
+    if (books.isEmpty) return _buildEmptyState(context);
+    return _buildSection(context);
   }
 
   // ============================================================================
   // STANDARD LAYOUT
   // ============================================================================
 
-  Widget _buildStandardSection(BuildContext context) {
+  /// Builds the section with header and horizontal book scroll.
+  Widget _buildSection(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final coverWidth = isDesktop ? 100.0 : 80.0;
     final coverHeight = isDesktop ? 150.0 : 120.0;
-
     final horizontalPadding = isDesktop ? 0.0 : Spacing.md;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: Row(
@@ -69,9 +58,8 @@ class RecentlyAddedSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Spacing.md),
-        // Horizontal scroll
         SizedBox(
-          height: coverHeight + 8, // Extra space for shadows
+          height: coverHeight + 8,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -93,6 +81,7 @@ class RecentlyAddedSection extends StatelessWidget {
     );
   }
 
+  /// Builds a single book cover with tap handling and hover cursor.
   Widget _buildBookCover(
     BuildContext context, {
     required BookData book,
@@ -133,6 +122,7 @@ class RecentlyAddedSection extends StatelessWidget {
     );
   }
 
+  /// Builds a placeholder with icon and title when no cover image is available.
   Widget _buildCoverPlaceholder(BuildContext context, BookData book) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -163,6 +153,7 @@ class RecentlyAddedSection extends StatelessWidget {
     );
   }
 
+  /// Builds the "View all" text button with forward arrow.
   Widget _buildViewAllButton({required VoidCallback onPressed}) {
     return TextButton.icon(
       onPressed: onPressed,
@@ -177,115 +168,10 @@ class RecentlyAddedSection extends StatelessWidget {
   }
 
   // ============================================================================
-  // E-INK LAYOUT
+  // EMPTY STATE
   // ============================================================================
 
-  Widget _buildEinkSection(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(Spacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'RECENTLY ADDED',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onSeeAll ?? () => context.go('/library'),
-                  child: Text(
-                    'SEE ALL >',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Book list
-          ...books.take(3).map((book) => _buildEinkBookRow(context, book)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkBookRow(BuildContext context, BookData book) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: () => _onBookTap(context, book),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: TouchTargets.einkMin),
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.md,
-          vertical: Spacing.sm,
-        ),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.black26)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    book.title.toUpperCase(),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    book.author,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.black54,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const Text(
-              '>',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================================
-  // EMPTY STATES
-  // ============================================================================
-
+  /// Builds the empty state when no books have been added recently.
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -305,30 +191,6 @@ class RecentlyAddedSection extends StatelessWidget {
             style: textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkEmptyState(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      padding: const EdgeInsets.all(Spacing.lg),
-      child: Column(
-        children: [
-          const Icon(Icons.library_books_outlined, size: 40),
-          const SizedBox(height: Spacing.sm),
-          Text(
-            'NO BOOKS ADDED RECENTLY',
-            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

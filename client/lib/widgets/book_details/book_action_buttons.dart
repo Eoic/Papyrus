@@ -9,7 +9,6 @@ class BookActionButtons extends StatelessWidget {
   final VoidCallback? onContinueReading;
   final VoidCallback? onAddToShelf;
   final VoidCallback? onEdit;
-  final bool isEinkMode;
   final bool isDesktop;
 
   const BookActionButtons({
@@ -18,19 +17,11 @@ class BookActionButtons extends StatelessWidget {
     this.onContinueReading,
     this.onAddToShelf,
     this.onEdit,
-    this.isEinkMode = false,
     this.isDesktop = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) {
-      return _buildEinkButtons(context);
-    }
-    return _buildStandardButtons(context);
-  }
-
-  Widget _buildStandardButtons(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final buttonHeight = isDesktop
         ? ComponentSizes.buttonHeightDesktop
@@ -99,94 +90,6 @@ class BookActionButtons extends StatelessWidget {
             ),
             child: Icon(Icons.edit_outlined, color: colorScheme.primary),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEinkButtons(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Primary button - Continue Reading
-        SizedBox(
-          height: TouchTargets.einkRecommended,
-          child: ElevatedButton(
-            onPressed: onContinueReading,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-              elevation: 0,
-            ),
-            child: Text(
-              book.progress > 0 ? 'CONTINUE READING' : 'START READING',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: Spacing.md),
-
-        // Secondary buttons row
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: TouchTargets.einkMin,
-                child: OutlinedButton(
-                  onPressed: onAddToShelf,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(
-                      color: Colors.black,
-                      width: BorderWidths.einkDefault,
-                    ),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  child: const Text(
-                    'ADD TO SHELF',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: Spacing.md),
-            Expanded(
-              child: SizedBox(
-                height: TouchTargets.einkMin,
-                child: OutlinedButton(
-                  onPressed: onEdit,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(
-                      color: Colors.black,
-                      width: BorderWidths.einkDefault,
-                    ),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  child: const Text(
-                    'EDIT',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );

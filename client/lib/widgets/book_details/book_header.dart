@@ -9,7 +9,6 @@ import 'package:papyrus/widgets/book_details/book_progress_bar.dart';
 /// Contains cover image, title, author, metadata, progress bar, and action buttons.
 class BookHeader extends StatelessWidget {
   final BookData book;
-  final bool isEinkMode;
   final bool isDesktop;
   final VoidCallback? onContinueReading;
   final VoidCallback? onAddToShelf;
@@ -18,7 +17,6 @@ class BookHeader extends StatelessWidget {
   const BookHeader({
     super.key,
     required this.book,
-    this.isEinkMode = false,
     this.isDesktop = false,
     this.onContinueReading,
     this.onAddToShelf,
@@ -27,9 +25,6 @@ class BookHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) {
-      return _buildEinkHeader(context);
-    }
     if (isDesktop) {
       return _buildDesktopHeader(context);
     }
@@ -47,7 +42,6 @@ class BookHeader extends StatelessWidget {
           imageUrl: book.coverURL,
           bookTitle: book.title,
           size: BookCoverSize.large,
-          isEinkMode: false,
         ),
         const SizedBox(width: Spacing.xl),
 
@@ -84,7 +78,6 @@ class BookHeader extends StatelessWidget {
                   progress: book.progress,
                   currentPage: book.currentPage,
                   totalPages: book.totalPages,
-                  isEinkMode: false,
                 ),
                 const SizedBox(height: Spacing.lg),
               ],
@@ -118,7 +111,6 @@ class BookHeader extends StatelessWidget {
             imageUrl: book.coverURL,
             bookTitle: book.title,
             size: BookCoverSize.medium,
-            isEinkMode: false,
           ),
           const SizedBox(height: Spacing.md),
 
@@ -152,7 +144,6 @@ class BookHeader extends StatelessWidget {
               progress: book.progress,
               currentPage: book.currentPage,
               totalPages: book.totalPages,
-              isEinkMode: false,
               height: 4,
             ),
             const SizedBox(height: Spacing.md),
@@ -167,75 +158,6 @@ class BookHeader extends StatelessWidget {
             onEdit: onEdit,
           ),
           const SizedBox(height: Spacing.md),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cover and info row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Cover image
-              BookCoverImage(
-                imageUrl: book.coverURL,
-                bookTitle: book.title,
-                size: BookCoverSize.eink,
-                isEinkMode: true,
-              ),
-              const SizedBox(width: Spacing.xl),
-
-              // Book info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title (uppercase)
-                    Text(
-                      book.title.toUpperCase(),
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                    ),
-                    const SizedBox(height: Spacing.sm),
-
-                    // Author
-                    Text(
-                      book.author,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Spacing.lg),
-
-          // Progress bar (segmented)
-          BookProgressBar(
-            progress: book.progress,
-            currentPage: book.currentPage,
-            totalPages: book.totalPages,
-            isEinkMode: true,
-          ),
-          const SizedBox(height: Spacing.lg),
-
-          // Action buttons
-          BookActionButtons(
-            book: book,
-            isEinkMode: true,
-            onContinueReading: onContinueReading,
-            onAddToShelf: onAddToShelf,
-            onEdit: onEdit,
-          ),
         ],
       ),
     );

@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Progress bar widget for book reading progress.
-/// Shows a standard linear progress bar or a segmented bar for e-ink.
+/// Shows a linear progress bar with an optional label.
 class BookProgressBar extends StatelessWidget {
   final double progress;
   final int? currentPage;
   final int? totalPages;
-  final bool isEinkMode;
   final bool showLabel;
   final double? height;
 
@@ -16,20 +15,12 @@ class BookProgressBar extends StatelessWidget {
     required this.progress,
     this.currentPage,
     this.totalPages,
-    this.isEinkMode = false,
     this.showLabel = true,
     this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) {
-      return _buildEinkProgressBar(context);
-    }
-    return _buildStandardProgressBar(context);
-  }
-
-  Widget _buildStandardProgressBar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final barHeight = height ?? 4.0;
 
@@ -62,66 +53,6 @@ class BookProgressBar extends StatelessWidget {
               ),
             ],
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEinkProgressBar(BuildContext context) {
-    const segments = 20;
-    final filledSegments = (progress * segments).round().clamp(0, segments);
-    final barHeight = height ?? 16.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showLabel)
-          Padding(
-            padding: const EdgeInsets.only(bottom: Spacing.xs),
-            child: Text(
-              'Progress: ${_getProgressLabel()}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ),
-        SizedBox(
-          height: barHeight,
-          child: Row(
-            children: List.generate(segments, (index) {
-              final isFilled = index < filledSegments;
-              final isFirst = index == 0;
-
-              return Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isFilled ? Colors.black : Colors.white,
-                    border: Border(
-                      top: const BorderSide(
-                        color: Colors.black,
-                        width: BorderWidths.einkDefault,
-                      ),
-                      bottom: const BorderSide(
-                        color: Colors.black,
-                        width: BorderWidths.einkDefault,
-                      ),
-                      left: isFirst
-                          ? const BorderSide(
-                              color: Colors.black,
-                              width: BorderWidths.einkDefault,
-                            )
-                          : BorderSide.none,
-                      right: const BorderSide(
-                        color: Colors.black,
-                        width: BorderWidths.einkDefault,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
         ),
       ],
     );

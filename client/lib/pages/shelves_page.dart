@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/shelf.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
@@ -13,7 +12,7 @@ import 'package:provider/provider.dart';
 
 /// Shelves page for managing book collections.
 ///
-/// Features responsive layouts for mobile, desktop, and e-ink displays.
+/// Features responsive layouts for mobile and desktop.
 /// Allows users to view, create, edit, and delete shelves,
 /// as well as manage books within shelves.
 class ShelvesPage extends StatefulWidget {
@@ -53,16 +52,11 @@ class _ShelvesPageState extends State<ShelvesPage> {
       value: _provider,
       child: Consumer<ShelvesProvider>(
         builder: (context, provider, _) {
-          final displayMode = context.watch<DisplayModeProvider>();
           final screenWidth = MediaQuery.of(context).size.width;
           final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
           if (provider.isLoading) {
             return _buildLoadingState(context);
-          }
-
-          if (displayMode.isEinkMode) {
-            return _buildEinkLayout(context, provider);
           }
 
           if (isDesktop) {
@@ -258,87 +252,6 @@ class _ShelvesPageState extends State<ShelvesPage> {
   }
 
   // ============================================================================
-  // E-INK LAYOUT
-  // ============================================================================
-
-  Widget _buildEinkLayout(BuildContext context, ShelvesProvider provider) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Scaffold(
-      body: Column(
-        children: [
-          // Header
-          Container(
-            height: ComponentSizes.einkHeaderHeight,
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outline,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'SHELVES',
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${provider.shelves.length} shelves',
-                  style: textTheme.bodyLarge,
-                ),
-                const SizedBox(width: Spacing.lg),
-                GestureDetector(
-                  onTap: () => _showAddShelfSheet(context),
-                  child: Container(
-                    width: TouchTargets.einkMin,
-                    height: TouchTargets.einkMin,
-                    alignment: Alignment.center,
-                    child: const Text(
-                      '+',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Shelves list
-          Expanded(
-            child: provider.hasShelves
-                ? ListView.builder(
-                    padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-                    itemCount: provider.shelves.length,
-                    itemBuilder: (context, index) {
-                      final shelf = provider.shelves[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: Spacing.md),
-                        child: ShelfCard(
-                          shelf: shelf,
-                          isEinkMode: true,
-                          onTap: () => _showShelfDetail(context, shelf),
-                        ),
-                      );
-                    },
-                  )
-                : _buildEinkEmptyState(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================================
   // SHARED WIDGETS
   // ============================================================================
 
@@ -402,43 +315,6 @@ class _ShelvesPageState extends State<ShelvesPage> {
         onPressed: () => _showAddShelfSheet(context),
         icon: const Icon(Icons.add),
         label: const Text('Create shelf'),
-      ),
-    );
-  }
-
-  Widget _buildEinkEmptyState(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(Spacing.pageMarginsEink),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        padding: const EdgeInsets.all(Spacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.shelves, size: 64),
-            const SizedBox(height: Spacing.lg),
-            Text(
-              'NO SHELVES YET',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: Spacing.sm),
-            Text(
-              'Tap + to create your first shelf',
-              style: textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

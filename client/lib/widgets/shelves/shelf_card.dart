@@ -6,7 +6,6 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// Card widget for displaying a shelf in grid or list view.
 ///
 /// Shows shelf name, book count, color indicator, and cover previews.
-/// Supports standard (mobile/desktop) and e-ink modes.
 class ShelfCard extends StatefulWidget {
   /// The shelf data to display.
   final ShelfData shelf;
@@ -17,9 +16,6 @@ class ShelfCard extends StatefulWidget {
   /// Called when the more menu is tapped.
   final VoidCallback? onMoreTap;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   /// Whether to show as list item (vs grid card).
   final bool isListItem;
 
@@ -28,7 +24,6 @@ class ShelfCard extends StatefulWidget {
     required this.shelf,
     this.onTap,
     this.onMoreTap,
-    this.isEinkMode = false,
     this.isListItem = false,
   });
 
@@ -44,13 +39,12 @@ class _ShelfCardState extends State<ShelfCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isEinkMode) return _buildEinkCard(context);
     if (widget.isListItem) return _buildListItem(context);
     return _buildGridCard(context);
   }
 
   // ============================================================================
-  // GRID CARD (Mobile & Desktop)
+  // GRID CARD
   // ============================================================================
 
   Widget _buildGridCard(BuildContext context) {
@@ -193,7 +187,7 @@ class _ShelfCardState extends State<ShelfCard> {
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: colorScheme.shadow.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(2, 2),
                         ),
@@ -226,18 +220,20 @@ class _ShelfCardState extends State<ShelfCard> {
   }
 
   Widget _buildMoreButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Material(
-      color: Colors.black45,
+      color: colorScheme.scrim.withValues(alpha: 0.45),
       borderRadius: BorderRadius.circular(AppRadius.full),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.full),
         onTap: widget.onMoreTap,
-        child: const Padding(
-          padding: EdgeInsets.all(6),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
           child: Icon(
             Icons.more_vert,
             size: IconSizes.small,
-            color: Colors.white,
+            color: colorScheme.onInverseSurface,
           ),
         ),
       ),
@@ -324,70 +320,6 @@ class _ShelfCardState extends State<ShelfCard> {
                   onPressed: widget.onMoreTap,
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================================
-  // E-INK CARD
-  // ============================================================================
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: BorderWidths.einkDefault,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.md),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.black,
-                    width: BorderWidths.thin,
-                  ),
-                ),
-                child: Icon(widget.shelf.displayIcon, size: 24),
-              ),
-              const SizedBox(width: Spacing.md),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.shelf.name.toUpperCase(),
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: Spacing.xs),
-                    Text(
-                      widget.shelf.bookCountLabel,
-                      style: textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              // Arrow
-              const Icon(Icons.chevron_right, size: 24),
             ],
           ),
         ),

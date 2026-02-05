@@ -3,19 +3,17 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/book_annotations.dart';
 import 'package:papyrus/widgets/book/book_details.dart';
 import 'package:papyrus/widgets/book/book_notes.dart';
 import 'package:papyrus/widgets/book_details/book_header.dart';
-import 'package:papyrus/widgets/book_details/eink_book_details_tab_bar.dart';
 import 'package:papyrus/widgets/book_details/note_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_dialog.dart';
 import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:provider/provider.dart';
 
-/// Book details page with responsive layouts for desktop, mobile, and e-ink.
+/// Book details page with responsive layouts for desktop and mobile.
 class BookDetailsPage extends StatefulWidget {
   final String? id;
 
@@ -81,13 +79,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
             return _buildNotFoundState(context);
           }
 
-          final displayMode = context.watch<DisplayModeProvider>();
           final screenWidth = MediaQuery.of(context).size.width;
           final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
-          if (displayMode.isEinkMode) {
-            return _buildEinkLayout(context, provider);
-          }
           if (isDesktop) {
             return _buildDesktopLayout(context, provider);
           }
@@ -98,23 +92,12 @@ class _BookDetailsPageState extends State<BookDetailsPage>
   }
 
   Widget _buildLoadingState(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
-
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
         title: const Text('Loading...'),
       ),
-      body: Center(
-        child: displayMode.isEinkMode
-            ? Text(
-                'LOADING...',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              )
-            : const CircularProgressIndicator(),
-      ),
+      body: const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -152,7 +135,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
-        title: const Text('Not Found'),
+        title: const Text('Not found'),
       ),
       body: Center(
         child: Column(
@@ -167,7 +150,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
             const SizedBox(height: Spacing.lg),
             FilledButton(
               onPressed: () => context.go('/library/books'),
-              child: const Text('Back to Library'),
+              child: const Text('Back to library'),
             ),
           ],
         ),
@@ -198,7 +181,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
               TextButton.icon(
                 onPressed: () => context.go('/library/books'),
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Back to Library'),
+                label: const Text('Back to library'),
               ),
             ],
           ),
@@ -274,7 +257,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
               const PopupMenuItem(value: 'share', child: Text('Share')),
               const PopupMenuItem(
                 value: 'favorite',
-                child: Text('Add to Favorites'),
+                child: Text('Add to favorites'),
               ),
               const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],
@@ -335,88 +318,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
     );
   }
 
-  Widget _buildEinkLayout(BuildContext context, BookDetailsProvider provider) {
-    return Scaffold(
-      body: Column(
-        children: [
-          // E-ink header bar
-          Container(
-            height: ComponentSizes.einkHeaderHeight,
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => context.go('/library/books'),
-                  icon: const Icon(Icons.arrow_back),
-                  iconSize: 28,
-                ),
-                const SizedBox(width: Spacing.sm),
-                Text(
-                  'BOOK DETAILS',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  BookHeader(
-                    book: provider.book!,
-                    isEinkMode: true,
-                    onContinueReading: _onContinueReading,
-                    onAddToShelf: _onAddToShelf,
-                    onEdit: _onEdit,
-                  ),
-
-                  // Divider
-                  Container(
-                    height: BorderWidths.einkDefault,
-                    color: Colors.black,
-                  ),
-
-                  // Tab bar
-                  Padding(
-                    padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-                    child: EinkBookDetailsTabBar(
-                      selectedTab: provider.selectedTab,
-                      annotationCount: provider.annotationCount,
-                      noteCount: provider.noteCount,
-                      onTabChanged: provider.setTab,
-                    ),
-                  ),
-
-                  // Tab content
-                  SizedBox(
-                    height: 600,
-                    child: _buildTabContent(provider, isEink: true),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabContent(BookDetailsProvider provider, {bool isEink = false}) {
+  Widget _buildTabContent(BookDetailsProvider provider) {
     switch (provider.selectedTab) {
       case BookDetailsTab.details:
         return BookDetails(

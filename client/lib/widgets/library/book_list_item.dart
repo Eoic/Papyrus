@@ -1,14 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
-import 'package:provider/provider.dart';
 
-/// List row for displaying books, optimized for e-ink.
-/// - Standard: 80px height with cover thumbnail
-/// - E-ink: 96px height with larger touch target, 64×96 thumbnail
+/// List row for displaying a book with cover thumbnail, title, author,
+/// progress, format badge, and favorite indicator.
 /// Supports context menu via long press (mobile) or right-click (desktop).
 class BookListItem extends StatefulWidget {
   final BookData book;
@@ -36,18 +33,13 @@ class _BookListItemState extends State<BookListItem> {
 
   @override
   Widget build(BuildContext context) {
-    final isEink = context.watch<DisplayModeProvider>().isEinkMode;
     final colorScheme = Theme.of(context).colorScheme;
-    final itemHeight = isEink ? 96.0 : 80.0;
-    final thumbnailWidth = isEink ? 64.0 : 54.0;
-    final thumbnailHeight = isEink ? 96.0 : 80.0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onSecondaryTapUp: (details) {
-          // Right-click for desktop
           showBookContextMenu(
             context: context,
             book: widget.book,
@@ -55,7 +47,6 @@ class _BookListItemState extends State<BookListItem> {
           );
         },
         onLongPressStart: (details) {
-          // Long press for mobile
           showBookContextMenu(
             context: context,
             book: widget.book,
@@ -67,33 +58,28 @@ class _BookListItemState extends State<BookListItem> {
           child: InkWell(
             onTap: widget.onTap,
             child: Container(
-              height: itemHeight,
-              padding: EdgeInsets.symmetric(
-                horizontal: isEink ? Spacing.md : Spacing.sm,
+              height: 80,
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sm,
                 vertical: Spacing.xs,
               ),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(
-                    color: colorScheme.outlineVariant,
-                    width: isEink ? BorderWidths.einkDefault : 1,
-                  ),
+                  bottom: BorderSide(color: colorScheme.outlineVariant),
                 ),
               ),
               child: Row(
                 children: [
                   // Cover thumbnail
                   SizedBox(
-                    width: thumbnailWidth,
-                    height: thumbnailHeight,
+                    width: 54,
+                    height: 80,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                        isEink ? AppRadius.einkCard : AppRadius.sm,
-                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: _buildCover(context),
                     ),
                   ),
-                  SizedBox(width: isEink ? Spacing.md : Spacing.sm),
+                  const SizedBox(width: Spacing.sm),
 
                   // Book info
                   Expanded(
@@ -129,7 +115,7 @@ class _BookListItemState extends State<BookListItem> {
                                   color: widget.book.isFinished
                                       ? colorScheme.tertiary
                                       : colorScheme.primary,
-                                  minHeight: isEink ? 4 : 3,
+                                  minHeight: 3,
                                 ),
                               ),
                               const SizedBox(width: Spacing.sm),
@@ -160,9 +146,6 @@ class _BookListItemState extends State<BookListItem> {
                         decoration: BoxDecoration(
                           color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: isEink
-                              ? Border.all(color: colorScheme.outline)
-                              : null,
                         ),
                         child: Text(
                           widget.book.formatLabel,

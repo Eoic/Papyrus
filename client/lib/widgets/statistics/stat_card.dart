@@ -23,9 +23,6 @@ class StatCard extends StatelessWidget {
   /// Whether to use desktop styling (larger).
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const StatCard({
     super.key,
     required this.value,
@@ -34,16 +31,10 @@ class StatCard extends StatelessWidget {
     this.trend,
     this.isTrendPositive,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -61,7 +52,6 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon and trend row
           if (icon != null || trend != null)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -86,7 +76,6 @@ class StatCard extends StatelessWidget {
               ],
             ),
           if (icon != null || trend != null) const SizedBox(height: Spacing.sm),
-          // Value
           Text(
             value,
             style:
@@ -97,7 +86,6 @@ class StatCard extends StatelessWidget {
                     ),
           ),
           const SizedBox(height: Spacing.xs),
-          // Label
           Text(
             label,
             style: textTheme.bodySmall?.copyWith(
@@ -144,52 +132,6 @@ class StatCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      padding: const EdgeInsets.all(Spacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: Spacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                value,
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (trend != null)
-                Text(
-                  trend!,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// A compact stat card for use in horizontal rows.
@@ -203,24 +145,15 @@ class CompactStatCard extends StatelessWidget {
   /// Whether to use desktop styling.
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const CompactStatCard({
     super.key,
     required this.value,
     required this.label,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -262,27 +195,6 @@ class CompactStatCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: textTheme.bodyMedium?.copyWith(fontSize: 14)),
-          Text(
-            value,
-            style: textTheme.bodyMedium?.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// A section card with a title and content area.
@@ -299,25 +211,16 @@ class StatSectionCard extends StatelessWidget {
   /// Whether to use desktop styling.
   final bool isDesktop;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   const StatSectionCard({
     super.key,
     required this.title,
     this.action,
     required this.child,
     this.isDesktop = false,
-    this.isEinkMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkCard(context);
-    return _buildStandardCard(context);
-  }
-
-  Widget _buildStandardCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -343,50 +246,6 @@ class StatSectionCard extends StatelessWidget {
           ),
           const SizedBox(height: Spacing.md),
           child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkCard(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(Spacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black,
-                  width: BorderWidths.einkDefault,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-                if (action != null) action!,
-              ],
-            ),
-          ),
-          Padding(padding: const EdgeInsets.all(Spacing.md), child: child),
         ],
       ),
     );

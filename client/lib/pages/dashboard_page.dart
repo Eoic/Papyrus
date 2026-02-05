@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/providers/dashboard_provider.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/dashboard/continue_reading_card.dart';
 import 'package:papyrus/widgets/dashboard/dashboard_greeting.dart';
@@ -13,10 +12,9 @@ import 'package:provider/provider.dart';
 
 /// Dashboard page displaying reading activity, current books, and quick actions.
 ///
-/// Provides three responsive layouts:
+/// Provides two responsive layouts:
 /// - **Mobile**: Vertical scrolling with stacked cards
 /// - **Desktop**: Widget grid layout with sidebar
-/// - **E-ink**: High-contrast vertical layout
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -36,7 +34,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Connect to DataStore for persistent storage
     final dataStore = context.read<DataStore>();
     _provider.attach(dataStore);
   }
@@ -53,16 +50,13 @@ class _DashboardPageState extends State<DashboardPage> {
       value: _provider,
       child: Consumer<DashboardProvider>(
         builder: (context, provider, _) {
-          final displayMode = context.watch<DisplayModeProvider>();
           final screenWidth = MediaQuery.of(context).size.width;
           final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
           if (provider.isLoading) {
-            return _buildLoadingState(context);
-          }
-
-          if (displayMode.isEinkMode) {
-            return _buildEinkLayout(context, provider);
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
 
           if (isDesktop) {
@@ -76,17 +70,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ============================================================================
-  // LOADING STATE
-  // ============================================================================
-
-  Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
-  }
-
-  // ============================================================================
   // MOBILE LAYOUT
   // ============================================================================
 
+  /// Builds the mobile layout with vertically stacked cards.
   Widget _buildMobileLayout(BuildContext context, DashboardProvider provider) {
     return Scaffold(
       appBar: AppBar(
@@ -104,25 +91,21 @@ class _DashboardPageState extends State<DashboardPage> {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: Spacing.md),
             children: [
-              // Greeting
               DashboardGreeting(
                 greeting: provider.greeting,
                 todayReadingLabel: provider.todayReadingLabel,
               ),
               const SizedBox(height: Spacing.lg),
-              // Continue Reading
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
                 child: ContinueReadingCard(book: provider.currentBook),
               ),
               const SizedBox(height: Spacing.md),
-              // Reading Goals
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
                 child: ReadingGoalCard(goals: provider.activeGoals),
               ),
               const SizedBox(height: Spacing.md),
-              // Weekly Activity
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
                 child: WeeklyActivityChart(
@@ -134,7 +117,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(height: Spacing.lg),
-              // Recently Added
               RecentlyAddedSection(books: provider.recentlyAdded),
               const SizedBox(height: Spacing.lg),
             ],
@@ -148,6 +130,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // DESKTOP LAYOUT
   // ============================================================================
 
+  /// Builds the desktop layout with grid arrangement.
   Widget _buildDesktopLayout(BuildContext context, DashboardProvider provider) {
     return Scaffold(
       body: SafeArea(
@@ -156,17 +139,14 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with greeting
               DashboardGreeting(
                 greeting: provider.greeting,
                 todayReadingLabel: provider.todayReadingLabel,
                 isDesktop: true,
               ),
               const SizedBox(height: Spacing.lg),
-              // Row 1: Continue Reading + Reading Goal
               _buildTopCards(context, provider),
               const SizedBox(height: Spacing.lg),
-              // Row 2: Activity Chart (full width)
               WeeklyActivityChart(
                 activities: provider.weeklyActivity,
                 activityPeriod: provider.activityPeriod,
@@ -178,7 +158,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 canGoToNextPeriod: provider.canGoToNextPeriod,
               ),
               const SizedBox(height: Spacing.lg),
-              // Row 3: Recently Added + Quick Stats
               IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -207,6 +186,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  /// Builds the top cards row (side-by-side on wide screens, stacked otherwise).
   Widget _buildTopCards(BuildContext context, DashboardProvider provider) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 1024;
@@ -243,6 +223,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  /// Wraps the recently added section in a bordered card for desktop layout.
   Widget _buildRecentlyAddedCard(
     BuildContext context,
     DashboardProvider provider,
@@ -262,80 +243,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: RecentlyAddedSection(
         books: provider.recentlyAdded,
         isDesktop: true,
-      ),
-    );
-  }
-
-  // ============================================================================
-  // E-INK LAYOUT
-  // ============================================================================
-
-  Widget _buildEinkLayout(BuildContext context, DashboardProvider provider) {
-    return Scaffold(
-      body: Column(
-        children: [
-          _buildEinkHeader(context),
-          const Divider(color: Colors.black, height: 1),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-              children: [
-                // Greeting
-                DashboardGreeting(
-                  greeting: provider.greeting,
-                  todayReadingLabel: provider.todayReadingLabel,
-                  isEinkMode: true,
-                ),
-                const SizedBox(height: Spacing.lg),
-                // Continue Reading
-                ContinueReadingCard(
-                  book: provider.currentBook,
-                  isEinkMode: true,
-                ),
-                const SizedBox(height: Spacing.lg),
-                // Reading Goals
-                ReadingGoalCard(goals: provider.activeGoals, isEinkMode: true),
-                const SizedBox(height: Spacing.lg),
-                // Weekly Activity
-                WeeklyActivityChart(
-                  activities: provider.weeklyActivity,
-                  isEinkMode: true,
-                  periodLabel: provider.periodLabel,
-                  onPreviousPeriod: provider.goToPreviousPeriod,
-                  onNextPeriod: provider.goToNextPeriod,
-                  canGoToNextPeriod: provider.canGoToNextPeriod,
-                ),
-                const SizedBox(height: Spacing.lg),
-                // Quick Stats
-                QuickStatsWidget(
-                  totalBooks: provider.totalBooks,
-                  totalShelves: provider.totalShelves,
-                  totalTopics: provider.totalTopics,
-                  totalReadingLabel: provider.totalReadingLabel,
-                  isEinkMode: true,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEinkHeader(BuildContext context) {
-    return Container(
-      height: ComponentSizes.einkHeaderHeight,
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.pageMarginsEink),
-      child: const Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          'DASHBOARD',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
       ),
     );
   }

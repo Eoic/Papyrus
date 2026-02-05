@@ -6,26 +6,14 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// Displays key-value pairs like Publisher, ISBN, Format, etc.
 class BookInfoGrid extends StatelessWidget {
   final BookData book;
-  final bool isEinkMode;
 
-  const BookInfoGrid({super.key, required this.book, this.isEinkMode = false});
+  const BookInfoGrid({super.key, required this.book});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final entries = _buildEntries();
 
-    if (isEinkMode) {
-      return _buildEinkGrid(context, entries);
-    }
-    return _buildStandardGrid(context, colorScheme, entries);
-  }
-
-  Widget _buildStandardGrid(
-    BuildContext context,
-    ColorScheme colorScheme,
-    List<_InfoEntry> entries,
-  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: entries.map((entry) {
@@ -53,61 +41,6 @@ class BookInfoGrid extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildEinkGrid(BuildContext context, List<_InfoEntry> entries) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.black,
-          width: BorderWidths.einkDefault,
-        ),
-      ),
-      child: Column(
-        children: entries.asMap().entries.map((mapEntry) {
-          final index = mapEntry.key;
-          final entry = mapEntry.value;
-          final isLast = index == entries.length - 1;
-
-          return Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.md,
-              vertical: Spacing.sm,
-            ),
-            decoration: BoxDecoration(
-              border: isLast
-                  ? null
-                  : const Border(
-                      bottom: BorderSide(color: Colors.black, width: 1),
-                    ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 120,
-                  child: Text(
-                    entry.label.toUpperCase(),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    entry.value,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
     );
   }
 

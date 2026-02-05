@@ -10,9 +10,6 @@ enum BookCoverSize {
   /// Mobile book details: 180x270
   medium,
 
-  /// E-ink book details: 160x240
-  eink,
-
   /// Grid thumbnail: 120x180
   gridThumbnail,
 
@@ -25,14 +22,12 @@ class BookCoverImage extends StatelessWidget {
   final String? imageUrl;
   final String? bookTitle;
   final BookCoverSize size;
-  final bool isEinkMode;
 
   const BookCoverImage({
     super.key,
     this.imageUrl,
     this.bookTitle,
     this.size = BookCoverSize.medium,
-    this.isEinkMode = false,
   });
 
   @override
@@ -44,26 +39,17 @@ class BookCoverImage extends StatelessWidget {
       width: dimensions.width,
       height: dimensions.height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          isEinkMode ? AppRadius.einkCard : AppRadius.lg,
-        ),
-        border: isEinkMode
-            ? Border.all(color: Colors.black, width: BorderWidths.einkDefault)
-            : null,
-        boxShadow: isEinkMode
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(
-          isEinkMode ? AppRadius.einkCard : AppRadius.lg,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: _buildImage(context, colorScheme),
       ),
     );
@@ -88,16 +74,14 @@ class BookCoverImage extends StatelessWidget {
     final iconSize = dimensions.width * 0.3;
 
     return Container(
-      color: isEinkMode ? Colors.white : colorScheme.surfaceContainerHighest,
+      color: colorScheme.surfaceContainerHighest,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.menu_book,
             size: iconSize.clamp(24.0, 64.0),
-            color: isEinkMode
-                ? Colors.black54
-                : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           if (bookTitle != null && size != BookCoverSize.listThumbnail) ...[
             const SizedBox(height: Spacing.sm),
@@ -106,9 +90,7 @@ class BookCoverImage extends StatelessWidget {
               child: Text(
                 bookTitle!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isEinkMode
-                      ? Colors.black54
-                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -126,21 +108,13 @@ class BookCoverImage extends StatelessWidget {
     ColorScheme colorScheme,
     DownloadProgress progress,
   ) {
-    final progressValue = progress.progress;
-
     return Container(
-      color: isEinkMode ? Colors.white : colorScheme.surfaceContainerHighest,
+      color: colorScheme.surfaceContainerHighest,
       child: Center(
-        child: isEinkMode
-            ? Text(
-                progressValue != null
-                    ? '${(progressValue * 100).toInt()}%'
-                    : '...',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-              )
-            : CircularProgressIndicator(value: progressValue, strokeWidth: 2),
+        child: CircularProgressIndicator(
+          value: progress.progress,
+          strokeWidth: 2,
+        ),
       ),
     );
   }
@@ -151,8 +125,6 @@ class BookCoverImage extends StatelessWidget {
         return const _CoverDimensions(240, 360);
       case BookCoverSize.medium:
         return const _CoverDimensions(180, 270);
-      case BookCoverSize.eink:
-        return const _CoverDimensions(160, 240);
       case BookCoverSize.gridThumbnail:
         return const _CoverDimensions(120, 180);
       case BookCoverSize.listThumbnail:

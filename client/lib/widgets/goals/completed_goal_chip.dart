@@ -13,9 +13,6 @@ class CompletedGoalChip extends StatelessWidget {
   /// Called when the delete button is pressed.
   final VoidCallback? onDelete;
 
-  /// Whether to use e-ink styling.
-  final bool isEinkMode;
-
   /// Whether to use expanded card layout (for desktop).
   final bool isExpanded;
 
@@ -24,13 +21,11 @@ class CompletedGoalChip extends StatelessWidget {
     required this.goal,
     this.onTap,
     this.onDelete,
-    this.isEinkMode = false,
     this.isExpanded = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isEinkMode) return _buildEinkChip(context);
     if (isExpanded) return _buildExpandedCard(context);
     return _buildCompactCard(context);
   }
@@ -256,56 +251,6 @@ class CompletedGoalChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ============================================================================
-  // E-INK CHIP
-  // ============================================================================
-
-  Widget _buildEinkChip(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: () => _showDetailsSheet(context),
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 48),
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.md,
-          vertical: Spacing.sm,
-        ),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.black26)),
-        ),
-        child: Row(
-          children: [
-            const Text(
-              '[X]',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: Spacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${goal.target} ${goal.typeLabel}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    '${_getGoalTypeLabel()} • ${_getCompletionDateLabel()}',
-                    style: textTheme.bodySmall?.copyWith(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, size: 20),
-          ],
-        ),
       ),
     );
   }
