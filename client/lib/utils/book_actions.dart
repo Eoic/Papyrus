@@ -4,6 +4,7 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/widgets/context_menu/book_context_menu.dart';
 import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
+import 'package:papyrus/widgets/topics/manage_topics_sheet.dart';
 import 'package:provider/provider.dart';
 
 /// Show the book context menu with standard actions.
@@ -34,13 +35,41 @@ void showBookContextMenu({
       _showMoveToShelfSheet(context, book);
     },
     onManageTopics: () {
-      // TODO: Implement manage topics
+      _showManageTopicsSheet(context, book);
     },
     onStatusChange: (status) {
       // TODO: Implement status change
     },
     onDelete: () {
       // TODO: Implement delete
+    },
+  );
+}
+
+/// Shows the manage topics sheet and handles topic assignments.
+void _showManageTopicsSheet(BuildContext context, BookData book) {
+  final dataStore = context.read<DataStore>();
+  final currentTagIds = dataStore.getTagIdsForBook(book.id).toSet();
+
+  ManageTopicsSheet.show(
+    context,
+    book: book,
+    onSave: (newTagIds) {
+      final newTagSet = newTagIds.toSet();
+
+      // Remove book from topics it was removed from
+      for (final tagId in currentTagIds) {
+        if (!newTagSet.contains(tagId)) {
+          dataStore.removeTagFromBook(book.id, tagId);
+        }
+      }
+
+      // Add book to new topics
+      for (final tagId in newTagIds) {
+        if (!currentTagIds.contains(tagId)) {
+          dataStore.addTagToBook(book.id, tagId);
+        }
+      }
     },
   );
 }

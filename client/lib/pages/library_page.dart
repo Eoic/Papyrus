@@ -84,7 +84,11 @@ class _LibraryPageState extends State<LibraryPage> {
       if (provider.isFilterActive(LibraryFilterType.topics) &&
           provider.selectedTopic != null) {
         books = books
-            .where((book) => book.topics.contains(provider.selectedTopic))
+            .where(
+              (book) => dataStore
+                  .getTagsForBook(book.id)
+                  .any((t) => t.name == provider.selectedTopic),
+            )
             .toList();
       }
     }
@@ -336,7 +340,10 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<void> _showFilterBottomSheet(BuildContext context) async {
     final libraryProvider = context.read<LibraryProvider>();
     final dataStore = context.read<DataStore>();
-    final filterOptions = FilterOptions.fromBooks(dataStore.books);
+    final filterOptions = FilterOptions.fromBooks(
+      dataStore.books,
+      topicNames: dataStore.tags.map((t) => t.name).toList(),
+    );
 
     final result = await FilterBottomSheet.show(
       context,

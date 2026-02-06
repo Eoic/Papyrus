@@ -106,14 +106,6 @@ class AppRouter {
                 ),
               ),
               GoRoute(
-                name: 'TOPICS',
-                path: 'topics',
-                pageBuilder: (context, state) => NoTransitionPage(
-                  key: state.pageKey,
-                  child: const StubPage(title: 'Topics'),
-                ),
-              ),
-              GoRoute(
                 name: 'BOOKMARKS',
                 path: 'bookmarks',
                 pageBuilder: (context, state) => NoTransitionPage(

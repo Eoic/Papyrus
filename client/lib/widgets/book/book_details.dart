@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/book_info_grid.dart';
+import 'package:papyrus/widgets/topics/manage_topics_sheet.dart';
+import 'package:papyrus/widgets/topics/topic_detail_sheet.dart';
+import 'package:provider/provider.dart';
 
 /// Details tab content for book details page.
 /// Shows description, information grid, shelves, and topics.
@@ -192,46 +196,62 @@ class _BookDetailsState extends State<BookDetails> {
   }
 
   Widget _buildTopicsChips(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (widget.book.topics.isEmpty) {
-      return Text(
-        'No topics assigned.',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-      );
-    }
+    final dataStore = context.watch<DataStore>();
+    final tags = dataStore.getTagsForBook(widget.book.id);
 
     return Wrap(
       spacing: Spacing.sm,
       runSpacing: Spacing.sm,
-      children: widget.book.topics.map((topic) {
-        return Chip(
-          avatar: Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: _getTopicColor(topic),
-              shape: BoxShape.circle,
+      children: [
+        ...tags.map((tag) {
+          return ActionChip(
+            avatar: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: tag.color,
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-          label: Text(topic),
-        );
-      }).toList(),
+            label: Text(tag.name),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onPressed: () => TopicDetailSheet.show(context, tag: tag),
+          );
+        }),
+        ActionChip(
+          avatar: const Icon(Icons.add, size: 16),
+          label: Text(tags.isEmpty ? 'Add topics' : 'Edit'),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onPressed: () => _showManageTopicsSheet(context),
+        ),
+      ],
     );
   }
 
-  Color _getTopicColor(String topic) {
-    // Generate consistent color based on topic name
-    final hash = topic.hashCode;
-    final colors = [
-      const Color(0xFF5654A8),
-      const Color(0xFF7A5368),
-      const Color(0xFF4A6741),
-      const Color(0xFF8B6914),
-      const Color(0xFF6B4423),
-    ];
-    return colors[hash.abs() % colors.length];
+  void _showManageTopicsSheet(BuildContext context) {
+    final dataStore = context.read<DataStore>();
+    final currentTagIds = dataStore.getTagIdsForBook(widget.book.id).toSet();
+
+    ManageTopicsSheet.show(
+      context,
+      book: widget.book,
+      onSave: (newTagIds) {
+        final newTagSet = newTagIds.toSet();
+
+        for (final tagId in currentTagIds) {
+          if (!newTagSet.contains(tagId)) {
+            dataStore.removeTagFromBook(widget.book.id, tagId);
+          }
+        }
+
+        for (final tagId in newTagIds) {
+          if (!currentTagIds.contains(tagId)) {
+            dataStore.addTagToBook(widget.book.id, tagId);
+          }
+        }
+      },
+    );
   }
 }

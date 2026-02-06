@@ -16,12 +16,15 @@ class FilterOptions {
     this.statuses = const ['reading', 'finished', 'unread'],
   });
 
-  factory FilterOptions.fromBooks(List<BookData> books) {
+  factory FilterOptions.fromBooks(
+    List<BookData> books, {
+    List<String> topicNames = const [],
+  }) {
     return FilterOptions(
       formats: books.map((b) => b.formatLabel.toLowerCase()).toSet().toList()
         ..sort(),
       shelves: books.expand((b) => b.shelves).toSet().toList()..sort(),
-      topics: books.expand((b) => b.topics).toSet().toList()..sort(),
+      topics: topicNames.toList()..sort(),
     );
   }
 }

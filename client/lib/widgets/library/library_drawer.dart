@@ -60,15 +60,6 @@ class LibraryDrawer extends StatelessWidget {
                     },
                   ),
                   _DrawerNavItem(
-                    icon: Icons.topic,
-                    label: 'Topics',
-                    isSelected: currentPath == '/library/topics',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/library/topics');
-                    },
-                  ),
-                  _DrawerNavItem(
                     icon: Icons.bookmark,
                     label: 'Bookmarks',
                     isSelected: currentPath == '/library/bookmarks',

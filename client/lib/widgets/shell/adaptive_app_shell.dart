@@ -59,12 +59,6 @@ class AdaptiveAppShell extends StatelessWidget {
           selectedIcon: Icons.shelves,
         ),
         AppShellNavItem(
-          path: '/library/topics',
-          label: 'Topics',
-          icon: Icons.topic_outlined,
-          selectedIcon: Icons.topic,
-        ),
-        AppShellNavItem(
           path: '/library/bookmarks',
           label: 'Bookmarks',
           icon: Icons.bookmark_outline,
