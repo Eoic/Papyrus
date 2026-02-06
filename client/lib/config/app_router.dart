@@ -17,7 +17,8 @@ import 'package:papyrus/pages/search_options_page.dart';
 import 'package:papyrus/pages/settings_page.dart';
 import 'package:papyrus/pages/shelves_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
-import 'package:papyrus/pages/stub_page.dart';
+import 'package:papyrus/pages/annotations_page.dart';
+import 'package:papyrus/pages/notes_page.dart';
 import 'package:papyrus/pages/welcome_page.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 
@@ -119,7 +120,7 @@ class AppRouter {
                 path: 'annotations',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const StubPage(title: 'Annotations'),
+                  child: const AnnotationsPage(),
                 ),
               ),
               GoRoute(
@@ -127,7 +128,7 @@ class AppRouter {
                 path: 'notes',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const StubPage(title: 'Notes'),
+                  child: const NotesPage(),
                 ),
               ),
               GoRoute(
