@@ -171,29 +171,29 @@ class _BookEditPageState extends State<BookEditPage> {
                 context.pop();
               }
             },
-            child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Edit book'),
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => _handleCancel(context),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: provider.canSave
-                        ? () => _handleSave(context)
-                        : null,
-                    child: const Text('Save'),
+            child: _isDesktop
+                ? _buildDesktopScaffold(context, provider)
+                : Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Edit book'),
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => _handleCancel(context),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: provider.canSave
+                              ? () => _handleSave(context)
+                              : null,
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
+                    body: Form(
+                      key: _formKey,
+                      child: _buildMobileLayout(context, provider),
+                    ),
                   ),
-                ],
-              ),
-              body: Form(
-                key: _formKey,
-                child: _isDesktop
-                    ? _buildDesktopLayout(context, provider)
-                    : _buildMobileLayout(context, provider),
-              ),
-            ),
           );
         },
       ),
@@ -203,6 +203,55 @@ class _BookEditPageState extends State<BookEditPage> {
   // ============================================================================
   // LAYOUTS
   // ============================================================================
+
+  Widget _buildDesktopScaffold(
+    BuildContext context,
+    BookEditProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        // Top bar matching book details page style
+        Container(
+          height: ComponentSizes.appBarHeight + 1,
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: colorScheme.outlineVariant),
+            ),
+          ),
+          child: Row(
+            children: [
+              TextButton.icon(
+                onPressed: () => _handleCancel(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                ),
+                icon: const Icon(Icons.arrow_back, size: 20),
+                label: Text(
+                  'Edit book',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: provider.canSave ? () => _handleSave(context) : null,
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ),
+        // Content
+        Expanded(
+          child: Form(
+            key: _formKey,
+            child: _buildDesktopLayout(context, provider),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildMobileLayout(BuildContext context, BookEditProvider provider) {
     return ListView(
