@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
@@ -47,52 +48,85 @@ class BookInfoGrid extends StatelessWidget {
   List<_InfoEntry> _buildEntries() {
     final entries = <_InfoEntry>[];
 
-    // Format
     entries.add(_InfoEntry('Format', book.formatLabel));
 
-    // Pages
     if (book.totalPages != null) {
       entries.add(_InfoEntry('Pages', '${book.totalPages}'));
     }
 
-    // These would come from extended BookData in the future
-    // For now, use placeholder data based on sample books
-    final sampleInfo = _getSampleInfoForBook(book.id);
-    entries.addAll(sampleInfo);
+    if (book.publisher != null && book.publisher!.isNotEmpty) {
+      entries.add(_InfoEntry('Publisher', book.publisher!));
+    }
+
+    if (book.publicationDate != null) {
+      entries.add(
+        _InfoEntry(
+          'Published',
+          DateFormat.yMMMMd().format(book.publicationDate!),
+        ),
+      );
+    }
+
+    if (book.isbn13 != null && book.isbn13!.isNotEmpty) {
+      entries.add(_InfoEntry('ISBN-13', book.isbn13!));
+    } else if (book.isbn != null && book.isbn!.isNotEmpty) {
+      entries.add(_InfoEntry('ISBN', book.isbn!));
+    }
+
+    if (book.language != null && book.language!.isNotEmpty) {
+      entries.add(_InfoEntry('Language', book.language!));
+    }
+
+    // Series
+    if (book.seriesName != null && book.seriesName!.isNotEmpty) {
+      final seriesValue = book.seriesNumber != null
+          ? '${book.seriesName} #${_formatSeriesNumber(book.seriesNumber!)}'
+          : book.seriesName!;
+      entries.add(_InfoEntry('Series', seriesValue));
+    } else if (book.seriesNumber != null) {
+      entries.add(
+        _InfoEntry('Series', '#${_formatSeriesNumber(book.seriesNumber!)}'),
+      );
+    }
+
+    // Rating
+    if (book.rating != null) {
+      entries.add(
+        _InfoEntry(
+          'Rating',
+          '${'★' * book.rating!}${'☆' * (5 - book.rating!)}',
+        ),
+      );
+    }
+
+    // Reading status
+    if (book.readingStatus != ReadingStatus.notStarted) {
+      entries.add(_InfoEntry('Status', book.readingStatus.label));
+    }
+
+    // Physical location
+    if (book.isPhysical &&
+        book.physicalLocation != null &&
+        book.physicalLocation!.isNotEmpty) {
+      entries.add(_InfoEntry('Location', book.physicalLocation!));
+    }
+
+    // Lending
+    if (book.isPhysical && book.lentTo != null && book.lentTo!.isNotEmpty) {
+      final lentValue = book.lentAt != null
+          ? '${book.lentTo!} (since ${DateFormat.yMMMd().format(book.lentAt!)})'
+          : book.lentTo!;
+      entries.add(_InfoEntry('Lent to', lentValue));
+    }
 
     return entries;
   }
 
-  List<_InfoEntry> _getSampleInfoForBook(String bookId) {
-    // Sample metadata for demo purposes
-    switch (bookId) {
-      case '1':
-        return [
-          const _InfoEntry('Publisher', 'Addison-Wesley'),
-          const _InfoEntry('Published', 'October 30, 2019'),
-          const _InfoEntry('ISBN', '978-0135957059'),
-          const _InfoEntry('Language', 'English'),
-        ];
-      case '2':
-        return [
-          const _InfoEntry('Publisher', 'Pearson'),
-          const _InfoEntry('Published', 'August 1, 2008'),
-          const _InfoEntry('ISBN', '978-0132350884'),
-          const _InfoEntry('Language', 'English'),
-        ];
-      case '3':
-        return [
-          const _InfoEntry('Publisher', 'Addison-Wesley'),
-          const _InfoEntry('Published', 'October 31, 1994'),
-          const _InfoEntry('ISBN', '978-0201633610'),
-          const _InfoEntry('Language', 'English'),
-        ];
-      default:
-        return [
-          const _InfoEntry('Publisher', 'Unknown'),
-          const _InfoEntry('Language', 'English'),
-        ];
-    }
+  /// Format series number: show as integer if whole, otherwise as decimal.
+  static String _formatSeriesNumber(double number) {
+    return number == number.roundToDouble()
+        ? number.toInt().toString()
+        : number.toString();
   }
 }
 

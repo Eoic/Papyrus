@@ -109,7 +109,8 @@ class Book {
 
   // Series
   final String? seriesId;
-  final int? seriesNumber;
+  final String? seriesName;
+  final double? seriesNumber;
 
   // Timestamps
   final DateTime addedAt;
@@ -147,6 +148,7 @@ class Book {
     this.rating,
     this.customMetadata,
     this.seriesId,
+    this.seriesName,
     this.seriesNumber,
     required this.addedAt,
     this.startedAt,
@@ -226,7 +228,8 @@ class Book {
     int? rating,
     Map<String, dynamic>? customMetadata,
     String? seriesId,
-    int? seriesNumber,
+    String? seriesName,
+    double? seriesNumber,
     DateTime? addedAt,
     DateTime? startedAt,
     DateTime? completedAt,
@@ -262,6 +265,7 @@ class Book {
       rating: rating ?? this.rating,
       customMetadata: customMetadata ?? this.customMetadata,
       seriesId: seriesId ?? this.seriesId,
+      seriesName: seriesName ?? this.seriesName,
       seriesNumber: seriesNumber ?? this.seriesNumber,
       addedAt: addedAt ?? this.addedAt,
       startedAt: startedAt ?? this.startedAt,
@@ -285,7 +289,7 @@ class Book {
       'language': language,
       'page_count': pageCount,
       'description': description,
-      'cover_url': coverUrl,
+      'cover_image_url': coverUrl,
       'file_path': filePath,
       'file_format': fileFormat?.name,
       'file_size': fileSize,
@@ -302,6 +306,7 @@ class Book {
       'rating': rating,
       'custom_metadata': customMetadata,
       'series_id': seriesId,
+      'series_name': seriesName,
       'series_number': seriesNumber,
       'added_at': addedAt.toIso8601String(),
       'started_at': startedAt?.toIso8601String(),
@@ -331,7 +336,7 @@ class Book {
       language: json['language'] as String?,
       pageCount: json['page_count'] as int?,
       description: json['description'] as String?,
-      coverUrl: json['cover_url'] as String?,
+      coverUrl: json['cover_image_url'] as String?,
       filePath: json['file_path'] as String?,
       fileFormat: json['file_format'] != null
           ? BookFormat.values.byName(json['file_format'] as String)
@@ -354,7 +359,8 @@ class Book {
       rating: json['rating'] as int?,
       customMetadata: json['custom_metadata'] as Map<String, dynamic>?,
       seriesId: json['series_id'] as String?,
-      seriesNumber: json['series_number'] as int?,
+      seriesName: json['series_name'] as String?,
+      seriesNumber: (json['series_number'] as num?)?.toDouble(),
       addedAt: DateTime.parse(json['added_at'] as String),
       startedAt: json['started_at'] != null
           ? DateTime.parse(json['started_at'] as String)

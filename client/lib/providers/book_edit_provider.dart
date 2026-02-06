@@ -268,6 +268,54 @@ class BookEditProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateRating(int? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(rating: value);
+    notifyListeners();
+  }
+
+  void updateSeriesName(String? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(
+      seriesName: value?.isEmpty == true ? null : value,
+    );
+    notifyListeners();
+  }
+
+  void updateSeriesNumber(double? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(seriesNumber: value);
+    notifyListeners();
+  }
+
+  void updateIsPhysical(bool value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(isPhysical: value);
+    notifyListeners();
+  }
+
+  void updatePhysicalLocation(String? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(
+      physicalLocation: value?.isEmpty == true ? null : value,
+    );
+    notifyListeners();
+  }
+
+  void updateLentTo(String? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(
+      lentTo: value?.isEmpty == true ? null : value,
+    );
+    notifyListeners();
+  }
+
+  void updateLentAt(DateTime? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(lentAt: value);
+    notifyListeners();
+  }
+
   // ============================================================================
   // METADATA FETCH
   // ============================================================================
@@ -333,9 +381,29 @@ class BookEditProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Try to parse a date string in various formats (yyyy-MM-dd, yyyy-MM, yyyy).
+  DateTime? _tryParseDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return null;
+    // Try full date: yyyy-MM-dd
+    final fullDate = DateTime.tryParse(dateStr);
+    if (fullDate != null) return fullDate;
+    // Try year-month: yyyy-MM
+    if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dateStr)) {
+      return DateTime.tryParse('$dateStr-01');
+    }
+    // Try year only: yyyy
+    final year = int.tryParse(dateStr);
+    if (year != null && year > 0 && year < 10000) {
+      return DateTime(year);
+    }
+    return null;
+  }
+
   /// Apply fetched metadata to the edited book.
   void applyMetadata(BookMetadataResult result) {
     if (_editedBook == null) return;
+
+    final parsedDate = _tryParseDate(result.publishedDate);
 
     _editedBook = _editedBook!.copyWith(
       title: result.title ?? _editedBook!.title,
@@ -353,6 +421,7 @@ class BookEditProvider extends ChangeNotifier {
       isbn13: result.isbn13 ?? _editedBook!.isbn13,
       description: result.description ?? _editedBook!.description,
       coverUrl: result.coverUrl ?? _editedBook!.coverUrl,
+      publicationDate: parsedDate ?? _editedBook!.publicationDate,
     );
 
     // Clear fetch results after applying

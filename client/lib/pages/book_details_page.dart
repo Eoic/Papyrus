@@ -169,7 +169,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
       children: [
         // Back navigation
         Container(
-          height: 48,
+          height: ComponentSizes.appBarHeight + 1,
           padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
           decoration: BoxDecoration(
             border: Border(
@@ -180,8 +180,14 @@ class _BookDetailsPageState extends State<BookDetailsPage>
             children: [
               TextButton.icon(
                 onPressed: () => context.go('/library/books'),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Back to library'),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                ),
+                icon: const Icon(Icons.arrow_back, size: 20),
+                label: Text(
+                  'Library',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
             ],
           ),

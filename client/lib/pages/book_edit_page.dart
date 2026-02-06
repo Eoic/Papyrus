@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/providers/book_edit_provider.dart';
 import 'package:papyrus/services/metadata_service.dart';
@@ -31,6 +32,12 @@ class _BookEditPageState extends State<BookEditPage> {
   final _isbnController = TextEditingController();
   final _isbn13Controller = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _publicationDateController = TextEditingController();
+  final _seriesNameController = TextEditingController();
+  final _seriesNumberController = TextEditingController();
+  final _physicalLocationController = TextEditingController();
+  final _lentToController = TextEditingController();
+  final _lentAtController = TextEditingController();
   final _metadataSearchController = TextEditingController();
 
   List<String> _coAuthors = [];
@@ -65,9 +72,27 @@ class _BookEditPageState extends State<BookEditPage> {
     _isbnController.text = book.isbn ?? '';
     _isbn13Controller.text = book.isbn13 ?? '';
     _descriptionController.text = book.description ?? '';
+    _publicationDateController.text = book.publicationDate != null
+        ? DateFormat.yMMMMd().format(book.publicationDate!)
+        : '';
+    _seriesNameController.text = book.seriesName ?? '';
+    _seriesNumberController.text = book.seriesNumber != null
+        ? _formatSeriesNumber(book.seriesNumber!)
+        : '';
+    _physicalLocationController.text = book.physicalLocation ?? '';
+    _lentToController.text = book.lentTo ?? '';
+    _lentAtController.text = book.lentAt != null
+        ? DateFormat.yMMMMd().format(book.lentAt!)
+        : '';
     setState(() {
       _coAuthors = List.from(book.coAuthors);
     });
+  }
+
+  String _formatSeriesNumber(double number) {
+    return number == number.roundToDouble()
+        ? number.toInt().toString()
+        : number.toString();
   }
 
   @override
@@ -81,6 +106,12 @@ class _BookEditPageState extends State<BookEditPage> {
     _isbnController.dispose();
     _isbn13Controller.dispose();
     _descriptionController.dispose();
+    _publicationDateController.dispose();
+    _seriesNameController.dispose();
+    _seriesNumberController.dispose();
+    _physicalLocationController.dispose();
+    _lentToController.dispose();
+    _lentAtController.dispose();
     _metadataSearchController.dispose();
     _provider.dispose();
     super.dispose();
@@ -140,29 +171,29 @@ class _BookEditPageState extends State<BookEditPage> {
                 context.pop();
               }
             },
-            child: Scaffold(
-              appBar: AppBar(
-                title: const Text('Edit book'),
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => _handleCancel(context),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: provider.canSave
-                        ? () => _handleSave(context)
-                        : null,
-                    child: const Text('Save'),
+            child: _isDesktop
+                ? _buildDesktopScaffold(context, provider)
+                : Scaffold(
+                    appBar: AppBar(
+                      title: const Text('Edit book'),
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => _handleCancel(context),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: provider.canSave
+                              ? () => _handleSave(context)
+                              : null,
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
+                    body: Form(
+                      key: _formKey,
+                      child: _buildMobileLayout(context, provider),
+                    ),
                   ),
-                ],
-              ),
-              body: Form(
-                key: _formKey,
-                child: _isDesktop
-                    ? _buildDesktopLayout(context, provider)
-                    : _buildMobileLayout(context, provider),
-              ),
-            ),
           );
         },
       ),
@@ -172,6 +203,55 @@ class _BookEditPageState extends State<BookEditPage> {
   // ============================================================================
   // LAYOUTS
   // ============================================================================
+
+  Widget _buildDesktopScaffold(
+    BuildContext context,
+    BookEditProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        // Top bar matching book details page style
+        Container(
+          height: ComponentSizes.appBarHeight + 1,
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: colorScheme.outlineVariant),
+            ),
+          ),
+          child: Row(
+            children: [
+              TextButton.icon(
+                onPressed: () => _handleCancel(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                ),
+                icon: const Icon(Icons.arrow_back, size: 20),
+                label: Text(
+                  'Edit book',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: provider.canSave ? () => _handleSave(context) : null,
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ),
+        // Content
+        Expanded(
+          child: Form(
+            key: _formKey,
+            child: _buildDesktopLayout(context, provider),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildMobileLayout(BuildContext context, BookEditProvider provider) {
     return ListView(
@@ -198,13 +278,17 @@ class _BookEditPageState extends State<BookEditPage> {
                 width: 360,
                 child: Column(
                   children: [
-                    _buildSectionCard(
-                      title: 'Cover',
-                      children: [
-                        _buildCoverSection(context, provider, isDesktop: true),
-                      ],
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(Spacing.md),
+                        child: _buildCoverSection(
+                          context,
+                          provider,
+                          isDesktop: true,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: Spacing.lg),
+                    const SizedBox(height: Spacing.sm),
                     _buildSectionCard(
                       title: 'Fetch metadata',
                       children: [_buildMetadataSection(context, provider)],
@@ -263,9 +347,11 @@ class _BookEditPageState extends State<BookEditPage> {
           ]),
           const SizedBox(height: Spacing.md),
           _buildCoAuthorsSection(context),
+          const SizedBox(height: Spacing.md),
+          _buildRatingRow(context, provider),
         ],
       ),
-      const SizedBox(height: Spacing.md),
+      const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Publication details',
         children: [
@@ -282,9 +368,14 @@ class _BookEditPageState extends State<BookEditPage> {
             ),
           ]),
           const SizedBox(height: Spacing.md),
-          SizedBox(
-            width: _isDesktop ? 200 : double.infinity,
-            child: _buildTextField(
+          _buildResponsiveRow([
+            _buildDateField(
+              controller: _publicationDateController,
+              label: 'Publication date',
+              value: _provider.editedBook?.publicationDate,
+              onChanged: _provider.updatePublicationDate,
+            ),
+            _buildTextField(
               controller: _pageCountController,
               label: 'Page count',
               keyboardType: TextInputType.number,
@@ -293,10 +384,10 @@ class _BookEditPageState extends State<BookEditPage> {
                 _provider.updatePageCount(pages);
               },
             ),
-          ),
+          ]),
         ],
       ),
-      const SizedBox(height: Spacing.md),
+      const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Identifiers',
         children: [
@@ -314,7 +405,7 @@ class _BookEditPageState extends State<BookEditPage> {
           ]),
         ],
       ),
-      const SizedBox(height: Spacing.md),
+      const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Description',
         children: [
@@ -326,8 +417,42 @@ class _BookEditPageState extends State<BookEditPage> {
           ),
         ],
       ),
+      const SizedBox(height: Spacing.sm),
+      _buildSectionCard(
+        title: 'Series',
+        children: [
+          _buildResponsiveRow([
+            _buildTextField(
+              controller: _seriesNameController,
+              label: 'Series name',
+              onChanged: _provider.updateSeriesName,
+            ),
+            _buildTextField(
+              controller: _seriesNumberController,
+              label: 'Number in series',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (value) {
+                final number = double.tryParse(value);
+                _provider.updateSeriesNumber(number);
+              },
+            ),
+          ]),
+        ],
+      ),
+      const SizedBox(height: Spacing.sm),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.md,
+            vertical: Spacing.xs,
+          ),
+          child: _buildPhysicalBookSection(context, provider),
+        ),
+      ),
       if (!skipMetadata) ...[
-        const SizedBox(height: Spacing.md),
+        const SizedBox(height: Spacing.sm),
         _buildSectionCard(
           title: 'Fetch metadata',
           children: [_buildMetadataSection(context, provider)],
@@ -395,6 +520,59 @@ class _BookEditPageState extends State<BookEditPage> {
     );
   }
 
+  Widget _buildDateField({
+    required TextEditingController controller,
+    required String label,
+    required DateTime? value,
+    required void Function(DateTime?) onChanged,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (value != null)
+              IconButton(
+                icon: const Icon(Icons.clear, size: 20),
+                onPressed: () {
+                  controller.clear();
+                  onChanged(null);
+                },
+              ),
+            IconButton(
+              icon: const Icon(Icons.calendar_today, size: 20),
+              onPressed: () => _pickDate(controller, value, onChanged),
+            ),
+          ],
+        ),
+      ),
+      onTap: () => _pickDate(controller, value, onChanged),
+    );
+  }
+
+  Future<void> _pickDate(
+    TextEditingController controller,
+    DateTime? currentValue,
+    void Function(DateTime?) onChanged,
+  ) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: currentValue ?? DateTime.now(),
+      firstDate: DateTime(1000),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      controller.text = DateFormat.yMMMMd().format(picked);
+      onChanged(picked);
+    }
+  }
+
   Widget _buildResponsiveRow(List<Widget> children) {
     if (!_isDesktop || children.length == 1) {
       return Column(
@@ -412,6 +590,91 @@ class _BookEditPageState extends State<BookEditPage> {
         yield Expanded(child: w);
         yield const SizedBox(width: Spacing.md);
       }).toList()..removeLast(),
+    );
+  }
+
+  // ============================================================================
+  // RATING SECTION
+  // ============================================================================
+
+  Widget _buildRatingRow(BuildContext context, BookEditProvider provider) {
+    final rating = provider.editedBook?.rating ?? 0;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: [
+        Text(
+          'Rating',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(width: Spacing.sm),
+        ...List.generate(5, (index) {
+          final starValue = index + 1;
+          final isSelected = starValue <= rating;
+          return GestureDetector(
+            onTap: () {
+              _provider.updateRating(starValue == rating ? null : starValue);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(
+                isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                size: 28,
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // ============================================================================
+  // PHYSICAL BOOK SECTION
+  // ============================================================================
+
+  Widget _buildPhysicalBookSection(
+    BuildContext context,
+    BookEditProvider provider,
+  ) {
+    final isPhysical = provider.editedBook?.isPhysical ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          title: const Text('Physical book'),
+          value: isPhysical,
+          onChanged: (value) => _provider.updateIsPhysical(value),
+          contentPadding: EdgeInsets.zero,
+        ),
+        if (isPhysical) ...[
+          const SizedBox(height: Spacing.sm),
+          _buildTextField(
+            controller: _physicalLocationController,
+            label: 'Location',
+            onChanged: _provider.updatePhysicalLocation,
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildResponsiveRow([
+            _buildTextField(
+              controller: _lentToController,
+              label: 'Lent to',
+              onChanged: _provider.updateLentTo,
+            ),
+            _buildDateField(
+              controller: _lentAtController,
+              label: 'Lent at',
+              value: provider.editedBook?.lentAt,
+              onChanged: _provider.updateLentAt,
+            ),
+          ]),
+        ],
+      ],
     );
   }
 
@@ -716,6 +979,9 @@ class _BookEditPageState extends State<BookEditPage> {
       _isbnController.text = book.isbn ?? '';
       _isbn13Controller.text = book.isbn13 ?? '';
       _descriptionController.text = book.description ?? '';
+      _publicationDateController.text = book.publicationDate != null
+          ? DateFormat.yMMMMd().format(book.publicationDate!)
+          : '';
       setState(() {
         _coAuthors = List.from(book.coAuthors);
       });
