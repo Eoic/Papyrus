@@ -393,9 +393,14 @@ class _BookEditPageState extends State<BookEditPage> {
         ],
       ),
       const SizedBox(height: Spacing.sm),
-      _buildSectionCard(
-        title: 'Physical book',
-        children: [_buildPhysicalBookSection(context, provider)],
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.md,
+            vertical: Spacing.xs,
+          ),
+          child: _buildPhysicalBookSection(context, provider),
+        ),
       ),
       if (!skipMetadata) ...[
         const SizedBox(height: Spacing.sm),

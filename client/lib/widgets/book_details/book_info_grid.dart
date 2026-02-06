@@ -112,7 +112,7 @@ class BookInfoGrid extends StatelessWidget {
     }
 
     // Lending
-    if (book.lentTo != null && book.lentTo!.isNotEmpty) {
+    if (book.isPhysical && book.lentTo != null && book.lentTo!.isNotEmpty) {
       final lentValue = book.lentAt != null
           ? '${book.lentTo!} (since ${DateFormat.yMMMd().format(book.lentAt!)})'
           : book.lentTo!;
