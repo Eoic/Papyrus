@@ -1065,10 +1065,7 @@ class _BookEditPageState extends State<BookEditPage> {
 
   void _navigateToBookDetails(BuildContext context) {
     if (widget.id != null) {
-      context.goNamed(
-        'BOOK_DETAILS',
-        pathParameters: {'bookId': widget.id!},
-      );
+      context.goNamed('BOOK_DETAILS', pathParameters: {'bookId': widget.id!});
     } else {
       context.pop();
     }
