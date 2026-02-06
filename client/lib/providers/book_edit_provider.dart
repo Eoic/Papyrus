@@ -268,6 +268,54 @@ class BookEditProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateRating(int? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(rating: value);
+    notifyListeners();
+  }
+
+  void updateSeriesName(String? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(
+      seriesName: value?.isEmpty == true ? null : value,
+    );
+    notifyListeners();
+  }
+
+  void updateSeriesNumber(double? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(seriesNumber: value);
+    notifyListeners();
+  }
+
+  void updateIsPhysical(bool value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(isPhysical: value);
+    notifyListeners();
+  }
+
+  void updatePhysicalLocation(String? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(
+      physicalLocation: value?.isEmpty == true ? null : value,
+    );
+    notifyListeners();
+  }
+
+  void updateLentTo(String? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(
+      lentTo: value?.isEmpty == true ? null : value,
+    );
+    notifyListeners();
+  }
+
+  void updateLentAt(DateTime? value) {
+    if (_editedBook == null) return;
+    _editedBook = _editedBook!.copyWith(lentAt: value);
+    notifyListeners();
+  }
+
   // ============================================================================
   // METADATA FETCH
   // ============================================================================

@@ -33,6 +33,11 @@ class _BookEditPageState extends State<BookEditPage> {
   final _isbn13Controller = TextEditingController();
   final _descriptionController = TextEditingController();
   final _publicationDateController = TextEditingController();
+  final _seriesNameController = TextEditingController();
+  final _seriesNumberController = TextEditingController();
+  final _physicalLocationController = TextEditingController();
+  final _lentToController = TextEditingController();
+  final _lentAtController = TextEditingController();
   final _metadataSearchController = TextEditingController();
 
   List<String> _coAuthors = [];
@@ -70,9 +75,24 @@ class _BookEditPageState extends State<BookEditPage> {
     _publicationDateController.text = book.publicationDate != null
         ? DateFormat.yMMMMd().format(book.publicationDate!)
         : '';
+    _seriesNameController.text = book.seriesName ?? '';
+    _seriesNumberController.text = book.seriesNumber != null
+        ? _formatSeriesNumber(book.seriesNumber!)
+        : '';
+    _physicalLocationController.text = book.physicalLocation ?? '';
+    _lentToController.text = book.lentTo ?? '';
+    _lentAtController.text = book.lentAt != null
+        ? DateFormat.yMMMMd().format(book.lentAt!)
+        : '';
     setState(() {
       _coAuthors = List.from(book.coAuthors);
     });
+  }
+
+  String _formatSeriesNumber(double number) {
+    return number == number.roundToDouble()
+        ? number.toInt().toString()
+        : number.toString();
   }
 
   @override
@@ -87,6 +107,11 @@ class _BookEditPageState extends State<BookEditPage> {
     _isbn13Controller.dispose();
     _descriptionController.dispose();
     _publicationDateController.dispose();
+    _seriesNameController.dispose();
+    _seriesNumberController.dispose();
+    _physicalLocationController.dispose();
+    _lentToController.dispose();
+    _lentAtController.dispose();
     _metadataSearchController.dispose();
     _provider.dispose();
     super.dispose();
@@ -273,6 +298,8 @@ class _BookEditPageState extends State<BookEditPage> {
           ]),
           const SizedBox(height: Spacing.md),
           _buildCoAuthorsSection(context),
+          const SizedBox(height: Spacing.md),
+          _buildRatingRow(context, provider),
         ],
       ),
       const SizedBox(height: Spacing.sm),
@@ -340,6 +367,35 @@ class _BookEditPageState extends State<BookEditPage> {
             onChanged: _provider.updateDescription,
           ),
         ],
+      ),
+      const SizedBox(height: Spacing.sm),
+      _buildSectionCard(
+        title: 'Series',
+        children: [
+          _buildResponsiveRow([
+            _buildTextField(
+              controller: _seriesNameController,
+              label: 'Series name',
+              onChanged: _provider.updateSeriesName,
+            ),
+            _buildTextField(
+              controller: _seriesNumberController,
+              label: 'Number in series',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (value) {
+                final number = double.tryParse(value);
+                _provider.updateSeriesNumber(number);
+              },
+            ),
+          ]),
+        ],
+      ),
+      const SizedBox(height: Spacing.sm),
+      _buildSectionCard(
+        title: 'Physical book',
+        children: [_buildPhysicalBookSection(context, provider)],
       ),
       if (!skipMetadata) ...[
         const SizedBox(height: Spacing.sm),
@@ -480,6 +536,91 @@ class _BookEditPageState extends State<BookEditPage> {
         yield Expanded(child: w);
         yield const SizedBox(width: Spacing.md);
       }).toList()..removeLast(),
+    );
+  }
+
+  // ============================================================================
+  // RATING SECTION
+  // ============================================================================
+
+  Widget _buildRatingRow(BuildContext context, BookEditProvider provider) {
+    final rating = provider.editedBook?.rating ?? 0;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: [
+        Text(
+          'Rating',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(width: Spacing.sm),
+        ...List.generate(5, (index) {
+          final starValue = index + 1;
+          final isSelected = starValue <= rating;
+          return GestureDetector(
+            onTap: () {
+              _provider.updateRating(starValue == rating ? null : starValue);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(
+                isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                size: 28,
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // ============================================================================
+  // PHYSICAL BOOK SECTION
+  // ============================================================================
+
+  Widget _buildPhysicalBookSection(
+    BuildContext context,
+    BookEditProvider provider,
+  ) {
+    final isPhysical = provider.editedBook?.isPhysical ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          title: const Text('Physical book'),
+          value: isPhysical,
+          onChanged: (value) => _provider.updateIsPhysical(value),
+          contentPadding: EdgeInsets.zero,
+        ),
+        if (isPhysical) ...[
+          const SizedBox(height: Spacing.sm),
+          _buildTextField(
+            controller: _physicalLocationController,
+            label: 'Location',
+            onChanged: _provider.updatePhysicalLocation,
+          ),
+          const SizedBox(height: Spacing.md),
+          _buildResponsiveRow([
+            _buildTextField(
+              controller: _lentToController,
+              label: 'Lent to',
+              onChanged: _provider.updateLentTo,
+            ),
+            _buildDateField(
+              controller: _lentAtController,
+              label: 'Lent at',
+              value: provider.editedBook?.lentAt,
+              onChanged: _provider.updateLentAt,
+            ),
+          ]),
+        ],
+      ],
     );
   }
 

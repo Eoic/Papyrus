@@ -57,11 +57,21 @@ class BookHeader extends StatelessWidget {
                   context,
                 ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
               ),
+              if (book.subtitle != null && book.subtitle!.isNotEmpty) ...[
+                const SizedBox(height: Spacing.xs),
+                Text(
+                  book.subtitle!,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
               const SizedBox(height: Spacing.xs),
 
               // Author
               Text(
-                book.author,
+                book.allAuthors,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -122,11 +132,22 @@ class BookHeader extends StatelessWidget {
             ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
+          if (book.subtitle != null && book.subtitle!.isNotEmpty) ...[
+            const SizedBox(height: Spacing.xs),
+            Text(
+              book.subtitle!,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: Spacing.xs),
 
           // Author (centered)
           Text(
-            book.author,
+            book.allAuthors,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),

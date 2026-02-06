@@ -77,7 +77,56 @@ class BookInfoGrid extends StatelessWidget {
       entries.add(_InfoEntry('Language', book.language!));
     }
 
+    // Series
+    if (book.seriesName != null && book.seriesName!.isNotEmpty) {
+      final seriesValue = book.seriesNumber != null
+          ? '${book.seriesName} #${_formatSeriesNumber(book.seriesNumber!)}'
+          : book.seriesName!;
+      entries.add(_InfoEntry('Series', seriesValue));
+    } else if (book.seriesNumber != null) {
+      entries.add(
+        _InfoEntry('Series', '#${_formatSeriesNumber(book.seriesNumber!)}'),
+      );
+    }
+
+    // Rating
+    if (book.rating != null) {
+      entries.add(
+        _InfoEntry(
+          'Rating',
+          '${'★' * book.rating!}${'☆' * (5 - book.rating!)}',
+        ),
+      );
+    }
+
+    // Reading status
+    if (book.readingStatus != ReadingStatus.notStarted) {
+      entries.add(_InfoEntry('Status', book.readingStatus.label));
+    }
+
+    // Physical location
+    if (book.isPhysical &&
+        book.physicalLocation != null &&
+        book.physicalLocation!.isNotEmpty) {
+      entries.add(_InfoEntry('Location', book.physicalLocation!));
+    }
+
+    // Lending
+    if (book.lentTo != null && book.lentTo!.isNotEmpty) {
+      final lentValue = book.lentAt != null
+          ? '${book.lentTo!} (since ${DateFormat.yMMMd().format(book.lentAt!)})'
+          : book.lentTo!;
+      entries.add(_InfoEntry('Lent to', lentValue));
+    }
+
     return entries;
+  }
+
+  /// Format series number: show as integer if whole, otherwise as decimal.
+  static String _formatSeriesNumber(double number) {
+    return number == number.roundToDouble()
+        ? number.toInt().toString()
+        : number.toString();
   }
 }
 
