@@ -75,8 +75,8 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     super.dispose();
   }
 
-  double get _coverWidth => widget.isDesktop ? 240.0 : 150.0;
-  double get _coverHeight => widget.isDesktop ? 360.0 : 225.0;
+  double get _coverWidth => widget.isDesktop ? 280.0 : 150.0;
+  double get _coverHeight => widget.isDesktop ? 420.0 : 225.0;
   // Mobile controls width for comfortable touch targets
   double get _mobileControlsWidth => 280.0;
 
@@ -119,7 +119,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
                   ),
                 ),
               ),
-              SizedBox(width: widget.isDesktop ? Spacing.xs : Spacing.md),
+              SizedBox(width: widget.isDesktop ? Spacing.md : Spacing.md),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () =>
@@ -142,7 +142,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
 
         // URL input
         if (_showUrlInput) ...[
-          SizedBox(height: widget.isDesktop ? Spacing.sm : Spacing.md),
+          const SizedBox(height: Spacing.md),
           _wrapWithWidth(
             TextField(
               controller: _urlController,

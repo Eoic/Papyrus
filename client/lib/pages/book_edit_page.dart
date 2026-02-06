@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/providers/book_edit_provider.dart';
 import 'package:papyrus/services/metadata_service.dart';
@@ -31,6 +32,7 @@ class _BookEditPageState extends State<BookEditPage> {
   final _isbnController = TextEditingController();
   final _isbn13Controller = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _publicationDateController = TextEditingController();
   final _metadataSearchController = TextEditingController();
 
   List<String> _coAuthors = [];
@@ -65,6 +67,9 @@ class _BookEditPageState extends State<BookEditPage> {
     _isbnController.text = book.isbn ?? '';
     _isbn13Controller.text = book.isbn13 ?? '';
     _descriptionController.text = book.description ?? '';
+    _publicationDateController.text = book.publicationDate != null
+        ? DateFormat.yMMMMd().format(book.publicationDate!)
+        : '';
     setState(() {
       _coAuthors = List.from(book.coAuthors);
     });
@@ -81,6 +86,7 @@ class _BookEditPageState extends State<BookEditPage> {
     _isbnController.dispose();
     _isbn13Controller.dispose();
     _descriptionController.dispose();
+    _publicationDateController.dispose();
     _metadataSearchController.dispose();
     _provider.dispose();
     super.dispose();
@@ -198,13 +204,17 @@ class _BookEditPageState extends State<BookEditPage> {
                 width: 360,
                 child: Column(
                   children: [
-                    _buildSectionCard(
-                      title: 'Cover',
-                      children: [
-                        _buildCoverSection(context, provider, isDesktop: true),
-                      ],
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(Spacing.md),
+                        child: _buildCoverSection(
+                          context,
+                          provider,
+                          isDesktop: true,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: Spacing.lg),
+                    const SizedBox(height: Spacing.sm),
                     _buildSectionCard(
                       title: 'Fetch metadata',
                       children: [_buildMetadataSection(context, provider)],
@@ -265,7 +275,7 @@ class _BookEditPageState extends State<BookEditPage> {
           _buildCoAuthorsSection(context),
         ],
       ),
-      const SizedBox(height: Spacing.md),
+      const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Publication details',
         children: [
@@ -282,9 +292,14 @@ class _BookEditPageState extends State<BookEditPage> {
             ),
           ]),
           const SizedBox(height: Spacing.md),
-          SizedBox(
-            width: _isDesktop ? 200 : double.infinity,
-            child: _buildTextField(
+          _buildResponsiveRow([
+            _buildDateField(
+              controller: _publicationDateController,
+              label: 'Publication date',
+              value: _provider.editedBook?.publicationDate,
+              onChanged: _provider.updatePublicationDate,
+            ),
+            _buildTextField(
               controller: _pageCountController,
               label: 'Page count',
               keyboardType: TextInputType.number,
@@ -293,10 +308,10 @@ class _BookEditPageState extends State<BookEditPage> {
                 _provider.updatePageCount(pages);
               },
             ),
-          ),
+          ]),
         ],
       ),
-      const SizedBox(height: Spacing.md),
+      const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Identifiers',
         children: [
@@ -314,7 +329,7 @@ class _BookEditPageState extends State<BookEditPage> {
           ]),
         ],
       ),
-      const SizedBox(height: Spacing.md),
+      const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Description',
         children: [
@@ -327,7 +342,7 @@ class _BookEditPageState extends State<BookEditPage> {
         ],
       ),
       if (!skipMetadata) ...[
-        const SizedBox(height: Spacing.md),
+        const SizedBox(height: Spacing.sm),
         _buildSectionCard(
           title: 'Fetch metadata',
           children: [_buildMetadataSection(context, provider)],
@@ -393,6 +408,59 @@ class _BookEditPageState extends State<BookEditPage> {
           : null,
       onChanged: onChanged,
     );
+  }
+
+  Widget _buildDateField({
+    required TextEditingController controller,
+    required String label,
+    required DateTime? value,
+    required void Function(DateTime?) onChanged,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (value != null)
+              IconButton(
+                icon: const Icon(Icons.clear, size: 20),
+                onPressed: () {
+                  controller.clear();
+                  onChanged(null);
+                },
+              ),
+            IconButton(
+              icon: const Icon(Icons.calendar_today, size: 20),
+              onPressed: () => _pickDate(controller, value, onChanged),
+            ),
+          ],
+        ),
+      ),
+      onTap: () => _pickDate(controller, value, onChanged),
+    );
+  }
+
+  Future<void> _pickDate(
+    TextEditingController controller,
+    DateTime? currentValue,
+    void Function(DateTime?) onChanged,
+  ) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: currentValue ?? DateTime.now(),
+      firstDate: DateTime(1000),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      controller.text = DateFormat.yMMMMd().format(picked);
+      onChanged(picked);
+    }
   }
 
   Widget _buildResponsiveRow(List<Widget> children) {
@@ -716,6 +784,9 @@ class _BookEditPageState extends State<BookEditPage> {
       _isbnController.text = book.isbn ?? '';
       _isbn13Controller.text = book.isbn13 ?? '';
       _descriptionController.text = book.description ?? '';
+      _publicationDateController.text = book.publicationDate != null
+          ? DateFormat.yMMMMd().format(book.publicationDate!)
+          : '';
       setState(() {
         _coAuthors = List.from(book.coAuthors);
       });
