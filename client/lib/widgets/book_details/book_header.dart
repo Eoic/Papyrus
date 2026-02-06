@@ -61,20 +61,21 @@ class BookHeader extends StatelessWidget {
                 const SizedBox(height: Spacing.xs),
                 Text(
                   book.subtitle!,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
               ],
-              const SizedBox(height: Spacing.xs),
+              const SizedBox(height: Spacing.sm),
 
               // Author
               Text(
                 book.allAuthors,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: colorScheme.onSurface),
               ),
               const SizedBox(height: Spacing.md),
 
@@ -136,21 +137,21 @@ class BookHeader extends StatelessWidget {
             const SizedBox(height: Spacing.xs),
             Text(
               book.subtitle!,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.italic,
               ),
               textAlign: TextAlign.center,
             ),
           ],
-          const SizedBox(height: Spacing.xs),
+          const SizedBox(height: Spacing.sm),
 
           // Author (centered)
           Text(
             book.allAuthors,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: colorScheme.onSurface),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: Spacing.md),
