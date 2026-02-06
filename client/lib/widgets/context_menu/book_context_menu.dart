@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
-/// Reading status options for books.
-enum ReadingStatus { reading, finished, wantToRead, unread }
-
 /// Context menu for book actions.
 /// Shows a bottom sheet on mobile and a popup menu on desktop.
 class BookContextMenu {
@@ -153,9 +150,9 @@ class BookContextMenu {
         case 'topics':
           onManageTopics?.call();
         case 'reading':
-          onStatusChange?.call(ReadingStatus.reading);
+          onStatusChange?.call(ReadingStatus.inProgress);
         case 'finished':
-          onStatusChange?.call(ReadingStatus.finished);
+          onStatusChange?.call(ReadingStatus.completed);
         case 'delete':
           _confirmDelete(context, book, onDelete);
       }
@@ -403,7 +400,7 @@ class _BookContextBottomSheet extends StatelessWidget {
               isSelected: book.isReading,
               onTap: () {
                 Navigator.pop(context);
-                onStatusChange?.call(ReadingStatus.reading);
+                onStatusChange?.call(ReadingStatus.inProgress);
               },
             ),
             _BottomSheetItem(
@@ -412,7 +409,7 @@ class _BookContextBottomSheet extends StatelessWidget {
               isSelected: book.isFinished,
               onTap: () {
                 Navigator.pop(context);
-                onStatusChange?.call(ReadingStatus.finished);
+                onStatusChange?.call(ReadingStatus.completed);
               },
             ),
             _BottomSheetItem(
@@ -421,7 +418,7 @@ class _BookContextBottomSheet extends StatelessWidget {
               isSelected: book.progress == 0 && !book.isFinished,
               onTap: () {
                 Navigator.pop(context);
-                onStatusChange?.call(ReadingStatus.unread);
+                onStatusChange?.call(ReadingStatus.notStarted);
               },
             ),
 

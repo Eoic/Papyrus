@@ -38,7 +38,10 @@ void showBookContextMenu({
       _showManageTopicsSheet(context, book);
     },
     onStatusChange: (status) {
-      // TODO: Implement status change
+      final dataStore = context.read<DataStore>();
+      final currentBook = dataStore.getBook(book.id);
+      if (currentBook == null) return;
+      dataStore.updateBook(currentBook.copyWith(readingStatus: status));
     },
     onDelete: () {
       // TODO: Implement delete
