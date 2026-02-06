@@ -48,7 +48,7 @@ class AdaptiveAppShell extends StatelessWidget {
       children: [
         AppShellNavItem(
           path: '/library/books',
-          label: 'All books',
+          label: 'Books',
           icon: Icons.menu_book_outlined,
           selectedIcon: Icons.menu_book,
         ),

@@ -26,7 +26,7 @@ class _AllBooksState extends State<BooksPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("All books"),
+        title: const Text("Books"),
         titleSpacing: 0,
         scrolledUnderElevation: 0,
         actions: [

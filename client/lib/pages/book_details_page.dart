@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/book_annotations.dart';
+import 'package:papyrus/widgets/book/book_bookmarks.dart';
 import 'package:papyrus/widgets/book/book_details.dart';
 import 'package:papyrus/widgets/book/book_notes.dart';
 import 'package:papyrus/widgets/book_details/book_header.dart';
 import 'package:papyrus/widgets/book_details/note_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_dialog.dart';
+import 'package:papyrus/widgets/bookmarks/bookmark_action_sheet.dart';
 import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:provider/provider.dart';
 
@@ -32,7 +35,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
   void initState() {
     super.initState();
     _provider = BookDetailsProvider();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_onTabChanged);
   }
 
@@ -240,6 +243,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
         tabAlignment: TabAlignment.start,
         tabs: [
           const Tab(text: 'Details'),
+          Tab(text: 'Bookmarks (${provider.bookmarkCount})'),
           Tab(text: 'Annotations (${provider.annotationCount})'),
           Tab(text: 'Notes (${provider.noteCount})'),
         ],
@@ -287,8 +291,11 @@ class _BookDetailsPageState extends State<BookDetailsPage>
             // Tab bar
             TabBar(
               controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
               tabs: [
                 const Tab(text: 'Details'),
+                Tab(text: 'Bookmarks (${provider.bookmarkCount})'),
                 Tab(text: 'Annotations (${provider.annotationCount})'),
                 Tab(text: 'Notes (${provider.noteCount})'),
               ],
@@ -302,6 +309,13 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                     book: provider.book!,
                     isDescriptionExpanded: provider.isDescriptionExpanded,
                     onToggleDescription: provider.toggleDescriptionExpanded,
+                  ),
+                  BookBookmarks(
+                    bookmarks: provider.bookmarks,
+                    bookTitle: provider.book!.title,
+                    onEditNote: _onEditBookmarkNote,
+                    onChangeColor: _onChangeBookmarkColor,
+                    onDelete: _onDeleteBookmark,
                   ),
                   BookAnnotations(annotations: provider.annotations),
                   BookNotes(
@@ -331,6 +345,14 @@ class _BookDetailsPageState extends State<BookDetailsPage>
           book: provider.book!,
           isDescriptionExpanded: provider.isDescriptionExpanded,
           onToggleDescription: provider.toggleDescriptionExpanded,
+        );
+      case BookDetailsTab.bookmarks:
+        return BookBookmarks(
+          bookmarks: provider.bookmarks,
+          bookTitle: provider.book!.title,
+          onEditNote: _onEditBookmarkNote,
+          onChangeColor: _onChangeBookmarkColor,
+          onDelete: _onDeleteBookmark,
         );
       case BookDetailsTab.annotations:
         return BookAnnotations(annotations: provider.annotations);
@@ -446,6 +468,33 @@ class _BookDetailsPageState extends State<BookDetailsPage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Note deleted')));
+    }
+  }
+
+  void _onEditBookmarkNote(Bookmark bookmark) async {
+    final note = await BookmarkNoteSheet.show(context, bookmark: bookmark);
+    if (!mounted) return;
+
+    if (note != null) {
+      _provider.updateBookmarkNote(bookmark.id, note.isEmpty ? null : note);
+    }
+  }
+
+  void _onChangeBookmarkColor(Bookmark bookmark) async {
+    final colorHex = await BookmarkColorSheet.show(context, bookmark: bookmark);
+    if (colorHex != null && mounted) {
+      _provider.updateBookmarkColor(bookmark.id, colorHex);
+    }
+  }
+
+  void _onDeleteBookmark(Bookmark bookmark) async {
+    final confirmed = await DeleteBookmarkDialog.show(
+      context,
+      bookmark: bookmark,
+      bookTitle: _provider.book?.title ?? '',
+    );
+    if (confirmed && mounted) {
+      _provider.deleteBookmark(bookmark.id);
     }
   }
 

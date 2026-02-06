@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+class _Sentinel {
+  const _Sentinel();
+}
+
+const _sentinel = _Sentinel();
+
 /// Bookmark data model for saved positions within books.
 class Bookmark {
   final String id;
@@ -47,13 +53,17 @@ class Bookmark {
   bool get hasNote => note != null && note!.isNotEmpty;
 
   /// Create a copy with updated fields.
+  ///
+  /// For nullable fields ([pageNumber], [chapterTitle], [note]), pass the
+  /// sentinel value to keep the current value, or pass `null` explicitly
+  /// to clear it.
   Bookmark copyWith({
     String? id,
     String? bookId,
     double? position,
-    int? pageNumber,
-    String? chapterTitle,
-    String? note,
+    Object? pageNumber = _sentinel,
+    Object? chapterTitle = _sentinel,
+    Object? note = _sentinel,
     String? colorHex,
     DateTime? createdAt,
   }) {
@@ -61,9 +71,13 @@ class Bookmark {
       id: id ?? this.id,
       bookId: bookId ?? this.bookId,
       position: position ?? this.position,
-      pageNumber: pageNumber ?? this.pageNumber,
-      chapterTitle: chapterTitle ?? this.chapterTitle,
-      note: note ?? this.note,
+      pageNumber: identical(pageNumber, _sentinel)
+          ? this.pageNumber
+          : pageNumber as int?,
+      chapterTitle: identical(chapterTitle, _sentinel)
+          ? this.chapterTitle
+          : chapterTitle as String?,
+      note: identical(note, _sentinel) ? this.note : note as String?,
       colorHex: colorHex ?? this.colorHex,
       createdAt: createdAt ?? this.createdAt,
     );

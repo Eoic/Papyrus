@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/pages/book_details_page.dart';
+import 'package:papyrus/pages/bookmarks_page.dart';
 import 'package:papyrus/pages/book_edit_page.dart';
 import 'package:papyrus/pages/dashboard_page.dart';
 import 'package:papyrus/pages/developer_options_page.dart';
@@ -110,7 +111,7 @@ class AppRouter {
                 path: 'bookmarks',
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const StubPage(title: 'Bookmarks'),
+                  child: const BookmarksPage(),
                 ),
               ),
               GoRoute(

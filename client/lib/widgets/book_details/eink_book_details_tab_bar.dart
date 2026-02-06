@@ -6,6 +6,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// Uses inverted colors for the selected tab via colorScheme.
 class EinkBookDetailsTabBar extends StatelessWidget {
   final BookDetailsTab selectedTab;
+  final int bookmarkCount;
   final int annotationCount;
   final int noteCount;
   final ValueChanged<BookDetailsTab> onTabChanged;
@@ -13,6 +14,7 @@ class EinkBookDetailsTabBar extends StatelessWidget {
   const EinkBookDetailsTabBar({
     super.key,
     required this.selectedTab,
+    required this.bookmarkCount,
     required this.annotationCount,
     required this.noteCount,
     required this.onTabChanged,
@@ -36,6 +38,13 @@ class EinkBookDetailsTabBar extends StatelessWidget {
             context,
             tab: BookDetailsTab.details,
             label: 'Details',
+            isLast: false,
+          ),
+          _buildTab(
+            context,
+            tab: BookDetailsTab.bookmarks,
+            label: 'Bookmarks',
+            count: bookmarkCount,
             isLast: false,
           ),
           _buildTab(

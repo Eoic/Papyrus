@@ -2,10 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 
 /// Tab indices for book details page.
-enum BookDetailsTab { details, annotations, notes }
+enum BookDetailsTab { details, bookmarks, annotations, notes }
 
 /// Provider for managing book details page state.
 ///
@@ -49,6 +50,12 @@ class BookDetailsProvider extends ChangeNotifier {
   // Getters
   BookData? get book => _book;
 
+  /// Get bookmarks for the current book from DataStore.
+  List<Bookmark> get bookmarks {
+    if (_dataStore == null || _currentBookId == null) return [];
+    return _dataStore!.getBookmarksForBook(_currentBookId!);
+  }
+
   /// Get annotations for the current book from DataStore.
   List<Annotation> get annotations {
     if (_dataStore == null || _currentBookId == null) return [];
@@ -66,11 +73,15 @@ class BookDetailsProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isDescriptionExpanded => _isDescriptionExpanded;
 
+  int get bookmarkCount => bookmarks.length;
   int get annotationCount => annotations.length;
   int get noteCount => notes.length;
 
   /// Whether the book has been loaded successfully.
   bool get hasBook => _book != null;
+
+  /// Whether the book has any bookmarks.
+  bool get hasBookmarks => bookmarks.isNotEmpty;
 
   /// Whether the book has any annotations.
   bool get hasAnnotations => annotations.isNotEmpty;
@@ -171,6 +182,28 @@ class BookDetailsProvider extends ChangeNotifier {
     if (_dataStore != null) {
       _dataStore!.deleteNote(noteId);
     }
+    notifyListeners();
+  }
+
+  /// Update a bookmark's note. Persists to DataStore.
+  void updateBookmarkNote(String bookmarkId, String? note) {
+    final bookmark = _dataStore?.getBookmark(bookmarkId);
+    if (bookmark == null || _dataStore == null) return;
+    _dataStore!.updateBookmark(bookmark.copyWith(note: note));
+    notifyListeners();
+  }
+
+  /// Update a bookmark's color. Persists to DataStore.
+  void updateBookmarkColor(String bookmarkId, String colorHex) {
+    final bookmark = _dataStore?.getBookmark(bookmarkId);
+    if (bookmark == null || _dataStore == null) return;
+    _dataStore!.updateBookmark(bookmark.copyWith(colorHex: colorHex));
+    notifyListeners();
+  }
+
+  /// Delete a bookmark. Persists to DataStore.
+  void deleteBookmark(String bookmarkId) {
+    _dataStore?.deleteBookmark(bookmarkId);
     notifyListeners();
   }
 
