@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/library_provider.dart';
@@ -29,7 +30,7 @@ void showBookContextMenu({
       libraryProvider.toggleFavorite(book.id, isFavorite);
     },
     onEdit: () {
-      // TODO: Implement edit
+      context.pushNamed('BOOK_EDIT', pathParameters: {'bookId': book.id});
     },
     onMoveToShelf: () {
       _showMoveToShelfSheet(context, book);

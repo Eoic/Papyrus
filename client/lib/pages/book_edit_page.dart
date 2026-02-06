@@ -168,7 +168,7 @@ class _BookEditPageState extends State<BookEditPage> {
               if (didPop) return;
               final discard = await _showDiscardDialog();
               if (discard && mounted && context.mounted) {
-                context.pop();
+                _navigateToBookDetails(context);
               }
             },
             child: _isDesktop
@@ -230,7 +230,7 @@ class _BookEditPageState extends State<BookEditPage> {
                 ),
                 icon: const Icon(Icons.arrow_back, size: 20),
                 label: Text(
-                  'Edit book',
+                  'Book details',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -1063,13 +1063,24 @@ class _BookEditPageState extends State<BookEditPage> {
     return result ?? false;
   }
 
+  void _navigateToBookDetails(BuildContext context) {
+    if (widget.id != null) {
+      context.goNamed(
+        'BOOK_DETAILS',
+        pathParameters: {'bookId': widget.id!},
+      );
+    } else {
+      context.pop();
+    }
+  }
+
   void _handleCancel(BuildContext context) async {
     if (_provider.hasUnsavedChanges) {
       final discard = await _showDiscardDialog();
       if (!discard) return;
     }
     if (mounted && context.mounted) {
-      context.pop();
+      _navigateToBookDetails(context);
     }
   }
 
@@ -1094,7 +1105,7 @@ class _BookEditPageState extends State<BookEditPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      context.pop();
+      _navigateToBookDetails(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
