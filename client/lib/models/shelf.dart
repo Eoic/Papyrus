@@ -11,7 +11,6 @@ class Shelf {
   final String? colorHex;
   final IconData? icon;
   final String? parentShelfId;
-  final bool isDefault;
   final bool isSmart;
   final String? smartQuery;
   final int sortOrder;
@@ -29,7 +28,6 @@ class Shelf {
     this.colorHex,
     this.icon,
     this.parentShelfId,
-    this.isDefault = false,
     this.isSmart = false,
     this.smartQuery,
     this.sortOrder = 0,
@@ -67,7 +65,6 @@ class Shelf {
     String? colorHex,
     IconData? icon,
     String? parentShelfId,
-    bool? isDefault,
     bool? isSmart,
     String? smartQuery,
     int? sortOrder,
@@ -83,7 +80,6 @@ class Shelf {
       colorHex: colorHex ?? this.colorHex,
       icon: icon ?? this.icon,
       parentShelfId: parentShelfId ?? this.parentShelfId,
-      isDefault: isDefault ?? this.isDefault,
       isSmart: isSmart ?? this.isSmart,
       smartQuery: smartQuery ?? this.smartQuery,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -103,7 +99,6 @@ class Shelf {
       'color_hex': colorHex,
       'icon': icon?.codePoint,
       'parent_shelf_id': parentShelfId,
-      'is_default': isDefault,
       'is_smart': isSmart,
       'smart_query': smartQuery,
       'sort_order': sortOrder,
@@ -121,7 +116,6 @@ class Shelf {
       colorHex: json['color_hex'] as String?,
       icon: _iconFromCodePoint(json['icon'] as int?),
       parentShelfId: json['parent_shelf_id'] as String?,
-      isDefault: json['is_default'] as bool? ?? false,
       isSmart: json['is_smart'] as bool? ?? false,
       smartQuery: json['smart_query'] as String?,
       sortOrder: json['sort_order'] as int? ?? 0,
@@ -197,7 +191,6 @@ class Shelf {
         description: 'Books I am reading right now',
         colorHex: '#4CAF50',
         icon: Icons.menu_book,
-        isDefault: true,
         sortOrder: 0,
         createdAt: now.subtract(const Duration(days: 90)),
         updatedAt: now.subtract(const Duration(hours: 2)),
@@ -208,7 +201,6 @@ class Shelf {
         description: 'My reading backlog',
         colorHex: '#2196F3',
         icon: Icons.bookmark_outline,
-        isDefault: true,
         sortOrder: 1,
         createdAt: now.subtract(const Duration(days: 90)),
         updatedAt: now.subtract(const Duration(days: 1)),
@@ -219,7 +211,6 @@ class Shelf {
         description: 'Books I have completed',
         colorHex: '#9C27B0',
         icon: Icons.check_circle_outline,
-        isDefault: true,
         sortOrder: 2,
         createdAt: now.subtract(const Duration(days: 90)),
         updatedAt: now.subtract(const Duration(days: 7)),

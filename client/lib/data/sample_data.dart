@@ -363,7 +363,7 @@ class SampleData {
   }
 
   // ============================================================
-  // Shelves (8 shelves: 3 default + 5 custom)
+  // Shelves (8 shelves)
   // ============================================================
 
   static List<Shelf> get shelves {
@@ -375,7 +375,6 @@ class SampleData {
         description: 'Books I am reading right now',
         colorHex: '#4CAF50',
         icon: Icons.menu_book,
-        isDefault: true,
         sortOrder: 0,
         bookCount: 4,
         coverPreviewUrls: [
@@ -393,7 +392,6 @@ class SampleData {
         description: 'My reading backlog',
         colorHex: '#2196F3',
         icon: Icons.bookmark_outline,
-        isDefault: true,
         sortOrder: 1,
         bookCount: 6,
         coverPreviewUrls: [
@@ -411,7 +409,6 @@ class SampleData {
         description: 'Books I have completed',
         colorHex: '#9C27B0',
         icon: Icons.check_circle_outline,
-        isDefault: true,
         sortOrder: 2,
         bookCount: 3,
         coverPreviewUrls: [

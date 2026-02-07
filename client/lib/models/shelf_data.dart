@@ -9,7 +9,6 @@ class ShelfData {
   final IconData? icon;
   final int bookCount;
   final List<String> coverPreviewUrls;
-  final bool isDefault;
   final bool isSmart;
   final String? smartQuery;
   final int sortOrder;
@@ -24,7 +23,6 @@ class ShelfData {
     this.icon,
     this.bookCount = 0,
     this.coverPreviewUrls = const [],
-    this.isDefault = false,
     this.isSmart = false,
     this.smartQuery,
     this.sortOrder = 0,
@@ -61,7 +59,6 @@ class ShelfData {
     IconData? icon,
     int? bookCount,
     List<String>? coverPreviewUrls,
-    bool? isDefault,
     bool? isSmart,
     String? smartQuery,
     int? sortOrder,
@@ -76,7 +73,6 @@ class ShelfData {
       icon: icon ?? this.icon,
       bookCount: bookCount ?? this.bookCount,
       coverPreviewUrls: coverPreviewUrls ?? this.coverPreviewUrls,
-      isDefault: isDefault ?? this.isDefault,
       isSmart: isSmart ?? this.isSmart,
       smartQuery: smartQuery ?? this.smartQuery,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -101,7 +97,6 @@ class ShelfData {
           'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1555447414i/44767458.jpg',
           'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1703329310i/23692271.jpg',
         ],
-        isDefault: true,
         sortOrder: 0,
         createdAt: now.subtract(const Duration(days: 90)),
         updatedAt: now.subtract(const Duration(hours: 2)),
@@ -118,7 +113,6 @@ class ShelfData {
           'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1554437249i/6088007.jpg',
           'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1417900846i/29579.jpg',
         ],
-        isDefault: true,
         sortOrder: 1,
         createdAt: now.subtract(const Duration(days: 90)),
         updatedAt: now.subtract(const Duration(days: 1)),
@@ -135,7 +129,6 @@ class ShelfData {
           'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1657781256i/61439040.jpg',
           'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg',
         ],
-        isDefault: true,
         sortOrder: 2,
         createdAt: now.subtract(const Duration(days: 90)),
         updatedAt: now.subtract(const Duration(days: 7)),

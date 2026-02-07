@@ -55,10 +55,6 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
     final dataStore = context.watch<DataStore>();
     final shelves = dataStore.shelves;
 
-    // Separate default and user shelves
-    final defaultShelves = shelves.where((s) => s.isDefault).toList();
-    final userShelves = shelves.where((s) => !s.isDefault).toList();
-
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.4,
@@ -118,23 +114,9 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
               child: ListView(
                 controller: scrollController,
                 children: [
-                  // Default shelves section
-                  if (defaultShelves.isNotEmpty) ...[
-                    _buildSectionHeader(context, 'Default shelves'),
-                    ...defaultShelves.map(
-                      (shelf) => _buildShelfTile(context, shelf),
-                    ),
-                    const SizedBox(height: Spacing.md),
-                  ],
-
-                  // User shelves section
-                  if (userShelves.isNotEmpty) ...[
-                    _buildSectionHeader(context, 'Your shelves'),
-                    ...userShelves.map(
-                      (shelf) => _buildShelfTile(context, shelf),
-                    ),
-                    const SizedBox(height: Spacing.md),
-                  ],
+                  // Shelves list
+                  ...shelves.map((shelf) => _buildShelfTile(context, shelf)),
+                  if (shelves.isNotEmpty) const SizedBox(height: Spacing.md),
 
                   // Create new shelf button
                   _buildCreateShelfButton(context),
@@ -196,21 +178,6 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
         Icons.menu_book,
         color: colorScheme.onSurfaceVariant,
         size: 20,
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(left: Spacing.sm, bottom: Spacing.xs),
-      child: Text(
-        title,
-        style: textTheme.labelMedium?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
       ),
     );
   }

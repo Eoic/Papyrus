@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/book_info_grid.dart';
+import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:papyrus/widgets/topics/manage_topics_sheet.dart';
 import 'package:papyrus/widgets/topics/topic_detail_sheet.dart';
 import 'package:provider/provider.dart';
@@ -169,29 +170,30 @@ class _BookDetailsState extends State<BookDetails> {
   }
 
   Widget _buildShelvesChips(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (widget.book.shelves.isEmpty) {
-      return Text(
-        'Not assigned to any shelf.',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-      );
-    }
+    final dataStore = context.watch<DataStore>();
+    final shelves = dataStore.getShelvesForBook(widget.book.id);
 
     return Wrap(
       spacing: Spacing.sm,
       runSpacing: Spacing.sm,
-      children: widget.book.shelves.map((shelf) {
-        return Chip(
-          label: Text(shelf),
-          deleteIcon: const Icon(Icons.close, size: 16),
-          onDeleted: () {
-            // TODO: Implement remove from shelf
-          },
-        );
-      }).toList(),
+      children: [
+        ...shelves.map((shelf) {
+          return ActionChip(
+            avatar: Icon(shelf.displayIcon, size: 16, color: shelf.color),
+            label: Text(shelf.name),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onPressed: () {},
+          );
+        }),
+        ActionChip(
+          avatar: const Icon(Icons.add, size: 16),
+          label: Text(shelves.isEmpty ? 'Add to shelf' : 'Edit'),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onPressed: () => _showMoveToShelfSheet(context),
+        ),
+      ],
     );
   }
 
@@ -227,6 +229,33 @@ class _BookDetailsState extends State<BookDetails> {
           onPressed: () => _showManageTopicsSheet(context),
         ),
       ],
+    );
+  }
+
+  void _showMoveToShelfSheet(BuildContext context) {
+    final dataStore = context.read<DataStore>();
+    final currentShelfIds = dataStore
+        .getShelfIdsForBook(widget.book.id)
+        .toSet();
+
+    MoveToShelfSheet.show(
+      context,
+      book: widget.book,
+      onSave: (newShelfIds) {
+        final newShelfSet = newShelfIds.toSet();
+
+        for (final shelfId in currentShelfIds) {
+          if (!newShelfSet.contains(shelfId)) {
+            dataStore.removeBookFromShelf(widget.book.id, shelfId);
+          }
+        }
+
+        for (final shelfId in newShelfIds) {
+          if (!currentShelfIds.contains(shelfId)) {
+            dataStore.addBookToShelf(widget.book.id, shelfId);
+          }
+        }
+      },
     );
   }
 

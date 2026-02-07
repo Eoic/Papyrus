@@ -13,7 +13,6 @@ import 'package:papyrus/widgets/book_details/book_header.dart';
 import 'package:papyrus/widgets/book_details/note_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_dialog.dart';
 import 'package:papyrus/widgets/bookmarks/bookmark_action_sheet.dart';
-import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:provider/provider.dart';
 
 /// Book details page with responsive layouts for desktop and mobile.
@@ -208,7 +207,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                   book: provider.book!,
                   isDesktop: true,
                   onContinueReading: _onContinueReading,
-                  onAddToShelf: _onAddToShelf,
+                  onToggleFavorite: _provider.toggleFavorite,
                   onEdit: _onEdit,
                 ),
                 const SizedBox(height: Spacing.xl),
@@ -264,11 +263,6 @@ class _BookDetailsPageState extends State<BookDetailsPage>
             icon: const Icon(Icons.more_vert),
             onSelected: _onMenuAction,
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'share', child: Text('Share')),
-              const PopupMenuItem(
-                value: 'favorite',
-                child: Text('Add to favorites'),
-              ),
               const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],
           ),
@@ -281,7 +275,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
               book: provider.book!,
               isDesktop: false,
               onContinueReading: _onContinueReading,
-              onAddToShelf: _onAddToShelf,
+              onToggleFavorite: _provider.toggleFavorite,
               onEdit: _onEdit,
             ),
           ),
@@ -370,42 +364,6 @@ class _BookDetailsPageState extends State<BookDetailsPage>
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Opening book reader...')));
-  }
-
-  void _onAddToShelf() {
-    final book = _provider.book;
-    if (book == null) return;
-
-    final dataStore = context.read<DataStore>();
-    final currentShelfIds = dataStore.getShelfIdsForBook(book.id).toSet();
-
-    MoveToShelfSheet.show(
-      context,
-      book: book,
-      onSave: (newShelfIds) {
-        final newShelfSet = newShelfIds.toSet();
-
-        // Remove book from shelves it was removed from
-        for (final shelfId in currentShelfIds) {
-          if (!newShelfSet.contains(shelfId)) {
-            dataStore.removeBookFromShelf(book.id, shelfId);
-          }
-        }
-
-        // Add book to new shelves
-        for (final shelfId in newShelfIds) {
-          if (!currentShelfIds.contains(shelfId)) {
-            dataStore.addBookToShelf(book.id, shelfId);
-          }
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Shelves updated')));
-        }
-      },
-    );
   }
 
   void _onEdit() {
@@ -500,21 +458,6 @@ class _BookDetailsPageState extends State<BookDetailsPage>
 
   void _onMenuAction(String action) {
     switch (action) {
-      case 'share':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Share functionality coming soon')),
-        );
-      case 'favorite':
-        _provider.toggleFavorite();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _provider.book!.isFavorite
-                  ? 'Added to favorites'
-                  : 'Removed from favorites',
-            ),
-          ),
-        );
       case 'delete':
         // TODO: Confirm and delete
         ScaffoldMessenger.of(context).showSnackBar(

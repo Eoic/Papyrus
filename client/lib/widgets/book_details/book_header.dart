@@ -11,7 +11,7 @@ class BookHeader extends StatelessWidget {
   final BookData book;
   final bool isDesktop;
   final VoidCallback? onContinueReading;
-  final VoidCallback? onAddToShelf;
+  final VoidCallback? onToggleFavorite;
   final VoidCallback? onEdit;
 
   const BookHeader({
@@ -19,7 +19,7 @@ class BookHeader extends StatelessWidget {
     required this.book,
     this.isDesktop = false,
     this.onContinueReading,
-    this.onAddToShelf,
+    this.onToggleFavorite,
     this.onEdit,
   });
 
@@ -98,7 +98,7 @@ class BookHeader extends StatelessWidget {
                 book: book,
                 isDesktop: true,
                 onContinueReading: onContinueReading,
-                onAddToShelf: onAddToShelf,
+                onToggleFavorite: onToggleFavorite,
                 onEdit: onEdit,
               ),
             ],
@@ -176,7 +176,7 @@ class BookHeader extends StatelessWidget {
             book: book,
             isDesktop: false,
             onContinueReading: onContinueReading,
-            onAddToShelf: onAddToShelf,
+            onToggleFavorite: onToggleFavorite,
             onEdit: onEdit,
           ),
           const SizedBox(height: Spacing.md),

@@ -3,11 +3,11 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Action buttons for book details page.
-/// Shows Continue Reading, Add to Shelf, and Edit buttons.
+/// Shows Continue Reading, Favorite, and Edit buttons.
 class BookActionButtons extends StatelessWidget {
   final BookData book;
   final VoidCallback? onContinueReading;
-  final VoidCallback? onAddToShelf;
+  final VoidCallback? onToggleFavorite;
   final VoidCallback? onEdit;
   final bool isDesktop;
 
@@ -15,7 +15,7 @@ class BookActionButtons extends StatelessWidget {
     super.key,
     required this.book,
     this.onContinueReading,
-    this.onAddToShelf,
+    this.onToggleFavorite,
     this.onEdit,
     this.isDesktop = false,
   });
@@ -59,19 +59,22 @@ class BookActionButtons extends StatelessWidget {
           ),
         const SizedBox(width: Spacing.sm),
 
-        // Add to Shelf button (outlined)
+        // Favorite toggle button
         SizedBox(
           width: buttonHeight,
           height: buttonHeight,
           child: OutlinedButton(
-            onPressed: onAddToShelf,
+            onPressed: onToggleFavorite,
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.button),
               ),
             ),
-            child: Icon(Icons.library_add_outlined, color: colorScheme.primary),
+            child: Icon(
+              book.isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: book.isFavorite ? colorScheme.error : colorScheme.primary,
+            ),
           ),
         ),
         const SizedBox(width: Spacing.sm),

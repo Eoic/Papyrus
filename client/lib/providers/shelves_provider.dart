@@ -80,12 +80,6 @@ class ShelvesProvider extends ChangeNotifier {
 
   bool get hasShelves => shelves.isNotEmpty;
 
-  /// Get default shelves (Currently Reading, Want to Read, Finished).
-  List<Shelf> get defaultShelves => shelves.where((s) => s.isDefault).toList();
-
-  /// Get user-created shelves.
-  List<Shelf> get userShelves => shelves.where((s) => !s.isDefault).toList();
-
   Shelf? get selectedShelf => _selectedShelf;
 
   ShelfSortOption get shelfSortOption => _shelfSortOption;
