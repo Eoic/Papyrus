@@ -47,5 +47,12 @@ jobs:
       - name: Analyze code
         run: dart analyze
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: client/coverage/lcov.info
+          flags: client
+          token: ${{ secrets.CODECOV_TOKEN }}
