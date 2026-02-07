@@ -50,30 +50,40 @@ class BookGrid extends StatelessWidget {
 
     final libraryProvider = context.watch<LibraryProvider>();
 
-    return GridView.builder(
-      padding: padding ?? const EdgeInsets.all(Spacing.md),
-      cacheExtent: 200,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: spacing,
-        crossAxisSpacing: spacing,
-        childAspectRatio: childAspectRatio,
+    return MediaQuery.removePadding(
+      context: context,
+      removeTop: true,
+      child: GridView.builder(
+        padding:
+            padding ??
+            const EdgeInsets.only(
+              left: Spacing.md,
+              right: Spacing.md,
+              bottom: Spacing.md,
+            ),
+        cacheExtent: 200,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: childAspectRatio,
+        ),
+        itemCount: books.length,
+        itemBuilder: (context, index) {
+          final book = books[index];
+          final isFavorite = libraryProvider.isBookFavorite(
+            book.id,
+            book.isFavorite,
+          );
+          return BookCard(
+            book: book,
+            isFavorite: isFavorite,
+            onToggleFavorite: (current) =>
+                libraryProvider.toggleFavorite(book.id, current),
+            onTap: onBookTap != null ? () => onBookTap!(book) : null,
+          );
+        },
       ),
-      itemCount: books.length,
-      itemBuilder: (context, index) {
-        final book = books[index];
-        final isFavorite = libraryProvider.isBookFavorite(
-          book.id,
-          book.isFavorite,
-        );
-        return BookCard(
-          book: book,
-          isFavorite: isFavorite,
-          onToggleFavorite: (current) =>
-              libraryProvider.toggleFavorite(book.id, current),
-          onTap: onBookTap != null ? () => onBookTap!(book) : null,
-        );
-      },
     );
   }
 }

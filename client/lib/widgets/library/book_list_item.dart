@@ -39,29 +39,23 @@ class _BookListItemState extends State<BookListItem> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onSecondaryTapUp: (details) {
-          showBookContextMenu(
-            context: context,
-            book: widget.book,
-            position: details.globalPosition,
-          );
-        },
-        onLongPressStart: (details) {
-          showBookContextMenu(
-            context: context,
-            book: widget.book,
-            position: details.globalPosition,
-          );
-        },
+        onLongPressStart: _isDesktop
+            ? null
+            : (details) {
+                showBookContextMenu(
+                  context: context,
+                  book: widget.book,
+                  position: details.globalPosition,
+                );
+              },
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: widget.onTap,
             child: Container(
-              height: 80,
               padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.sm,
-                vertical: Spacing.xs,
+                horizontal: Spacing.md,
+                vertical: Spacing.sm,
               ),
               decoration: BoxDecoration(
                 border: Border(
@@ -72,14 +66,14 @@ class _BookListItemState extends State<BookListItem> {
                 children: [
                   // Cover thumbnail
                   SizedBox(
-                    width: 54,
-                    height: 80,
+                    width: ComponentSizes.bookCoverWidthList,
+                    height: ComponentSizes.bookCoverHeightList,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: _buildCover(context),
                     ),
                   ),
-                  const SizedBox(width: Spacing.sm),
+                  const SizedBox(width: Spacing.md),
 
                   // Book info
                   Expanded(
@@ -94,7 +88,7 @@ class _BookListItemState extends State<BookListItem> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: Spacing.xs),
                         Text(
                           widget.book.author,
                           style: Theme.of(context).textTheme.bodyMedium

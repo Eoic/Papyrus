@@ -6,15 +6,13 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
-import 'package:papyrus/widgets/filter/active_filter_bar.dart';
 import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
-import 'package:papyrus/widgets/filter/quick_filter_chips.dart';
-import 'package:papyrus/widgets/library/advanced_search_bar.dart';
+import 'package:papyrus/widgets/filter/filter_dialog.dart';
 import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
-import 'package:papyrus/widgets/search/mobile_search_bar.dart';
+import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
 
@@ -58,7 +56,9 @@ class _LibraryPageState extends State<LibraryPage> {
     if (provider.searchQuery.isNotEmpty) {
       final searchQuery = SearchQueryParser.parse(provider.searchQuery);
       if (searchQuery.isNotEmpty) {
-        books = books.where((book) => searchQuery.matches(book)).toList();
+        books = books
+            .where((book) => searchQuery.matches(book, dataStore: dataStore))
+            .toList();
       }
     }
 
@@ -75,10 +75,19 @@ class _LibraryPageState extends State<LibraryPage> {
       if (provider.isFilterActive(LibraryFilterType.finished)) {
         books = books.where((book) => book.isFinished).toList();
       }
+      if (provider.isFilterActive(LibraryFilterType.unread)) {
+        books = books
+            .where((book) => book.readingStatus == ReadingStatus.notStarted)
+            .toList();
+      }
       if (provider.isFilterActive(LibraryFilterType.shelves) &&
           provider.selectedShelf != null) {
         books = books
-            .where((book) => book.shelves.contains(provider.selectedShelf))
+            .where(
+              (book) => dataStore
+                  .getShelvesForBook(book.id)
+                  .any((s) => s.name == provider.selectedShelf),
+            )
             .toList();
       }
       if (provider.isFilterActive(LibraryFilterType.topics) &&
@@ -105,8 +114,6 @@ class _LibraryPageState extends State<LibraryPage> {
     List<BookData> books,
     LibraryProvider libraryProvider,
   ) {
-    final activeFilters = _buildActiveFilters(libraryProvider);
-
     return Scaffold(
       key: _scaffoldKey,
       drawer: const LibraryDrawer(),
@@ -128,41 +135,13 @@ class _LibraryPageState extends State<LibraryPage> {
                   ),
                   const SizedBox(width: Spacing.xs),
                   // Search bar
-                  Expanded(
-                    child: MobileSearchBar(
-                      initialQuery: libraryProvider.searchQuery,
-                      activeFilterCount: activeFilters.length,
-                      onQueryChanged: (query) {
-                        libraryProvider.setSearchQuery(query);
-                      },
-                      onFilterTap: () => _showFilterBottomSheet(context),
-                    ),
-                  ),
+                  Expanded(child: _buildSearchBar(libraryProvider)),
                 ],
               ),
             ),
 
-            // Active filter bar (only visible when filters are active)
-            if (activeFilters.isNotEmpty)
-              ActiveFilterBar(
-                filters: activeFilters,
-                onFilterRemoved: (filter) =>
-                    _removeFilter(libraryProvider, filter),
-                onClearAll: () => libraryProvider.resetFilters(),
-              ),
-
             // Quick filter chips
-            QuickFilterChips(
-              selectedFilters: libraryProvider.activeFilters,
-              onFilterToggled: (filter) {
-                if (filter == LibraryFilterType.all) {
-                  libraryProvider.resetFilters();
-                } else {
-                  libraryProvider.toggleFilter(filter);
-                }
-              },
-              onMoreFilters: () => _showFilterBottomSheet(context),
-            ),
+            const LibraryFilterChips(),
 
             // View toggle row
             Padding(
@@ -226,37 +205,11 @@ class _LibraryPageState extends State<LibraryPage> {
 
   /// Build list of active filters for display.
   /// Uses a Set to prevent duplicate filters.
+  /// Quick filters (Reading, Favorites, Finished) are excluded because they
+  /// are already shown as highlighted buttons in the QuickFilterChips bar.
   List<ActiveFilter> _buildActiveFilters(LibraryProvider provider) {
     final filters = <ActiveFilter>{};
 
-    // Add quick filters
-    if (provider.isFilterActive(LibraryFilterType.reading)) {
-      filters.add(
-        const ActiveFilter(
-          type: ActiveFilterType.quick,
-          label: 'Reading',
-          value: 'reading',
-        ),
-      );
-    }
-    if (provider.isFilterActive(LibraryFilterType.favorites)) {
-      filters.add(
-        const ActiveFilter(
-          type: ActiveFilterType.quick,
-          label: 'Favorites',
-          value: 'favorites',
-        ),
-      );
-    }
-    if (provider.isFilterActive(LibraryFilterType.finished)) {
-      filters.add(
-        const ActiveFilter(
-          type: ActiveFilterType.quick,
-          label: 'Finished',
-          value: 'finished',
-        ),
-      );
-    }
     if (provider.selectedShelf != null) {
       filters.add(
         ActiveFilter(
@@ -306,49 +259,21 @@ class _LibraryPageState extends State<LibraryPage> {
     return filters.toList();
   }
 
-  /// Remove a filter from the provider.
-  void _removeFilter(LibraryProvider provider, ActiveFilter filter) {
-    if (filter.type == ActiveFilterType.quick) {
-      switch (filter.value) {
-        case 'reading':
-          provider.removeFilter(LibraryFilterType.reading);
-        case 'favorites':
-          provider.removeFilter(LibraryFilterType.favorites);
-        case 'finished':
-          provider.removeFilter(LibraryFilterType.finished);
-      }
-    } else {
-      // Remove from search query
-      if (filter.queryString != null) {
-        final currentQuery = provider.searchQuery;
-        final newQuery = currentQuery
-            .replaceAll(filter.queryString!, '')
-            .replaceAll(RegExp(r'\s+'), ' ')
-            .trim();
-        provider.setSearchQuery(newQuery);
-      }
-      // Clear shelf/topic selection
-      if (filter.label == 'shelf') {
-        provider.selectShelf(null);
-      } else if (filter.label == 'topic') {
-        provider.selectTopic(null);
-      }
-    }
-  }
-
   /// Show the filter bottom sheet.
   Future<void> _showFilterBottomSheet(BuildContext context) async {
     final libraryProvider = context.read<LibraryProvider>();
     final dataStore = context.read<DataStore>();
     final filterOptions = FilterOptions.fromBooks(
       dataStore.books,
+      shelfNames: dataStore.shelves.map((s) => s.name).toList(),
       topicNames: dataStore.tags.map((t) => t.name).toList(),
     );
 
     final result = await FilterBottomSheet.show(
       context,
       filterOptions: filterOptions,
-      initialFilters: AppliedFilters(
+      initialFilters: AppliedFilters.fromQueryString(
+        libraryProvider.searchQuery,
         filterReading: libraryProvider.isFilterActive(
           LibraryFilterType.reading,
         ),
@@ -358,41 +283,79 @@ class _LibraryPageState extends State<LibraryPage> {
         filterFinished: libraryProvider.isFilterActive(
           LibraryFilterType.finished,
         ),
+        filterUnread: libraryProvider.isFilterActive(LibraryFilterType.unread),
         shelf: libraryProvider.selectedShelf,
         topic: libraryProvider.selectedTopic,
       ),
     );
 
     if (result != null) {
-      // Apply quick filters
-      if (result.filterReading) {
-        libraryProvider.addFilter(LibraryFilterType.reading);
-      } else {
-        libraryProvider.removeFilter(LibraryFilterType.reading);
-      }
-      if (result.filterFavorites) {
-        libraryProvider.addFilter(LibraryFilterType.favorites);
-      } else {
-        libraryProvider.removeFilter(LibraryFilterType.favorites);
-      }
-      if (result.filterFinished) {
-        libraryProvider.addFilter(LibraryFilterType.finished);
-      } else {
-        libraryProvider.removeFilter(LibraryFilterType.finished);
-      }
-
-      // Apply shelf/topic
-      libraryProvider.selectShelf(result.shelf);
-      libraryProvider.selectTopic(result.topic);
-
-      // Set or clear search query from advanced filters
-      final queryString = result.toQueryString();
-      if (queryString.isNotEmpty) {
-        libraryProvider.setSearchQuery(queryString);
-      } else {
-        libraryProvider.clearSearch();
-      }
+      _applyFilterResult(result);
     }
+  }
+
+  /// Show the filter dialog (desktop).
+  Future<void> _showFilterDialog(BuildContext context) async {
+    final result = await FilterDialog.show(context);
+    if (result != null) {
+      _applyFilterResult(result);
+    }
+  }
+
+  /// Apply the filter result from either the bottom sheet or dialog.
+  void _applyFilterResult(AppliedFilters result) {
+    final libraryProvider = context.read<LibraryProvider>();
+
+    // Apply quick filters
+    if (result.filterReading) {
+      libraryProvider.addFilter(LibraryFilterType.reading);
+    } else {
+      libraryProvider.removeFilter(LibraryFilterType.reading);
+    }
+    if (result.filterFavorites) {
+      libraryProvider.addFilter(LibraryFilterType.favorites);
+    } else {
+      libraryProvider.removeFilter(LibraryFilterType.favorites);
+    }
+    if (result.filterFinished) {
+      libraryProvider.addFilter(LibraryFilterType.finished);
+    } else {
+      libraryProvider.removeFilter(LibraryFilterType.finished);
+    }
+    if (result.filterUnread) {
+      libraryProvider.addFilter(LibraryFilterType.unread);
+    } else {
+      libraryProvider.removeFilter(LibraryFilterType.unread);
+    }
+
+    // Apply shelf/topic
+    libraryProvider.selectShelf(result.shelf);
+    libraryProvider.selectTopic(result.topic);
+
+    // Set or clear search query from advanced filters
+    final queryString = result.toQueryString();
+    if (queryString.isNotEmpty) {
+      libraryProvider.setSearchQuery(queryString);
+    } else {
+      libraryProvider.clearSearch();
+    }
+  }
+
+  Widget _buildSearchBar(LibraryProvider libraryProvider) {
+    final activeFilters = _buildActiveFilters(libraryProvider);
+    final isDesktop =
+        MediaQuery.of(context).size.width >= Breakpoints.desktopSmall;
+
+    return LibrarySearchBar(
+      initialQuery: libraryProvider.searchQuery,
+      activeFilterCount: activeFilters.length,
+      onQueryChanged: (query) {
+        libraryProvider.setSearchQuery(query);
+      },
+      onFilterTap: () => isDesktop
+          ? _showFilterDialog(context)
+          : _showFilterBottomSheet(context),
+    );
   }
 
   // ============================================================================
@@ -404,14 +367,16 @@ class _LibraryPageState extends State<LibraryPage> {
     LibraryProvider libraryProvider,
     double height,
   ) {
+    final radius = BorderRadius.circular(AppRadius.input);
+
     return Container(
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: radius,
         border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: radius,
         child: ToggleButtons(
           isSelected: [
             libraryProvider.viewMode == LibraryViewMode.grid,
@@ -422,7 +387,7 @@ class _LibraryPageState extends State<LibraryPage> {
               index == 0 ? LibraryViewMode.grid : LibraryViewMode.list,
             );
           },
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: radius,
           renderBorder: false,
           constraints: BoxConstraints(minHeight: height, minWidth: height),
           children: const [Icon(Icons.grid_view), Icon(Icons.view_list)],
@@ -447,7 +412,7 @@ class _LibraryPageState extends State<LibraryPage> {
     List<BookData> books,
     LibraryProvider libraryProvider,
   ) {
-    const double controlHeight = 48.0;
+    const double controlHeight = 40.0;
 
     return Scaffold(
       body: Column(
@@ -455,7 +420,11 @@ class _LibraryPageState extends State<LibraryPage> {
         children: [
           // Header row
           Container(
-            padding: const EdgeInsets.all(Spacing.lg),
+            padding: const EdgeInsets.only(
+              top: Spacing.lg,
+              left: Spacing.lg,
+              right: Spacing.lg,
+            ),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 // Calculate if we need compact layout
@@ -487,7 +456,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                       const SizedBox(height: Spacing.md),
                       // Second row: search bar full width
-                      AdvancedSearchBar(height: controlHeight),
+                      _buildSearchBar(libraryProvider),
                     ],
                   );
                 }
@@ -504,7 +473,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                     ),
                     // Search bar - fills available space
-                    Expanded(child: AdvancedSearchBar(height: controlHeight)),
+                    Expanded(child: _buildSearchBar(libraryProvider)),
                     const SizedBox(width: Spacing.md),
                     _buildViewToggle(context, libraryProvider, controlHeight),
                     const SizedBox(width: Spacing.md),
@@ -516,7 +485,6 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
           // Filter chips
           const LibraryFilterChips(),
-          const SizedBox(height: Spacing.sm),
           // Book grid or list
           Expanded(
             child: books.isEmpty

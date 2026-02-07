@@ -18,12 +18,13 @@ class FilterOptions {
 
   factory FilterOptions.fromBooks(
     List<BookData> books, {
+    List<String> shelfNames = const [],
     List<String> topicNames = const [],
   }) {
     return FilterOptions(
       formats: books.map((b) => b.formatLabel.toLowerCase()).toSet().toList()
         ..sort(),
-      shelves: books.expand((b) => b.shelves).toSet().toList()..sort(),
+      shelves: shelfNames.toList()..sort(),
       topics: topicNames.toList()..sort(),
     );
   }
@@ -97,6 +98,99 @@ class AppliedFilters {
         filterFinished ||
         filterUnread ||
         progressRange != null;
+  }
+
+  /// Parse a search query string to extract field values back into
+  /// an AppliedFilters, merging with explicitly provided values.
+  factory AppliedFilters.fromQueryString(
+    String query, {
+    bool filterReading = false,
+    bool filterFavorites = false,
+    bool filterFinished = false,
+    bool filterUnread = false,
+    String? shelf,
+    String? topic,
+  }) {
+    String? author;
+    String? format;
+    String? status;
+    double progressMin = 0;
+    double progressMax = 100;
+    bool hasProgress = false;
+
+    // Tokenize respecting quotes
+    final tokens = _tokenize(query);
+    for (final token in tokens) {
+      final colonIndex = token.indexOf(':');
+      if (colonIndex <= 0) continue;
+
+      final field = token.substring(0, colonIndex).toLowerCase();
+      var value = token.substring(colonIndex + 1);
+
+      // Strip quotes
+      if (value.startsWith('"') && value.endsWith('"') && value.length > 1) {
+        value = value.substring(1, value.length - 1);
+      }
+
+      switch (field) {
+        case 'author':
+          author = value;
+        case 'format':
+          format = value;
+        case 'shelf':
+          shelf ??= value;
+        case 'topic':
+          topic ??= value;
+        case 'status':
+          status = value;
+        case 'progress':
+          hasProgress = true;
+          if (value.startsWith('>')) {
+            progressMin = double.tryParse(value.substring(1)) ?? 0;
+          } else if (value.startsWith('<')) {
+            progressMax = double.tryParse(value.substring(1)) ?? 100;
+          }
+      }
+    }
+
+    return AppliedFilters(
+      author: author,
+      format: format,
+      shelf: shelf,
+      topic: topic,
+      status: status,
+      filterReading: filterReading,
+      filterFavorites: filterFavorites,
+      filterFinished: filterFinished,
+      filterUnread: filterUnread,
+      progressRange: hasProgress ? RangeValues(progressMin, progressMax) : null,
+    );
+  }
+
+  /// Tokenize a query string respecting quoted phrases.
+  static List<String> _tokenize(String input) {
+    final tokens = <String>[];
+    final buffer = StringBuffer();
+    bool inQuotes = false;
+
+    for (int i = 0; i < input.length; i++) {
+      final char = input[i];
+      if (char == '"') {
+        inQuotes = !inQuotes;
+        buffer.write(char);
+      } else if (char == ' ' && !inQuotes) {
+        if (buffer.isNotEmpty) {
+          tokens.add(buffer.toString());
+          buffer.clear();
+        }
+      } else {
+        buffer.write(char);
+      }
+    }
+    if (buffer.isNotEmpty) {
+      tokens.add(buffer.toString());
+    }
+    return tokens;
   }
 }
 
@@ -238,30 +332,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     });
     // Apply empty filters to actually clear them
     widget.onApply?.call(const AppliedFilters());
-  }
-
-  String _buildQueryPreview() {
-    final parts = <String>[];
-
-    if (_authorController.text.isNotEmpty) {
-      parts.add('author:"${_authorController.text}"');
-    }
-    if (_selectedFormat != null) {
-      parts.add('format:$_selectedFormat');
-    }
-    if (_selectedShelf != null) {
-      parts.add('shelf:"$_selectedShelf"');
-    }
-    if (_selectedTopic != null) {
-      parts.add('topic:"$_selectedTopic"');
-    }
-    if (_selectedStatus != null) {
-      parts.add('status:$_selectedStatus');
-    }
-    if (_filterReading) parts.add('status:reading');
-    if (_filterFinished) parts.add('status:finished');
-
-    return parts.isEmpty ? 'No filters applied' : parts.join(' ');
   }
 
   @override
@@ -425,31 +495,46 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   icon: Icons.show_chart,
                   child: Column(
                     children: [
-                      SwitchListTile(
-                        title: const Text('Filter by progress'),
-                        value: _useProgressFilter,
-                        onChanged: (v) =>
-                            setState(() => _useProgressFilter = v),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      if (_useProgressFilter)
-                        RangeSlider(
-                          values: _progressRange,
-                          min: 0,
-                          max: 100,
-                          divisions: 20,
-                          labels: RangeLabels(
-                            '${_progressRange.start.toInt()}%',
-                            '${_progressRange.end.toInt()}%',
+                      const SizedBox(height: Spacing.sm),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 36,
+                            child: Text(
+                              '${_progressRange.start.toInt()}%',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ),
-                          onChanged: (v) => setState(() => _progressRange = v),
-                        ),
+                          Expanded(
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                overlayShape: SliderComponentShape.noOverlay,
+                              ),
+                              child: RangeSlider(
+                                values: _progressRange,
+                                min: 0,
+                                max: 100,
+                                divisions: 20,
+                                onChanged: (v) => setState(() {
+                                  _progressRange = v;
+                                  _useProgressFilter = true;
+                                }),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 36,
+                            child: Text(
+                              '${_progressRange.end.toInt()}%',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              textAlign: TextAlign.end,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-
-                // Query preview
-                _buildQueryPreviewSection(),
               ],
             ),
           ),
@@ -581,32 +666,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           child,
         ],
       ),
-    );
-  }
-
-  Widget _buildQueryPreviewSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final preview = _buildQueryPreview();
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Query: ',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        Expanded(
-          child: Text(
-            preview,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontFamily: 'monospace',
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

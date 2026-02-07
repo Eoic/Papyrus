@@ -33,40 +33,62 @@ class LibraryFilterChips extends StatelessWidget {
         label: 'Finished',
         icon: Icons.check_circle,
       ),
+      _FilterChipData(
+        type: LibraryFilterType.unread,
+        label: 'Unread',
+        icon: Icons.book,
+      ),
     ];
 
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-        itemCount: filters.length,
-        separatorBuilder: (context, index) => const SizedBox(width: Spacing.sm),
-        itemBuilder: (context, index) {
-          final filter = filters[index];
-          final isSelected = libraryProvider.isFilterActive(filter.type);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+      child: SizedBox(
+        height: 48,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+          itemCount: filters.length,
+          separatorBuilder: (context, index) =>
+              const SizedBox(width: Spacing.sm),
+          itemBuilder: (context, index) {
+            final filter = filters[index];
+            final isSelected = libraryProvider.isFilterActive(filter.type);
 
-          return FilterChip(
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  filter.icon,
-                  size: IconSizes.small,
-                  color: isSelected
-                      ? colorScheme.onSecondaryContainer
-                      : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: Spacing.xs),
-                Text(filter.label),
-              ],
-            ),
-            selected: isSelected,
-            onSelected: (_) {
-              libraryProvider.setFilter(filter.type);
-            },
-          );
-        },
+            return FilterChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    filter.icon,
+                    size: IconSizes.small,
+                    color: isSelected
+                        ? colorScheme.onSecondaryContainer
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: Spacing.xs),
+                  Text(
+                    filter.label,
+                    style: TextStyle(
+                      color: isSelected
+                          ? colorScheme.onSecondaryContainer
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              selected: isSelected,
+              showCheckmark: false,
+              side: BorderSide(color: colorScheme.outline),
+              onSelected: (_) {
+                if (filter.type == LibraryFilterType.all) {
+                  libraryProvider.resetFilters();
+                } else {
+                  libraryProvider.toggleFilter(filter.type);
+                }
+              },
+            );
+          },
+        ),
       ),
     );
   }

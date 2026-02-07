@@ -1,3 +1,4 @@
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 
 /// Represents a search filter condition.
@@ -13,8 +14,8 @@ class SearchFilter {
   });
 
   /// Check if a book matches this filter.
-  bool matches(BookData book) {
-    final fieldValue = _getFieldValue(book);
+  bool matches(BookData book, {DataStore? dataStore}) {
+    final fieldValue = _getFieldValue(book, dataStore: dataStore);
     if (fieldValue == null) return false;
 
     switch (operator) {
@@ -37,7 +38,7 @@ class SearchFilter {
     }
   }
 
-  String? _getFieldValue(BookData book) {
+  String? _getFieldValue(BookData book, {DataStore? dataStore}) {
     switch (field) {
       case SearchField.title:
         return book.title;
@@ -46,9 +47,17 @@ class SearchFilter {
       case SearchField.format:
         return book.formatLabel.toLowerCase();
       case SearchField.shelf:
-        return book.shelves.join(',');
+        return dataStore
+                ?.getShelvesForBook(book.id)
+                .map((s) => s.name)
+                .join(',') ??
+            book.shelves.join(',');
       case SearchField.topic:
-        return book.topics.join(',');
+        return dataStore
+                ?.getTagsForBook(book.id)
+                .map((t) => t.name)
+                .join(',') ??
+            book.topics.join(',');
       case SearchField.status:
         if (book.isFinished) return 'finished';
         if (book.isReading) return 'reading';
@@ -104,20 +113,20 @@ class SearchQuery {
   });
 
   /// Check if a book matches this query.
-  bool matches(BookData book) {
+  bool matches(BookData book, {DataStore? dataStore}) {
     // Check NOT filters first - if any match, exclude the book
     for (final filter in notFilters) {
-      if (filter.matches(book)) {
+      if (filter.matches(book, dataStore: dataStore)) {
         return false;
       }
     }
 
     if (filters.isEmpty) return true;
 
-    bool result = filters[0].matches(book);
+    bool result = filters[0].matches(book, dataStore: dataStore);
 
     for (int i = 1; i < filters.length; i++) {
-      final filterResult = filters[i].matches(book);
+      final filterResult = filters[i].matches(book, dataStore: dataStore);
       final op = i - 1 < operators.length
           ? operators[i - 1]
           : LogicalOperator.and;

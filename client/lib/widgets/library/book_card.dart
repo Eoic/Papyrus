@@ -42,22 +42,15 @@ class _BookCardState extends State<BookCard> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onSecondaryTapUp: (details) {
-          // Right-click for desktop
-          showBookContextMenu(
-            context: context,
-            book: widget.book,
-            position: details.globalPosition,
-          );
-        },
-        onLongPressStart: (details) {
-          // Long press for mobile
-          showBookContextMenu(
-            context: context,
-            book: widget.book,
-            position: details.globalPosition,
-          );
-        },
+        onLongPressStart: _isDesktop
+            ? null
+            : (details) {
+                showBookContextMenu(
+                  context: context,
+                  book: widget.book,
+                  position: details.globalPosition,
+                );
+              },
         child: Card(
           clipBehavior: Clip.antiAlias,
           elevation: AppElevation.level1,

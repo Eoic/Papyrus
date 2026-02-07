@@ -4,7 +4,15 @@ import 'package:flutter/foundation.dart';
 enum LibraryViewMode { grid, list }
 
 /// Active filter type for library content.
-enum LibraryFilterType { all, shelves, topics, favorites, reading, finished }
+enum LibraryFilterType {
+  all,
+  shelves,
+  topics,
+  favorites,
+  reading,
+  finished,
+  unread,
+}
 
 /// Provider for managing library view state.
 class LibraryProvider extends ChangeNotifier {
@@ -33,18 +41,14 @@ class LibraryProvider extends ChangeNotifier {
   /// Currently selected topic for filtering.
   String? get selectedTopic => _selectedTopic;
 
+  /// Whether the search query contains advanced field filters.
+  bool get hasActiveAdvancedFilters => _searchQuery.contains(':');
+
   /// Whether the list view is currently active.
   bool get isListView => _viewMode == LibraryViewMode.list;
 
   /// Whether the grid view is currently active.
   bool get isGridView => _viewMode == LibraryViewMode.grid;
-
-  /// Whether there are any active advanced filters (search query contains field:value syntax).
-  bool get hasActiveAdvancedFilters {
-    if (_searchQuery.isEmpty) return false;
-    // Check if search query contains field:value pattern
-    return _searchQuery.contains(':');
-  }
 
   /// Set the view mode.
   void setViewMode(LibraryViewMode mode) {
