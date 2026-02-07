@@ -340,7 +340,38 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
     return Column(
       children: [
-        // Drag handle
+        _buildHeader(context),
+        const Divider(height: 1),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('Quick filters'),
+                const SizedBox(height: Spacing.sm),
+                _buildQuickFilters(),
+                const SizedBox(height: Spacing.md),
+                const Divider(),
+                const SizedBox(height: Spacing.md),
+                _buildSectionHeader('Filter by'),
+                const SizedBox(height: Spacing.md),
+                _buildAdvancedFilters(context),
+                _buildProgressSlider(context),
+              ],
+            ),
+          ),
+        ),
+        _buildActionBar(context, colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
         Container(
           margin: const EdgeInsets.only(top: Spacing.sm),
           width: 32,
@@ -350,8 +381,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-
-        // Header
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Spacing.md,
@@ -368,223 +397,197 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ],
           ),
         ),
+      ],
+    );
+  }
 
-        const Divider(height: 1),
-
-        // Content
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Quick filters section
-                _buildSectionHeader('Quick filters'),
-                const SizedBox(height: Spacing.sm),
-                _buildQuickFilters(),
-
-                const SizedBox(height: Spacing.md),
-                const Divider(),
-                const SizedBox(height: Spacing.md),
-
-                // Advanced filters section
-                _buildSectionHeader('Filter by'),
-                const SizedBox(height: Spacing.md),
-
-                // Author field
-                _buildFilterField(
-                  label: 'Author',
-                  icon: Icons.person_outline,
-                  child: TextField(
-                    controller: _authorController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter author name...',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-
-                // Format dropdown
-                _buildFilterField(
-                  label: 'Format',
-                  icon: Icons.book_outlined,
-                  child: DropdownMenu<String>(
-                    initialSelection: _selectedFormat,
-                    expandedInsets: EdgeInsets.zero,
-                    hintText: 'Any format',
-                    dropdownMenuEntries: [
-                      const DropdownMenuEntry(value: '', label: 'Any format'),
-                      ...widget.filterOptions.formats.map(
-                        (f) =>
-                            DropdownMenuEntry(value: f, label: f.toUpperCase()),
-                      ),
-                    ],
-                    onSelected: (v) => setState(
-                      () => _selectedFormat = v?.isEmpty == true ? null : v,
-                    ),
-                  ),
-                ),
-
-                // Shelf dropdown
-                _buildFilterField(
-                  label: 'Shelf',
-                  icon: Icons.folder_outlined,
-                  child: DropdownMenu<String>(
-                    initialSelection: _selectedShelf,
-                    expandedInsets: EdgeInsets.zero,
-                    hintText: 'Any shelf',
-                    dropdownMenuEntries: [
-                      const DropdownMenuEntry(value: '', label: 'Any shelf'),
-                      ...widget.filterOptions.shelves.map(
-                        (s) => DropdownMenuEntry(value: s, label: s),
-                      ),
-                    ],
-                    onSelected: (v) => setState(
-                      () => _selectedShelf = v?.isEmpty == true ? null : v,
-                    ),
-                  ),
-                ),
-
-                // Topic dropdown
-                _buildFilterField(
-                  label: 'Topic',
-                  icon: Icons.label_outline,
-                  child: DropdownMenu<String>(
-                    initialSelection: _selectedTopic,
-                    expandedInsets: EdgeInsets.zero,
-                    hintText: 'Any topic',
-                    dropdownMenuEntries: [
-                      const DropdownMenuEntry(value: '', label: 'Any topic'),
-                      ...widget.filterOptions.topics.map(
-                        (t) => DropdownMenuEntry(value: t, label: t),
-                      ),
-                    ],
-                    onSelected: (v) => setState(
-                      () => _selectedTopic = v?.isEmpty == true ? null : v,
-                    ),
-                  ),
-                ),
-
-                // Status dropdown
-                _buildFilterField(
-                  label: 'Status',
-                  icon: Icons.schedule,
-                  child: DropdownMenu<String>(
-                    initialSelection: _selectedStatus,
-                    expandedInsets: EdgeInsets.zero,
-                    hintText: 'Any status',
-                    dropdownMenuEntries: const [
-                      DropdownMenuEntry(value: '', label: 'Any status'),
-                      DropdownMenuEntry(
-                        value: 'reading',
-                        label: 'Currently reading',
-                      ),
-                      DropdownMenuEntry(value: 'finished', label: 'Finished'),
-                      DropdownMenuEntry(value: 'unread', label: 'Unread'),
-                    ],
-                    onSelected: (v) => setState(
-                      () => _selectedStatus = v?.isEmpty == true ? null : v,
-                    ),
-                  ),
-                ),
-
-                // Progress range slider
-                _buildFilterField(
-                  label: 'Progress',
-                  icon: Icons.show_chart,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: Spacing.sm),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 36,
-                            child: Text(
-                              '${_progressRange.start.toInt()}%',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                overlayShape: SliderComponentShape.noOverlay,
-                              ),
-                              child: RangeSlider(
-                                values: _progressRange,
-                                min: 0,
-                                max: 100,
-                                divisions: 20,
-                                onChanged: (v) => setState(() {
-                                  _progressRange = v;
-                                  _useProgressFilter = true;
-                                }),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 36,
-                            child: Text(
-                              '${_progressRange.end.toInt()}%',
-                              style: Theme.of(context).textTheme.bodySmall,
-                              textAlign: TextAlign.end,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+  Widget _buildAdvancedFilters(BuildContext context) {
+    return Column(
+      children: [
+        // Author field
+        _buildFilterField(
+          label: 'Author',
+          icon: Icons.person_outline,
+          child: TextField(
+            controller: _authorController,
+            decoration: const InputDecoration(
+              hintText: 'Enter author name...',
+              border: OutlineInputBorder(),
             ),
+            onChanged: (_) => setState(() {}),
           ),
         ),
 
-        // Action bar
-        Container(
-          padding: const EdgeInsets.all(Spacing.md),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        // Format dropdown
+        _buildFilterField(
+          label: 'Format',
+          icon: Icons.book_outlined,
+          child: DropdownMenu<String>(
+            initialSelection: _selectedFormat,
+            expandedInsets: EdgeInsets.zero,
+            hintText: 'Any format',
+            dropdownMenuEntries: [
+              const DropdownMenuEntry(value: '', label: 'Any format'),
+              ...widget.filterOptions.formats.map(
+                (f) => DropdownMenuEntry(value: f, label: f.toUpperCase()),
+              ),
+            ],
+            onSelected: (v) =>
+                setState(() => _selectedFormat = v?.isEmpty == true ? null : v),
           ),
-          child: SafeArea(
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: _resetFilters,
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: const Text('Reset'),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: Spacing.sm),
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 48,
-                    child: FilledButton(
-                      onPressed: _applyFilters,
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: const Text('Apply filters'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        ),
+
+        // Shelf dropdown
+        _buildFilterField(
+          label: 'Shelf',
+          icon: Icons.folder_outlined,
+          child: DropdownMenu<String>(
+            initialSelection: _selectedShelf,
+            expandedInsets: EdgeInsets.zero,
+            hintText: 'Any shelf',
+            dropdownMenuEntries: [
+              const DropdownMenuEntry(value: '', label: 'Any shelf'),
+              ...widget.filterOptions.shelves.map(
+                (s) => DropdownMenuEntry(value: s, label: s),
+              ),
+            ],
+            onSelected: (v) =>
+                setState(() => _selectedShelf = v?.isEmpty == true ? null : v),
+          ),
+        ),
+
+        // Topic dropdown
+        _buildFilterField(
+          label: 'Topic',
+          icon: Icons.label_outline,
+          child: DropdownMenu<String>(
+            initialSelection: _selectedTopic,
+            expandedInsets: EdgeInsets.zero,
+            hintText: 'Any topic',
+            dropdownMenuEntries: [
+              const DropdownMenuEntry(value: '', label: 'Any topic'),
+              ...widget.filterOptions.topics.map(
+                (t) => DropdownMenuEntry(value: t, label: t),
+              ),
+            ],
+            onSelected: (v) =>
+                setState(() => _selectedTopic = v?.isEmpty == true ? null : v),
+          ),
+        ),
+
+        // Status dropdown
+        _buildFilterField(
+          label: 'Status',
+          icon: Icons.schedule,
+          child: DropdownMenu<String>(
+            initialSelection: _selectedStatus,
+            expandedInsets: EdgeInsets.zero,
+            hintText: 'Any status',
+            dropdownMenuEntries: const [
+              DropdownMenuEntry(value: '', label: 'Any status'),
+              DropdownMenuEntry(value: 'reading', label: 'Currently reading'),
+              DropdownMenuEntry(value: 'finished', label: 'Finished'),
+              DropdownMenuEntry(value: 'unread', label: 'Unread'),
+            ],
+            onSelected: (v) =>
+                setState(() => _selectedStatus = v?.isEmpty == true ? null : v),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProgressSlider(BuildContext context) {
+    return _buildFilterField(
+      label: 'Progress',
+      icon: Icons.show_chart,
+      child: Column(
+        children: [
+          const SizedBox(height: Spacing.sm),
+          Row(
+            children: [
+              SizedBox(
+                width: 36,
+                child: Text(
+                  '${_progressRange.start.toInt()}%',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(
+                    context,
+                  ).copyWith(overlayShape: SliderComponentShape.noOverlay),
+                  child: RangeSlider(
+                    values: _progressRange,
+                    min: 0,
+                    max: 100,
+                    divisions: 20,
+                    onChanged: (v) => setState(() {
+                      _progressRange = v;
+                      _useProgressFilter = true;
+                    }),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 36,
+                child: Text(
+                  '${_progressRange.end.toInt()}%',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionBar(BuildContext context, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: _resetFilters,
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: const Text('Reset'),
+                ),
+              ),
+            ),
+            const SizedBox(width: Spacing.sm),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 48,
+                child: FilledButton(
+                  onPressed: _applyFilters,
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: const Text('Apply filters'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

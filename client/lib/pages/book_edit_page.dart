@@ -321,90 +321,11 @@ class _BookEditPageState extends State<BookEditPage> {
     bool skipMetadata = false,
   }) {
     return [
-      _buildSectionCard(
-        title: 'Basic information',
-        children: [
-          _buildTextField(
-            controller: _titleController,
-            label: 'Title',
-            required: true,
-            onChanged: _provider.updateTitle,
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildTextField(
-            controller: _subtitleController,
-            label: 'Subtitle',
-            onChanged: _provider.updateSubtitle,
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildResponsiveRow([
-            _buildTextField(
-              controller: _authorController,
-              label: 'Author',
-              required: true,
-              onChanged: _provider.updateAuthor,
-            ),
-          ]),
-          const SizedBox(height: Spacing.md),
-          _buildCoAuthorsSection(context),
-          const SizedBox(height: Spacing.md),
-          _buildRatingRow(context, provider),
-        ],
-      ),
+      _buildBasicInfoSection(context, provider),
       const SizedBox(height: Spacing.sm),
-      _buildSectionCard(
-        title: 'Publication details',
-        children: [
-          _buildResponsiveRow([
-            _buildTextField(
-              controller: _publisherController,
-              label: 'Publisher',
-              onChanged: _provider.updatePublisher,
-            ),
-            _buildTextField(
-              controller: _languageController,
-              label: 'Language',
-              onChanged: _provider.updateLanguage,
-            ),
-          ]),
-          const SizedBox(height: Spacing.md),
-          _buildResponsiveRow([
-            _buildDateField(
-              controller: _publicationDateController,
-              label: 'Publication date',
-              value: _provider.editedBook?.publicationDate,
-              onChanged: _provider.updatePublicationDate,
-            ),
-            _buildTextField(
-              controller: _pageCountController,
-              label: 'Page count',
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                final pages = int.tryParse(value);
-                _provider.updatePageCount(pages);
-              },
-            ),
-          ]),
-        ],
-      ),
+      _buildPublicationSection(),
       const SizedBox(height: Spacing.sm),
-      _buildSectionCard(
-        title: 'Identifiers',
-        children: [
-          _buildResponsiveRow([
-            _buildTextField(
-              controller: _isbnController,
-              label: 'ISBN',
-              onChanged: _provider.updateIsbn,
-            ),
-            _buildTextField(
-              controller: _isbn13Controller,
-              label: 'ISBN-13',
-              onChanged: _provider.updateIsbn13,
-            ),
-          ]),
-        ],
-      ),
+      _buildIdentifiersSection(),
       const SizedBox(height: Spacing.sm),
       _buildSectionCard(
         title: 'Description',
@@ -418,29 +339,7 @@ class _BookEditPageState extends State<BookEditPage> {
         ],
       ),
       const SizedBox(height: Spacing.sm),
-      _buildSectionCard(
-        title: 'Series',
-        children: [
-          _buildResponsiveRow([
-            _buildTextField(
-              controller: _seriesNameController,
-              label: 'Series name',
-              onChanged: _provider.updateSeriesName,
-            ),
-            _buildTextField(
-              controller: _seriesNumberController,
-              label: 'Number in series',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onChanged: (value) {
-                final number = double.tryParse(value);
-                _provider.updateSeriesNumber(number);
-              },
-            ),
-          ]),
-        ],
-      ),
+      _buildSeriesSection(),
       const SizedBox(height: Spacing.sm),
       Card(
         child: Padding(
@@ -460,6 +359,124 @@ class _BookEditPageState extends State<BookEditPage> {
       ],
       const SizedBox(height: Spacing.xl),
     ];
+  }
+
+  Widget _buildBasicInfoSection(
+    BuildContext context,
+    BookEditProvider provider,
+  ) {
+    return _buildSectionCard(
+      title: 'Basic information',
+      children: [
+        _buildTextField(
+          controller: _titleController,
+          label: 'Title',
+          required: true,
+          onChanged: _provider.updateTitle,
+        ),
+        const SizedBox(height: Spacing.md),
+        _buildTextField(
+          controller: _subtitleController,
+          label: 'Subtitle',
+          onChanged: _provider.updateSubtitle,
+        ),
+        const SizedBox(height: Spacing.md),
+        _buildResponsiveRow([
+          _buildTextField(
+            controller: _authorController,
+            label: 'Author',
+            required: true,
+            onChanged: _provider.updateAuthor,
+          ),
+        ]),
+        const SizedBox(height: Spacing.md),
+        _buildCoAuthorsSection(context),
+        const SizedBox(height: Spacing.md),
+        _buildRatingRow(context, provider),
+      ],
+    );
+  }
+
+  Widget _buildPublicationSection() {
+    return _buildSectionCard(
+      title: 'Publication details',
+      children: [
+        _buildResponsiveRow([
+          _buildTextField(
+            controller: _publisherController,
+            label: 'Publisher',
+            onChanged: _provider.updatePublisher,
+          ),
+          _buildTextField(
+            controller: _languageController,
+            label: 'Language',
+            onChanged: _provider.updateLanguage,
+          ),
+        ]),
+        const SizedBox(height: Spacing.md),
+        _buildResponsiveRow([
+          _buildDateField(
+            controller: _publicationDateController,
+            label: 'Publication date',
+            value: _provider.editedBook?.publicationDate,
+            onChanged: _provider.updatePublicationDate,
+          ),
+          _buildTextField(
+            controller: _pageCountController,
+            label: 'Page count',
+            keyboardType: TextInputType.number,
+            onChanged: (value) {
+              final pages = int.tryParse(value);
+              _provider.updatePageCount(pages);
+            },
+          ),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildIdentifiersSection() {
+    return _buildSectionCard(
+      title: 'Identifiers',
+      children: [
+        _buildResponsiveRow([
+          _buildTextField(
+            controller: _isbnController,
+            label: 'ISBN',
+            onChanged: _provider.updateIsbn,
+          ),
+          _buildTextField(
+            controller: _isbn13Controller,
+            label: 'ISBN-13',
+            onChanged: _provider.updateIsbn13,
+          ),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildSeriesSection() {
+    return _buildSectionCard(
+      title: 'Series',
+      children: [
+        _buildResponsiveRow([
+          _buildTextField(
+            controller: _seriesNameController,
+            label: 'Series name',
+            onChanged: _provider.updateSeriesName,
+          ),
+          _buildTextField(
+            controller: _seriesNumberController,
+            label: 'Number in series',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (value) {
+              final number = double.tryParse(value);
+              _provider.updateSeriesNumber(number);
+            },
+          ),
+        ]),
+      ],
+    );
   }
 
   // ============================================================================

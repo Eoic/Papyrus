@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/tag.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/topics/add_topic_sheet.dart';
 import 'package:provider/provider.dart';
 
@@ -69,16 +70,7 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const BottomSheetHandle(),
             const SizedBox(height: Spacing.lg),
 
             // Header with book info

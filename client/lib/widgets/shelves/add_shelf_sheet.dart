@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/color_utils.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Bottom sheet for creating or editing a shelf.
 class AddShelfSheet extends StatefulWidget {
@@ -88,16 +90,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const BottomSheetHandle(),
             const SizedBox(height: Spacing.lg),
             // Title
             Text(
@@ -208,7 +201,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
       spacing: Spacing.sm,
       runSpacing: Spacing.sm,
       children: ShelfData.availableColors.map((colorHex) {
-        final color = _parseColor(colorHex);
+        final color = parseHexColor(colorHex);
         final isSelected = _selectedColorHex == colorHex;
 
         return GestureDetector(
@@ -233,7 +226,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
                   : null,
             ),
             child: isSelected
-                ? Icon(Icons.check, size: 18, color: _getContrastColor(color))
+                ? Icon(Icons.check, size: 18, color: getContrastColor(color))
                 : null,
           ),
         );
@@ -244,7 +237,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
   Widget _buildIconPicker(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final selectedColor = _selectedColorHex != null
-        ? _parseColor(_selectedColorHex!)
+        ? parseHexColor(_selectedColorHex!)
         : colorScheme.primary;
 
     return Wrap(
@@ -282,7 +275,7 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final shelfColor = _selectedColorHex != null
-        ? _parseColor(_selectedColorHex!)
+        ? parseHexColor(_selectedColorHex!)
         : colorScheme.primary;
 
     return Container(
@@ -373,19 +366,5 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
       _selectedIcon,
     );
     Navigator.of(context).pop();
-  }
-
-  Color _parseColor(String hex) {
-    try {
-      final hexValue = hex.replaceFirst('#', '');
-      return Color(int.parse('FF$hexValue', radix: 16));
-    } catch (_) {
-      return Colors.blue;
-    }
-  }
-
-  Color _getContrastColor(Color color) {
-    final luminance = color.computeLuminance();
-    return luminance > 0.5 ? Colors.black : Colors.white;
   }
 }

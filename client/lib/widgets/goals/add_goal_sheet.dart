@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// The type of goal scheduling.
 enum GoalScheduleType {
@@ -85,16 +86,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const BottomSheetHandle(),
             const SizedBox(height: Spacing.lg),
             // Title
             Text('Create new goal', style: textTheme.headlineSmall),

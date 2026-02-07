@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Bottom sheet for viewing and editing an active goal.
 class ActiveGoalDetailsSheet extends StatefulWidget {
@@ -94,16 +95,7 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          const BottomSheetHandle(),
           const SizedBox(height: Spacing.lg),
 
           // Header

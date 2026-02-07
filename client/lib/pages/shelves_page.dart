@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
@@ -387,14 +388,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Handle
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              const BottomSheetHandle(),
               const SizedBox(height: Spacing.md),
               // Shelf name
               Padding(

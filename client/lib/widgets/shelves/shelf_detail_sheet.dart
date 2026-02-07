@@ -4,6 +4,7 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Bottom sheet or page for viewing books in a shelf.
 class ShelfDetailSheet extends StatefulWidget {
@@ -128,16 +129,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
         // Handle
         Padding(
           padding: const EdgeInsets.only(top: Spacing.md),
-          child: Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          child: const BottomSheetHandle(),
         ),
         // Header
         Padding(
@@ -436,18 +428,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const BottomSheetHandle(),
               const SizedBox(height: Spacing.md),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
