@@ -24,6 +24,14 @@ dependencies:
   file_picker: ^8.0.0+1
   cached_network_image: ^3.3.1
   google_fonts: ^6.2.1
+  epub_pro: ^5.6.0
+  syncfusion_flutter_pdf: ^32.2.3
+  dart_mobi: ^1.0.2
+  archive: ^4.0.7
+  unrar_file: ^1.1.0
+  xml: ^6.6.1
+  image: ^4.7.2
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

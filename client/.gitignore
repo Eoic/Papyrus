@@ -46,3 +46,6 @@ app.*.map.json
 
 # Config.
 google-services.json
+
+# Tests.
+client/test/data/files
