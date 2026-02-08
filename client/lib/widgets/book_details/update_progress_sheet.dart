@@ -105,7 +105,9 @@ class _UpdateProgressSheetState extends State<UpdateProgressSheet> {
                 onCancel: () => Navigator.of(context).pop(),
                 onSave: _save,
               ),
-              const SizedBox(height: Spacing.lg),
+              const SizedBox(height: Spacing.md),
+              const Divider(height: 1),
+              const SizedBox(height: Spacing.md),
 
               if (_hasPageCount) _buildPageInput(context) else _buildSlider(),
 

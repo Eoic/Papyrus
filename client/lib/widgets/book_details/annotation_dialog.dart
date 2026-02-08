@@ -107,7 +107,7 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        initialChildSize: 0.6,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
@@ -142,7 +142,7 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
                     ],
                   ),
                 ),
-                const SizedBox(height: Spacing.sm),
+                const SizedBox(height: Spacing.md),
                 const Divider(height: 1),
 
                 // Form
@@ -209,6 +209,21 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
                         ),
                         const SizedBox(height: Spacing.md),
 
+                        // Note (optional)
+                        TextFormField(
+                          controller: _noteController,
+                          decoration: const InputDecoration(
+                            labelText: 'Note (optional)',
+                            hintText: 'Add your thoughts about this passage...',
+                            border: OutlineInputBorder(),
+                            alignLabelWithHint: true,
+                          ),
+                          textCapitalization: TextCapitalization.sentences,
+                          maxLines: 3,
+                        ),
+
+                        const SizedBox(height: Spacing.md),
+
                         // Highlight color
                         Text(
                           'Highlight color',
@@ -245,20 +260,6 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
                               ),
                             );
                           }).toList(),
-                        ),
-                        const SizedBox(height: Spacing.md),
-
-                        // Note (optional)
-                        TextFormField(
-                          controller: _noteController,
-                          decoration: const InputDecoration(
-                            labelText: 'Note (optional)',
-                            hintText: 'Add your thoughts about this passage...',
-                            border: OutlineInputBorder(),
-                            alignLabelWithHint: true,
-                          ),
-                          textCapitalization: TextCapitalization.sentences,
-                          maxLines: 3,
                         ),
                       ],
                     ),

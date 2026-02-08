@@ -126,7 +126,9 @@ class _BookmarkDialogState extends State<BookmarkDialog> {
                   onCancel: () => Navigator.of(context).pop(),
                   onSave: _save,
                 ),
-                const SizedBox(height: Spacing.lg),
+                const SizedBox(height: Spacing.md),
+                const Divider(height: 1),
+                const SizedBox(height: Spacing.md),
 
                 // Page number
                 TextFormField(

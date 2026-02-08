@@ -177,6 +177,8 @@ class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
                 },
               ),
               const SizedBox(height: Spacing.md),
+              const Divider(height: 1),
+              const SizedBox(height: Spacing.md),
 
               // Note field
               TextField(
@@ -185,8 +187,10 @@ class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
                 maxLength: 500,
                 autofocus: true,
                 decoration: const InputDecoration(
+                  labelText: 'Note',
                   hintText: 'Add a note...',
                   border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
                 ),
               ),
             ],

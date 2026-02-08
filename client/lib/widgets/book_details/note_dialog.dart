@@ -159,7 +159,7 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
                     ],
                   ),
                 ),
-                const SizedBox(height: Spacing.sm),
+                const SizedBox(height: Spacing.md),
                 const Divider(height: 1),
 
                 // Form
@@ -193,7 +193,6 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: Spacing.md),
                               ],
                             ),
                           ),
@@ -237,13 +236,6 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
                                 ),
                                 const SizedBox(height: Spacing.md),
 
-                                // Tags section
-                                Text(
-                                  'Tags',
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
-                                const SizedBox(height: Spacing.sm),
-
                                 // Tag input
                                 Row(
                                   children: [
@@ -251,6 +243,7 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
                                       child: TextField(
                                         controller: _tagController,
                                         decoration: const InputDecoration(
+                                          labelText: 'Tags',
                                           hintText: 'Add a tag...',
                                           border: OutlineInputBorder(),
                                           isDense: true,
