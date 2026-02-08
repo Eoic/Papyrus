@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 
 // =============================================================================
 // BOOKMARK ACTION SHEET (action chooser)
@@ -36,15 +38,7 @@ class BookmarkActionSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const BottomSheetHandle(),
             const SizedBox(height: Spacing.md),
 
             // Bookmark location
@@ -161,7 +155,6 @@ class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -173,40 +166,15 @@ class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outline,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const BottomSheetHandle(),
               const SizedBox(height: Spacing.md),
-
-              // Header
-              Row(
-                children: [
-                  Text(
-                    'Edit note',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  FilledButton(
-                    onPressed: () {
-                      final text = _controller.text.trim();
-                      Navigator.pop(context, text.isEmpty ? '' : text);
-                    },
-                    child: const Text('Save'),
-                  ),
-                ],
+              BottomSheetHeader(
+                title: 'Edit note',
+                onCancel: () => Navigator.pop(context),
+                onSave: () {
+                  final text = _controller.text.trim();
+                  Navigator.pop(context, text.isEmpty ? '' : text);
+                },
               ),
               const SizedBox(height: Spacing.md),
 
@@ -265,17 +233,7 @@ class BookmarkColorSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 32,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const BottomSheetHandle(),
             const SizedBox(height: Spacing.md),
 
             // Title

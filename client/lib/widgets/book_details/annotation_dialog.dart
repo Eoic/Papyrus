@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 
 /// Bottom sheet for creating or editing an annotation manually.
 class AnnotationDialog extends StatefulWidget {
@@ -119,43 +121,28 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
             ),
             child: Column(
               children: [
-                // Handle
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     Spacing.md,
-                    0,
                     Spacing.md,
-                    Spacing.sm,
+                    Spacing.md,
+                    0,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+                      const BottomSheetHandle(),
+                      const SizedBox(height: Spacing.md),
+                      BottomSheetHeader(
+                        title: _isEditing
+                            ? 'Edit annotation'
+                            : 'New annotation',
+                        onCancel: () => Navigator.of(context).pop(),
+                        onSave: _save,
                       ),
-                      Text(
-                        _isEditing ? 'Edit annotation' : 'New annotation',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      TextButton(onPressed: _save, child: const Text('Save')),
                     ],
                   ),
                 ),
+                const SizedBox(height: Spacing.sm),
                 const Divider(height: 1),
 
                 // Form
