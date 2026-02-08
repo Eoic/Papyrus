@@ -14,17 +14,15 @@ enum _BookmarkSort { dateNewest, dateOldest, position }
 class BookBookmarks extends StatefulWidget {
   final List<Bookmark> bookmarks;
   final String bookTitle;
-  final Function(Bookmark)? onEditNote;
-  final Function(Bookmark)? onChangeColor;
-  final Function(Bookmark)? onDelete;
+
+  /// Called when the user requests actions menu for a bookmark (long press).
+  final Function(Bookmark)? onBookmarkActions;
 
   const BookBookmarks({
     super.key,
     required this.bookmarks,
     required this.bookTitle,
-    this.onEditNote,
-    this.onChangeColor,
-    this.onDelete,
+    this.onBookmarkActions,
   });
 
   @override
@@ -105,12 +103,13 @@ class _BookBookmarksState extends State<BookBookmarks> {
               : _buildBookmarksList(
                   filtered,
                   padding: const EdgeInsets.fromLTRB(
-                    Spacing.lg,
-                    0,
-                    Spacing.lg,
-                    Spacing.lg,
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    Spacing.md,
                   ),
                   separatorHeight: Spacing.md,
+                  showActionMenu: true,
                 ),
         ),
       ],
@@ -119,13 +118,7 @@ class _BookBookmarksState extends State<BookBookmarks> {
 
   Widget _buildDesktopHeader() {
     return Padding(
-      // +4 accounts for Card's default margin to align with card borders
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.lg + 4,
-        Spacing.lg,
-        Spacing.lg + 4,
-        Spacing.md,
-      ),
+      padding: EdgeInsets.all(Spacing.md),
       child: Row(
         children: [
           Expanded(
@@ -162,6 +155,7 @@ class _BookBookmarksState extends State<BookBookmarks> {
                     Spacing.md,
                   ),
                   separatorHeight: Spacing.sm,
+                  showActionMenu: false,
                 ),
         ),
       ],
@@ -170,13 +164,7 @@ class _BookBookmarksState extends State<BookBookmarks> {
 
   Widget _buildMobileHeader() {
     return Padding(
-      // +4 accounts for Card's default margin to align with card borders
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.md + 4,
-        Spacing.md,
-        Spacing.md + 4,
-        Spacing.sm,
-      ),
+      padding: EdgeInsets.all(Spacing.md),
       child: Row(
         children: [
           Expanded(
@@ -216,12 +204,13 @@ class _BookBookmarksState extends State<BookBookmarks> {
       child: Row(
         children: [
           Expanded(child: Text(label)),
-          if (option == _sortOption)
-            Icon(
-              Icons.check,
-              size: IconSizes.small,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          Icon(
+            Icons.check,
+            size: IconSizes.small,
+            color: option == _sortOption
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent,
+          ),
         ],
       ),
     );
@@ -231,6 +220,7 @@ class _BookBookmarksState extends State<BookBookmarks> {
     List<Bookmark> bookmarks, {
     required EdgeInsets padding,
     required double separatorHeight,
+    required bool showActionMenu,
   }) {
     return ListView.separated(
       padding: padding,
@@ -241,9 +231,8 @@ class _BookBookmarksState extends State<BookBookmarks> {
         return BookmarkListItem(
           bookmark: bookmark,
           bookTitle: widget.bookTitle,
-          onEditNote: () => widget.onEditNote?.call(bookmark),
-          onChangeColor: () => widget.onChangeColor?.call(bookmark),
-          onDelete: () => widget.onDelete?.call(bookmark),
+          showActionMenu: showActionMenu,
+          onLongPress: () => widget.onBookmarkActions?.call(bookmark),
         );
       },
     );

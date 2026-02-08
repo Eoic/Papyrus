@@ -215,6 +215,14 @@ class BookDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update an annotation's note. Persists to DataStore.
+  void updateAnnotationNote(String annotationId, String? note) {
+    final annotation = _dataStore?.getAnnotation(annotationId);
+    if (annotation == null || _dataStore == null) return;
+    _dataStore!.updateAnnotation(annotation.copyWith(note: note));
+    notifyListeners();
+  }
+
   /// Update an existing annotation. Persists to DataStore.
   void updateAnnotation(String annotationId, Annotation updatedAnnotation) {
     if (_dataStore != null) {

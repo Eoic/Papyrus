@@ -48,6 +48,9 @@ class NoteCard extends StatelessWidget {
   /// Whether to show full content instead of preview.
   final bool showFullContent;
 
+  /// Whether to show the inline action menu (ellipsis button).
+  final bool showActionMenu;
+
   /// Creates a note card widget.
   const NoteCard({
     super.key,
@@ -57,6 +60,7 @@ class NoteCard extends StatelessWidget {
     this.onDelete,
     this.onLongPress,
     this.showFullContent = false,
+    this.showActionMenu = true,
   });
 
   @override
@@ -67,6 +71,7 @@ class NoteCard extends StatelessWidget {
     return Card(
       elevation: AppElevation.level1,
       clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(color: colorScheme.outlineVariant),
@@ -108,18 +113,19 @@ class NoteCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        IconButton(
-          icon: Icon(
-            Icons.more_vert,
-            size: IconSizes.small,
-            color: colorScheme.onSurfaceVariant,
+        if (showActionMenu)
+          IconButton(
+            icon: Icon(
+              Icons.more_vert,
+              size: IconSizes.small,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            visualDensity: VisualDensity.compact,
+            onPressed: onLongPress,
+            tooltip: 'More options',
           ),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          visualDensity: VisualDensity.compact,
-          onPressed: onLongPress,
-          tooltip: 'More options',
-        ),
       ],
     );
   }

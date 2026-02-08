@@ -179,101 +179,140 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
 
                 // Form
                 Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(Spacing.md),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title field
-                          TextFormField(
-                            controller: _titleController,
-                            focusNode: _titleFocusNode,
-                            decoration: const InputDecoration(
-                              labelText: 'Title',
-                              hintText: 'Enter note title',
-                              border: OutlineInputBorder(),
-                            ),
-                            textCapitalization: TextCapitalization.sentences,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a title';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: Spacing.md),
-
-                          // Content field
-                          TextFormField(
-                            controller: _contentController,
-                            decoration: const InputDecoration(
-                              labelText: 'Content',
-                              hintText: 'Write your note...',
-                              border: OutlineInputBorder(),
-                              alignLabelWithHint: true,
-                            ),
-                            textCapitalization: TextCapitalization.sentences,
-                            maxLines: 8,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter some content';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: Spacing.md),
-
-                          // Tags section
-                          Text(
-                            'Tags',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: Spacing.sm),
-
-                          // Tag input
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _tagController,
+                  child: Form(
+                    key: _formKey,
+                    child: CustomScrollView(
+                      controller: scrollController,
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.all(Spacing.md),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Title field
+                                TextFormField(
+                                  controller: _titleController,
+                                  focusNode: _titleFocusNode,
                                   decoration: const InputDecoration(
-                                    hintText: 'Add a tag...',
+                                    labelText: 'Title',
+                                    hintText: 'Enter note title',
                                     border: OutlineInputBorder(),
-                                    isDense: true,
                                   ),
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _addTag(),
+                                  textCapitalization:
+                                      TextCapitalization.sentences,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Please enter a title';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                              ),
-                              const SizedBox(width: Spacing.sm),
-                              IconButton.filled(
-                                onPressed: _addTag,
-                                icon: const Icon(Icons.add),
-                              ),
-                            ],
-                          ),
-
-                          // Tags display
-                          if (_tags.isNotEmpty) ...[
-                            const SizedBox(height: Spacing.sm),
-                            Wrap(
-                              spacing: Spacing.xs,
-                              runSpacing: Spacing.xs,
-                              children: _tags.map((tag) {
-                                return Chip(
-                                  label: Text(tag),
-                                  deleteIcon: const Icon(Icons.close, size: 18),
-                                  onDeleted: () => _removeTag(tag),
-                                  visualDensity: VisualDensity.compact,
-                                );
-                              }).toList(),
+                                const SizedBox(height: Spacing.md),
+                              ],
                             ),
-                          ],
-                        ],
-                      ),
+                          ),
+                        ),
+
+                        // Content field — fills remaining space
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              Spacing.md,
+                              0,
+                              Spacing.md,
+                              Spacing.md,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _contentController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Content',
+                                      hintText: 'Write your note...',
+                                      border: OutlineInputBorder(),
+                                      alignLabelWithHint: true,
+                                    ),
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    maxLines: null,
+                                    expands: true,
+                                    textAlignVertical: TextAlignVertical.top,
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return 'Please enter some content';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: Spacing.md),
+
+                                // Tags section
+                                Text(
+                                  'Tags',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: Spacing.sm),
+
+                                // Tag input
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _tagController,
+                                        decoration: const InputDecoration(
+                                          hintText: 'Add a tag...',
+                                          border: OutlineInputBorder(),
+                                          isDense: true,
+                                        ),
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _addTag(),
+                                      ),
+                                    ),
+                                    const SizedBox(width: Spacing.sm),
+                                    IconButton.filled(
+                                      onPressed: _addTag,
+                                      icon: const Icon(Icons.add),
+                                    ),
+                                  ],
+                                ),
+
+                                // Tags display
+                                const SizedBox(height: Spacing.sm),
+                                if (_tags.isNotEmpty)
+                                  Wrap(
+                                    spacing: Spacing.xs,
+                                    runSpacing: Spacing.xs,
+                                    children: _tags.map((tag) {
+                                      return Chip(
+                                        label: Text(tag),
+                                        deleteIcon: const Icon(
+                                          Icons.close,
+                                          size: 18,
+                                        ),
+                                        onDeleted: () => _removeTag(tag),
+                                        visualDensity: VisualDensity.compact,
+                                      );
+                                    }).toList(),
+                                  )
+                                else
+                                  Text(
+                                    'Tags will appear here',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

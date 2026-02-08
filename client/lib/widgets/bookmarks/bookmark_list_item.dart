@@ -6,22 +6,30 @@ import 'package:papyrus/themes/design_tokens.dart';
 ///
 /// Uses Material Design 3 card with colored left border accent,
 /// following the same pattern as [AnnotationCard].
+///
+/// ## Interactions
+///
+/// - **Tap**: Opens bookmark details
+/// - **Long press**: Shows action menu (edit note, change color, delete)
+/// - **Menu icon**: Same as long press (desktop-friendly)
 class BookmarkListItem extends StatelessWidget {
   final Bookmark bookmark;
   final String bookTitle;
   final VoidCallback? onTap;
-  final VoidCallback? onEditNote;
-  final VoidCallback? onChangeColor;
-  final VoidCallback? onDelete;
+
+  /// Called when the card is long-pressed or menu icon is tapped.
+  final VoidCallback? onLongPress;
+
+  /// Whether to show the inline action menu (ellipsis button).
+  final bool showActionMenu;
 
   const BookmarkListItem({
     super.key,
     required this.bookmark,
     required this.bookTitle,
     this.onTap,
-    this.onEditNote,
-    this.onChangeColor,
-    this.onDelete,
+    this.onLongPress,
+    this.showActionMenu = true,
   });
 
   @override
@@ -39,6 +47,7 @@ class BookmarkListItem extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           decoration: BoxDecoration(
             border: Border(left: BorderSide(color: bookmark.color, width: 4)),
@@ -50,7 +59,7 @@ class BookmarkListItem extends StatelessWidget {
               children: [
                 _buildHeader(colorScheme, textTheme),
                 if (bookmark.hasNote) ...[
-                  const SizedBox(height: Spacing.xs),
+                  const SizedBox(height: Spacing.sm),
                   _buildNote(colorScheme, textTheme),
                   const SizedBox(height: Spacing.sm),
                 ],
@@ -83,40 +92,25 @@ class BookmarkListItem extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        _buildActionMenu(colorScheme),
+        if (showActionMenu) _buildActionMenu(colorScheme),
       ],
     );
   }
 
+  /// Icon button that triggers the action menu via onLongPress.
   Widget _buildActionMenu(ColorScheme colorScheme) {
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(
         Icons.more_vert,
         size: IconSizes.small,
         color: colorScheme.onSurfaceVariant,
       ),
       padding: EdgeInsets.zero,
-      onSelected: _handleMenuAction,
-      itemBuilder: (context) => [
-        const PopupMenuItem(value: 'edit_note', child: Text('Edit note')),
-        const PopupMenuItem(value: 'change_color', child: Text('Change color')),
-        PopupMenuItem(
-          value: 'delete',
-          child: Text('Delete', style: TextStyle(color: colorScheme.error)),
-        ),
-      ],
+      constraints: const BoxConstraints(),
+      visualDensity: VisualDensity.compact,
+      onPressed: onLongPress,
+      tooltip: 'More options',
     );
-  }
-
-  void _handleMenuAction(String action) {
-    switch (action) {
-      case 'edit_note':
-        onEditNote?.call();
-      case 'change_color':
-        onChangeColor?.call();
-      case 'delete':
-        onDelete?.call();
-    }
   }
 
   Widget _buildNote(ColorScheme colorScheme, TextTheme textTheme) {

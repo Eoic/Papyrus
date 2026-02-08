@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
@@ -10,8 +11,11 @@ import 'package:papyrus/widgets/book/book_bookmarks.dart';
 import 'package:papyrus/widgets/book/book_details.dart';
 import 'package:papyrus/widgets/book/book_notes.dart';
 import 'package:papyrus/widgets/book_details/book_header.dart';
+import 'package:papyrus/widgets/book_details/annotation_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_dialog.dart';
+import 'package:papyrus/widgets/annotations/annotation_action_sheet.dart'
+    as annotation_sheets;
 import 'package:papyrus/widgets/bookmarks/bookmark_action_sheet.dart';
 import 'package:provider/provider.dart';
 
@@ -307,11 +311,12 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                   BookBookmarks(
                     bookmarks: provider.bookmarks,
                     bookTitle: provider.book!.title,
-                    onEditNote: _onEditBookmarkNote,
-                    onChangeColor: _onChangeBookmarkColor,
-                    onDelete: _onDeleteBookmark,
+                    onBookmarkActions: _onBookmarkActions,
                   ),
-                  BookAnnotations(annotations: provider.annotations),
+                  BookAnnotations(
+                    annotations: provider.annotations,
+                    onAnnotationActions: _onAnnotationActions,
+                  ),
                   BookNotes(
                     notes: provider.notes,
                     onAddNote: _onAddNote,
@@ -344,12 +349,13 @@ class _BookDetailsPageState extends State<BookDetailsPage>
         return BookBookmarks(
           bookmarks: provider.bookmarks,
           bookTitle: provider.book!.title,
-          onEditNote: _onEditBookmarkNote,
-          onChangeColor: _onChangeBookmarkColor,
-          onDelete: _onDeleteBookmark,
+          onBookmarkActions: _onBookmarkActions,
         );
       case BookDetailsTab.annotations:
-        return BookAnnotations(annotations: provider.annotations);
+        return BookAnnotations(
+          annotations: provider.annotations,
+          onAnnotationActions: _onAnnotationActions,
+        );
       case BookDetailsTab.notes:
         return BookNotes(
           notes: provider.notes,
@@ -426,6 +432,60 @@ class _BookDetailsPageState extends State<BookDetailsPage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Note deleted')));
+    }
+  }
+
+  void _onAnnotationActions(Annotation annotation) async {
+    final action = await AnnotationActionSheet.show(
+      context,
+      annotation: annotation,
+    );
+
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case AnnotationAction.editNote:
+        _onEditAnnotationNote(annotation);
+      case AnnotationAction.delete:
+        _onDeleteAnnotation(annotation);
+    }
+  }
+
+  void _onEditAnnotationNote(Annotation annotation) async {
+    final note = await annotation_sheets.AnnotationNoteSheet.show(
+      context,
+      annotation: annotation,
+    );
+    if (!mounted) return;
+
+    if (note != null) {
+      _provider.updateAnnotationNote(annotation.id, note.isEmpty ? null : note);
+    }
+  }
+
+  void _onDeleteAnnotation(Annotation annotation) async {
+    final confirmed = await annotation_sheets.DeleteAnnotationDialog.show(
+      context,
+      annotation: annotation,
+      bookTitle: _provider.book?.title ?? '',
+    );
+    if (confirmed && mounted) {
+      _provider.deleteAnnotation(annotation.id);
+    }
+  }
+
+  void _onBookmarkActions(Bookmark bookmark) async {
+    final action = await BookmarkActionSheet.show(context, bookmark: bookmark);
+
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case BookmarkAction.editNote:
+        _onEditBookmarkNote(bookmark);
+      case BookmarkAction.changeColor:
+        _onChangeBookmarkColor(bookmark);
+      case BookmarkAction.delete:
+        _onDeleteBookmark(bookmark);
     }
   }
 

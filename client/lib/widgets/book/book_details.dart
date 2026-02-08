@@ -40,7 +40,7 @@ class _BookDetailsState extends State<BookDetails> {
 
   Widget _buildDesktopLayout(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(Spacing.lg),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

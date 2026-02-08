@@ -5,6 +5,9 @@ import 'package:papyrus/widgets/book_details/annotation_card.dart';
 import 'package:papyrus/widgets/book_details/empty_annotations_state.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
 
+/// Sort options for annotations within a single book.
+enum _AnnotationSort { dateNewest, dateOldest, position, color }
+
 /// Annotations tab content for the book details page.
 ///
 /// Displays a searchable list of annotations (highlights) associated with a book.
@@ -28,8 +31,7 @@ import 'package:papyrus/widgets/input/search_field.dart';
 /// BookAnnotations(
 ///   annotations: bookProvider.annotations,
 ///   onAnnotationTap: (annotation) => _showAnnotationDetail(annotation),
-///   onAnnotationEdit: (annotation) => _editAnnotation(annotation),
-///   onAnnotationDelete: (annotation) => _deleteAnnotation(annotation),
+///   onAnnotationActions: (annotation) => _showAnnotationActions(annotation),
 /// )
 /// ```
 class BookAnnotations extends StatefulWidget {
@@ -39,19 +41,15 @@ class BookAnnotations extends StatefulWidget {
   /// Called when an annotation is tapped.
   final Function(Annotation)? onAnnotationTap;
 
-  /// Called when an annotation should be edited.
-  final Function(Annotation)? onAnnotationEdit;
-
-  /// Called when an annotation should be deleted.
-  final Function(Annotation)? onAnnotationDelete;
+  /// Called when the user requests actions menu for an annotation (long press).
+  final Function(Annotation)? onAnnotationActions;
 
   /// Creates an annotations tab widget.
   const BookAnnotations({
     super.key,
     required this.annotations,
     this.onAnnotationTap,
-    this.onAnnotationEdit,
-    this.onAnnotationDelete,
+    this.onAnnotationActions,
   });
 
   @override
@@ -61,6 +59,7 @@ class BookAnnotations extends StatefulWidget {
 class _BookAnnotationsState extends State<BookAnnotations> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  _AnnotationSort _sortOption = _AnnotationSort.dateNewest;
 
   @override
   void dispose() {
@@ -68,18 +67,32 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     super.dispose();
   }
 
-  /// Returns annotations filtered by the current search query.
-  ///
-  /// Matches against highlight text, note content, and location (case-insensitive).
-  List<Annotation> get _filteredAnnotations {
-    if (_searchQuery.isEmpty) return widget.annotations;
+  List<Annotation> get _filteredAndSortedAnnotations {
+    var result = widget.annotations.toList();
 
-    final query = _searchQuery.toLowerCase();
-    return widget.annotations.where((annotation) {
-      return annotation.highlightText.toLowerCase().contains(query) ||
-          (annotation.note?.toLowerCase().contains(query) ?? false) ||
-          annotation.location.displayLocation.toLowerCase().contains(query);
-    }).toList();
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      result = result.where((annotation) {
+        return annotation.highlightText.toLowerCase().contains(query) ||
+            (annotation.note?.toLowerCase().contains(query) ?? false) ||
+            annotation.location.displayLocation.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    result.sort((a, b) {
+      switch (_sortOption) {
+        case _AnnotationSort.dateNewest:
+          return b.createdAt.compareTo(a.createdAt);
+        case _AnnotationSort.dateOldest:
+          return a.createdAt.compareTo(b.createdAt);
+        case _AnnotationSort.position:
+          return a.location.pageNumber.compareTo(b.location.pageNumber);
+        case _AnnotationSort.color:
+          return a.color.index.compareTo(b.color.index);
+      }
+    });
+
+    return result;
   }
 
   void _onSearchChanged(String value) {
@@ -106,61 +119,44 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     return _buildMobileLayout(context);
   }
 
-  /// Desktop layout with search field at top.
   Widget _buildDesktopLayout(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final filteredAnnotations = _filteredAnnotations;
+    final filtered = _filteredAndSortedAnnotations;
 
     return Column(
       children: [
-        _buildSearchBar(
-          // +4 accounts for Card's default margin to align with card borders
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.lg + 4,
-            Spacing.lg,
-            Spacing.lg + 4,
-            Spacing.md,
-          ),
-        ),
+        _buildHeader(),
         Expanded(
-          child: filteredAnnotations.isEmpty
+          child: filtered.isEmpty
               ? _buildNoResultsState(context, colorScheme)
               : _buildAnnotationsList(
-                  filteredAnnotations,
+                  filtered,
                   padding: const EdgeInsets.fromLTRB(
-                    Spacing.lg,
-                    0,
-                    Spacing.lg,
-                    Spacing.lg,
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    Spacing.md,
                   ),
                   separatorHeight: Spacing.md,
+                  showActionMenu: true,
                 ),
         ),
       ],
     );
   }
 
-  /// Mobile layout with search field at top.
   Widget _buildMobileLayout(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final filteredAnnotations = _filteredAnnotations;
+    final filtered = _filteredAndSortedAnnotations;
 
     return Column(
       children: [
-        _buildSearchBar(
-          // +4 accounts for Card's default margin to align with card borders
-          padding: const EdgeInsets.fromLTRB(
-            Spacing.md + 4,
-            Spacing.md,
-            Spacing.md + 4,
-            Spacing.sm,
-          ),
-        ),
+        _buildHeader(),
         Expanded(
-          child: filteredAnnotations.isEmpty
+          child: filtered.isEmpty
               ? _buildNoResultsState(context, colorScheme)
               : _buildAnnotationsList(
-                  filteredAnnotations,
+                  filtered,
                   padding: const EdgeInsets.fromLTRB(
                     Spacing.md,
                     0,
@@ -168,21 +164,64 @@ class _BookAnnotationsState extends State<BookAnnotations> {
                     Spacing.md,
                   ),
                   separatorHeight: Spacing.sm,
+                  showActionMenu: false,
                 ),
         ),
       ],
     );
   }
 
-  /// Builds the search bar with configurable padding.
-  Widget _buildSearchBar({required EdgeInsets padding}) {
+  Widget _buildHeader() {
     return Padding(
-      padding: padding,
-      child: SearchField(
-        controller: _searchController,
-        hintText: 'Search annotations...',
-        onChanged: _onSearchChanged,
-        onClear: _clearSearch,
+      padding: const EdgeInsets.all(Spacing.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: SearchField(
+              controller: _searchController,
+              hintText: 'Search annotations...',
+              onChanged: _onSearchChanged,
+              onClear: _clearSearch,
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          _buildSortButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortButton() {
+    return PopupMenuButton<_AnnotationSort>(
+      icon: const Icon(Icons.sort),
+      tooltip: 'Sort annotations',
+      onSelected: (option) => setState(() => _sortOption = option),
+      itemBuilder: (context) => [
+        _buildSortMenuItem(_AnnotationSort.dateNewest, 'Newest first'),
+        _buildSortMenuItem(_AnnotationSort.dateOldest, 'Oldest first'),
+        _buildSortMenuItem(_AnnotationSort.position, 'By position'),
+        _buildSortMenuItem(_AnnotationSort.color, 'By color'),
+      ],
+    );
+  }
+
+  PopupMenuItem<_AnnotationSort> _buildSortMenuItem(
+    _AnnotationSort option,
+    String label,
+  ) {
+    return PopupMenuItem(
+      value: option,
+      child: Row(
+        children: [
+          Expanded(child: Text(label)),
+          Icon(
+            Icons.check,
+            size: IconSizes.small,
+            color: option == _sortOption
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent,
+          ),
+        ],
       ),
     );
   }
@@ -192,6 +231,7 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     List<Annotation> annotations, {
     required EdgeInsets padding,
     required double separatorHeight,
+    required bool showActionMenu,
   }) {
     return ListView.separated(
       padding: padding,
@@ -201,9 +241,9 @@ class _BookAnnotationsState extends State<BookAnnotations> {
         final annotation = annotations[index];
         return AnnotationCard(
           annotation: annotation,
+          showActionMenu: showActionMenu,
           onTap: () => widget.onAnnotationTap?.call(annotation),
-          onEdit: () => widget.onAnnotationEdit?.call(annotation),
-          onDelete: () => widget.onAnnotationDelete?.call(annotation),
+          onLongPress: () => widget.onAnnotationActions?.call(annotation),
         );
       },
     );

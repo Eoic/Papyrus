@@ -366,6 +366,8 @@ class _BookmarksPageState extends State<BookmarksPage> {
   Widget _buildBookmarkList(BuildContext context, BookmarksProvider provider) {
     final groups = provider.bookmarksByBook;
     final items = <Widget>[];
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     for (final entry in groups.entries) {
       final isCollapsed = _collapsedGroups.contains(entry.key);
@@ -393,12 +395,10 @@ class _BookmarksPageState extends State<BookmarksPage> {
             BookmarkListItem(
               bookmark: bookmark,
               bookTitle: provider.getBookTitle(bookmark.bookId),
+              showActionMenu: isDesktop,
               onTap: () => _navigateToBook(context, bookmark.bookId),
-              onEditNote: () => _showEditNoteSheet(context, provider, bookmark),
-              onChangeColor: () =>
-                  _showColorPicker(context, provider, bookmark),
-              onDelete: () =>
-                  _confirmDeleteBookmark(context, provider, bookmark),
+              onLongPress: () =>
+                  _onBookmarkActions(context, provider, bookmark),
             ),
           );
         }
@@ -419,8 +419,26 @@ class _BookmarksPageState extends State<BookmarksPage> {
     context.goNamed('BOOK_DETAILS', pathParameters: {'bookId': bookId});
   }
 
-  void _showEditNoteSheet(
+  void _onBookmarkActions(
     BuildContext context,
+    BookmarksProvider provider,
+    Bookmark bookmark,
+  ) async {
+    final action = await BookmarkActionSheet.show(context, bookmark: bookmark);
+
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case BookmarkAction.editNote:
+        _onEditBookmarkNote(provider, bookmark);
+      case BookmarkAction.changeColor:
+        _onChangeBookmarkColor(provider, bookmark);
+      case BookmarkAction.delete:
+        _onDeleteBookmark(provider, bookmark);
+    }
+  }
+
+  void _onEditBookmarkNote(
     BookmarksProvider provider,
     Bookmark bookmark,
   ) async {
@@ -432,8 +450,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
     }
   }
 
-  void _showColorPicker(
-    BuildContext context,
+  void _onChangeBookmarkColor(
     BookmarksProvider provider,
     Bookmark bookmark,
   ) async {
@@ -443,11 +460,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
     }
   }
 
-  void _confirmDeleteBookmark(
-    BuildContext context,
-    BookmarksProvider provider,
-    Bookmark bookmark,
-  ) async {
+  void _onDeleteBookmark(BookmarksProvider provider, Bookmark bookmark) async {
     final bookTitle = provider.getBookTitle(bookmark.bookId);
     final confirmed = await DeleteBookmarkDialog.show(
       context,

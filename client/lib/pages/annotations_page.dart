@@ -6,6 +6,7 @@ import 'package:papyrus/providers/annotations_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/book_group_header.dart';
 import 'package:papyrus/widgets/annotations/annotation_action_sheet.dart';
+import 'package:papyrus/widgets/book_details/annotation_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/annotation_card.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
@@ -360,6 +361,8 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
   ) {
     final groups = provider.annotationsByBook;
     final items = <Widget>[];
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     for (final entry in groups.entries) {
       final isCollapsed = _collapsedGroups.contains(entry.key);
@@ -386,10 +389,10 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
           items.add(
             AnnotationCard(
               annotation: annotation,
+              showActionMenu: isDesktop,
               onTap: () => _navigateToBook(context, annotation.bookId),
-              onEdit: () => _showEditNoteSheet(context, provider, annotation),
-              onDelete: () =>
-                  _confirmDeleteAnnotation(context, provider, annotation),
+              onLongPress: () =>
+                  _onAnnotationActions(context, provider, annotation),
             ),
           );
         }
@@ -410,8 +413,27 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
     context.goNamed('BOOK_DETAILS', pathParameters: {'bookId': bookId});
   }
 
-  void _showEditNoteSheet(
+  void _onAnnotationActions(
     BuildContext context,
+    AnnotationsProvider provider,
+    Annotation annotation,
+  ) async {
+    final action = await AnnotationActionSheet.show(
+      context,
+      annotation: annotation,
+    );
+
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case AnnotationAction.editNote:
+        _onEditAnnotationNote(provider, annotation);
+      case AnnotationAction.delete:
+        _onDeleteAnnotation(provider, annotation);
+    }
+  }
+
+  void _onEditAnnotationNote(
     AnnotationsProvider provider,
     Annotation annotation,
   ) async {
@@ -426,8 +448,7 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
     }
   }
 
-  void _confirmDeleteAnnotation(
-    BuildContext context,
+  void _onDeleteAnnotation(
     AnnotationsProvider provider,
     Annotation annotation,
   ) async {

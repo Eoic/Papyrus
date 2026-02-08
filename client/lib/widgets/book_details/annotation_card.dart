@@ -12,7 +12,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// - Quoted highlight text with italic styling
 /// - Optional note attached to highlight
 /// - Location and date metadata
-/// - Action menu for edit and delete operations
+/// - Action menu (via long press or icon button)
 ///
 /// ## Visual Design
 ///
@@ -20,14 +20,19 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// highlight color, providing visual categorization. A small color dot in
 /// the header reinforces the color association.
 ///
+/// ## Interactions
+///
+/// - **Tap**: Opens annotation details
+/// - **Long press**: Shows action menu (edit note, delete)
+/// - **Menu icon**: Same as long press (desktop-friendly)
+///
 /// ## Example
 ///
 /// ```dart
 /// AnnotationCard(
 ///   annotation: annotation,
 ///   onTap: () => _showAnnotationDetail(annotation),
-///   onEdit: () => _editAnnotation(annotation),
-///   onDelete: () => _deleteAnnotation(annotation),
+///   onLongPress: () => _showAnnotationActions(annotation),
 /// )
 /// ```
 class AnnotationCard extends StatelessWidget {
@@ -37,19 +42,19 @@ class AnnotationCard extends StatelessWidget {
   /// Called when the card is tapped.
   final VoidCallback? onTap;
 
-  /// Called when the edit action is triggered.
-  final VoidCallback? onEdit;
+  /// Called when the card is long-pressed or menu icon is tapped.
+  final VoidCallback? onLongPress;
 
-  /// Called when the delete action is triggered.
-  final VoidCallback? onDelete;
+  /// Whether to show the inline action menu (ellipsis button).
+  final bool showActionMenu;
 
   /// Creates an annotation card widget.
   const AnnotationCard({
     super.key,
     required this.annotation,
     this.onTap,
-    this.onEdit,
-    this.onDelete,
+    this.onLongPress,
+    this.showActionMenu = true,
   });
 
   @override
@@ -61,12 +66,14 @@ class AnnotationCard extends StatelessWidget {
     return Card(
       elevation: AppElevation.level1,
       clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           decoration: BoxDecoration(
             border: Border(left: BorderSide(color: accentColor, width: 4)),
@@ -108,7 +115,7 @@ class AnnotationCard extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        _buildActionMenu(colorScheme),
+        if (showActionMenu) _buildActionMenu(colorScheme),
       ],
     );
   }
@@ -122,31 +129,20 @@ class AnnotationCard extends StatelessWidget {
     );
   }
 
-  /// Popup menu with edit and delete actions.
+  /// Icon button that triggers the action menu via onLongPress.
   Widget _buildActionMenu(ColorScheme colorScheme) {
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(
         Icons.more_vert,
         size: IconSizes.small,
         color: colorScheme.onSurfaceVariant,
       ),
       padding: EdgeInsets.zero,
-      onSelected: _handleMenuAction,
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: 'edit', child: Text('Edit')),
-        PopupMenuItem(value: 'delete', child: Text('Delete')),
-      ],
+      constraints: const BoxConstraints(),
+      visualDensity: VisualDensity.compact,
+      onPressed: onLongPress,
+      tooltip: 'More options',
     );
-  }
-
-  /// Handles menu action selection.
-  void _handleMenuAction(String action) {
-    switch (action) {
-      case 'edit':
-        onEdit?.call();
-      case 'delete':
-        onDelete?.call();
-    }
   }
 
   /// Quoted highlight text with italic styling.

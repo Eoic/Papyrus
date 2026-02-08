@@ -5,6 +5,9 @@ import 'package:papyrus/widgets/book_details/empty_notes_state.dart';
 import 'package:papyrus/widgets/book_details/note_card.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
 
+/// Sort options for notes within a single book.
+enum _NoteSort { dateNewest, dateOldest, title }
+
 /// Notes tab content for the book details page.
 ///
 /// Displays a searchable list of notes associated with a book. Supports
@@ -42,12 +45,6 @@ class BookNotes extends StatefulWidget {
   /// Called when a note is tapped.
   final Function(Note)? onNoteTap;
 
-  /// Called when a note should be edited.
-  final Function(Note)? onNoteEdit;
-
-  /// Called when a note should be deleted.
-  final Function(Note)? onNoteDelete;
-
   /// Called when the user requests actions menu for a note (long press).
   final Function(Note)? onNoteActions;
 
@@ -57,8 +54,6 @@ class BookNotes extends StatefulWidget {
     required this.notes,
     this.onAddNote,
     this.onNoteTap,
-    this.onNoteEdit,
-    this.onNoteDelete,
     this.onNoteActions,
   });
 
@@ -69,6 +64,7 @@ class BookNotes extends StatefulWidget {
 class _BookNotesState extends State<BookNotes> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  _NoteSort _sortOption = _NoteSort.dateNewest;
 
   @override
   void dispose() {
@@ -76,18 +72,30 @@ class _BookNotesState extends State<BookNotes> {
     super.dispose();
   }
 
-  /// Returns notes filtered by the current search query.
-  ///
-  /// Matches against note title, content, and tags (case-insensitive).
-  List<Note> get _filteredNotes {
-    if (_searchQuery.isEmpty) return widget.notes;
+  List<Note> get _filteredAndSortedNotes {
+    var result = widget.notes.toList();
 
-    final query = _searchQuery.toLowerCase();
-    return widget.notes.where((note) {
-      return note.title.toLowerCase().contains(query) ||
-          note.content.toLowerCase().contains(query) ||
-          note.tags.any((tag) => tag.toLowerCase().contains(query));
-    }).toList();
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      result = result.where((note) {
+        return note.title.toLowerCase().contains(query) ||
+            note.content.toLowerCase().contains(query) ||
+            note.tags.any((tag) => tag.toLowerCase().contains(query));
+      }).toList();
+    }
+
+    result.sort((a, b) {
+      switch (_sortOption) {
+        case _NoteSort.dateNewest:
+          return b.createdAt.compareTo(a.createdAt);
+        case _NoteSort.dateOldest:
+          return a.createdAt.compareTo(b.createdAt);
+        case _NoteSort.title:
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      }
+    });
+
+    return result;
   }
 
   void _onSearchChanged(String value) {
@@ -116,42 +124,35 @@ class _BookNotesState extends State<BookNotes> {
     return _buildMobileLayout(context);
   }
 
-  /// Desktop layout with search field and add button in a header row.
   Widget _buildDesktopLayout(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final filteredNotes = _filteredNotes;
+    final filtered = _filteredAndSortedNotes;
 
     return Column(
       children: [
         _buildDesktopHeader(),
         Expanded(
-          child: filteredNotes.isEmpty
+          child: filtered.isEmpty
               ? _buildNoResultsState(context, colorScheme)
               : _buildNotesList(
-                  filteredNotes,
+                  filtered,
                   padding: const EdgeInsets.fromLTRB(
-                    Spacing.lg,
-                    0,
-                    Spacing.lg,
-                    Spacing.lg,
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    Spacing.md,
                   ),
                   separatorHeight: Spacing.md,
+                  showActionMenu: true,
                 ),
         ),
       ],
     );
   }
 
-  /// Desktop header with search field and "Add note" button.
   Widget _buildDesktopHeader() {
-    // +4 accounts for Card's default margin to align with card borders
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.lg + 4,
-        Spacing.lg,
-        Spacing.lg + 4,
-        Spacing.md,
-      ),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Row(
         children: [
           Expanded(
@@ -162,6 +163,8 @@ class _BookNotesState extends State<BookNotes> {
               onClear: _clearSearch,
             ),
           ),
+          const SizedBox(width: Spacing.sm),
+          _buildSortButton(),
           const SizedBox(width: Spacing.md),
           FilledButton.icon(
             onPressed: widget.onAddNote,
@@ -173,19 +176,18 @@ class _BookNotesState extends State<BookNotes> {
     );
   }
 
-  /// Mobile layout with full-width search field at top.
   Widget _buildMobileLayout(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final filteredNotes = _filteredNotes;
+    final filtered = _filteredAndSortedNotes;
 
     return Column(
       children: [
-        _buildMobileSearchBar(),
+        _buildMobileHeader(),
         Expanded(
-          child: filteredNotes.isEmpty
+          child: filtered.isEmpty
               ? _buildNoResultsState(context, colorScheme)
               : _buildNotesList(
-                  filteredNotes,
+                  filtered,
                   padding: const EdgeInsets.fromLTRB(
                     Spacing.md,
                     0,
@@ -193,27 +195,60 @@ class _BookNotesState extends State<BookNotes> {
                     Spacing.md,
                   ),
                   separatorHeight: Spacing.sm,
+                  showActionMenu: false,
                 ),
         ),
       ],
     );
   }
 
-  /// Mobile search bar section.
-  Widget _buildMobileSearchBar() {
-    // +4 accounts for Card's default margin to align with card borders
+  Widget _buildMobileHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Spacing.md + 4,
-        Spacing.md,
-        Spacing.md + 4,
-        Spacing.sm,
+      padding: const EdgeInsets.all(Spacing.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: SearchField(
+              controller: _searchController,
+              hintText: 'Search notes...',
+              onChanged: _onSearchChanged,
+              onClear: _clearSearch,
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          _buildSortButton(),
+        ],
       ),
-      child: SearchField(
-        controller: _searchController,
-        hintText: 'Search notes...',
-        onChanged: _onSearchChanged,
-        onClear: _clearSearch,
+    );
+  }
+
+  Widget _buildSortButton() {
+    return PopupMenuButton<_NoteSort>(
+      icon: const Icon(Icons.sort),
+      tooltip: 'Sort notes',
+      onSelected: (option) => setState(() => _sortOption = option),
+      itemBuilder: (context) => [
+        _buildSortMenuItem(_NoteSort.dateNewest, 'Newest first'),
+        _buildSortMenuItem(_NoteSort.dateOldest, 'Oldest first'),
+        _buildSortMenuItem(_NoteSort.title, 'By title'),
+      ],
+    );
+  }
+
+  PopupMenuItem<_NoteSort> _buildSortMenuItem(_NoteSort option, String label) {
+    return PopupMenuItem(
+      value: option,
+      child: Row(
+        children: [
+          Expanded(child: Text(label)),
+          Icon(
+            Icons.check,
+            size: IconSizes.small,
+            color: option == _sortOption
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent,
+          ),
+        ],
       ),
     );
   }
@@ -223,6 +258,7 @@ class _BookNotesState extends State<BookNotes> {
     List<Note> notes, {
     required EdgeInsets padding,
     required double separatorHeight,
+    required bool showActionMenu,
   }) {
     return ListView.separated(
       padding: padding,
@@ -232,6 +268,7 @@ class _BookNotesState extends State<BookNotes> {
         final note = notes[index];
         return NoteCard(
           note: note,
+          showActionMenu: showActionMenu,
           onTap: () => widget.onNoteTap?.call(note),
           onLongPress: () => widget.onNoteActions?.call(note),
         );
