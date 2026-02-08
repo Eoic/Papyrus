@@ -48,4 +48,4 @@ app.*.map.json
 google-services.json
 
 # Tests.
-client/test/data/files
+test/data/files

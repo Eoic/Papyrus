@@ -58,11 +58,41 @@ class FileMetadataResult {
       authors != null && authors!.length > 1 ? authors!.sublist(1) : [];
 }
 
+/// Parsed ComicInfo.xml fields shared between CBZ and CBR extractors.
+class _ComicInfoData {
+  final String? title;
+  final List<String>? authors;
+  final String? publisher;
+  final String? description;
+  final String? language;
+  final int? pageCount;
+
+  const _ComicInfoData({
+    this.title,
+    this.authors,
+    this.publisher,
+    this.description,
+    this.language,
+    this.pageCount,
+  });
+}
+
 /// Service for extracting metadata from book files.
 ///
 /// Supports EPUB, PDF, MOBI/AZW3, CBZ, CBR, and TXT formats.
 /// Never throws — returns partial results with warnings on failure.
 class FileMetadataService {
+  static const _charsPerPage = 1500;
+
+  static const _imageExtensions = {
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.bmp',
+    '.webp',
+  };
+
   /// Extract metadata from file bytes.
   ///
   /// Format is detected from the [filename] extension. Returns partial results
@@ -107,79 +137,53 @@ class FileMetadataService {
     final book = await EpubReader.readBook(bytes);
     final metadata = book.schema?.package?.metadata;
 
-    // Title
-    String? title;
-    try {
-      title = book.title;
-    } catch (e) {
-      warnings.add('Could not read EPUB title: $e');
-    }
+    final title = _tryRead('EPUB title', warnings, () => book.title);
 
-    // Authors
-    List<String>? authors;
-    try {
-      final rawAuthors = book.authors
+    final authors = _tryRead('EPUB authors', warnings, () {
+      final raw = book.authors
           .whereType<String>()
           .where((a) => a.isNotEmpty)
           .toList();
-      if (rawAuthors.isNotEmpty) authors = rawAuthors;
-    } catch (e) {
-      warnings.add('Could not read EPUB authors: $e');
-    }
+      return raw.isNotEmpty ? raw : null;
+    });
 
-    // Publisher
-    String? publisher;
-    try {
-      publisher = metadata?.publishers.firstOrNull;
-    } catch (e) {
-      warnings.add('Could not read EPUB publisher: $e');
-    }
+    final publisher = _tryRead(
+      'EPUB publisher',
+      warnings,
+      () => metadata?.publishers.firstOrNull,
+    );
+    final description = _tryRead(
+      'EPUB description',
+      warnings,
+      () => metadata?.description,
+    );
+    final language = _tryRead(
+      'EPUB language',
+      warnings,
+      () => metadata?.languages.firstOrNull,
+    );
+    final publishedDate = _tryRead(
+      'EPUB date',
+      warnings,
+      () => _findEpubDate(metadata?.dates),
+    );
 
-    // Description
-    String? description;
-    try {
-      description = metadata?.description;
-    } catch (e) {
-      warnings.add('Could not read EPUB description: $e');
-    }
+    final isbns = _tryRead(
+      'EPUB identifiers',
+      warnings,
+      () => _findEpubIsbns(metadata?.identifiers),
+    );
 
-    // Language
-    String? language;
-    try {
-      language = metadata?.languages.firstOrNull;
-    } catch (e) {
-      warnings.add('Could not read EPUB language: $e');
-    }
-
-    // Date
-    String? publishedDate;
-    try {
-      publishedDate = _findEpubDate(metadata?.dates);
-    } catch (e) {
-      warnings.add('Could not read EPUB date: $e');
-    }
-
-    // Identifiers (ISBN)
-    String? isbn;
-    String? isbn13;
-    try {
-      final result = _findEpubIsbns(metadata?.identifiers);
-      isbn = result.$1;
-      isbn13 = result.$2;
-    } catch (e) {
-      warnings.add('Could not read EPUB identifiers: $e');
-    }
-
-    // Cover image
     Uint8List? coverImageBytes;
     String? coverImageMimeType;
-    try {
-      if (book.coverImage != null) {
-        coverImageBytes = img.encodePng(book.coverImage!);
-        coverImageMimeType = 'image/png';
-      }
-    } catch (e) {
-      warnings.add('Could not read EPUB cover image: $e');
+    final coverImage = _tryRead(
+      'EPUB cover image',
+      warnings,
+      () => book.coverImage,
+    );
+    if (coverImage != null) {
+      coverImageBytes = img.encodePng(coverImage);
+      coverImageMimeType = 'image/png';
     }
 
     return FileMetadataResult(
@@ -189,8 +193,8 @@ class FileMetadataService {
       publishedDate: publishedDate,
       description: description,
       language: language,
-      isbn: isbn,
-      isbn13: isbn13,
+      isbn: isbns?.$1,
+      isbn13: isbns?.$2,
       coverImageBytes: coverImageBytes,
       coverImageMimeType: coverImageMimeType,
       warnings: warnings,
@@ -420,56 +424,12 @@ class FileMetadataService {
     final warnings = <String>[];
     final archive = ZipDecoder().decodeBytes(bytes);
 
-    // Look for ComicInfo.xml
-    String? title;
-    List<String>? authors;
-    String? publisher;
-    String? description;
-    String? language;
-    int? pageCount;
-
-    final comicInfoFile = archive.files
+    final comicInfoBytes = archive.files
         .where((f) => f.name.toLowerCase() == 'comicinfo.xml')
-        .firstOrNull;
+        .firstOrNull
+        ?.content;
 
-    if (comicInfoFile != null) {
-      try {
-        final xmlString = utf8.decode(comicInfoFile.content);
-        final doc = XmlDocument.parse(xmlString);
-        final info = doc.rootElement;
-
-        title = _xmlText(info, 'Title');
-
-        final series = _xmlText(info, 'Series');
-        final number = _xmlText(info, 'Number');
-        if (title == null && series != null) {
-          title = number != null ? '$series #$number' : series;
-        }
-
-        // Authors: Writer, Penciller, etc.
-        final writer = _xmlText(info, 'Writer');
-        final penciller = _xmlText(info, 'Penciller');
-        final authorSet = <String>{};
-        if (writer != null) {
-          authorSet.addAll(writer.split(',').map((a) => a.trim()));
-        }
-        if (penciller != null) {
-          authorSet.addAll(penciller.split(',').map((a) => a.trim()));
-        }
-        if (authorSet.isNotEmpty) authors = authorSet.toList();
-
-        publisher = _xmlText(info, 'Publisher');
-        description = _xmlText(info, 'Summary');
-        language = _xmlText(info, 'LanguageISO');
-
-        final pageCountStr = _xmlText(info, 'PageCount');
-        if (pageCountStr != null) pageCount = int.tryParse(pageCountStr);
-      } catch (e) {
-        warnings.add('Could not parse ComicInfo.xml: $e');
-      }
-    } else {
-      warnings.add('No ComicInfo.xml found in CBZ archive');
-    }
+    final comicInfo = _parseComicInfo(comicInfoBytes, 'CBZ', warnings);
 
     // Cover: first image file (sorted alphabetically)
     Uint8List? coverImageBytes;
@@ -488,12 +448,12 @@ class FileMetadataService {
     }
 
     return FileMetadataResult(
-      title: title,
-      authors: authors,
-      publisher: publisher,
-      description: description,
-      language: language,
-      pageCount: pageCount,
+      title: comicInfo.title,
+      authors: comicInfo.authors,
+      publisher: comicInfo.publisher,
+      description: comicInfo.description,
+      language: comicInfo.language,
+      pageCount: comicInfo.pageCount,
       coverImageBytes: coverImageBytes,
       coverImageMimeType: coverImageMimeType,
       warnings: warnings,
@@ -517,62 +477,18 @@ class FileMetadataService {
     await tempFile.writeAsBytes(bytes);
 
     try {
-      // Use the RAR5 pure-Dart decoder directly.
       final rar = RAR5(tempFile.path);
       final List<RarFile> files = rar.files;
 
-      // Look for ComicInfo.xml
-      String? title;
-      List<String>? authors;
-      String? publisher;
-      String? description;
-      String? language;
-      int? pageCount;
-
-      final comicInfoFile = files
+      final comicInfoBytes = files
           .where(
             (f) =>
                 f.name?.toLowerCase() == 'comicinfo.xml' && f.content != null,
           )
-          .firstOrNull;
+          .firstOrNull
+          ?.content;
 
-      if (comicInfoFile != null) {
-        try {
-          final xmlString = utf8.decode(comicInfoFile.content!);
-          final doc = XmlDocument.parse(xmlString);
-          final info = doc.rootElement;
-
-          title = _xmlText(info, 'Title');
-
-          final series = _xmlText(info, 'Series');
-          final number = _xmlText(info, 'Number');
-          if (title == null && series != null) {
-            title = number != null ? '$series #$number' : series;
-          }
-
-          final writer = _xmlText(info, 'Writer');
-          final penciller = _xmlText(info, 'Penciller');
-          final authorSet = <String>{};
-          if (writer != null) {
-            authorSet.addAll(writer.split(',').map((a) => a.trim()));
-          }
-          if (penciller != null) {
-            authorSet.addAll(penciller.split(',').map((a) => a.trim()));
-          }
-          if (authorSet.isNotEmpty) authors = authorSet.toList();
-
-          publisher = _xmlText(info, 'Publisher');
-          description = _xmlText(info, 'Summary');
-          language = _xmlText(info, 'LanguageISO');
-
-          final pageCountStr = _xmlText(info, 'PageCount');
-          if (pageCountStr != null) pageCount = int.tryParse(pageCountStr);
-        } catch (e) {
-          warnings.add('Could not parse ComicInfo.xml: $e');
-        }
-      } else {
-        warnings.add('No ComicInfo.xml found in CBR archive');
-      }
+      final comicInfo = _parseComicInfo(comicInfoBytes, 'CBR', warnings);
 
       // Cover: first image file (sorted alphabetically)
       Uint8List? coverImageBytes;
@@ -598,12 +514,12 @@ class FileMetadataService {
       }
 
       return FileMetadataResult(
-        title: title,
-        authors: authors,
-        publisher: publisher,
-        description: description,
-        language: language,
-        pageCount: pageCount,
+        title: comicInfo.title,
+        authors: comicInfo.authors,
+        publisher: comicInfo.publisher,
+        description: comicInfo.description,
+        language: comicInfo.language,
+        pageCount: comicInfo.pageCount,
         coverImageBytes: coverImageBytes,
         coverImageMimeType: coverImageMimeType,
         warnings: warnings,
@@ -639,11 +555,10 @@ class FileMetadataService {
       warnings.add('Could not detect author from filename');
     }
 
-    // Estimate page count (~1500 characters per page)
+    // Estimate page count from byte length
     int? pageCount;
     try {
-      final charCount = bytes.length;
-      pageCount = (charCount / 1500).ceil();
+      pageCount = (bytes.length / _charsPerPage).ceil();
       if (pageCount == 0) pageCount = 1;
     } catch (e) {
       warnings.add('Could not estimate page count: $e');
@@ -661,6 +576,65 @@ class FileMetadataService {
   // Helpers
   // ============================================================================
 
+  /// Try reading a metadata field; on failure, add a warning and return null.
+  T? _tryRead<T>(String field, List<String> warnings, T? Function() read) {
+    try {
+      return read();
+    } catch (e) {
+      warnings.add('Could not read $field: $e');
+      return null;
+    }
+  }
+
+  /// Parse ComicInfo.xml bytes into metadata fields.
+  ///
+  /// If [xmlBytes] is null, adds a "not found" warning for [archiveType].
+  _ComicInfoData _parseComicInfo(
+    Uint8List? xmlBytes,
+    String archiveType,
+    List<String> warnings,
+  ) {
+    if (xmlBytes == null) {
+      warnings.add('No ComicInfo.xml found in $archiveType archive');
+      return const _ComicInfoData();
+    }
+
+    try {
+      final doc = XmlDocument.parse(utf8.decode(xmlBytes));
+      final info = doc.rootElement;
+
+      var title = _xmlText(info, 'Title');
+      final series = _xmlText(info, 'Series');
+      final number = _xmlText(info, 'Number');
+      if (title == null && series != null) {
+        title = number != null ? '$series #$number' : series;
+      }
+
+      // Authors: Writer, Penciller, etc.
+      final authorSet = <String>{};
+      for (final role in ['Writer', 'Penciller']) {
+        final value = _xmlText(info, role);
+        if (value != null) {
+          authorSet.addAll(value.split(',').map((a) => a.trim()));
+        }
+      }
+
+      final pageCountStr = _xmlText(info, 'PageCount');
+
+      return _ComicInfoData(
+        title: title,
+        authors: authorSet.isNotEmpty ? authorSet.toList() : null,
+        publisher: _xmlText(info, 'Publisher'),
+        description: _xmlText(info, 'Summary'),
+        language: _xmlText(info, 'LanguageISO'),
+        pageCount: pageCountStr != null ? int.tryParse(pageCountStr) : null,
+      );
+    } catch (e) {
+      warnings.add('Could not parse ComicInfo.xml: $e');
+      return const _ComicInfoData();
+    }
+  }
+
   /// Get text content of a direct child XML element by tag name.
   String? _xmlText(XmlElement parent, String tagName) {
     final el = parent.findElements(tagName).firstOrNull;
@@ -671,15 +645,7 @@ class FileMetadataService {
 
   /// Check if a filename looks like an image file.
   bool _isImageFile(String filename) {
-    final ext = p.extension(filename).toLowerCase();
-    return const {
-      '.jpg',
-      '.jpeg',
-      '.png',
-      '.gif',
-      '.bmp',
-      '.webp',
-    }.contains(ext);
+    return _imageExtensions.contains(p.extension(filename).toLowerCase());
   }
 
   /// Guess MIME type from image bytes by checking magic bytes.
