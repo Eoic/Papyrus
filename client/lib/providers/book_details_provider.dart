@@ -261,6 +261,34 @@ class BookDetailsProvider extends ChangeNotifier {
     }
   }
 
+  /// Update reading progress by page number. Calculates position from page count.
+  void updatePageProgress(int page, double position) {
+    if (_book == null) return;
+
+    _book = _book!.copyWith(
+      currentPage: page,
+      currentPosition: position.clamp(0.0, 1.0),
+      readingStatus: position >= 1.0
+          ? ReadingStatus.completed
+          : position > 0
+          ? ReadingStatus.inProgress
+          : _book!.readingStatus,
+      lastReadAt: DateTime.now(),
+    );
+    if (_dataStore != null) {
+      _dataStore!.updateBook(_book!);
+    }
+    notifyListeners();
+  }
+
+  /// Add a new bookmark. Persists to DataStore.
+  void addBookmark(Bookmark bookmark) {
+    if (_dataStore != null) {
+      _dataStore!.addBookmark(bookmark);
+    }
+    notifyListeners();
+  }
+
   /// Clear the current book state.
   void clear() {
     _book = null;

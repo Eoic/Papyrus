@@ -38,6 +38,12 @@ class BookAnnotations extends StatefulWidget {
   /// List of annotations to display.
   final List<Annotation> annotations;
 
+  /// Whether this is a physical book.
+  final bool isPhysical;
+
+  /// Called when the user wants to add a new annotation (physical books).
+  final VoidCallback? onAddAnnotation;
+
   /// Called when an annotation is tapped.
   final Function(Annotation)? onAnnotationTap;
 
@@ -48,6 +54,8 @@ class BookAnnotations extends StatefulWidget {
   const BookAnnotations({
     super.key,
     required this.annotations,
+    this.isPhysical = false,
+    this.onAddAnnotation,
     this.onAnnotationTap,
     this.onAnnotationActions,
   });
@@ -112,7 +120,12 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     if (widget.annotations.isEmpty) {
-      return const SingleChildScrollView(child: EmptyAnnotationsState());
+      return SingleChildScrollView(
+        child: EmptyAnnotationsState(
+          isPhysical: widget.isPhysical,
+          onAddAnnotation: widget.onAddAnnotation,
+        ),
+      );
     }
 
     if (isDesktop) return _buildDesktopLayout(context);
@@ -125,7 +138,7 @@ class _BookAnnotationsState extends State<BookAnnotations> {
 
     return Column(
       children: [
-        _buildHeader(),
+        _buildHeader(showAddButton: true),
         Expanded(
           child: filtered.isEmpty
               ? _buildNoResultsState(context, colorScheme)
@@ -171,7 +184,7 @@ class _BookAnnotationsState extends State<BookAnnotations> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader({bool showAddButton = false}) {
     return Padding(
       padding: const EdgeInsets.all(Spacing.md),
       child: Row(
@@ -186,6 +199,14 @@ class _BookAnnotationsState extends State<BookAnnotations> {
           ),
           const SizedBox(width: Spacing.sm),
           _buildSortButton(),
+          if (showAddButton && widget.isPhysical) ...[
+            const SizedBox(width: Spacing.md),
+            FilledButton.icon(
+              onPressed: widget.onAddAnnotation,
+              icon: const Icon(Icons.add),
+              label: const Text('Add annotation'),
+            ),
+          ],
         ],
       ),
     );
@@ -251,30 +272,39 @@ class _BookAnnotationsState extends State<BookAnnotations> {
 
   /// Empty state shown when search yields no results.
   Widget _buildNoResultsState(BuildContext context, ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 48,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.xl,
+          vertical: Spacing.xxl,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 48,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: Spacing.md),
+              Text(
+                'No annotations found',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: Spacing.xs),
+              Text(
+                'Try a different search term',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: Spacing.md),
-          Text(
-            'No annotations found',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: Spacing.xs),
-          Text(
-            'Try a different search term',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

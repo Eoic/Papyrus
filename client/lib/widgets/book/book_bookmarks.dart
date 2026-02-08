@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/book_details/empty_bookmarks_state.dart';
 import 'package:papyrus/widgets/bookmarks/bookmark_list_item.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
 
@@ -14,6 +15,8 @@ enum _BookmarkSort { dateNewest, dateOldest, position }
 class BookBookmarks extends StatefulWidget {
   final List<Bookmark> bookmarks;
   final String bookTitle;
+  final bool isPhysical;
+  final VoidCallback? onAddBookmark;
 
   /// Called when the user requests actions menu for a bookmark (long press).
   final Function(Bookmark)? onBookmarkActions;
@@ -22,6 +25,8 @@ class BookBookmarks extends StatefulWidget {
     super.key,
     required this.bookmarks,
     required this.bookTitle,
+    this.isPhysical = false,
+    this.onAddBookmark,
     this.onBookmarkActions,
   });
 
@@ -83,7 +88,12 @@ class _BookBookmarksState extends State<BookBookmarks> {
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     if (widget.bookmarks.isEmpty) {
-      return const SingleChildScrollView(child: _EmptyBookmarksState());
+      return SingleChildScrollView(
+        child: EmptyBookmarksState(
+          isPhysical: widget.isPhysical,
+          onAddBookmark: widget.onAddBookmark,
+        ),
+      );
     }
 
     if (isDesktop) return _buildDesktopLayout(context);
@@ -131,6 +141,14 @@ class _BookBookmarksState extends State<BookBookmarks> {
           ),
           const SizedBox(width: Spacing.sm),
           _buildSortButton(),
+          if (widget.isPhysical) ...[
+            const SizedBox(width: Spacing.md),
+            FilledButton.icon(
+              onPressed: widget.onAddBookmark,
+              icon: const Icon(Icons.add),
+              label: const Text('Add bookmark'),
+            ),
+          ],
         ],
       ),
     );
@@ -239,72 +257,38 @@ class _BookBookmarksState extends State<BookBookmarks> {
   }
 
   Widget _buildNoResultsState(BuildContext context, ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 48,
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: Spacing.md),
-          Text(
-            'No bookmarks found',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: Spacing.xs),
-          Text(
-            'Try a different search term',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyBookmarksState extends StatelessWidget {
-  const _EmptyBookmarksState();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.xl,
-        vertical: Spacing.xxl,
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.bookmark_outline,
-              size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: Spacing.md),
-            Text(
-              'No bookmarks yet',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.xl,
+          vertical: Spacing.xxl,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 48,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
-            ),
-            const SizedBox(height: Spacing.sm),
-            Text(
-              'Bookmarks you create while reading will appear here.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              const SizedBox(height: Spacing.md),
+              Text(
+                'No bookmarks found',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: Spacing.xs),
+              Text(
+                'Try a different search term',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

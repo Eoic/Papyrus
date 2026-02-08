@@ -11,6 +11,7 @@ class BookHeader extends StatelessWidget {
   final BookData book;
   final bool isDesktop;
   final VoidCallback? onContinueReading;
+  final VoidCallback? onUpdateProgress;
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onEdit;
 
@@ -19,6 +20,7 @@ class BookHeader extends StatelessWidget {
     required this.book,
     this.isDesktop = false,
     this.onContinueReading,
+    this.onUpdateProgress,
     this.onToggleFavorite,
     this.onEdit,
   });
@@ -84,11 +86,12 @@ class BookHeader extends StatelessWidget {
               const SizedBox(height: Spacing.lg),
 
               // Progress bar
-              if (book.progress > 0) ...[
+              if (book.progress > 0 || book.isPhysical) ...[
                 BookProgressBar(
                   progress: book.progress,
                   currentPage: book.currentPage,
                   totalPages: book.totalPages,
+                  onTap: book.isPhysical ? onUpdateProgress : null,
                 ),
                 const SizedBox(height: Spacing.lg),
               ],
@@ -98,6 +101,7 @@ class BookHeader extends StatelessWidget {
                 book: book,
                 isDesktop: true,
                 onContinueReading: onContinueReading,
+                onUpdateProgress: onUpdateProgress,
                 onToggleFavorite: onToggleFavorite,
                 onEdit: onEdit,
               ),
@@ -161,12 +165,13 @@ class BookHeader extends StatelessWidget {
           const SizedBox(height: Spacing.md),
 
           // Progress bar
-          if (book.progress > 0) ...[
+          if (book.progress > 0 || book.isPhysical) ...[
             BookProgressBar(
               progress: book.progress,
               currentPage: book.currentPage,
               totalPages: book.totalPages,
               height: 4,
+              onTap: book.isPhysical ? onUpdateProgress : null,
             ),
             const SizedBox(height: Spacing.md),
           ],
@@ -176,6 +181,7 @@ class BookHeader extends StatelessWidget {
             book: book,
             isDesktop: false,
             onContinueReading: onContinueReading,
+            onUpdateProgress: onUpdateProgress,
             onToggleFavorite: onToggleFavorite,
             onEdit: onEdit,
           ),

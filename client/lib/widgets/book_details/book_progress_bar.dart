@@ -9,6 +9,7 @@ class BookProgressBar extends StatelessWidget {
   final int? totalPages;
   final bool showLabel;
   final double? height;
+  final VoidCallback? onTap;
 
   const BookProgressBar({
     super.key,
@@ -17,6 +18,7 @@ class BookProgressBar extends StatelessWidget {
     this.totalPages,
     this.showLabel = true,
     this.height,
+    this.onTap,
   });
 
   @override
@@ -24,7 +26,7 @@ class BookProgressBar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final barHeight = height ?? 4.0;
 
-    return Column(
+    Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -56,6 +58,12 @@ class BookProgressBar extends StatelessWidget {
         ),
       ],
     );
+
+    if (onTap != null) {
+      content = GestureDetector(onTap: onTap, child: content);
+    }
+
+    return content;
   }
 
   String _getProgressLabel() {

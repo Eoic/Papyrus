@@ -10,10 +10,13 @@ import 'package:papyrus/widgets/book/book_annotations.dart';
 import 'package:papyrus/widgets/book/book_bookmarks.dart';
 import 'package:papyrus/widgets/book/book_details.dart';
 import 'package:papyrus/widgets/book/book_notes.dart';
+import 'package:papyrus/widgets/book_details/annotation_dialog.dart';
 import 'package:papyrus/widgets/book_details/book_header.dart';
+import 'package:papyrus/widgets/book_details/bookmark_dialog.dart';
 import 'package:papyrus/widgets/book_details/annotation_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/note_dialog.dart';
+import 'package:papyrus/widgets/book_details/update_progress_sheet.dart';
 import 'package:papyrus/widgets/annotations/annotation_action_sheet.dart'
     as annotation_sheets;
 import 'package:papyrus/widgets/bookmarks/bookmark_action_sheet.dart';
@@ -211,6 +214,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                   book: provider.book!,
                   isDesktop: true,
                   onContinueReading: _onContinueReading,
+                  onUpdateProgress: _onUpdateProgress,
                   onToggleFavorite: _provider.toggleFavorite,
                   onEdit: _onEdit,
                 ),
@@ -279,6 +283,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
               book: provider.book!,
               isDesktop: false,
               onContinueReading: _onContinueReading,
+              onUpdateProgress: _onUpdateProgress,
               onToggleFavorite: _provider.toggleFavorite,
               onEdit: _onEdit,
             ),
@@ -311,10 +316,14 @@ class _BookDetailsPageState extends State<BookDetailsPage>
                   BookBookmarks(
                     bookmarks: provider.bookmarks,
                     bookTitle: provider.book!.title,
+                    isPhysical: provider.book!.isPhysical,
+                    onAddBookmark: _onAddBookmark,
                     onBookmarkActions: _onBookmarkActions,
                   ),
                   BookAnnotations(
                     annotations: provider.annotations,
+                    isPhysical: provider.book!.isPhysical,
+                    onAddAnnotation: _onAddAnnotation,
                     onAnnotationActions: _onAnnotationActions,
                   ),
                   BookNotes(
@@ -328,12 +337,7 @@ class _BookDetailsPageState extends State<BookDetailsPage>
           ],
         ),
       ),
-      floatingActionButton: provider.selectedTab == BookDetailsTab.notes
-          ? FloatingActionButton(
-              onPressed: _onAddNote,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: _buildFab(provider),
     );
   }
 
@@ -349,11 +353,15 @@ class _BookDetailsPageState extends State<BookDetailsPage>
         return BookBookmarks(
           bookmarks: provider.bookmarks,
           bookTitle: provider.book!.title,
+          isPhysical: provider.book!.isPhysical,
+          onAddBookmark: _onAddBookmark,
           onBookmarkActions: _onBookmarkActions,
         );
       case BookDetailsTab.annotations:
         return BookAnnotations(
           annotations: provider.annotations,
+          isPhysical: provider.book!.isPhysical,
+          onAddAnnotation: _onAddAnnotation,
           onAnnotationActions: _onAnnotationActions,
         );
       case BookDetailsTab.notes:
@@ -363,6 +371,53 @@ class _BookDetailsPageState extends State<BookDetailsPage>
           onNoteActions: _onNoteActions,
         );
     }
+  }
+
+  Widget? _buildFab(BookDetailsProvider provider) {
+    final isPhysical = provider.book?.isPhysical ?? false;
+
+    switch (provider.selectedTab) {
+      case BookDetailsTab.notes:
+        return FloatingActionButton(
+          onPressed: _onAddNote,
+          child: const Icon(Icons.add),
+        );
+      case BookDetailsTab.bookmarks:
+        if (isPhysical) {
+          return FloatingActionButton(
+            onPressed: _onAddBookmark,
+            child: const Icon(Icons.add),
+          );
+        }
+        return null;
+      case BookDetailsTab.annotations:
+        if (isPhysical) {
+          return FloatingActionButton(
+            onPressed: _onAddAnnotation,
+            child: const Icon(Icons.add),
+          );
+        }
+        return null;
+      case BookDetailsTab.details:
+        return null;
+    }
+  }
+
+  void _onUpdateProgress() {
+    if (_provider.book == null) return;
+
+    UpdateProgressSheet.show(
+      context,
+      book: _provider.book!,
+      onSave: (page, position) {
+        _provider.updatePageProgress(page, position);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Progress updated')));
+        }
+      },
+    );
   }
 
   void _onContinueReading() {
@@ -391,6 +446,39 @@ class _BookDetailsPageState extends State<BookDetailsPage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Note added')));
+    }
+  }
+
+  void _onAddBookmark() async {
+    if (_provider.book == null) return;
+
+    final bookmark = await BookmarkDialog.show(
+      context,
+      bookId: _provider.book!.id,
+      pageCount: _provider.book!.pageCount,
+    );
+
+    if (bookmark != null && mounted) {
+      _provider.addBookmark(bookmark);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Bookmark added')));
+    }
+  }
+
+  void _onAddAnnotation() async {
+    if (_provider.book == null) return;
+
+    final annotation = await AnnotationDialog.show(
+      context,
+      bookId: _provider.book!.id,
+    );
+
+    if (annotation != null && mounted) {
+      _provider.addAnnotation(annotation);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Annotation added')));
     }
   }
 

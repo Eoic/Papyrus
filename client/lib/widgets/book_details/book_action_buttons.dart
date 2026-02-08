@@ -3,10 +3,11 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Action buttons for book details page.
-/// Shows Continue Reading, Favorite, and Edit buttons.
+/// Shows Continue Reading (or Update Progress for physical books), Favorite, and Edit buttons.
 class BookActionButtons extends StatelessWidget {
   final BookData book;
   final VoidCallback? onContinueReading;
+  final VoidCallback? onUpdateProgress;
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onEdit;
   final bool isDesktop;
@@ -15,6 +16,7 @@ class BookActionButtons extends StatelessWidget {
     super.key,
     required this.book,
     this.onContinueReading,
+    this.onUpdateProgress,
     this.onToggleFavorite,
     this.onEdit,
     this.isDesktop = false,
@@ -30,31 +32,45 @@ class BookActionButtons extends StatelessWidget {
     return Row(
       mainAxisSize: isDesktop ? MainAxisSize.min : MainAxisSize.max,
       children: [
-        // Continue Reading button (primary)
+        // Primary action button
         if (isDesktop)
           SizedBox(
-            width: 160,
+            width: 180,
             height: buttonHeight,
-            child: FilledButton.icon(
-              onPressed: onContinueReading,
-              icon: Icon(
-                book.progress > 0 ? Icons.play_arrow : Icons.menu_book,
-              ),
-              label: Text(book.progress > 0 ? 'Continue' : 'Start Reading'),
-            ),
+            child: book.isPhysical
+                ? FilledButton.icon(
+                    onPressed: onUpdateProgress,
+                    icon: const Icon(Icons.edit_note),
+                    label: const Text('Update progress'),
+                  )
+                : FilledButton.icon(
+                    onPressed: onContinueReading,
+                    icon: Icon(
+                      book.progress > 0 ? Icons.play_arrow : Icons.menu_book,
+                    ),
+                    label: Text(
+                      book.progress > 0 ? 'Continue' : 'Start reading',
+                    ),
+                  ),
           )
         else
           Expanded(
             flex: 2,
             child: SizedBox(
               height: buttonHeight,
-              child: FilledButton.icon(
-                onPressed: onContinueReading,
-                icon: Icon(
-                  book.progress > 0 ? Icons.play_arrow : Icons.menu_book,
-                ),
-                label: Text(book.progress > 0 ? 'Continue' : 'Read'),
-              ),
+              child: book.isPhysical
+                  ? FilledButton.icon(
+                      onPressed: onUpdateProgress,
+                      icon: const Icon(Icons.edit_note),
+                      label: const Text('Update progress'),
+                    )
+                  : FilledButton.icon(
+                      onPressed: onContinueReading,
+                      icon: Icon(
+                        book.progress > 0 ? Icons.play_arrow : Icons.menu_book,
+                      ),
+                      label: Text(book.progress > 0 ? 'Continue' : 'Read'),
+                    ),
             ),
           ),
         const SizedBox(width: Spacing.sm),

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
-/// Empty state widget for when a book has no annotations.
-class EmptyAnnotationsState extends StatelessWidget {
+/// Empty state widget for when a book has no bookmarks.
+class EmptyBookmarksState extends StatelessWidget {
   final bool isPhysical;
-  final VoidCallback? onAddAnnotation;
+  final VoidCallback? onAddBookmark;
 
-  const EmptyAnnotationsState({
+  const EmptyBookmarksState({
     super.key,
     this.isPhysical = false,
-    this.onAddAnnotation,
+    this.onAddBookmark,
   });
 
   @override
@@ -26,13 +26,13 @@ class EmptyAnnotationsState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.highlight_outlined,
+              Icons.bookmark_outline,
               size: 64,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: Spacing.md),
             Text(
-              'No annotations yet',
+              'No bookmarks yet',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -40,8 +40,8 @@ class EmptyAnnotationsState extends StatelessWidget {
             const SizedBox(height: Spacing.sm),
             Text(
               isPhysical
-                  ? 'Add passages you\'ve highlighted or underlined in your book.'
-                  : 'Highlight text while reading to create annotations.',
+                  ? 'Save pages you want to return to later.'
+                  : 'Bookmarks you create while reading will appear here.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -50,9 +50,9 @@ class EmptyAnnotationsState extends StatelessWidget {
             if (isPhysical) ...[
               const SizedBox(height: Spacing.lg),
               FilledButton.icon(
-                onPressed: onAddAnnotation,
+                onPressed: onAddBookmark,
                 icon: const Icon(Icons.add),
-                label: const Text('Add annotation'),
+                label: const Text('Add bookmark'),
               ),
             ],
           ],
