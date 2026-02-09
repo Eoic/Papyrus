@@ -13,6 +13,7 @@ import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
+import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
 
@@ -195,9 +196,7 @@ class _LibraryPageState extends State<LibraryPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Add book action
-        },
+        onPressed: () => AddBookChoiceSheet.show(context),
         child: const Icon(Icons.add),
       ),
     );
@@ -398,9 +397,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildAddBookButton(double height) {
     return FilledButton.icon(
-      onPressed: () {
-        // TODO: Add book action
-      },
+      onPressed: () => AddBookChoiceSheet.show(context),
       icon: const Icon(Icons.add),
       label: const Text('Add book'),
       style: FilledButton.styleFrom(minimumSize: Size(0, height)),
