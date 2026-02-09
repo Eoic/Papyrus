@@ -323,17 +323,25 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CoverImagePicker(
-                        initialUrl: _coverUrl,
-                        initialBytes: _coverImageBytes,
-                        onUrlChanged: (url) => setState(() => _coverUrl = url),
-                        onFileChanged: (bytes) => setState(() {
-                          _coverImageBytes = bytes;
-                          if (bytes != null) _coverUrl = null;
-                        }),
-                        coverWidth: 205.0,
-                        coverHeight: 315.0,
+                      Card(
+                        margin: const EdgeInsets.only(bottom: Spacing.xs),
+                        child: Padding(
+                          padding: const EdgeInsets.all(Spacing.md),
+                          child: CoverImagePicker(
+                            initialUrl: _coverUrl,
+                            initialBytes: _coverImageBytes,
+                            onUrlChanged: (url) =>
+                                setState(() => _coverUrl = url),
+                            onFileChanged: (bytes) => setState(() {
+                              _coverImageBytes = bytes;
+                              if (bytes != null) _coverUrl = null;
+                            }),
+                            coverWidth: 205.0,
+                            coverHeight: 315.0,
+                          ),
+                        ),
                       ),
+
                       _buildIsbnSection(),
                       _buildBasicInfoSection(),
                       _buildPublicationSection(),
