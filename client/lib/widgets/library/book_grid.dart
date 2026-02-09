@@ -10,8 +10,8 @@ import 'package:provider/provider.dart';
 /// - Tablet: 3-4 columns with 12px gap
 /// - Desktop: 5 columns with 16px gap
 class BookGrid extends StatelessWidget {
-  final List<BookData> books;
-  final void Function(BookData book)? onBookTap;
+  final List<Book> books;
+  final void Function(Book book)? onBookTap;
   final EdgeInsets? padding;
 
   const BookGrid({

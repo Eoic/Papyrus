@@ -1,8 +1,3 @@
-import 'package:papyrus/data/sample_data.dart';
-
-/// Backwards compatibility alias.
-typedef BookData = Book;
-
 /// Reading status of a book.
 enum ReadingStatus { notStarted, inProgress, completed, paused, abandoned }
 
@@ -66,10 +61,6 @@ extension BookFormatExtension on BookFormat {
 
 /// Book data model matching the database schema.
 class Book {
-  /// Sample books for backwards compatibility.
-  /// Prefer using DataStore.books for new code.
-  static List<Book> get sampleBooks => SampleData.books;
-
   final String id;
   final String title;
   final String? subtitle;

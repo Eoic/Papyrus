@@ -52,7 +52,7 @@ class DashboardProvider extends ChangeNotifier {
   String? get error => _error;
 
   /// Get current book (most recently read with progress < 100%).
-  BookData? get currentBook {
+  Book? get currentBook {
     if (_dataStore == null) return null;
     final readingBooks = _dataStore!.books.where((b) => b.isReading).toList()
       ..sort(
@@ -72,7 +72,7 @@ class DashboardProvider extends ChangeNotifier {
   List<DailyActivity> get weeklyActivity => _weeklyActivity;
 
   /// Get recently added books (last 5).
-  List<BookData> get recentlyAdded {
+  List<Book> get recentlyAdded {
     if (_dataStore == null) return [];
     final books = List<Book>.from(_dataStore!.books)
       ..sort((a, b) => b.addedAt.compareTo(a.addedAt));

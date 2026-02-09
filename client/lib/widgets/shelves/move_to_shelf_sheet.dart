@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 /// Bottom sheet for moving a book to one or more shelves.
 class MoveToShelfSheet extends StatefulWidget {
   /// The book to move.
-  final BookData book;
+  final Book book;
 
   /// Called when shelf assignments change.
   final void Function(List<String> shelfIds)? onSave;
@@ -20,7 +20,7 @@ class MoveToShelfSheet extends StatefulWidget {
   /// Shows the move to shelf sheet.
   static Future<void> show(
     BuildContext context, {
-    required BookData book,
+    required Book book,
     void Function(List<String> shelfIds)? onSave,
   }) {
     return showModalBottomSheet(

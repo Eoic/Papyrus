@@ -8,7 +8,7 @@ import 'package:papyrus/widgets/book_details/book_progress_bar.dart';
 /// Header section for book details page.
 /// Contains cover image, title, author, metadata, progress bar, and action buttons.
 class BookHeader extends StatelessWidget {
-  final BookData book;
+  final Book book;
   final bool isDesktop;
   final VoidCallback? onContinueReading;
   final VoidCallback? onUpdateProgress;

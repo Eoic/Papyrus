@@ -14,7 +14,7 @@ class SearchFilter {
   });
 
   /// Check if a book matches this filter.
-  bool matches(BookData book, {DataStore? dataStore}) {
+  bool matches(Book book, {DataStore? dataStore}) {
     final fieldValue = _getFieldValue(book, dataStore: dataStore);
     if (fieldValue == null) return false;
 
@@ -38,7 +38,7 @@ class SearchFilter {
     }
   }
 
-  String? _getFieldValue(BookData book, {DataStore? dataStore}) {
+  String? _getFieldValue(Book book, {DataStore? dataStore}) {
     switch (field) {
       case SearchField.title:
         return book.title;
@@ -113,7 +113,7 @@ class SearchQuery {
   });
 
   /// Check if a book matches this query.
-  bool matches(BookData book, {DataStore? dataStore}) {
+  bool matches(Book book, {DataStore? dataStore}) {
     // Check NOT filters first - if any match, exclude the book
     for (final filter in notFilters) {
       if (filter.matches(book, dataStore: dataStore)) {

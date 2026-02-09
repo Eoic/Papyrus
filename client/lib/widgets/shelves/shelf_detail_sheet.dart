@@ -12,13 +12,13 @@ class ShelfDetailSheet extends StatefulWidget {
   final ShelfData shelf;
 
   /// The books in this shelf.
-  final List<BookData> books;
+  final List<Book> books;
 
   /// Called when delete is tapped.
   final VoidCallback? onDelete;
 
   /// Called when a book is removed from the shelf.
-  final void Function(BookData book)? onRemoveBook;
+  final void Function(Book book)? onRemoveBook;
 
   const ShelfDetailSheet({
     super.key,
@@ -37,9 +37,9 @@ class ShelfDetailSheet extends StatefulWidget {
   static Future<String?> show(
     BuildContext context, {
     required ShelfData shelf,
-    required List<BookData> books,
+    required List<Book> books,
     VoidCallback? onDelete,
-    void Function(BookData book)? onRemoveBook,
+    void Function(Book book)? onRemoveBook,
   }) {
     return showModalBottomSheet<String>(
       context: context,
@@ -67,7 +67,7 @@ class ShelfDetailSheet extends StatefulWidget {
 class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
   BookSortOption _sortOption = BookSortOption.title;
   bool _sortAscending = true;
-  late List<BookData> _sortedBooks;
+  late List<Book> _sortedBooks;
 
   @override
   void initState() {
@@ -298,7 +298,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
     );
   }
 
-  Widget _buildBookItem(BuildContext context, BookData book) {
+  Widget _buildBookItem(BuildContext context, Book book) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -483,7 +483,7 @@ class _ShelfDetailSheetState extends State<ShelfDetailSheet> {
     );
   }
 
-  void _confirmRemoveBook(BuildContext context, BookData book) {
+  void _confirmRemoveBook(BuildContext context, Book book) {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(

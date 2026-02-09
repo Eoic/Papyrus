@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/metadata_service.dart';
+import 'package:papyrus/utils/image_utils.dart';
 
 /// State for metadata fetch operations.
 enum MetadataFetchState { idle, loading, success, error }
@@ -111,7 +110,7 @@ class BookEditProvider extends ChangeNotifier {
       // If we have local cover image bytes, convert to data URI
       var bookToSave = _editedBook!;
       if (_coverImageBytes != null) {
-        final dataUri = _bytesToDataUri(_coverImageBytes!);
+        final dataUri = bytesToDataUri(_coverImageBytes!);
         bookToSave = bookToSave.copyWith(coverUrl: dataUri);
         _editedBook = bookToSave;
       }
@@ -128,30 +127,6 @@ class BookEditProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  /// Convert image bytes to a data URI string.
-  String _bytesToDataUri(Uint8List bytes) {
-    // Detect image type from magic bytes
-    String mimeType = 'image/jpeg'; // default
-    if (bytes.length >= 8) {
-      if (bytes[0] == 0x89 &&
-          bytes[1] == 0x50 &&
-          bytes[2] == 0x4E &&
-          bytes[3] == 0x47) {
-        mimeType = 'image/png';
-      } else if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
-        mimeType = 'image/gif';
-      } else if (bytes[0] == 0x52 &&
-          bytes[1] == 0x49 &&
-          bytes[2] == 0x46 &&
-          bytes[3] == 0x46) {
-        mimeType = 'image/webp';
-      }
-    }
-
-    final base64Data = base64Encode(bytes);
-    return 'data:$mimeType;base64,$base64Data';
   }
 
   /// Revert all changes to the original book.

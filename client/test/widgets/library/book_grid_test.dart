@@ -16,7 +16,7 @@ void main() {
 
     Widget buildGrid({
       List<Book>? books,
-      void Function(BookData)? onBookTap,
+      void Function(Book)? onBookTap,
       Size screenSize = const Size(400, 800),
     }) {
       return createTestApp(
@@ -43,7 +43,7 @@ void main() {
     });
 
     testWidgets('passes onBookTap to each card', (tester) async {
-      BookData? tappedBook;
+      Book? tappedBook;
       await tester.pumpWidget(
         buildGrid(onBookTap: (book) => tappedBook = book),
       );

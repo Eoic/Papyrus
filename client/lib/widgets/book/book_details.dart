@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 /// Details tab content for book details page.
 /// Shows description, information grid, shelves, and topics.
 class BookDetails extends StatefulWidget {
-  final BookData book;
+  final Book book;
   final bool isDescriptionExpanded;
   final VoidCallback? onToggleDescription;
 

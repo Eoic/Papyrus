@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/sample_data.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/bookmark.dart';
@@ -15,7 +16,7 @@ enum BookDetailsTab { details, bookmarks, annotations, notes }
 class BookDetailsProvider extends ChangeNotifier {
   DataStore? _dataStore;
   String? _currentBookId;
-  BookData? _book;
+  Book? _book;
   BookDetailsTab _selectedTab = BookDetailsTab.details;
   bool _isLoading = false;
   String? _error;
@@ -48,7 +49,7 @@ class BookDetailsProvider extends ChangeNotifier {
   }
 
   // Getters
-  BookData? get book => _book;
+  Book? get book => _book;
 
   /// Get bookmarks for the current book from DataStore.
   List<Bookmark> get bookmarks {
@@ -111,13 +112,13 @@ class BookDetailsProvider extends ChangeNotifier {
 
     try {
       // Find book from DataStore (or sample data as fallback)
-      BookData? foundBook;
+      Book? foundBook;
       if (_dataStore != null) {
         foundBook = _dataStore!.getBook(bookId);
       }
 
       // Fallback to sample data if not found in DataStore
-      foundBook ??= BookData.sampleBooks.cast<BookData?>().firstWhere(
+      foundBook ??= SampleData.books.cast<Book?>().firstWhere(
         (b) => b?.id == bookId,
         orElse: () => null,
       );

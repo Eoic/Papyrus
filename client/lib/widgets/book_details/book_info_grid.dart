@@ -6,7 +6,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// Information grid for book metadata.
 /// Displays key-value pairs like Publisher, ISBN, Format, etc.
 class BookInfoGrid extends StatelessWidget {
-  final BookData book;
+  final Book book;
 
   const BookInfoGrid({super.key, required this.book});
 

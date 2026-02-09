@@ -17,7 +17,7 @@ class FilterOptions {
   });
 
   factory FilterOptions.fromBooks(
-    List<BookData> books, {
+    List<Book> books, {
     List<String> shelfNames = const [],
     List<String> topicNames = const [],
   }) {

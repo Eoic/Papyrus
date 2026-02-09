@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/book.dart' as models;
 
 class Book extends StatefulWidget {
   final String id;
-  final BookData data;
+  final models.Book data;
 
   const Book({super.key, required this.id, required this.data});
 

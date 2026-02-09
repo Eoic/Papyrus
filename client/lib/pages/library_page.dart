@@ -47,10 +47,7 @@ class _LibraryPageState extends State<LibraryPage> {
     return _buildMobileLayout(context, books, libraryProvider);
   }
 
-  List<BookData> _getFilteredBooks(
-    LibraryProvider provider,
-    DataStore dataStore,
-  ) {
+  List<Book> _getFilteredBooks(LibraryProvider provider, DataStore dataStore) {
     var books = dataStore.books;
 
     // Apply search filter using query parser
@@ -112,7 +109,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildMobileLayout(
     BuildContext context,
-    List<BookData> books,
+    List<Book> books,
     LibraryProvider libraryProvider,
   ) {
     return Scaffold(
@@ -406,7 +403,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildDesktopLayout(
     BuildContext context,
-    List<BookData> books,
+    List<Book> books,
     LibraryProvider libraryProvider,
   ) {
     const double controlHeight = 40.0;
@@ -498,7 +495,7 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildBookList(BuildContext context, List<BookData> books) {
+  Widget _buildBookList(BuildContext context, List<Book> books) {
     final libraryProvider = context.read<LibraryProvider>();
 
     return ListView.builder(
@@ -519,7 +516,7 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  void _navigateToBookDetails(BuildContext context, BookData book) {
+  void _navigateToBookDetails(BuildContext context, Book book) {
     context.go('/library/details/${book.id}');
   }
 

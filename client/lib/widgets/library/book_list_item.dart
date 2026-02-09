@@ -8,7 +8,7 @@ import 'package:papyrus/utils/book_actions.dart';
 /// progress, format badge, and favorite indicator.
 /// Supports context menu via long press (mobile) or right-click (desktop).
 class BookListItem extends StatefulWidget {
-  final BookData book;
+  final Book book;
   final VoidCallback? onTap;
   final bool showProgress;
   final bool isFavorite;

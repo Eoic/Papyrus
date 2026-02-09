@@ -7,7 +7,7 @@ import 'package:papyrus/widgets/book_details/book_progress_bar.dart';
 /// Card displaying the currently reading book with progress and continue button.
 class ContinueReadingCard extends StatelessWidget {
   /// The book currently being read.
-  final BookData? book;
+  final Book? book;
 
   /// Called when continue reading is pressed.
   final VoidCallback? onContinue;

@@ -5,7 +5,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// Action buttons for book details page.
 /// Shows Continue Reading (or Update Progress for physical books), Favorite, and Edit buttons.
 class BookActionButtons extends StatelessWidget {
-  final BookData book;
+  final Book book;
   final VoidCallback? onContinueReading;
   final VoidCallback? onUpdateProgress;
   final VoidCallback? onToggleFavorite;

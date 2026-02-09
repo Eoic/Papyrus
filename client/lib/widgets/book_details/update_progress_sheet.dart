@@ -7,7 +7,7 @@ import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 
 /// Bottom sheet for manually updating reading progress of a physical book.
 class UpdateProgressSheet extends StatefulWidget {
-  final BookData book;
+  final Book book;
   final void Function(int page, double position) onSave;
 
   const UpdateProgressSheet({
@@ -19,7 +19,7 @@ class UpdateProgressSheet extends StatefulWidget {
   /// Shows the bottom sheet and calls [onSave] when the user saves.
   static Future<void> show(
     BuildContext context, {
-    required BookData book,
+    required Book book,
     required void Function(int page, double position) onSave,
   }) {
     return showModalBottomSheet<void>(

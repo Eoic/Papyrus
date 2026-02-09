@@ -8,7 +8,7 @@ class BookContextMenu {
   /// Show the context menu for a book.
   static void show({
     required BuildContext context,
-    required BookData book,
+    required Book book,
     required bool isFavorite,
     Offset? tapPosition,
     VoidCallback? onFavoriteToggle,
@@ -52,7 +52,7 @@ class BookContextMenu {
   static void _showDesktopMenu({
     required BuildContext context,
     required Offset position,
-    required BookData book,
+    required Book book,
     required bool isFavorite,
     VoidCallback? onFavoriteToggle,
     VoidCallback? onEdit,
@@ -161,7 +161,7 @@ class BookContextMenu {
 
   static void _showMobileSheet({
     required BuildContext context,
-    required BookData book,
+    required Book book,
     required bool isFavorite,
     VoidCallback? onFavoriteToggle,
     VoidCallback? onEdit,
@@ -193,7 +193,7 @@ class BookContextMenu {
 
   static void _confirmDelete(
     BuildContext context,
-    BookData book,
+    Book book,
     VoidCallback? onDelete,
   ) {
     showDialog(
@@ -263,7 +263,7 @@ class _MenuItemRow extends StatelessWidget {
 
 /// Bottom sheet for mobile context menu.
 class _BookContextBottomSheet extends StatelessWidget {
-  final BookData book;
+  final Book book;
   final bool isFavorite;
   final VoidCallback? onFavoriteToggle;
   final VoidCallback? onEdit;

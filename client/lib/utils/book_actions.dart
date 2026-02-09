@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 /// be positioned at the center of the screen.
 void showBookContextMenu({
   required BuildContext context,
-  required BookData book,
+  required Book book,
   Offset? position,
 }) {
   final libraryProvider = context.read<LibraryProvider>();
@@ -51,7 +51,7 @@ void showBookContextMenu({
 }
 
 /// Shows the manage topics sheet and handles topic assignments.
-void _showManageTopicsSheet(BuildContext context, BookData book) {
+void _showManageTopicsSheet(BuildContext context, Book book) {
   final dataStore = context.read<DataStore>();
   final currentTagIds = dataStore.getTagIdsForBook(book.id).toSet();
 
@@ -79,7 +79,7 @@ void _showManageTopicsSheet(BuildContext context, BookData book) {
 }
 
 /// Shows the move to shelf sheet and handles shelf assignments.
-void _showMoveToShelfSheet(BuildContext context, BookData book) {
+void _showMoveToShelfSheet(BuildContext context, Book book) {
   final dataStore = context.read<DataStore>();
   final currentShelfIds = dataStore.getShelfIdsForBook(book.id).toSet();
 

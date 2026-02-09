@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,8 +6,13 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/metadata_service.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/image_utils.dart';
 import 'package:papyrus/widgets/add_book/isbn_scanner_dialog.dart';
 import 'package:papyrus/widgets/book_edit/cover_image_picker.dart';
+import 'package:papyrus/widgets/book_form/book_date_field.dart';
+import 'package:papyrus/widgets/book_form/book_text_field.dart';
+import 'package:papyrus/widgets/book_form/co_author_editor.dart';
+import 'package:papyrus/widgets/book_form/responsive_form_row.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 import 'package:provider/provider.dart';
@@ -116,7 +120,6 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
 
   // New state fields
   List<String> _coAuthors = [];
-  int? _rating;
   DateTime? _publicationDate;
   DateTime? _lentAt;
   Uint8List? _coverImageBytes;
@@ -264,7 +267,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     // Convert cover image bytes to data URI if present
     String? coverUrl = _coverUrl;
     if (_coverImageBytes != null) {
-      coverUrl = _bytesToDataUri(_coverImageBytes!);
+      coverUrl = bytesToDataUri(_coverImageBytes!);
     }
 
     final book = Book(
@@ -281,7 +284,6 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
       publicationDate: _publicationDate,
       description: _nullIfEmpty(_descriptionController.text),
       coverUrl: coverUrl,
-      rating: _rating,
       isPhysical: true,
       physicalLocation: _nullIfEmpty(_locationController.text),
       lentTo: _nullIfEmpty(_lentToController.text),
@@ -309,27 +311,6 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
   String? _nullIfEmpty(String text) {
     final trimmed = text.trim();
     return trimmed.isEmpty ? null : trimmed;
-  }
-
-  String _bytesToDataUri(Uint8List bytes) {
-    String mimeType = 'image/jpeg';
-    if (bytes.length >= 8) {
-      if (bytes[0] == 0x89 &&
-          bytes[1] == 0x50 &&
-          bytes[2] == 0x4E &&
-          bytes[3] == 0x47) {
-        mimeType = 'image/png';
-      } else if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
-        mimeType = 'image/gif';
-      } else if (bytes[0] == 0x52 &&
-          bytes[1] == 0x49 &&
-          bytes[2] == 0x46 &&
-          bytes[3] == 0x46) {
-        mimeType = 'image/webp';
-      }
-    }
-    final base64Data = base64Encode(bytes);
-    return 'data:$mimeType;base64,$base64Data';
   }
 
   // ============================================================================
@@ -585,25 +566,28 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Basic information',
       children: [
-        _buildTextField(
+        BookTextField(
           controller: _titleController,
           label: 'Title',
           required: true,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: Spacing.md),
-        _buildTextField(controller: _subtitleController, label: 'Subtitle'),
+        BookTextField(controller: _subtitleController, label: 'Subtitle'),
         const SizedBox(height: Spacing.md),
-        _buildTextField(
+        BookTextField(
           controller: _authorController,
           label: 'Author',
           required: true,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: Spacing.md),
-        _buildCoAuthorsSection(),
+        CoAuthorEditor(
+          coAuthors: _coAuthors,
+          onChanged: (updated) => setState(() => _coAuthors = updated),
+        ),
         const SizedBox(height: Spacing.md),
-        _buildTextField(
+        BookTextField(
           controller: _descriptionController,
           label: 'Description',
           maxLines: 5,
@@ -616,24 +600,30 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Publication details',
       children: [
-        _buildResponsiveRow([
-          _buildTextField(controller: _publisherController, label: 'Publisher'),
-          _buildTextField(controller: _languageController, label: 'Language'),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: widget.isDesktop,
+          children: [
+            BookTextField(controller: _publisherController, label: 'Publisher'),
+            BookTextField(controller: _languageController, label: 'Language'),
+          ],
+        ),
         const SizedBox(height: Spacing.md),
-        _buildResponsiveRow([
-          _buildDateField(
-            controller: _publicationDateController,
-            label: 'Publication date',
-            value: _publicationDate,
-            onChanged: (date) => setState(() => _publicationDate = date),
-          ),
-          _buildTextField(
-            controller: _pageCountController,
-            label: 'Page count',
-            keyboardType: TextInputType.number,
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: widget.isDesktop,
+          children: [
+            BookDateField(
+              controller: _publicationDateController,
+              label: 'Publication date',
+              value: _publicationDate,
+              onChanged: (date) => setState(() => _publicationDate = date),
+            ),
+            BookTextField(
+              controller: _pageCountController,
+              label: 'Page count',
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -642,10 +632,13 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Identifiers',
       children: [
-        _buildResponsiveRow([
-          _buildTextField(controller: _isbnController, label: 'ISBN'),
-          _buildTextField(controller: _isbn13Controller, label: 'ISBN-13'),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: widget.isDesktop,
+          children: [
+            BookTextField(controller: _isbnController, label: 'ISBN'),
+            BookTextField(controller: _isbn13Controller, label: 'ISBN-13'),
+          ],
+        ),
       ],
     );
   }
@@ -654,17 +647,22 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Series',
       children: [
-        _buildResponsiveRow([
-          _buildTextField(
-            controller: _seriesNameController,
-            label: 'Series name',
-          ),
-          _buildTextField(
-            controller: _seriesNumberController,
-            label: 'Number in series',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: widget.isDesktop,
+          children: [
+            BookTextField(
+              controller: _seriesNameController,
+              label: 'Series name',
+            ),
+            BookTextField(
+              controller: _seriesNumberController,
+              label: 'Number in series',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -673,247 +671,23 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Other details',
       children: [
-        _buildTextField(controller: _locationController, label: 'Location'),
+        BookTextField(controller: _locationController, label: 'Location'),
         const SizedBox(height: Spacing.md),
-        _buildResponsiveRow([
-          _buildTextField(controller: _lentToController, label: 'Lent to'),
-          _buildDateField(
-            controller: _lentAtController,
-            label: 'Lent at',
-            value: _lentAt,
-            onChanged: (date) => setState(() => _lentAt = date),
-          ),
-        ]),
-      ],
-    );
-  }
-
-  // ============================================================================
-  // FORM FIELDS
-  // ============================================================================
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    bool required = false,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    void Function(String)? onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: required ? '$label*' : label,
-        alignLabelWithHint: maxLines > 1,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-      ),
-      validator: required
-          ? (value) =>
-                value?.trim().isEmpty == true ? '$label is required' : null
-          : null,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildDateField({
-    required TextEditingController controller,
-    required String label,
-    required DateTime? value,
-    required void Function(DateTime?) onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        suffixIcon: Row(
-          mainAxisSize: MainAxisSize.min,
+        ResponsiveFormRow(
+          isDesktop: widget.isDesktop,
           children: [
-            if (value != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                onPressed: () {
-                  controller.clear();
-                  onChanged(null);
-                },
-              ),
-            IconButton(
-              icon: const Icon(Icons.calendar_today, size: 20),
-              onPressed: () => _pickDate(controller, value, onChanged),
-            ),
-          ],
-        ),
-      ),
-      onTap: () => _pickDate(controller, value, onChanged),
-    );
-  }
-
-  Future<void> _pickDate(
-    TextEditingController controller,
-    DateTime? currentValue,
-    void Function(DateTime?) onChanged,
-  ) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: currentValue ?? DateTime.now(),
-      firstDate: DateTime(1000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      controller.text = DateFormat.yMMMMd().format(picked);
-      onChanged(picked);
-    }
-  }
-
-  Widget _buildResponsiveRow(List<Widget> children) {
-    if (!widget.isDesktop || children.length == 1) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children.expand((w) sync* {
-          yield w;
-          yield const SizedBox(height: Spacing.md);
-        }).toList()..removeLast(),
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children.expand((w) sync* {
-        yield Expanded(child: w);
-        yield const SizedBox(width: Spacing.md);
-      }).toList()..removeLast(),
-    );
-  }
-
-  // ============================================================================
-  // CO-AUTHORS
-  // ============================================================================
-
-  Widget _buildCoAuthorsSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Co-authors',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: Spacing.xs),
-        Wrap(
-          spacing: Spacing.xs,
-          runSpacing: Spacing.xs,
-          children: [
-            ..._coAuthors.map(
-              (author) => Chip(
-                label: Text(author),
-                onDeleted: () {
-                  setState(() => _coAuthors.remove(author));
-                },
-              ),
-            ),
-            ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
-              label: const Text('Add'),
-              onPressed: _showAddCoAuthorDialog,
+            BookTextField(controller: _lentToController, label: 'Lent to'),
+            BookDateField(
+              controller: _lentAtController,
+              label: 'Lent at',
+              value: _lentAt,
+              onChanged: (date) => setState(() => _lentAt = date),
             ),
           ],
         ),
       ],
     );
   }
-
-  void _showAddCoAuthorDialog() {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add co-author'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            hintText: 'Enter co-author name',
-          ),
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              Navigator.pop(ctx, value.trim());
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(ctx, controller.text.trim());
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    ).then((name) {
-      if (name != null && name is String && name.isNotEmpty) {
-        setState(() => _coAuthors.add(name));
-      }
-    });
-  }
-
-  // ============================================================================
-  // RATING
-  // ============================================================================
-
-  // Widget _buildRatingRow() {
-  //   final colorScheme = Theme.of(context).colorScheme;
-
-  //   return Row(
-  //     children: [
-  //       Text(
-  //         'Rating',
-  //         style: Theme.of(
-  //           context,
-  //         ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-  //       ),
-  //       const SizedBox(width: Spacing.sm),
-  //       ...List.generate(5, (index) {
-  //         final starValue = index + 1;
-  //         final isSelected = _rating != null && starValue <= _rating!;
-  //         return GestureDetector(
-  //           onTap: () {
-  //             setState(() {
-  //               _rating = starValue == _rating ? null : starValue;
-  //             });
-  //           },
-  //           child: Padding(
-  //             padding: const EdgeInsets.symmetric(horizontal: 2),
-  //             child: Icon(
-  //               isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-  //               color: isSelected
-  //                   ? colorScheme.primary
-  //                   : colorScheme.onSurfaceVariant,
-  //               size: 28,
-  //             ),
-  //           ),
-  //         );
-  //       }),
-  //     ],
-  //   );
-  // }
 
   // ============================================================================
   // ISBN SECTION

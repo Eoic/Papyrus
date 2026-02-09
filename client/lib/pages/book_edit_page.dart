@@ -6,6 +6,10 @@ import 'package:papyrus/providers/book_edit_provider.dart';
 import 'package:papyrus/services/metadata_service.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_edit/cover_image_picker.dart';
+import 'package:papyrus/widgets/book_form/book_date_field.dart';
+import 'package:papyrus/widgets/book_form/book_text_field.dart';
+import 'package:papyrus/widgets/book_form/co_author_editor.dart';
+import 'package:papyrus/widgets/book_form/responsive_form_row.dart';
 import 'package:provider/provider.dart';
 
 /// Page for editing book metadata.
@@ -330,7 +334,7 @@ class _BookEditPageState extends State<BookEditPage> {
       _buildSectionCard(
         title: 'Description',
         children: [
-          _buildTextField(
+          BookTextField(
             controller: _descriptionController,
             label: 'Description',
             maxLines: 5,
@@ -368,29 +372,38 @@ class _BookEditPageState extends State<BookEditPage> {
     return _buildSectionCard(
       title: 'Basic information',
       children: [
-        _buildTextField(
+        BookTextField(
           controller: _titleController,
           label: 'Title',
           required: true,
           onChanged: _provider.updateTitle,
         ),
         const SizedBox(height: Spacing.md),
-        _buildTextField(
+        BookTextField(
           controller: _subtitleController,
           label: 'Subtitle',
           onChanged: _provider.updateSubtitle,
         ),
         const SizedBox(height: Spacing.md),
-        _buildResponsiveRow([
-          _buildTextField(
-            controller: _authorController,
-            label: 'Author',
-            required: true,
-            onChanged: _provider.updateAuthor,
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: _isDesktop,
+          children: [
+            BookTextField(
+              controller: _authorController,
+              label: 'Author',
+              required: true,
+              onChanged: _provider.updateAuthor,
+            ),
+          ],
+        ),
         const SizedBox(height: Spacing.md),
-        _buildCoAuthorsSection(context),
+        CoAuthorEditor(
+          coAuthors: _coAuthors,
+          onChanged: (updated) {
+            setState(() => _coAuthors = updated);
+            _provider.updateCoAuthors(updated);
+          },
+        ),
         const SizedBox(height: Spacing.md),
         _buildRatingRow(context, provider),
       ],
@@ -401,36 +414,42 @@ class _BookEditPageState extends State<BookEditPage> {
     return _buildSectionCard(
       title: 'Publication details',
       children: [
-        _buildResponsiveRow([
-          _buildTextField(
-            controller: _publisherController,
-            label: 'Publisher',
-            onChanged: _provider.updatePublisher,
-          ),
-          _buildTextField(
-            controller: _languageController,
-            label: 'Language',
-            onChanged: _provider.updateLanguage,
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: _isDesktop,
+          children: [
+            BookTextField(
+              controller: _publisherController,
+              label: 'Publisher',
+              onChanged: _provider.updatePublisher,
+            ),
+            BookTextField(
+              controller: _languageController,
+              label: 'Language',
+              onChanged: _provider.updateLanguage,
+            ),
+          ],
+        ),
         const SizedBox(height: Spacing.md),
-        _buildResponsiveRow([
-          _buildDateField(
-            controller: _publicationDateController,
-            label: 'Publication date',
-            value: _provider.editedBook?.publicationDate,
-            onChanged: _provider.updatePublicationDate,
-          ),
-          _buildTextField(
-            controller: _pageCountController,
-            label: 'Page count',
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              final pages = int.tryParse(value);
-              _provider.updatePageCount(pages);
-            },
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: _isDesktop,
+          children: [
+            BookDateField(
+              controller: _publicationDateController,
+              label: 'Publication date',
+              value: _provider.editedBook?.publicationDate,
+              onChanged: _provider.updatePublicationDate,
+            ),
+            BookTextField(
+              controller: _pageCountController,
+              label: 'Page count',
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                final pages = int.tryParse(value);
+                _provider.updatePageCount(pages);
+              },
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -439,18 +458,21 @@ class _BookEditPageState extends State<BookEditPage> {
     return _buildSectionCard(
       title: 'Identifiers',
       children: [
-        _buildResponsiveRow([
-          _buildTextField(
-            controller: _isbnController,
-            label: 'ISBN',
-            onChanged: _provider.updateIsbn,
-          ),
-          _buildTextField(
-            controller: _isbn13Controller,
-            label: 'ISBN-13',
-            onChanged: _provider.updateIsbn13,
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: _isDesktop,
+          children: [
+            BookTextField(
+              controller: _isbnController,
+              label: 'ISBN',
+              onChanged: _provider.updateIsbn,
+            ),
+            BookTextField(
+              controller: _isbn13Controller,
+              label: 'ISBN-13',
+              onChanged: _provider.updateIsbn13,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -459,22 +481,27 @@ class _BookEditPageState extends State<BookEditPage> {
     return _buildSectionCard(
       title: 'Series',
       children: [
-        _buildResponsiveRow([
-          _buildTextField(
-            controller: _seriesNameController,
-            label: 'Series name',
-            onChanged: _provider.updateSeriesName,
-          ),
-          _buildTextField(
-            controller: _seriesNumberController,
-            label: 'Number in series',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (value) {
-              final number = double.tryParse(value);
-              _provider.updateSeriesNumber(number);
-            },
-          ),
-        ]),
+        ResponsiveFormRow(
+          isDesktop: _isDesktop,
+          children: [
+            BookTextField(
+              controller: _seriesNameController,
+              label: 'Series name',
+              onChanged: _provider.updateSeriesName,
+            ),
+            BookTextField(
+              controller: _seriesNumberController,
+              label: 'Number in series',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (value) {
+                final number = double.tryParse(value);
+                _provider.updateSeriesNumber(number);
+              },
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -504,109 +531,6 @@ class _BookEditPageState extends State<BookEditPage> {
           ],
         ),
       ),
-    );
-  }
-
-  // ============================================================================
-  // FORM FIELDS
-  // ============================================================================
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    bool required = false,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    required void Function(String) onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-      ),
-      validator: required
-          ? (value) =>
-                value?.trim().isEmpty == true ? '$label is required' : null
-          : null,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildDateField({
-    required TextEditingController controller,
-    required String label,
-    required DateTime? value,
-    required void Function(DateTime?) onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        suffixIcon: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (value != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                onPressed: () {
-                  controller.clear();
-                  onChanged(null);
-                },
-              ),
-            IconButton(
-              icon: const Icon(Icons.calendar_today, size: 20),
-              onPressed: () => _pickDate(controller, value, onChanged),
-            ),
-          ],
-        ),
-      ),
-      onTap: () => _pickDate(controller, value, onChanged),
-    );
-  }
-
-  Future<void> _pickDate(
-    TextEditingController controller,
-    DateTime? currentValue,
-    void Function(DateTime?) onChanged,
-  ) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: currentValue ?? DateTime.now(),
-      firstDate: DateTime(1000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      controller.text = DateFormat.yMMMMd().format(picked);
-      onChanged(picked);
-    }
-  }
-
-  Widget _buildResponsiveRow(List<Widget> children) {
-    if (!_isDesktop || children.length == 1) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children.expand((w) sync* {
-          yield w;
-          yield const SizedBox(height: Spacing.md);
-        }).toList()..removeLast(),
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children.expand((w) sync* {
-        yield Expanded(child: w);
-        yield const SizedBox(width: Spacing.md);
-      }).toList()..removeLast(),
     );
   }
 
@@ -671,25 +595,28 @@ class _BookEditPageState extends State<BookEditPage> {
         ),
         if (isPhysical) ...[
           const SizedBox(height: Spacing.sm),
-          _buildTextField(
+          BookTextField(
             controller: _physicalLocationController,
             label: 'Location',
             onChanged: _provider.updatePhysicalLocation,
           ),
           const SizedBox(height: Spacing.md),
-          _buildResponsiveRow([
-            _buildTextField(
-              controller: _lentToController,
-              label: 'Lent to',
-              onChanged: _provider.updateLentTo,
-            ),
-            _buildDateField(
-              controller: _lentAtController,
-              label: 'Lent at',
-              value: provider.editedBook?.lentAt,
-              onChanged: _provider.updateLentAt,
-            ),
-          ]),
+          ResponsiveFormRow(
+            isDesktop: _isDesktop,
+            children: [
+              BookTextField(
+                controller: _lentToController,
+                label: 'Lent to',
+                onChanged: _provider.updateLentTo,
+              ),
+              BookDateField(
+                controller: _lentAtController,
+                label: 'Lent at',
+                value: provider.editedBook?.lentAt,
+                onChanged: _provider.updateLentAt,
+              ),
+            ],
+          ),
         ],
       ],
     );
@@ -710,49 +637,6 @@ class _BookEditPageState extends State<BookEditPage> {
       isDesktop: isDesktop,
       onUrlChanged: (url) => _provider.updateCoverUrl(url),
       onFileChanged: (bytes) => _provider.updateCoverFromFile(bytes),
-    );
-  }
-
-  // ============================================================================
-  // CO-AUTHORS SECTION
-  // ============================================================================
-
-  Widget _buildCoAuthorsSection(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Co-authors',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: Spacing.xs),
-        Wrap(
-          spacing: Spacing.xs,
-          runSpacing: Spacing.xs,
-          children: [
-            ..._coAuthors.map(
-              (author) => Chip(
-                label: Text(author),
-                onDeleted: () {
-                  setState(() {
-                    _coAuthors.remove(author);
-                    _provider.updateCoAuthors(_coAuthors);
-                  });
-                },
-              ),
-            ),
-            ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
-              label: const Text('Add'),
-              onPressed: () => _showAddCoAuthorDialog(context),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -1010,51 +894,6 @@ class _BookEditPageState extends State<BookEditPage> {
         behavior: SnackBarBehavior.floating,
       ),
     );
-  }
-
-  void _showAddCoAuthorDialog(BuildContext context) {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add co-author'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            hintText: 'Enter co-author name',
-          ),
-          onSubmitted: (value) {
-            if (value.trim().isNotEmpty) {
-              Navigator.pop(ctx, value.trim());
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(ctx, controller.text.trim());
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    ).then((name) {
-      if (name != null && name is String && name.isNotEmpty) {
-        setState(() {
-          _coAuthors.add(name);
-          _provider.updateCoAuthors(_coAuthors);
-        });
-      }
-    });
   }
 
   Future<bool> _showDiscardDialog() async {

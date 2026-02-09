@@ -6,10 +6,10 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// Section displaying recently added books in a horizontal scroll.
 class RecentlyAddedSection extends StatelessWidget {
   /// List of recently added books.
-  final List<BookData> books;
+  final List<Book> books;
 
   /// Called when a book is tapped.
-  final void Function(BookData book)? onBookTap;
+  final void Function(Book book)? onBookTap;
 
   /// Called when "View all" is tapped.
   final VoidCallback? onSeeAll;
@@ -84,7 +84,7 @@ class RecentlyAddedSection extends StatelessWidget {
   /// Builds a single book cover with tap handling and hover cursor.
   Widget _buildBookCover(
     BuildContext context, {
-    required BookData book,
+    required Book book,
     required double width,
     required double height,
   }) {
@@ -123,7 +123,7 @@ class RecentlyAddedSection extends StatelessWidget {
   }
 
   /// Builds a placeholder with icon and title when no cover image is available.
-  Widget _buildCoverPlaceholder(BuildContext context, BookData book) {
+  Widget _buildCoverPlaceholder(BuildContext context, Book book) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -201,7 +201,7 @@ class RecentlyAddedSection extends StatelessWidget {
   // HELPERS
   // ============================================================================
 
-  void _onBookTap(BuildContext context, BookData book) {
+  void _onBookTap(BuildContext context, Book book) {
     if (onBookTap != null) {
       onBookTap!(book);
     } else {

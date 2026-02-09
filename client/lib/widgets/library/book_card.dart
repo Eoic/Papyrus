@@ -9,7 +9,7 @@ import 'package:papyrus/utils/book_actions.dart';
 /// - Desktop: 200×300 with 16px gap
 /// Supports context menu via long press (mobile) or right-click (desktop).
 class BookCard extends StatefulWidget {
-  final BookData book;
+  final Book book;
   final VoidCallback? onTap;
   final bool showProgress;
   final bool isFavorite;

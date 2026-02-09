@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 /// Bottom sheet for managing topic assignments for a book.
 class ManageTopicsSheet extends StatefulWidget {
   /// The book to manage topics for.
-  final BookData book;
+  final Book book;
 
   /// Called when topic assignments change.
   final void Function(List<String> tagIds)? onSave;
@@ -20,7 +20,7 @@ class ManageTopicsSheet extends StatefulWidget {
   /// Shows the manage topics sheet.
   static Future<void> show(
     BuildContext context, {
-    required BookData book,
+    required Book book,
     void Function(List<String> tagIds)? onSave,
   }) {
     return showModalBottomSheet(
