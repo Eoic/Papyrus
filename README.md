@@ -17,15 +17,15 @@
 
 ## Overview
 
-Papyrus is an open-source, cross-platform application for managing and reading books. It supports both physical and digital book collections across Android, iOS, Web, Desktop, and e-ink devices. The application features an integrated e-book reader, flexible organization tools, progress tracking, various storage back-ends and cross-device synchronization via a self-hostable server.
+Papyrus is an open-source, cross-platform application for managing and reading books. It supports both physical and digital book collections across Android, iOS, Web, Windows and Linux. The application features an integrated book reader, flexible organization tools, reading statistics, progress tracking, supports various file storage back-ends and cross-device synchronization via a self-hostable server.
 
 ### Why Papyrus?
 
-Many reading applications offer partial solutions but fall short on essential features or user experience. Papyrus aims to deliver a comprehensive, privacy oriented solution that:
+Many reading applications offer partial solutions but fall short on essential features, platform availability or user experience. Papyrus aims to deliver a comprehensive, privacy oriented solution that:
 
-- Works offline-first with optional cloud sync
+- Works offline-first with optional cloud synchronization
 - Supports self-hosting for complete data ownership
-- Provides a unified experience across all platforms
+- Provides a unified experience across all popular platforms
 - Offers extensive customization for different reading preferences
 
 ## Features
@@ -38,7 +38,7 @@ Many reading applications offer partial solutions but fall short on essential fe
 | **Progress** | Reading time tracking, page/percentage progress, statistics |
 | **Goals** | Reading goals (books, pages, time) with streak tracking |
 | **Sync** | Cross-device synchronization via self-hostable server |
-| **Storage** | Multiple backends: Local, Google Drive, WebDAV, MinIO, S3 |
+| **Storage** | Multiple backends: Seff-hosted, Google Drive, WebDAV, MinIO, S3 |
 | **Accessibility** | E-ink optimization, dark/light themes, customizable fonts |
 
 ## Supported platforms
@@ -51,7 +51,6 @@ Many reading applications offer partial solutions but fall short on essential fe
 | Windows | Supported | Native desktop experience |
 | macOS | Supported | Requires Xcode for building |
 | Linux | Supported | AppImage/Snap distribution |
-| E-ink | Supported | Optimized UI for Boox, Kobo, etc. |
 
 ## Getting started
 
@@ -123,15 +122,6 @@ mkdocs serve
 mkdocs build
 ```
 
-**Documentation includes:**
-
-- [Market Analysis](spec/market-analysis.md) - Competitive landscape
-- [Functional Requirements](spec/requirements/functional-requirements.md) - System capabilities
-- [Use Cases](spec/use-cases.md) - Detailed workflows
-- [Database Model](spec/database-model.md) - Data architecture
-- [Server Architecture](spec/server-architecture.md) - Backend design
-- [Technologies](spec/technologies.md) - Tech stack details
-
 ## Technology stack
 
 | Layer | Technology | Purpose |
@@ -143,8 +133,6 @@ mkdocs build
 | Storage | Multiple backends | Book file storage |
 
 ## Contributing
-
-Contributions are welcome!
 
 ### Setup
 
