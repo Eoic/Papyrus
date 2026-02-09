@@ -261,8 +261,13 @@ class _BookEditPageState extends State<BookEditPage> {
     return ListView(
       padding: const EdgeInsets.all(Spacing.md),
       children: [
-        _buildCoverSection(context, provider, isDesktop: false),
-        const SizedBox(height: Spacing.lg),
+        Card(
+          margin: const EdgeInsets.only(bottom: Spacing.xs),
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: _buildCoverSection(context, provider, isDesktop: false),
+          ),
+        ),
         ..._buildFormSections(context, provider),
       ],
     );
@@ -283,6 +288,7 @@ class _BookEditPageState extends State<BookEditPage> {
                 child: Column(
                   children: [
                     Card(
+                      margin: const EdgeInsets.only(bottom: Spacing.xs),
                       child: Padding(
                         padding: const EdgeInsets.all(Spacing.md),
                         child: _buildCoverSection(
@@ -292,7 +298,6 @@ class _BookEditPageState extends State<BookEditPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: Spacing.sm),
                     _buildSectionCard(
                       title: 'Fetch metadata',
                       children: [_buildMetadataSection(context, provider)],
@@ -326,26 +331,11 @@ class _BookEditPageState extends State<BookEditPage> {
   }) {
     return [
       _buildBasicInfoSection(context, provider),
-      const SizedBox(height: Spacing.sm),
       _buildPublicationSection(),
-      const SizedBox(height: Spacing.sm),
       _buildIdentifiersSection(),
-      const SizedBox(height: Spacing.sm),
-      _buildSectionCard(
-        title: 'Description',
-        children: [
-          BookTextField(
-            controller: _descriptionController,
-            label: 'Description',
-            maxLines: 5,
-            onChanged: _provider.updateDescription,
-          ),
-        ],
-      ),
-      const SizedBox(height: Spacing.sm),
       _buildSeriesSection(),
-      const SizedBox(height: Spacing.sm),
       Card(
+        margin: const EdgeInsets.only(bottom: Spacing.xs),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Spacing.md,
@@ -354,13 +344,11 @@ class _BookEditPageState extends State<BookEditPage> {
           child: _buildPhysicalBookSection(context, provider),
         ),
       ),
-      if (!skipMetadata) ...[
-        const SizedBox(height: Spacing.sm),
+      if (!skipMetadata)
         _buildSectionCard(
           title: 'Fetch metadata',
           children: [_buildMetadataSection(context, provider)],
         ),
-      ],
       const SizedBox(height: Spacing.xl),
     ];
   }
@@ -383,6 +371,13 @@ class _BookEditPageState extends State<BookEditPage> {
           controller: _subtitleController,
           label: 'Subtitle',
           onChanged: _provider.updateSubtitle,
+        ),
+        const SizedBox(height: Spacing.md),
+        BookTextField(
+          controller: _descriptionController,
+          label: 'Description',
+          maxLines: 5,
+          onChanged: _provider.updateDescription,
         ),
         const SizedBox(height: Spacing.md),
         ResponsiveFormRow(
@@ -515,6 +510,7 @@ class _BookEditPageState extends State<BookEditPage> {
     required List<Widget> children,
   }) {
     return Card(
+      margin: const EdgeInsets.only(bottom: Spacing.xs),
       child: Padding(
         padding: const EdgeInsets.all(Spacing.md),
         child: Column(

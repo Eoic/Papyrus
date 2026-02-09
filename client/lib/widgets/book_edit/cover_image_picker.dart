@@ -80,113 +80,88 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
   }
 
   double get _coverWidth =>
-      widget.coverWidth ?? (widget.isDesktop ? 280.0 : 150.0);
+      widget.coverWidth ?? (widget.isDesktop ? 280.0 : 180.0);
   double get _coverHeight =>
-      widget.coverHeight ?? (widget.isDesktop ? 420.0 : 225.0);
-  // Mobile controls width for comfortable touch targets
-  double get _mobileControlsWidth => 280.0;
-
-  /// On desktop, let widget stretch to fill container.
-  /// On mobile, constrain to fixed width.
-  Widget _wrapWithWidth(Widget child) {
-    if (widget.isDesktop) {
-      return child;
-    }
-    return SizedBox(width: _mobileControlsWidth, child: child);
-  }
+      widget.coverHeight ?? (widget.isDesktop ? 420.0 : 270.0);
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
-      // On desktop, stretch controls to fill container width
-      crossAxisAlignment: widget.isDesktop
-          ? CrossAxisAlignment.stretch
-          : CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Cover preview (always centered)
         Center(child: _buildCoverPreview(context)),
         SizedBox(height: widget.isDesktop ? Spacing.md : Spacing.lg),
 
         // Action buttons
-        _wrapWithWidth(
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.upload, size: 18),
-                  label: const Text('Upload'),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      vertical: widget.isDesktop ? 8 : 12,
-                    ),
-                  ),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.upload, size: 18),
+                label: const Text('Upload'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
-              SizedBox(width: widget.isDesktop ? Spacing.md : Spacing.md),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () =>
-                      setState(() => _showUrlInput = !_showUrlInput),
-                  icon: const Icon(Icons.link, size: 18),
-                  label: const Text('URL'),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      vertical: widget.isDesktop ? 8 : 12,
-                    ),
-                    backgroundColor: _showUrlInput
-                        ? colorScheme.secondaryContainer
-                        : null,
-                  ),
+            ),
+            const SizedBox(width: Spacing.md),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _showUrlInput = !_showUrlInput),
+                icon: const Icon(Icons.link, size: 18),
+                label: const Text('URL'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: _showUrlInput
+                      ? colorScheme.secondaryContainer
+                      : null,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
 
         // URL input
         if (_showUrlInput) ...[
           const SizedBox(height: Spacing.md),
-          _wrapWithWidth(
-            TextField(
-              controller: _urlController,
-              decoration: InputDecoration(
-                labelText: 'Image URL',
-                hintText: 'https://...',
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                suffixIcon: _urlController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        onPressed: () {
-                          _urlController.clear();
-                          _onUrlChanged('');
-                        },
-                        tooltip: 'Clear URL',
-                      )
-                    : null,
+          TextField(
+            controller: _urlController,
+            decoration: InputDecoration(
+              labelText: 'Image URL',
+              hintText: 'https://...',
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              keyboardType: TextInputType.url,
-              style: Theme.of(context).textTheme.bodySmall,
-              onChanged: _onUrlChanged,
-              onSubmitted: (_) => _applyUrl(),
+              suffixIcon: _urlController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        _urlController.clear();
+                        _onUrlChanged('');
+                      },
+                      tooltip: 'Clear URL',
+                    )
+                  : null,
             ),
+            keyboardType: TextInputType.url,
+            style: Theme.of(context).textTheme.bodySmall,
+            onChanged: _onUrlChanged,
+            onSubmitted: (_) => _applyUrl(),
           ),
         ],
 
         // Error message
         if (_error != null) ...[
           const SizedBox(height: Spacing.sm),
-          _wrapWithWidth(
-            Text(
-              _error!,
-              style: TextStyle(color: colorScheme.error, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
+          Text(
+            _error!,
+            style: TextStyle(color: colorScheme.error, fontSize: 12),
+            textAlign: TextAlign.center,
           ),
         ],
       ],
