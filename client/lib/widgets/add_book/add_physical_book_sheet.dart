@@ -10,6 +10,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/isbn_scanner_dialog.dart';
 import 'package:papyrus/widgets/book_edit/cover_image_picker.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 import 'package:provider/provider.dart';
 
 /// ISBN lookup states.
@@ -337,41 +338,106 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isDesktop) return _buildDesktopLayout();
+    return _buildMobileLayout();
+  }
+
+  Widget _buildMobileLayout() {
     return Padding(
       padding: EdgeInsets.only(
-        left: Spacing.lg,
-        right: Spacing.lg,
-        top: Spacing.md,
-        bottom: widget.isDesktop
-            ? Spacing.lg
-            : MediaQuery.of(context).viewInsets.bottom + Spacing.lg,
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Form(
         key: _formKey,
-        child: ListView(
-          controller: widget.scrollController,
-          shrinkWrap: widget.isDesktop,
+        child: Column(
           children: [
-            if (!widget.isDesktop) ...[
-              const BottomSheetHandle(),
-              const SizedBox(height: Spacing.lg),
-            ],
-            Text(
-              'Add physical book',
-              style: Theme.of(context).textTheme.headlineSmall,
+            // Fixed header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.md,
+                Spacing.md,
+                Spacing.md,
+                0,
+              ),
+              child: Column(
+                children: [
+                  const BottomSheetHandle(),
+                  const SizedBox(height: Spacing.md),
+                  BottomSheetHeader(
+                    title: 'Add physical book',
+                    onCancel: () => Navigator.pop(context),
+                    onSave: _onSave,
+                    saveLabel: 'Add',
+                    canSave: _canSave,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: Spacing.lg),
-
-            // Cover + form sections
-            if (widget.isDesktop) _buildDesktopBody() else _buildMobileBody(),
-
-            const SizedBox(height: Spacing.lg),
-
-            // Action buttons
-            _buildActionButtons(),
             const SizedBox(height: Spacing.md),
+            const Divider(height: 1),
+
+            // Scrollable form content
+            Expanded(
+              child: ListView(
+                controller: widget.scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.lg,
+                  vertical: Spacing.md,
+                ),
+                children: [_buildMobileBody()],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // Fixed header bar with title + action buttons
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.md,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: colorScheme.outlineVariant),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'Add physical book',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: Spacing.sm),
+                FilledButton(
+                  onPressed: _canSave ? _onSave : null,
+                  child: const Text('Add to library'),
+                ),
+              ],
+            ),
+          ),
+          // Scrollable form content
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(Spacing.lg),
+              children: [_buildDesktopBody()],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -394,11 +460,11 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
             _coverImageBytes = bytes;
             if (bytes != null) _coverUrl = null;
           }),
+          coverWidth: 205.0,
+          coverHeight: 315.0,
         ),
-        const SizedBox(height: Spacing.lg),
         // ISBN lookup — below cover on mobile
         _buildIsbnSection(),
-        const SizedBox(height: Spacing.lg),
         ..._buildFormSections(),
       ],
     );
@@ -410,19 +476,9 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     // Sections to lay out in two columns below the top row
     final twoColumnSections = [
       _buildPublicationSection(),
-      _buildIdentifiersSection(),
-      _buildSectionCard(
-        title: 'Description',
-        children: [
-          _buildTextField(
-            controller: _descriptionController,
-            label: 'Description',
-            maxLines: 5,
-          ),
-        ],
-      ),
-      _buildSeriesSection(),
       _buildPhysicalBookSection(),
+      _buildIdentifiersSection(),
+      _buildSeriesSection(),
     ];
 
     return Column(
@@ -446,6 +502,8 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
                       _coverImageBytes = bytes;
                       if (bytes != null) _coverUrl = null;
                     }),
+                    coverWidth: 290.0,
+                    coverHeight: 402.0,
                   ),
                 ),
               ),
@@ -483,16 +541,6 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
       _buildBasicInfoSection(),
       _buildPublicationSection(),
       _buildIdentifiersSection(),
-      _buildSectionCard(
-        title: 'Description',
-        children: [
-          _buildTextField(
-            controller: _descriptionController,
-            label: 'Description',
-            maxLines: 5,
-          ),
-        ],
-      ),
       _buildSeriesSection(),
       _buildPhysicalBookSection(),
     ];
@@ -503,7 +551,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
   // ============================================================================
 
   Widget _buildSectionCard({
-    required String title,
+    required String? title,
     required List<Widget> children,
   }) {
     return Card(
@@ -513,13 +561,15 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: Spacing.md),
+            if (title != null) ...[
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: Spacing.md),
+            ],
             ...children,
           ],
         ),
@@ -553,7 +603,11 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
         const SizedBox(height: Spacing.md),
         _buildCoAuthorsSection(),
         const SizedBox(height: Spacing.md),
-        _buildRatingRow(),
+        _buildTextField(
+          controller: _descriptionController,
+          label: 'Description',
+          maxLines: 5,
+        ),
       ],
     );
   }
@@ -617,7 +671,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
 
   Widget _buildPhysicalBookSection() {
     return _buildSectionCard(
-      title: 'Physical book',
+      title: 'Other details',
       children: [
         _buildTextField(controller: _locationController, label: 'Location'),
         const SizedBox(height: Spacing.md),
@@ -651,7 +705,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: required ? '$label*' : label,
         alignLabelWithHint: maxLines > 1,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -824,42 +878,42 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
   // RATING
   // ============================================================================
 
-  Widget _buildRatingRow() {
-    final colorScheme = Theme.of(context).colorScheme;
+  // Widget _buildRatingRow() {
+  //   final colorScheme = Theme.of(context).colorScheme;
 
-    return Row(
-      children: [
-        Text(
-          'Rating',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(width: Spacing.sm),
-        ...List.generate(5, (index) {
-          final starValue = index + 1;
-          final isSelected = _rating != null && starValue <= _rating!;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _rating = starValue == _rating ? null : starValue;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Icon(
-                isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-                size: 28,
-              ),
-            ),
-          );
-        }),
-      ],
-    );
-  }
+  //   return Row(
+  //     children: [
+  //       Text(
+  //         'Rating',
+  //         style: Theme.of(
+  //           context,
+  //         ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+  //       ),
+  //       const SizedBox(width: Spacing.sm),
+  //       ...List.generate(5, (index) {
+  //         final starValue = index + 1;
+  //         final isSelected = _rating != null && starValue <= _rating!;
+  //         return GestureDetector(
+  //           onTap: () {
+  //             setState(() {
+  //               _rating = starValue == _rating ? null : starValue;
+  //             });
+  //           },
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 2),
+  //             child: Icon(
+  //               isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+  //               color: isSelected
+  //                   ? colorScheme.primary
+  //                   : colorScheme.onSurfaceVariant,
+  //               size: 28,
+  //             ),
+  //           ),
+  //         );
+  //       }),
+  //     ],
+  //   );
+  // }
 
   // ============================================================================
   // ISBN SECTION
@@ -891,11 +945,11 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
               ),
             ),
             const SizedBox(width: Spacing.sm),
-            FilledButton(
+            IconButton(
               onPressed: isFetching
                   ? null
                   : () => _lookupIsbn(_isbnController.text),
-              child: isFetching
+              icon: isFetching
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -904,7 +958,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Look up'),
+                  : const Icon(Icons.search),
             ),
           ],
         ),
@@ -963,24 +1017,4 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
   // ============================================================================
   // ACTION BUTTONS
   // ============================================================================
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ),
-        const SizedBox(width: Spacing.md),
-        Expanded(
-          child: FilledButton(
-            onPressed: _canSave ? _onSave : null,
-            child: const Text('Add to library'),
-          ),
-        ),
-      ],
-    );
-  }
 }

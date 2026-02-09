@@ -10,6 +10,8 @@ class CoverImagePicker extends StatefulWidget {
   final void Function(String? url) onUrlChanged;
   final void Function(Uint8List? bytes) onFileChanged;
   final bool isDesktop;
+  final double? coverWidth;
+  final double? coverHeight;
 
   const CoverImagePicker({
     super.key,
@@ -18,6 +20,8 @@ class CoverImagePicker extends StatefulWidget {
     required this.onUrlChanged,
     required this.onFileChanged,
     this.isDesktop = false,
+    this.coverWidth,
+    this.coverHeight,
   });
 
   @override
@@ -75,8 +79,10 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     super.dispose();
   }
 
-  double get _coverWidth => widget.isDesktop ? 280.0 : 150.0;
-  double get _coverHeight => widget.isDesktop ? 420.0 : 225.0;
+  double get _coverWidth =>
+      widget.coverWidth ?? (widget.isDesktop ? 280.0 : 150.0);
+  double get _coverHeight =>
+      widget.coverHeight ?? (widget.isDesktop ? 420.0 : 225.0);
   // Mobile controls width for comfortable touch targets
   double get _mobileControlsWidth => 280.0;
 
