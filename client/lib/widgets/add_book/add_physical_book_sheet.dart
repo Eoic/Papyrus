@@ -12,7 +12,6 @@ import 'package:papyrus/widgets/book_edit/cover_image_picker.dart';
 import 'package:papyrus/widgets/book_form/book_date_field.dart';
 import 'package:papyrus/widgets/book_form/book_text_field.dart';
 import 'package:papyrus/widgets/book_form/co_author_editor.dart';
-import 'package:papyrus/widgets/book_form/responsive_form_row.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 import 'package:provider/provider.dart';
@@ -20,30 +19,12 @@ import 'package:provider/provider.dart';
 /// ISBN lookup states.
 enum _IsbnLookupState { idle, fetching, found, notFound, error }
 
-/// Sheet/dialog for adding a physical book with optional ISBN scan/lookup.
-class AddPhysicalBookSheet extends StatefulWidget {
+/// Sheet for adding a physical book with optional ISBN scan/lookup.
+class AddPhysicalBookSheet extends StatelessWidget {
   const AddPhysicalBookSheet({super.key});
 
-  /// Show the sheet (bottom sheet on mobile, dialog on desktop).
+  /// Show the sheet as a bottom sheet.
   static Future<void> show(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= Breakpoints.desktopSmall;
-
-    if (isDesktop) {
-      return showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.dialog),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: const AddPhysicalBookSheet(),
-          ),
-        ),
-      );
-    }
-
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -55,42 +36,20 @@ class AddPhysicalBookSheet extends StatefulWidget {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) => _PhysicalBookContent(
-          scrollController: scrollController,
-          isDesktop: false,
-        ),
+        builder: (context, scrollController) =>
+            _PhysicalBookContent(scrollController: scrollController),
       ),
     );
   }
 
   @override
-  State<AddPhysicalBookSheet> createState() => _AddPhysicalBookSheetState();
-}
-
-class _AddPhysicalBookSheetState extends State<AddPhysicalBookSheet> {
-  @override
-  Widget build(BuildContext context) {
-    // Desktop dialog: rendered inside ConstrainedBox
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-      ),
-      child: const _PhysicalBookContent(
-        scrollController: null,
-        isDesktop: true,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 class _PhysicalBookContent extends StatefulWidget {
   final ScrollController? scrollController;
-  final bool isDesktop;
 
-  const _PhysicalBookContent({
-    required this.scrollController,
-    required this.isDesktop,
-  });
+  const _PhysicalBookContent({required this.scrollController});
 
   @override
   State<_PhysicalBookContent> createState() => _PhysicalBookContentState();
@@ -319,11 +278,6 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isDesktop) return _buildDesktopLayout();
-    return _buildMobileLayout();
-  }
-
-  Widget _buildMobileLayout() {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -365,166 +319,36 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
                   horizontal: Spacing.lg,
                   vertical: Spacing.md,
                 ),
-                children: [_buildMobileBody()],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          // Fixed header bar with title + action buttons
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Spacing.lg,
-              vertical: Spacing.md,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: colorScheme.outlineVariant),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Add physical book',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: Spacing.sm),
-                FilledButton(
-                  onPressed: _canSave ? _onSave : null,
-                  child: const Text('Add to library'),
-                ),
-              ],
-            ),
-          ),
-          // Scrollable form content
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(Spacing.lg),
-              children: [_buildDesktopBody()],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================================
-  // MOBILE / DESKTOP BODY
-  // ============================================================================
-
-  Widget _buildMobileBody() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Cover image
-        CoverImagePicker(
-          initialUrl: _coverUrl,
-          initialBytes: _coverImageBytes,
-          isDesktop: false,
-          onUrlChanged: (url) => setState(() => _coverUrl = url),
-          onFileChanged: (bytes) => setState(() {
-            _coverImageBytes = bytes;
-            if (bytes != null) _coverUrl = null;
-          }),
-          coverWidth: 205.0,
-          coverHeight: 315.0,
-        ),
-        // ISBN lookup — below cover on mobile
-        _buildIsbnSection(),
-        ..._buildFormSections(),
-      ],
-    );
-  }
-
-  Widget _buildDesktopBody() {
-    const double coverWidth = 280;
-
-    // Sections to lay out in two columns below the top row
-    final twoColumnSections = [
-      _buildPublicationSection(),
-      _buildPhysicalBookSection(),
-      _buildIdentifiersSection(),
-      _buildSeriesSection(),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Top row: Cover (left) + Basic info & ISBN lookup (right)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: coverWidth,
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  child: CoverImagePicker(
-                    initialUrl: _coverUrl,
-                    initialBytes: _coverImageBytes,
-                    isDesktop: true,
-                    onUrlChanged: (url) => setState(() => _coverUrl = url),
-                    onFileChanged: (bytes) => setState(() {
-                      _coverImageBytes = bytes;
-                      if (bytes != null) _coverUrl = null;
-                    }),
-                    coverWidth: 290.0,
-                    coverHeight: 402.0,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      CoverImagePicker(
+                        initialUrl: _coverUrl,
+                        initialBytes: _coverImageBytes,
+                        onUrlChanged: (url) => setState(() => _coverUrl = url),
+                        onFileChanged: (bytes) => setState(() {
+                          _coverImageBytes = bytes;
+                          if (bytes != null) _coverUrl = null;
+                        }),
+                        coverWidth: 205.0,
+                        coverHeight: 315.0,
+                      ),
+                      _buildIsbnSection(),
+                      _buildBasicInfoSection(),
+                      _buildPublicationSection(),
+                      _buildIdentifiersSection(),
+                      _buildSeriesSection(),
+                      _buildPhysicalBookSection(),
+                    ],
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(width: Spacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [_buildBasicInfoSection(), _buildIsbnSection()],
+                ],
               ),
             ),
           ],
         ),
-
-        // Remaining sections in two columns
-        for (int i = 0; i < twoColumnSections.length; i += 2)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: twoColumnSections[i]),
-              const SizedBox(width: Spacing.sm),
-              Expanded(
-                child: i + 1 < twoColumnSections.length
-                    ? twoColumnSections[i + 1]
-                    : const SizedBox.shrink(),
-              ),
-            ],
-          ),
-      ],
+      ),
     );
-  }
-
-  List<Widget> _buildFormSections() {
-    return [
-      _buildBasicInfoSection(),
-      _buildPublicationSection(),
-      _buildIdentifiersSection(),
-      _buildSeriesSection(),
-      _buildPhysicalBookSection(),
-    ];
   }
 
   // ============================================================================
@@ -600,29 +424,21 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Publication details',
       children: [
-        ResponsiveFormRow(
-          isDesktop: widget.isDesktop,
-          children: [
-            BookTextField(controller: _publisherController, label: 'Publisher'),
-            BookTextField(controller: _languageController, label: 'Language'),
-          ],
+        BookTextField(controller: _publisherController, label: 'Publisher'),
+        const SizedBox(height: Spacing.md),
+        BookTextField(controller: _languageController, label: 'Language'),
+        const SizedBox(height: Spacing.md),
+        BookDateField(
+          controller: _publicationDateController,
+          label: 'Publication date',
+          value: _publicationDate,
+          onChanged: (date) => setState(() => _publicationDate = date),
         ),
         const SizedBox(height: Spacing.md),
-        ResponsiveFormRow(
-          isDesktop: widget.isDesktop,
-          children: [
-            BookDateField(
-              controller: _publicationDateController,
-              label: 'Publication date',
-              value: _publicationDate,
-              onChanged: (date) => setState(() => _publicationDate = date),
-            ),
-            BookTextField(
-              controller: _pageCountController,
-              label: 'Page count',
-              keyboardType: TextInputType.number,
-            ),
-          ],
+        BookTextField(
+          controller: _pageCountController,
+          label: 'Page count',
+          keyboardType: TextInputType.number,
         ),
       ],
     );
@@ -632,13 +448,9 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Identifiers',
       children: [
-        ResponsiveFormRow(
-          isDesktop: widget.isDesktop,
-          children: [
-            BookTextField(controller: _isbnController, label: 'ISBN'),
-            BookTextField(controller: _isbn13Controller, label: 'ISBN-13'),
-          ],
-        ),
+        BookTextField(controller: _isbnController, label: 'ISBN'),
+        const SizedBox(height: Spacing.md),
+        BookTextField(controller: _isbn13Controller, label: 'ISBN-13'),
       ],
     );
   }
@@ -647,21 +459,12 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     return _buildSectionCard(
       title: 'Series',
       children: [
-        ResponsiveFormRow(
-          isDesktop: widget.isDesktop,
-          children: [
-            BookTextField(
-              controller: _seriesNameController,
-              label: 'Series name',
-            ),
-            BookTextField(
-              controller: _seriesNumberController,
-              label: 'Number in series',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-            ),
-          ],
+        BookTextField(controller: _seriesNameController, label: 'Series name'),
+        const SizedBox(height: Spacing.md),
+        BookTextField(
+          controller: _seriesNumberController,
+          label: 'Number in series',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
       ],
     );
@@ -673,17 +476,13 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
       children: [
         BookTextField(controller: _locationController, label: 'Location'),
         const SizedBox(height: Spacing.md),
-        ResponsiveFormRow(
-          isDesktop: widget.isDesktop,
-          children: [
-            BookTextField(controller: _lentToController, label: 'Lent to'),
-            BookDateField(
-              controller: _lentAtController,
-              label: 'Lent at',
-              value: _lentAt,
-              onChanged: (date) => setState(() => _lentAt = date),
-            ),
-          ],
+        BookTextField(controller: _lentToController, label: 'Lent to'),
+        const SizedBox(height: Spacing.md),
+        BookDateField(
+          controller: _lentAtController,
+          label: 'Lent at',
+          value: _lentAt,
+          onChanged: (date) => setState(() => _lentAt = date),
         ),
       ],
     );
