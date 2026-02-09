@@ -539,7 +539,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
         // Scan barcode button — full width, consistent with form
         OutlinedButton.icon(
           onPressed: isFetching ? null : _onScanBarcode,
-          icon: const Icon(Icons.qr_code_scanner),
+          icon: const Icon(Icons.barcode_reader),
           label: const Text('Scan barcode'),
         ),
 
