@@ -19,6 +19,10 @@
 
 Papyrus is an open-source, cross-platform application for managing and reading books. It supports both physical and digital book collections across Android, iOS, Web, Windows and Linux. The application features an integrated book reader, flexible organization tools, reading statistics, progress tracking, supports various file storage back-ends and cross-device synchronization via a self-hostable server.
 
+<div align="center">
+  <img src="/public/img/library.png" alt="Papyrus library view" />
+</div>
+
 ### Why Papyrus?
 
 Many reading applications offer partial solutions but fall short on essential features, platform availability or user experience. Papyrus aims to deliver a comprehensive, privacy oriented solution that:
