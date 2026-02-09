@@ -185,62 +185,73 @@ class ImportContentState extends State<ImportContent> {
               ? Spacing.lg
               : viewInsets.bottom + Spacing.lg,
         ),
-        child: ListView(
-          controller: widget.scrollController,
-          children: [
-            if (!widget.isDesktop) ...[
-              const BottomSheetHandle(),
-              const SizedBox(height: Spacing.lg),
-            ],
-            _buildHeader(
-              textTheme: textTheme,
-              colorScheme: colorScheme,
-              provider: provider,
-              isPicking: isPicking,
-              isProcessing: isProcessing,
-              isReview: isReview,
-            ),
-            const SizedBox(height: Spacing.md),
-            if (isPicking)
-              SizedBox(
-                height: 200,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: Spacing.md),
-                      Text(
-                        'Opening file picker...',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // DraggableScrollableSheet passes unconstrained cross-axis width
+            // during its first layout frame on web. Return an empty widget for
+            // that transient frame to avoid BoxConstraints infinite width
+            // crashes in Material widgets like OutlinedButton.
+            if (!constraints.hasBoundedWidth) {
+              return const SizedBox.shrink();
+            }
+            return ListView(
+              controller: widget.scrollController,
+              children: [
+                if (!widget.isDesktop) ...[
+                  const BottomSheetHandle(),
+                  const SizedBox(height: Spacing.lg),
+                ],
+                _buildHeader(
+                  textTheme: textTheme,
+                  colorScheme: colorScheme,
+                  provider: provider,
+                  isPicking: isPicking,
+                  isProcessing: isProcessing,
+                  isReview: isReview,
+                ),
+                const SizedBox(height: Spacing.md),
+                if (isPicking)
+                  SizedBox(
+                    height: 200,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: Spacing.md),
+                          Text(
+                            'Opening file picker...',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  )
+                else ...[
+                  for (var i = 0; i < provider.items.length; i++) ...[
+                    if (i > 0) const SizedBox(height: Spacing.sm),
+                    FileImportItemCard(
+                      item: provider.items[i],
+                      index: i,
+                      isReviewPhase: isReview,
+                      isDesktop: widget.isDesktop,
+                      initiallyExpanded: isReview && i == firstSuccessIndex,
+                      onRemove: isReview ? (i) => provider.removeItem(i) : null,
+                    ),
+                  ],
+                  const SizedBox(height: Spacing.md),
+                  _buildFooter(
+                    provider: provider,
+                    isPicking: isPicking,
+                    isProcessing: isProcessing,
+                    isReview: isReview,
                   ),
-                ),
-              )
-            else ...[
-              for (var i = 0; i < provider.items.length; i++) ...[
-                if (i > 0) const SizedBox(height: Spacing.sm),
-                FileImportItemCard(
-                  item: provider.items[i],
-                  index: i,
-                  isReviewPhase: isReview,
-                  isDesktop: widget.isDesktop,
-                  initiallyExpanded: isReview && i == firstSuccessIndex,
-                  onRemove: isReview ? (i) => provider.removeItem(i) : null,
-                ),
+                ],
               ],
-              const SizedBox(height: Spacing.md),
-              _buildFooter(
-                provider: provider,
-                isPicking: isPicking,
-                isProcessing: isProcessing,
-                isReview: isReview,
-              ),
-            ],
-          ],
+            );
+          },
         ),
       ),
     );
