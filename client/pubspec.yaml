@@ -32,12 +32,16 @@ dependencies:
   xml: ^6.6.1
   image: ^4.7.2
   path: ^1.9.1
+  crypto: ^3.0.6
+  web: ^1.1.1
+  mobile_scanner: ^7.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   uses-material-design: true

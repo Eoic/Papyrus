@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/data/data_store.dart';
@@ -8,7 +9,38 @@ import 'package:papyrus/providers/add_book_provider.dart';
 import 'package:papyrus/widgets/add_book/file_import_item_card.dart';
 import 'package:papyrus/widgets/add_book/file_import_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:provider/provider.dart';
+
+// ---------------------------------------------------------------------------
+// Fake FilePicker for integration tests
+// ---------------------------------------------------------------------------
+
+/// A fake [FilePicker] that returns a pre-configured result (or null).
+///
+/// Uses [MockPlatformInterfaceMixin] to bypass the platform interface
+/// token verification so it can be set via [FilePicker.platform].
+class FakeFilePicker extends FilePicker with MockPlatformInterfaceMixin {
+  FilePickerResult? resultToReturn;
+
+  @override
+  Future<FilePickerResult?> pickFiles({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    bool allowCompression = true,
+    int compressionQuality = 30,
+    bool allowMultiple = false,
+    bool withData = false,
+    bool withReadStream = false,
+    bool lockParentWindow = false,
+    bool readSequential = false,
+  }) async {
+    return resultToReturn;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -331,6 +363,145 @@ void main() {
         find.widgetWithText(FilledButton, 'Add 3 books to library'),
         findsOneWidget,
       );
+
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  // =========================================================================
+  // Integration: FileImportSheet.show() through real showModalBottomSheet
+  // =========================================================================
+
+  group('FileImportSheet.show() integration', () {
+    late FakeFilePicker fakePicker;
+
+    setUp(() {
+      fakePicker = FakeFilePicker();
+      FilePicker.platform = fakePicker;
+    });
+
+    testWidgets('mobile: opens bottom sheet without rendering exceptions', (
+      tester,
+    ) async {
+      // Picker returns null (user cancels) — sheet should open, show
+      // the picking state, then close automatically.
+      fakePicker.resultToReturn = null;
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<DataStore>.value(
+          value: DataStore(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => FileImportSheet.show(context),
+                  child: const Text('Import'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Tap the button to trigger show()
+      await tester.tap(find.text('Import'));
+      // Pump once to trigger the post-frame callback and open the sheet
+      await tester.pump();
+      // Pump again for the sheet animation to begin
+      await tester.pump();
+
+      // The sheet should have opened and rendered the picking state.
+      // If DraggableScrollableSheet passes unconstrained width, a
+      // rendering exception would be caught here.
+      expect(tester.takeException(), isNull);
+
+      // Let the picker future resolve (null → sheet auto-closes)
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('mobile: processes picked files without rendering exceptions', (
+      tester,
+    ) async {
+      // Picker returns a file
+      fakePicker.resultToReturn = FilePickerResult([
+        PlatformFile(
+          name: 'test-book.epub',
+          size: 100,
+          bytes: Uint8List.fromList([0x50, 0x4B, 0x03, 0x04]),
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<DataStore>.value(
+          value: DataStore(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => FileImportSheet.show(context),
+                  child: const Text('Import'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Import'));
+      await tester.pump();
+      await tester.pump();
+
+      // No rendering exception during the picking → processing transition
+      expect(tester.takeException(), isNull);
+
+      // Pump several frames to let processing UI render
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        final exception = tester.takeException();
+        if (exception != null) {
+          fail('Rendering exception on frame $i: $exception');
+        }
+      }
+    });
+
+    testWidgets('desktop: opens dialog without rendering exceptions', (
+      tester,
+    ) async {
+      fakePicker.resultToReturn = null;
+
+      // Use a wide screen to trigger the desktop path (>= 840px)
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<DataStore>.value(
+          value: DataStore(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => FileImportSheet.show(context),
+                  child: const Text('Import'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Import'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
     });
