@@ -5,7 +5,13 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Choice sheet for selecting how to add a book: digital import or physical.
 class AddBookChoiceSheet extends StatelessWidget {
-  const AddBookChoiceSheet({super.key});
+  const AddBookChoiceSheet({required this.callerContext, super.key});
+
+  /// The context of the page that opened this sheet.
+  ///
+  /// Used to show follow-up sheets after this one is dismissed, since the
+  /// dialog/bottom-sheet's own context becomes invalid after popping.
+  final BuildContext callerContext;
 
   /// Show the choice sheet (bottom sheet on mobile, dialog on desktop).
   static Future<void> show(BuildContext context) {
@@ -15,15 +21,15 @@ class AddBookChoiceSheet extends StatelessWidget {
     if (isDesktop) {
       return showDialog(
         context: context,
-        builder: (context) => Dialog(
+        builder: (_) => Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.dialog),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: const Padding(
-              padding: EdgeInsets.all(Spacing.lg),
-              child: AddBookChoiceSheet(),
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.lg),
+              child: AddBookChoiceSheet(callerContext: context),
             ),
           ),
         ),
@@ -35,14 +41,14 @@ class AddBookChoiceSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (context) => Padding(
+      builder: (_) => Padding(
         padding: const EdgeInsets.only(
           left: Spacing.lg,
           right: Spacing.lg,
           top: Spacing.md,
           bottom: Spacing.lg,
         ),
-        child: const AddBookChoiceSheet(),
+        child: AddBookChoiceSheet(callerContext: context),
       ),
     );
   }
@@ -52,10 +58,6 @@ class AddBookChoiceSheet extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final isDesktop =
         MediaQuery.of(context).size.width >= Breakpoints.desktopSmall;
-    // Capture the navigator before popping so we can use the parent route's
-    // context (which stays mounted) for the next sheet/dialog.
-    final navigator = Navigator.of(context);
-    final parentContext = navigator.context;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -79,8 +81,8 @@ class AddBookChoiceSheet extends StatelessWidget {
           title: 'Add physical book',
           subtitle: 'Enter details manually',
           onTap: () {
-            navigator.pop();
-            AddPhysicalBookSheet.show(parentContext);
+            Navigator.of(context).pop();
+            AddPhysicalBookSheet.show(callerContext);
           },
         ),
       ],

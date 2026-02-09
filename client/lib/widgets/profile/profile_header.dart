@@ -133,6 +133,8 @@ class ProfileHeader extends StatelessWidget {
           ),
           const SizedBox(width: Spacing.md),
           OutlinedButton(
+            // Override the theme's infinite-width minimumSize for Row usage.
+            style: OutlinedButton.styleFrom(minimumSize: Size.zero),
             onPressed: onEditProfile,
             child: const Text('Edit profile'),
           ),
