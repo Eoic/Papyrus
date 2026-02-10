@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:papyrus/models/book.dart';
 
 /// View mode for displaying books in the library.
 enum LibraryViewMode { grid, list }
@@ -14,10 +15,24 @@ enum LibraryFilterType {
   unread,
 }
 
+/// Sort options for library books. Each value encodes its direction.
+enum LibrarySortOption {
+  dateAddedNewest,
+  dateAddedOldest,
+  titleAZ,
+  titleZA,
+  authorAZ,
+  authorZA,
+  lastRead,
+  rating,
+  progress,
+}
+
 /// Provider for managing library view state.
 class LibraryProvider extends ChangeNotifier {
   LibraryViewMode _viewMode = LibraryViewMode.grid;
   final Set<LibraryFilterType> _activeFilters = {LibraryFilterType.all};
+  LibrarySortOption _sortOption = LibrarySortOption.dateAddedNewest;
   String _searchQuery = '';
   String? _selectedShelf;
   String? _selectedTopic;
@@ -31,6 +46,9 @@ class LibraryProvider extends ChangeNotifier {
 
   /// Active filters for library content.
   Set<LibraryFilterType> get activeFilters => Set.unmodifiable(_activeFilters);
+
+  /// Current sort option.
+  LibrarySortOption get sortOption => _sortOption;
 
   /// Current search query.
   String get searchQuery => _searchQuery;
@@ -64,6 +82,50 @@ class LibraryProvider extends ChangeNotifier {
         ? LibraryViewMode.list
         : LibraryViewMode.grid;
     notifyListeners();
+  }
+
+  /// Set the sort option.
+  void setSortOption(LibrarySortOption option) {
+    if (_sortOption != option) {
+      _sortOption = option;
+      notifyListeners();
+    }
+  }
+
+  /// Sort a list of books according to the current sort option.
+  List<Book> sortBooks(List<Book> books) {
+    final sorted = List<Book>.of(books);
+    sorted.sort((a, b) {
+      switch (_sortOption) {
+        case LibrarySortOption.dateAddedNewest:
+          return b.addedAt.compareTo(a.addedAt);
+        case LibrarySortOption.dateAddedOldest:
+          return a.addedAt.compareTo(b.addedAt);
+        case LibrarySortOption.titleAZ:
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        case LibrarySortOption.titleZA:
+          return b.title.toLowerCase().compareTo(a.title.toLowerCase());
+        case LibrarySortOption.authorAZ:
+          return a.author.toLowerCase().compareTo(b.author.toLowerCase());
+        case LibrarySortOption.authorZA:
+          return b.author.toLowerCase().compareTo(a.author.toLowerCase());
+        case LibrarySortOption.lastRead:
+          // Nulls sort to end
+          if (a.lastReadAt == null && b.lastReadAt == null) return 0;
+          if (a.lastReadAt == null) return 1;
+          if (b.lastReadAt == null) return -1;
+          return b.lastReadAt!.compareTo(a.lastReadAt!);
+        case LibrarySortOption.rating:
+          // Nulls sort to end, highest first
+          if (a.rating == null && b.rating == null) return 0;
+          if (a.rating == null) return 1;
+          if (b.rating == null) return -1;
+          return b.rating!.compareTo(a.rating!);
+        case LibrarySortOption.progress:
+          return b.currentPosition.compareTo(a.currentPosition);
+      }
+    });
+    return sorted;
   }
 
   /// Set a single filter (replaces existing filters).

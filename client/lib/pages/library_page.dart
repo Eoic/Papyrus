@@ -100,7 +100,7 @@ class _LibraryPageState extends State<LibraryPage> {
       }
     }
 
-    return books;
+    return provider.sortBooks(books);
   }
 
   // ============================================================================
@@ -120,7 +120,11 @@ class _LibraryPageState extends State<LibraryPage> {
           children: [
             // Search bar section with drawer button
             Padding(
-              padding: const EdgeInsets.all(Spacing.md),
+              padding: const EdgeInsets.only(
+                top: Spacing.md,
+                left: Spacing.md,
+                right: Spacing.md,
+              ),
               child: Row(
                 children: [
                   // Drawer hamburger button
@@ -134,6 +138,8 @@ class _LibraryPageState extends State<LibraryPage> {
                   const SizedBox(width: Spacing.xs),
                   // Search bar
                   Expanded(child: _buildSearchBar(libraryProvider)),
+                  const SizedBox(width: Spacing.sm),
+                  _buildSortButton(libraryProvider),
                 ],
               ),
             ),
@@ -143,7 +149,11 @@ class _LibraryPageState extends State<LibraryPage> {
 
             // View toggle row
             Padding(
-              padding: const EdgeInsets.all(Spacing.md),
+              padding: const EdgeInsets.only(
+                left: Spacing.md,
+                right: Spacing.md,
+                bottom: Spacing.md,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -358,36 +368,25 @@ class _LibraryPageState extends State<LibraryPage> {
   // DESKTOP LAYOUT
   // ============================================================================
 
-  Widget _buildViewToggle(
-    BuildContext context,
-    LibraryProvider libraryProvider,
-    double height,
-  ) {
-    final radius = BorderRadius.circular(AppRadius.input);
-
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-      ),
-      child: ClipRRect(
-        borderRadius: radius,
-        child: ToggleButtons(
-          isSelected: [
-            libraryProvider.viewMode == LibraryViewMode.grid,
-            libraryProvider.viewMode == LibraryViewMode.list,
-          ],
-          onPressed: (index) {
-            libraryProvider.setViewMode(
-              index == 0 ? LibraryViewMode.grid : LibraryViewMode.list,
-            );
-          },
-          borderRadius: radius,
-          renderBorder: false,
-          constraints: BoxConstraints(minHeight: height, minWidth: height),
-          children: const [Icon(Icons.grid_view), Icon(Icons.view_list)],
+  Widget _buildViewToggle(LibraryProvider libraryProvider) {
+    return SegmentedButton<LibraryViewMode>(
+      segments: const [
+        ButtonSegment(
+          value: LibraryViewMode.grid,
+          icon: Icon(Icons.grid_view, size: IconSizes.small),
         ),
+        ButtonSegment(
+          value: LibraryViewMode.list,
+          icon: Icon(Icons.view_list, size: IconSizes.small),
+        ),
+      ],
+      selected: {libraryProvider.viewMode},
+      onSelectionChanged: (selection) {
+        libraryProvider.setViewMode(selection.first);
+      },
+      style: ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }
@@ -398,6 +397,86 @@ class _LibraryPageState extends State<LibraryPage> {
       icon: const Icon(Icons.add),
       label: const Text('Add book'),
       style: FilledButton.styleFrom(minimumSize: Size(0, height)),
+    );
+  }
+
+  Widget _buildSortButton(LibraryProvider provider) {
+    return PopupMenuButton<LibrarySortOption>(
+      icon: const Icon(Icons.sort),
+      tooltip: 'Sort books',
+      onSelected: provider.setSortOption,
+      itemBuilder: (context) => [
+        _buildSortMenuItem(
+          LibrarySortOption.dateAddedNewest,
+          'Date added (newest)',
+          provider.sortOption,
+        ),
+        _buildSortMenuItem(
+          LibrarySortOption.dateAddedOldest,
+          'Date added (oldest)',
+          provider.sortOption,
+        ),
+        const PopupMenuDivider(),
+        _buildSortMenuItem(
+          LibrarySortOption.titleAZ,
+          'Title (A\u2013Z)',
+          provider.sortOption,
+        ),
+        _buildSortMenuItem(
+          LibrarySortOption.titleZA,
+          'Title (Z\u2013A)',
+          provider.sortOption,
+        ),
+        const PopupMenuDivider(),
+        _buildSortMenuItem(
+          LibrarySortOption.authorAZ,
+          'Author (A\u2013Z)',
+          provider.sortOption,
+        ),
+        _buildSortMenuItem(
+          LibrarySortOption.authorZA,
+          'Author (Z\u2013A)',
+          provider.sortOption,
+        ),
+        const PopupMenuDivider(),
+        _buildSortMenuItem(
+          LibrarySortOption.lastRead,
+          'Last read',
+          provider.sortOption,
+        ),
+        _buildSortMenuItem(
+          LibrarySortOption.rating,
+          'Rating',
+          provider.sortOption,
+        ),
+        _buildSortMenuItem(
+          LibrarySortOption.progress,
+          'Progress',
+          provider.sortOption,
+        ),
+      ],
+    );
+  }
+
+  PopupMenuItem<LibrarySortOption> _buildSortMenuItem(
+    LibrarySortOption option,
+    String label,
+    LibrarySortOption current,
+  ) {
+    return PopupMenuItem(
+      value: option,
+      child: Row(
+        children: [
+          Expanded(child: Text(label)),
+          Icon(
+            Icons.check,
+            size: IconSizes.small,
+            color: option == current
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent,
+          ),
+        ],
+      ),
     );
   }
 
@@ -439,18 +518,20 @@ class _LibraryPageState extends State<LibraryPage> {
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const Spacer(),
-                          _buildViewToggle(
-                            context,
-                            libraryProvider,
-                            controlHeight,
-                          ),
+                          _buildViewToggle(libraryProvider),
                           const SizedBox(width: Spacing.sm),
                           _buildAddBookButton(controlHeight),
                         ],
                       ),
                       const SizedBox(height: Spacing.md),
                       // Second row: search bar full width
-                      _buildSearchBar(libraryProvider),
+                      Row(
+                        children: [
+                          Expanded(child: _buildSearchBar(libraryProvider)),
+                          const SizedBox(width: Spacing.sm),
+                          _buildSortButton(libraryProvider),
+                        ],
+                      ),
                     ],
                   );
                 }
@@ -469,7 +550,9 @@ class _LibraryPageState extends State<LibraryPage> {
                     // Search bar - fills available space
                     Expanded(child: _buildSearchBar(libraryProvider)),
                     const SizedBox(width: Spacing.md),
-                    _buildViewToggle(context, libraryProvider, controlHeight),
+                    _buildSortButton(libraryProvider),
+                    const SizedBox(width: Spacing.md),
+                    _buildViewToggle(libraryProvider),
                     const SizedBox(width: Spacing.md),
                     _buildAddBookButton(controlHeight),
                   ],
