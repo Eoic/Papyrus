@@ -92,25 +92,6 @@ Many reading applications offer partial solutions but fall short on essential fe
    flutter run -d windows    # or: macos, linux
    ```
 
-## Project structure
-
-```text
-Papyrus/
-├── client/                 # Flutter application
-│   ├── lib/
-│   │   ├── config/         # App configuration, routing
-│   │   ├── pages/          # Screen widgets
-│   │   ├── providers/      # State management
-│   │   ├── widgets/        # Reusable components
-│   │   ├── models/         # Data models
-│   │   └── themes/         # Color schemes
-│   └── test/               # Unit and widget tests
-├── spec/                   # Project documentation (MkDocs)
-├── design/
-│   └── api/                # OpenAPI specification
-└── public/                 # Static assets
-```
-
 ## Documentation
 
 Project documentation is available in the `/spec/` directory and can be built into a browsable static site using MkDocs.
