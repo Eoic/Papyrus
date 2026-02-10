@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/input/search_field.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +40,8 @@ class MoveToShelfSheet extends StatefulWidget {
 
 class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
   late Set<String> _selectedShelfIds;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -46,6 +49,12 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
     // Initialize with current shelf assignments
     final dataStore = context.read<DataStore>();
     _selectedShelfIds = dataStore.getShelfIdsForBook(widget.book.id).toSet();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -105,46 +114,74 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                     ],
                   ),
                 ),
+                // Create new shelf button
+                IconButton.filledTonal(
+                  onPressed: _showCreateShelfSheet,
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Create new shelf',
+                ),
               ],
+            ),
+            const SizedBox(height: Spacing.md),
+
+            // Search field
+            SearchField(
+              controller: _searchController,
+              hintText: 'Search shelves...',
+              onChanged: (value) => setState(() => _searchQuery = value),
             ),
             const SizedBox(height: Spacing.md),
 
             // Shelf list
             Expanded(
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  // Shelves list
-                  ...shelves.map((shelf) => _buildShelfTile(context, shelf)),
-                  if (shelves.isNotEmpty) const SizedBox(height: Spacing.md),
+              child: Builder(
+                builder: (context) {
+                  final filteredShelves = _searchQuery.isEmpty
+                      ? shelves
+                      : shelves
+                            .where(
+                              (s) => s.name.toLowerCase().contains(
+                                _searchQuery.toLowerCase(),
+                              ),
+                            )
+                            .toList();
 
-                  // Create new shelf button
-                  _buildCreateShelfButton(context),
-                  const SizedBox(height: Spacing.lg),
-                ],
+                  if (filteredShelves.isEmpty && _searchQuery.isNotEmpty) {
+                    return Center(
+                      child: Text(
+                        'No shelves found',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: filteredShelves.length,
+                    itemBuilder: (context, index) =>
+                        _buildShelfTile(context, filteredShelves[index]),
+                  );
+                },
               ),
             ),
+            Divider(height: Spacing.md, color: colorScheme.outlineVariant),
 
             // Action buttons
             Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.lg,
+                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.sm,
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
                   ),
                   const SizedBox(width: Spacing.md),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _onSave,
-                      child: const Text('Save'),
-                    ),
-                  ),
+                  FilledButton(onPressed: _onSave, child: const Text('Save')),
                 ],
               ),
             ),
@@ -249,59 +286,6 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                 value: isSelected,
                 onChanged: (_) => _toggleShelf(shelf.id),
                 activeColor: shelfColor,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateShelfButton(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: InkWell(
-        onTap: _showCreateShelfSheet,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.md,
-            vertical: Spacing.md,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: colorScheme.onPrimaryContainer,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: Spacing.md),
-              Text(
-                'Create new shelf',
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.primary,
-                ),
               ),
             ],
           ),

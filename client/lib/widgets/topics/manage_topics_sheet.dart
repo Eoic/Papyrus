@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/tag.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/input/search_field.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/topics/add_topic_sheet.dart';
 import 'package:provider/provider.dart';
@@ -39,12 +40,20 @@ class ManageTopicsSheet extends StatefulWidget {
 
 class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
   late Set<String> _selectedTagIds;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     final dataStore = context.read<DataStore>();
     _selectedTagIds = dataStore.getTagIdsForBook(widget.book.id).toSet();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -104,7 +113,21 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                     ],
                   ),
                 ),
+                // Create new topic button
+                IconButton.filledTonal(
+                  onPressed: _showCreateTopicSheet,
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Create new topic',
+                ),
               ],
+            ),
+            const SizedBox(height: Spacing.md),
+
+            // Search field
+            SearchField(
+              controller: _searchController,
+              hintText: 'Search topics...',
+              onChanged: (value) => setState(() => _searchQuery = value),
             ),
             const SizedBox(height: Spacing.md),
 
@@ -112,37 +135,54 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
             Expanded(
               child: tags.isEmpty
                   ? _buildEmptyState(context)
-                  : ListView(
-                      controller: scrollController,
-                      children: [
-                        ...tags.map((tag) => _buildTagTile(context, tag)),
-                        const SizedBox(height: Spacing.md),
-                        _buildCreateTopicButton(context),
-                        const SizedBox(height: Spacing.lg),
-                      ],
+                  : Builder(
+                      builder: (context) {
+                        final filteredTags = _searchQuery.isEmpty
+                            ? tags
+                            : tags
+                                  .where(
+                                    (t) => t.name.toLowerCase().contains(
+                                      _searchQuery.toLowerCase(),
+                                    ),
+                                  )
+                                  .toList();
+
+                        if (filteredTags.isEmpty && _searchQuery.isNotEmpty) {
+                          return Center(
+                            child: Text(
+                              'No topics found',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: filteredTags.length,
+                          itemBuilder: (context, index) =>
+                              _buildTagTile(context, filteredTags[index]),
+                        );
+                      },
                     ),
             ),
+            Divider(height: Spacing.md, color: colorScheme.outlineVariant),
 
             // Action buttons
             Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.lg,
+                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.sm,
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
                   ),
                   const SizedBox(width: Spacing.md),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _onSave,
-                      child: const Text('Save'),
-                    ),
-                  ),
+                  FilledButton(onPressed: _onSave, child: const Text('Save')),
                 ],
               ),
             ),
@@ -201,13 +241,11 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
         ),
         const SizedBox(height: Spacing.sm),
         Text(
-          'Create a topic to get started',
+          'Tap + to create a topic',
           style: textTheme.bodyMedium?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: Spacing.lg),
-        _buildCreateTopicButton(context),
       ],
     );
   }
@@ -290,59 +328,6 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                 value: isSelected,
                 onChanged: (_) => _toggleTag(tag.id),
                 activeColor: tagColor,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateTopicButton(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: InkWell(
-        onTap: _showCreateTopicSheet,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.md,
-            vertical: Spacing.md,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: colorScheme.onPrimaryContainer,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: Spacing.md),
-              Text(
-                'Create new topic',
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.primary,
-                ),
               ),
             ],
           ),
