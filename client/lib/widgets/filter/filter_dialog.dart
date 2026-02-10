@@ -359,18 +359,25 @@ class _FilterDialogState extends State<FilterDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: _clearFilters, child: const Text('Clear all')),
-        const Spacer(),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _applyFilters,
-          child: const Text('Apply filters'),
+        Row(
+          children: [
+            TextButton(
+              onPressed: _clearFilters,
+              child: const Text('Clear all'),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            const SizedBox(width: Spacing.sm),
+            FilledButton(
+              onPressed: _applyFilters,
+              child: const Text('Apply filters'),
+            ),
+          ],
         ),
       ],
-      actionsAlignment: MainAxisAlignment.start,
     );
   }
 }
