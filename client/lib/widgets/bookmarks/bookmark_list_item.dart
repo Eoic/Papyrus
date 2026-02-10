@@ -12,7 +12,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 /// - **Tap**: Opens bookmark details
 /// - **Long press**: Shows action menu (edit note, change color, delete)
 /// - **Menu icon**: Same as long press (desktop-friendly)
-class BookmarkListItem extends StatelessWidget {
+class BookmarkListItem extends StatefulWidget {
   final Bookmark bookmark;
   final String bookTitle;
   final VoidCallback? onTap;
@@ -33,38 +33,51 @@ class BookmarkListItem extends StatelessWidget {
   });
 
   @override
+  State<BookmarkListItem> createState() => _BookmarkListItemState();
+}
+
+class _BookmarkListItemState extends State<BookmarkListItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Card(
-      elevation: AppElevation.level1,
-      clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: bookmark.color, width: 4)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(colorScheme, textTheme),
-                if (bookmark.hasNote) ...[
-                  const SizedBox(height: Spacing.sm),
-                  _buildNote(colorScheme, textTheme),
-                  const SizedBox(height: Spacing.sm),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Card(
+        elevation: AppElevation.level1,
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: InkWell(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: widget.bookmark.color, width: 4),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(colorScheme, textTheme),
+                  if (widget.bookmark.hasNote) ...[
+                    const SizedBox(height: Spacing.sm),
+                    _buildNote(colorScheme, textTheme),
+                    const SizedBox(height: Spacing.sm),
+                  ],
+                  _buildDate(colorScheme, textTheme),
                 ],
-                _buildDate(colorScheme, textTheme),
-              ],
+              ),
             ),
           ),
         ),
@@ -79,37 +92,37 @@ class BookmarkListItem extends StatelessWidget {
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: bookmark.color,
+            color: widget.bookmark.color,
             shape: BoxShape.circle,
           ),
         ),
         const SizedBox(width: Spacing.sm),
         Expanded(
           child: Text(
-            bookmark.displayLocation,
+            widget.bookmark.displayLocation,
             style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (showActionMenu) _buildActionMenu(colorScheme),
+        if (widget.showActionMenu) _buildActionMenu(colorScheme),
       ],
     );
   }
 
   /// Icon button that triggers the action menu via onLongPress.
+  /// Shown only on mouse hover with animated opacity.
   Widget _buildActionMenu(ColorScheme colorScheme) {
-    return IconButton(
-      icon: Icon(
-        Icons.more_vert,
-        size: IconSizes.small,
-        color: colorScheme.onSurfaceVariant,
+    return AnimatedOpacity(
+      opacity: _isHovered ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 150),
+      child: IconButton(
+        icon: const Icon(Icons.more_vert),
+        iconSize: IconSizes.action,
+        onPressed: widget.onLongPress,
+        tooltip: 'More options',
+        visualDensity: VisualDensity.compact,
       ),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
-      visualDensity: VisualDensity.compact,
-      onPressed: onLongPress,
-      tooltip: 'More options',
     );
   }
 
@@ -131,7 +144,7 @@ class BookmarkListItem extends StatelessWidget {
           const SizedBox(width: Spacing.sm),
           Expanded(
             child: Text(
-              bookmark.note!,
+              widget.bookmark.note!,
               style: textTheme.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -144,7 +157,7 @@ class BookmarkListItem extends StatelessWidget {
 
   Widget _buildDate(ColorScheme colorScheme, TextTheme textTheme) {
     return Text(
-      formatRelativeDate(bookmark.createdAt),
+      formatRelativeDate(widget.bookmark.createdAt),
       style: textTheme.labelSmall?.copyWith(
         color: colorScheme.onSurfaceVariant,
       ),

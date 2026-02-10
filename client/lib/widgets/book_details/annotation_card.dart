@@ -35,7 +35,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 ///   onLongPress: () => _showAnnotationActions(annotation),
 /// )
 /// ```
-class AnnotationCard extends StatelessWidget {
+class AnnotationCard extends StatefulWidget {
   /// The annotation data to display.
   final Annotation annotation;
 
@@ -58,38 +58,50 @@ class AnnotationCard extends StatelessWidget {
   });
 
   @override
+  State<AnnotationCard> createState() => _AnnotationCardState();
+}
+
+class _AnnotationCardState extends State<AnnotationCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final accentColor = annotation.color.accentColor;
+    final accentColor = widget.annotation.color.accentColor;
 
-    return Card(
-      elevation: AppElevation.level1,
-      clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: accentColor, width: 4)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context, colorScheme, textTheme, accentColor),
-                const SizedBox(height: Spacing.sm),
-                _buildHighlightText(textTheme),
-                if (annotation.hasNote) _buildNote(colorScheme, textTheme),
-                const SizedBox(height: Spacing.sm),
-                _buildDate(colorScheme, textTheme),
-              ],
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Card(
+        elevation: AppElevation.level1,
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: InkWell(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(left: BorderSide(color: accentColor, width: 4)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context, colorScheme, textTheme, accentColor),
+                  const SizedBox(height: Spacing.sm),
+                  _buildHighlightText(textTheme),
+                  if (widget.annotation.hasNote)
+                    _buildNote(colorScheme, textTheme),
+                  const SizedBox(height: Spacing.sm),
+                  _buildDate(colorScheme, textTheme),
+                ],
+              ),
             ),
           ),
         ),
@@ -109,13 +121,13 @@ class AnnotationCard extends StatelessWidget {
         _buildColorDot(accentColor),
         const SizedBox(width: Spacing.sm),
         Text(
-          annotation.location.shortLocation,
+          widget.annotation.location.shortLocation,
           style: textTheme.labelSmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
         ),
         const Spacer(),
-        if (showActionMenu) _buildActionMenu(colorScheme),
+        if (widget.showActionMenu) _buildActionMenu(colorScheme),
       ],
     );
   }
@@ -130,25 +142,25 @@ class AnnotationCard extends StatelessWidget {
   }
 
   /// Icon button that triggers the action menu via onLongPress.
+  /// Shown only on mouse hover with animated opacity.
   Widget _buildActionMenu(ColorScheme colorScheme) {
-    return IconButton(
-      icon: Icon(
-        Icons.more_vert,
-        size: IconSizes.small,
-        color: colorScheme.onSurfaceVariant,
+    return AnimatedOpacity(
+      opacity: _isHovered ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 150),
+      child: IconButton(
+        icon: const Icon(Icons.more_vert),
+        iconSize: IconSizes.action,
+        onPressed: widget.onLongPress,
+        tooltip: 'More options',
+        visualDensity: VisualDensity.compact,
       ),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
-      visualDensity: VisualDensity.compact,
-      onPressed: onLongPress,
-      tooltip: 'More options',
     );
   }
 
   /// Quoted highlight text with italic styling.
   Widget _buildHighlightText(TextTheme textTheme) {
     return Text(
-      '"${annotation.highlightText}"',
+      '"${widget.annotation.highlightText}"',
       style: textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
     );
   }
@@ -163,7 +175,7 @@ class AnnotationCard extends StatelessWidget {
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        child: Text(annotation.note!, style: textTheme.bodyMedium),
+        child: Text(widget.annotation.note!, style: textTheme.bodyMedium),
       ),
     );
   }
@@ -171,7 +183,7 @@ class AnnotationCard extends StatelessWidget {
   /// Date metadata.
   Widget _buildDate(ColorScheme colorScheme, TextTheme textTheme) {
     return Text(
-      _formatDate(annotation.createdAt),
+      _formatDate(widget.annotation.createdAt),
       style: textTheme.labelSmall?.copyWith(
         color: colorScheme.onSurfaceVariant,
       ),

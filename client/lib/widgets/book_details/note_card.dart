@@ -29,7 +29,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 ///   onLongPress: () => _showNoteActions(note),
 /// )
 /// ```
-class NoteCard extends StatelessWidget {
+class NoteCard extends StatefulWidget {
   /// The note data to display.
   final Note note;
 
@@ -64,33 +64,44 @@ class NoteCard extends StatelessWidget {
   });
 
   @override
+  State<NoteCard> createState() => _NoteCardState();
+}
+
+class _NoteCardState extends State<NoteCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Card(
-      elevation: AppElevation.level1,
-      clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTitleRow(context, colorScheme, textTheme),
-              const Divider(height: Spacing.md),
-              _buildContent(context, textTheme),
-              if (note.hasTags) _buildTags(context, textTheme),
-              const SizedBox(height: Spacing.sm),
-              _buildMetadata(context, colorScheme, textTheme),
-            ],
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Card(
+        elevation: AppElevation.level1,
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: InkWell(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTitleRow(context, colorScheme, textTheme),
+                const Divider(height: Spacing.md),
+                _buildContent(context, textTheme),
+                if (widget.note.hasTags) _buildTags(context, textTheme),
+                const SizedBox(height: Spacing.sm),
+                _buildMetadata(context, colorScheme, textTheme),
+              ],
+            ),
           ),
         ),
       ),
@@ -107,24 +118,23 @@ class NoteCard extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            note.title,
+            widget.note.title,
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (showActionMenu)
-          IconButton(
-            icon: Icon(
-              Icons.more_vert,
-              size: IconSizes.small,
-              color: colorScheme.onSurfaceVariant,
+        if (widget.showActionMenu)
+          AnimatedOpacity(
+            opacity: _isHovered ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 150),
+            child: IconButton(
+              icon: const Icon(Icons.more_vert),
+              iconSize: IconSizes.action,
+              onPressed: widget.onLongPress,
+              tooltip: 'More options',
+              visualDensity: VisualDensity.compact,
             ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            visualDensity: VisualDensity.compact,
-            onPressed: onLongPress,
-            tooltip: 'More options',
           ),
       ],
     );
@@ -133,10 +143,10 @@ class NoteCard extends StatelessWidget {
   /// Content preview or full content.
   Widget _buildContent(BuildContext context, TextTheme textTheme) {
     return Text(
-      showFullContent ? note.content : note.preview,
+      widget.showFullContent ? widget.note.content : widget.note.preview,
       style: textTheme.bodyMedium,
-      maxLines: showFullContent ? null : 3,
-      overflow: showFullContent ? null : TextOverflow.ellipsis,
+      maxLines: widget.showFullContent ? null : 3,
+      overflow: widget.showFullContent ? null : TextOverflow.ellipsis,
     );
   }
 
@@ -147,7 +157,7 @@ class NoteCard extends StatelessWidget {
       child: Wrap(
         spacing: Spacing.xs,
         runSpacing: Spacing.xs,
-        children: note.tags.map((tag) {
+        children: widget.note.tags.map((tag) {
           return Chip(
             label: Text(tag),
             visualDensity: VisualDensity.compact,
@@ -172,14 +182,14 @@ class NoteCard extends StatelessWidget {
 
     return Row(
       children: [
-        if (note.hasLocation) ...[
+        if (widget.note.hasLocation) ...[
           Icon(
             Icons.location_on_outlined,
             size: IconSizes.small,
             color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 4),
-          Text(note.location!.shortLocation, style: metaStyle),
+          Text(widget.note.location!.shortLocation, style: metaStyle),
           const SizedBox(width: Spacing.md),
         ],
         Icon(
@@ -188,7 +198,7 @@ class NoteCard extends StatelessWidget {
           color: colorScheme.onSurfaceVariant,
         ),
         const SizedBox(width: 4),
-        Text(note.dateLabel, style: metaStyle),
+        Text(widget.note.dateLabel, style: metaStyle),
       ],
     );
   }
