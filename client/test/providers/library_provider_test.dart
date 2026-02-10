@@ -123,6 +123,53 @@ void main() {
         provider.setSearchQuery('author:tolkien');
         expect(provider.hasActiveAdvancedFilters, true);
       });
+
+      test('should clear shelf and topic filters when clearing search', () {
+        // Simulate applying filters via the filter dialog:
+        // shelf filter sets selectedShelf + shelves filter type + query
+        provider.selectShelf('Fiction');
+        provider.setSearchQuery('shelf:"Fiction"');
+
+        // Simulate pressing the "X" clear button on the search bar
+        provider.clearSearch();
+
+        expect(provider.searchQuery, '');
+        expect(provider.selectedShelf, isNull);
+        expect(provider.isFilterActive(LibraryFilterType.shelves), false);
+        expect(provider.isFilterActive(LibraryFilterType.all), true);
+      });
+
+      test('should clear topic filter when clearing search', () {
+        provider.selectTopic('Science');
+        provider.setSearchQuery('topic:"Science"');
+
+        provider.clearSearch();
+
+        expect(provider.searchQuery, '');
+        expect(provider.selectedTopic, isNull);
+        expect(provider.isFilterActive(LibraryFilterType.topics), false);
+        expect(provider.isFilterActive(LibraryFilterType.all), true);
+      });
+
+      test('should clear all filter state when clearing search', () {
+        // Set up shelf/topic filters then add a quick filter chip on top
+        provider.selectShelf('Fiction');
+        provider.selectTopic('Science');
+        provider.addFilter(LibraryFilterType.reading);
+        provider.setSearchQuery(
+          'author:tolkien shelf:"Fiction" topic:"Science"',
+        );
+
+        provider.clearSearch();
+
+        expect(provider.searchQuery, '');
+        expect(provider.selectedShelf, isNull);
+        expect(provider.selectedTopic, isNull);
+        expect(provider.isFilterActive(LibraryFilterType.shelves), false);
+        expect(provider.isFilterActive(LibraryFilterType.topics), false);
+        // Reading filter was set via chip, not search — should be preserved
+        expect(provider.isFilterActive(LibraryFilterType.reading), true);
+      });
     });
 
     group('shelf and topic selection', () {

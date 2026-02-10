@@ -356,7 +356,11 @@ class _LibraryPageState extends State<LibraryPage> {
       initialQuery: libraryProvider.searchQuery,
       activeFilterCount: activeFilters.length,
       onQueryChanged: (query) {
-        libraryProvider.setSearchQuery(query);
+        if (query.isEmpty) {
+          libraryProvider.clearSearch();
+        } else {
+          libraryProvider.setSearchQuery(query);
+        }
       },
       onFilterTap: () => isDesktop
           ? _showFilterDialog(context)

@@ -184,12 +184,17 @@ class LibraryProvider extends ChangeNotifier {
     }
   }
 
-  /// Clear the search query.
+  /// Clear the search query and associated shelf/topic filters.
   void clearSearch() {
-    if (_searchQuery.isNotEmpty) {
-      _searchQuery = '';
-      notifyListeners();
+    _searchQuery = '';
+    _selectedShelf = null;
+    _selectedTopic = null;
+    _activeFilters.remove(LibraryFilterType.shelves);
+    _activeFilters.remove(LibraryFilterType.topics);
+    if (_activeFilters.isEmpty) {
+      _activeFilters.add(LibraryFilterType.all);
     }
+    notifyListeners();
   }
 
   /// Select a shelf for filtering.
