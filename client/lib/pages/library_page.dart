@@ -15,6 +15,7 @@ import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
+import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:provider/provider.dart';
 
 /// Main library page with responsive layouts for all platforms.
@@ -163,26 +164,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  SegmentedButton<LibraryViewMode>(
-                    segments: const [
-                      ButtonSegment(
-                        value: LibraryViewMode.grid,
-                        icon: Icon(Icons.grid_view, size: IconSizes.small),
-                      ),
-                      ButtonSegment(
-                        value: LibraryViewMode.list,
-                        icon: Icon(Icons.view_list, size: IconSizes.small),
-                      ),
-                    ],
-                    selected: {libraryProvider.viewMode},
-                    onSelectionChanged: (selection) {
-                      libraryProvider.setViewMode(selection.first);
-                    },
-                    style: ButtonStyle(
-                      visualDensity: VisualDensity.compact,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
+                  _buildViewToggle(libraryProvider),
                 ],
               ),
             ),
@@ -373,24 +355,10 @@ class _LibraryPageState extends State<LibraryPage> {
   // ============================================================================
 
   Widget _buildViewToggle(LibraryProvider libraryProvider) {
-    return SegmentedButton<LibraryViewMode>(
-      segments: const [
-        ButtonSegment(
-          value: LibraryViewMode.grid,
-          icon: Icon(Icons.grid_view, size: IconSizes.small),
-        ),
-        ButtonSegment(
-          value: LibraryViewMode.list,
-          icon: Icon(Icons.view_list, size: IconSizes.small),
-        ),
-      ],
-      selected: {libraryProvider.viewMode},
-      onSelectionChanged: (selection) {
-        libraryProvider.setViewMode(selection.first);
-      },
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return ViewModeToggle(
+      isGridView: libraryProvider.isGridView,
+      onChanged: (isGrid) => libraryProvider.setViewMode(
+        isGrid ? LibraryViewMode.grid : LibraryViewMode.list,
       ),
     );
   }

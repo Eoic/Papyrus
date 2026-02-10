@@ -31,6 +31,9 @@ class ShelvesProvider extends ChangeNotifier {
   ShelfSortOption _shelfSortOption = ShelfSortOption.name;
   bool _shelfSortAscending = true;
 
+  // Search
+  String _searchQuery = '';
+
   // Sorting state for books within shelves
   BookSortOption _bookSortOption = BookSortOption.title;
   bool _bookSortAscending = true;
@@ -70,10 +73,17 @@ class ShelvesProvider extends ChangeNotifier {
   bool get isGridView => _viewMode == ShelvesViewMode.grid;
   bool get isListView => _viewMode == ShelvesViewMode.list;
 
-  /// Get all shelves, sorted according to current settings.
+  /// Get all shelves, filtered and sorted according to current settings.
   List<Shelf> get shelves {
     if (_dataStore == null) return [];
-    final list = List<Shelf>.from(_dataStore!.shelves);
+    var list = List<Shelf>.from(_dataStore!.shelves);
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      list = list.where((shelf) {
+        return shelf.name.toLowerCase().contains(query) ||
+            (shelf.description?.toLowerCase().contains(query) ?? false);
+      }).toList();
+    }
     _applySorting(list);
     return list;
   }
@@ -81,6 +91,8 @@ class ShelvesProvider extends ChangeNotifier {
   bool get hasShelves => shelves.isNotEmpty;
 
   Shelf? get selectedShelf => _selectedShelf;
+
+  String get searchQuery => _searchQuery;
 
   ShelfSortOption get shelfSortOption => _shelfSortOption;
   bool get shelfSortAscending => _shelfSortAscending;
@@ -116,6 +128,22 @@ class ShelvesProvider extends ChangeNotifier {
     } catch (e) {
       _error = 'Failed to load shelves: $e';
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Sets the search query and filters shelves.
+  void setSearchQuery(String query) {
+    if (_searchQuery != query) {
+      _searchQuery = query;
+      notifyListeners();
+    }
+  }
+
+  /// Clears the search query.
+  void clearSearch() {
+    if (_searchQuery.isNotEmpty) {
+      _searchQuery = '';
       notifyListeners();
     }
   }
