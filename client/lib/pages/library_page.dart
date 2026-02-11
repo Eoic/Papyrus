@@ -539,7 +539,7 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
           ),
           // Filter chips
-          const LibraryFilterChips(),
+          const LibraryFilterChips(horizontalPadding: Spacing.lg),
           // Book grid or list
           Expanded(
             child: books.isEmpty

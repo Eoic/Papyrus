@@ -82,30 +82,19 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
   // ============================================================================
 
   Widget _buildNotFound(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= Breakpoints.desktopSmall;
-
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.all(isDesktop ? Spacing.lg : Spacing.md),
-              child: Row(children: [_buildDesktopBackButton(context)]),
+        child: Center(
+          child: EmptyState(
+            icon: Icons.shelves,
+            title: 'Shelf not found',
+            subtitle: 'This shelf may have been deleted',
+            action: FilledButton.icon(
+              onPressed: () => context.go('/library/shelves'),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Back to shelves'),
             ),
-            Expanded(
-              child: EmptyState(
-                icon: Icons.shelves,
-                title: 'Shelf not found',
-                subtitle: 'This shelf may have been deleted',
-                action: FilledButton.icon(
-                  onPressed: () => context.go('/library/shelves'),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to shelves'),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -266,14 +255,6 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
                     children: [
                       Row(
                         children: [
-                          _buildDesktopBackButton(context),
-                          const Spacer(),
-                          _buildViewToggle(provider),
-                        ],
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      Row(
-                        children: [
                           Expanded(
                             child: _buildSearchBar(provider, isDesktop: true),
                           ),
@@ -281,14 +262,16 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
                           _buildSortButton(provider),
                         ],
                       ),
+                      const SizedBox(height: Spacing.md),
+                      Row(
+                        children: [const Spacer(), _buildViewToggle(provider)],
+                      ),
                     ],
                   );
                 }
 
                 return Row(
                   children: [
-                    _buildDesktopBackButton(context),
-                    const SizedBox(width: Spacing.sm),
                     Expanded(child: _buildSearchBar(provider, isDesktop: true)),
                     const SizedBox(width: Spacing.md),
                     _buildSortButton(provider),
@@ -300,7 +283,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
             ),
           ),
           // Filter chips
-          _buildFilterChips(provider),
+          _buildFilterChips(provider, horizontalPadding: Spacing.lg),
           // Content grid/list
           Expanded(
             child: _buildContent(
@@ -319,17 +302,6 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
   // ============================================================================
   // HEADER CONTROLS
   // ============================================================================
-
-  Widget _buildDesktopBackButton(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return TextButton.icon(
-      onPressed: () => context.go('/library/shelves'),
-      style: TextButton.styleFrom(foregroundColor: colorScheme.onSurface),
-      icon: const Icon(Icons.arrow_back, size: 20),
-      label: Text('Shelves', style: Theme.of(context).textTheme.titleMedium),
-    );
-  }
 
   Widget _buildSearchBar(ShelvesProvider provider, {required bool isDesktop}) {
     final activeFilterCount = _countActiveAdvancedFilters(provider);
@@ -405,8 +377,12 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
     (type: BookFilterType.unread, label: 'Unread', icon: Icons.book),
   ];
 
-  Widget _buildFilterChips(ShelvesProvider provider) {
+  Widget _buildFilterChips(
+    ShelvesProvider provider, {
+    double? horizontalPadding,
+  }) {
     return QuickFilterChips(
+      horizontalPadding: horizontalPadding,
       filters: _quickFilters
           .map(
             (f) => QuickFilterChipData(

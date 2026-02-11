@@ -18,11 +18,13 @@ class QuickFilterChipData {
 class QuickFilterChips extends StatelessWidget {
   final List<QuickFilterChipData> filters;
   final ValueChanged<int> onFilterTapped;
+  final double? horizontalPadding;
 
   const QuickFilterChips({
     super.key,
     required this.filters,
     required this.onFilterTapped,
+    this.horizontalPadding,
   });
 
   @override
@@ -35,7 +37,9 @@ class QuickFilterChips extends StatelessWidget {
         height: 48,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding ?? Spacing.md,
+          ),
           itemCount: filters.length,
           separatorBuilder: (context, index) =>
               const SizedBox(width: Spacing.sm),

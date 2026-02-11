@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 /// Horizontal scrollable filter chips for library filtering.
 /// Thin wrapper around [QuickFilterChips] that reads [LibraryProvider].
 class LibraryFilterChips extends StatelessWidget {
-  const LibraryFilterChips({super.key});
+  final double? horizontalPadding;
+
+  const LibraryFilterChips({super.key, this.horizontalPadding});
 
   static const _filters = [
     (type: LibraryFilterType.all, label: 'All', icon: Icons.apps),
@@ -33,6 +35,7 @@ class LibraryFilterChips extends StatelessWidget {
     final libraryProvider = context.watch<LibraryProvider>();
 
     return QuickFilterChips(
+      horizontalPadding: horizontalPadding,
       filters: _filters
           .map(
             (f) => QuickFilterChipData(
