@@ -136,13 +136,6 @@ void main() {
     group('desktop layout', () {
       const desktopSize = Size(1200, 800);
 
-      testWidgets('renders Library title heading', (tester) async {
-        await tester.pumpWidget(buildPage(screenSize: desktopSize));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Library'), findsOneWidget);
-      });
-
       testWidgets('renders search bar', (tester) async {
         await tester.pumpWidget(buildPage(screenSize: desktopSize));
         await tester.pumpAndSettle();
@@ -459,8 +452,7 @@ void main() {
         await tester.pumpWidget(buildPage(screenSize: narrowDesktop));
         await tester.pumpAndSettle();
 
-        // Should still show Library heading and search bar
-        expect(find.text('Library'), findsOneWidget);
+        // Should still show search bar
         expect(find.byType(LibrarySearchBar), findsOneWidget);
       });
 
@@ -469,7 +461,6 @@ void main() {
         await tester.pumpWidget(buildPage(screenSize: wideDesktop));
         await tester.pumpAndSettle();
 
-        expect(find.text('Library'), findsOneWidget);
         expect(find.text('Add book'), findsOneWidget);
       });
     });

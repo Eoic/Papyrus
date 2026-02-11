@@ -171,37 +171,9 @@ class _BookDetailsPageState extends State<BookDetailsPage>
     BuildContext context,
     BookDetailsProvider provider,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Back navigation
-        Container(
-          height: ComponentSizes.appBarHeight + 1,
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: Row(
-            children: [
-              TextButton.icon(
-                onPressed: () => context.go('/library/books'),
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.onSurface,
-                ),
-                icon: const Icon(Icons.arrow_back, size: 20),
-                label: Text(
-                  'Library',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            ],
-          ),
-        ),
-
         // Scrollable content
         Expanded(
           child: SingleChildScrollView(

@@ -212,49 +212,7 @@ class _BookEditPageState extends State<BookEditPage> {
     BuildContext context,
     BookEditProvider provider,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      children: [
-        // Top bar matching book details page style
-        Container(
-          height: ComponentSizes.appBarHeight + 1,
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: Row(
-            children: [
-              TextButton.icon(
-                onPressed: () => _handleCancel(context),
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.onSurface,
-                ),
-                icon: const Icon(Icons.arrow_back, size: 20),
-                label: Text(
-                  'Book details',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              const Spacer(),
-              FilledButton(
-                onPressed: provider.canSave ? () => _handleSave(context) : null,
-                child: const Text('Save'),
-              ),
-            ],
-          ),
-        ),
-        // Content
-        Expanded(
-          child: Form(
-            key: _formKey,
-            child: _buildDesktopLayout(context, provider),
-          ),
-        ),
-      ],
-    );
+    return Form(key: _formKey, child: _buildDesktopLayout(context, provider));
   }
 
   Widget _buildMobileLayout(BuildContext context, BookEditProvider provider) {
@@ -310,11 +268,24 @@ class _BookEditPageState extends State<BookEditPage> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _buildFormSections(
-                    context,
-                    provider,
-                    skipMetadata: true,
-                  ),
+                  children: [
+                    ..._buildFormSections(
+                      context,
+                      provider,
+                      skipMetadata: true,
+                    ),
+                    const Divider(),
+                    const SizedBox(height: Spacing.sm),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: provider.canSave
+                            ? () => _handleSave(context)
+                            : null,
+                        child: const Text('Save'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -335,7 +306,7 @@ class _BookEditPageState extends State<BookEditPage> {
       _buildIdentifiersSection(),
       _buildSeriesSection(),
       Card(
-        margin: const EdgeInsets.only(bottom: Spacing.xs),
+        margin: EdgeInsets.zero,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Spacing.md,
@@ -349,7 +320,6 @@ class _BookEditPageState extends State<BookEditPage> {
           title: 'Fetch metadata',
           children: [_buildMetadataSection(context, provider)],
         ),
-      const SizedBox(height: Spacing.xl),
     ];
   }
 

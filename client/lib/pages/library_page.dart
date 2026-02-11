@@ -498,31 +498,12 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Calculate if we need compact layout
-                // Title (~100) + search (350) + toggle (96) + button (140) + spacing/padding (~80) ≈ 766
-                // Add buffer for safety
                 final useCompactLayout = constraints.maxWidth < 800;
 
                 if (useCompactLayout) {
-                  // Stack layout for narrow screens
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // First row: title and buttons
-                      Row(
-                        children: [
-                          Text(
-                            'Library',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const Spacer(),
-                          _buildViewToggle(libraryProvider),
-                          const SizedBox(width: Spacing.sm),
-                          _buildAddBookButton(controlHeight),
-                        ],
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      // Second row: search bar full width
                       Row(
                         children: [
                           Expanded(child: _buildSearchBar(libraryProvider)),
@@ -530,22 +511,21 @@ class _LibraryPageState extends State<LibraryPage> {
                           _buildSortButton(libraryProvider),
                         ],
                       ),
+                      const SizedBox(height: Spacing.md),
+                      Row(
+                        children: [
+                          const Spacer(),
+                          _buildViewToggle(libraryProvider),
+                          const SizedBox(width: Spacing.sm),
+                          _buildAddBookButton(controlHeight),
+                        ],
+                      ),
                     ],
                   );
                 }
 
-                // Normal row layout for wider screens
                 return Row(
                   children: [
-                    // Library title
-                    Padding(
-                      padding: const EdgeInsets.only(right: Spacing.lg),
-                      child: Text(
-                        'Library',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    ),
-                    // Search bar - fills available space
                     Expanded(child: _buildSearchBar(libraryProvider)),
                     const SizedBox(width: Spacing.md),
                     _buildSortButton(libraryProvider),

@@ -182,22 +182,18 @@ class _ShelvesPageState extends State<ShelvesPage> {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'Shelves',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const Spacer(),
-                          _buildViewToggle(provider),
+                          Expanded(child: _buildSearchField(provider)),
                           const SizedBox(width: Spacing.sm),
-                          _buildNewShelfButton(controlHeight),
+                          _buildSortButton(provider),
                         ],
                       ),
                       const SizedBox(height: Spacing.md),
                       Row(
                         children: [
-                          Expanded(child: _buildSearchField(provider)),
+                          const Spacer(),
+                          _buildViewToggle(provider),
                           const SizedBox(width: Spacing.sm),
-                          _buildSortButton(provider),
+                          _buildNewShelfButton(controlHeight),
                         ],
                       ),
                     ],
@@ -206,13 +202,6 @@ class _ShelvesPageState extends State<ShelvesPage> {
 
                 return Row(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: Spacing.lg),
-                      child: Text(
-                        'Shelves',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    ),
                     Expanded(child: _buildSearchField(provider)),
                     const SizedBox(width: Spacing.md),
                     _buildSortButton(provider),
