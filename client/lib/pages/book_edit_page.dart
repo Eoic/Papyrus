@@ -237,55 +237,62 @@ class _BookEditPageState extends State<BookEditPage> {
         constraints: const BoxConstraints(maxWidth: 1100),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(Spacing.xl),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
-              // Left pane - Cover + Metadata
-              SizedBox(
-                width: 360,
-                child: Column(
-                  children: [
-                    Card(
-                      margin: const EdgeInsets.only(bottom: Spacing.xs),
-                      child: Padding(
-                        padding: const EdgeInsets.all(Spacing.md),
-                        child: _buildCoverSection(
-                          context,
-                          provider,
-                          isDesktop: true,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left pane - Cover + Metadata
+                  SizedBox(
+                    width: 360,
+                    child: Column(
+                      children: [
+                        _buildSectionCard(
+                          title: 'Cover',
+                          children: [
+                            _buildCoverSection(
+                              context,
+                              provider,
+                              isDesktop: true,
+                            ),
+                          ],
                         ),
+                        _buildSectionCard(
+                          title: 'Fetch metadata',
+                          children: [_buildMetadataSection(context, provider)],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: Spacing.xl),
+                  // Right pane - Form fields
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: _buildFormSections(
+                        context,
+                        provider,
+                        skipMetadata: true,
                       ),
                     ),
-                    _buildSectionCard(
-                      title: 'Fetch metadata',
-                      children: [_buildMetadataSection(context, provider)],
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: Spacing.xl),
-              // Right pane - Form fields
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ..._buildFormSections(
-                      context,
-                      provider,
-                      skipMetadata: true,
-                    ),
-                    const Divider(),
-                    const SizedBox(height: Spacing.sm),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilledButton(
-                        onPressed: provider.canSave
-                            ? () => _handleSave(context)
-                            : null,
-                        child: const Text('Save'),
-                      ),
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+                child: const Divider(),
+              ),
+              const SizedBox(height: Spacing.sm),
+              Padding(
+                padding: const EdgeInsets.only(right: Spacing.md),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: provider.canSave
+                        ? () => _handleSave(context)
+                        : null,
+                    child: const Text('Save'),
+                  ),
                 ),
               ),
             ],

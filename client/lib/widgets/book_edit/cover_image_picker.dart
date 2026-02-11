@@ -91,8 +91,8 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Cover preview (always centered)
-        Center(child: _buildCoverPreview(context)),
+        // Cover preview
+        _buildCoverPreview(context),
         SizedBox(height: widget.isDesktop ? Spacing.md : Spacing.lg),
 
         // Action buttons
@@ -173,24 +173,25 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
 
     return GestureDetector(
       onTap: _pickImage,
-      child: Container(
-        width: _coverWidth,
-        height: _coverHeight,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: _buildCoverImage(context),
+      child: AspectRatio(
+        aspectRatio: _coverWidth / _coverHeight,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: colorScheme.outlineVariant),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: _buildCoverImage(context),
+          ),
         ),
       ),
     );
