@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
+import 'package:papyrus/utils/search_query_parser.dart';
 
 /// View mode for displaying shelves.
 enum ShelvesViewMode { grid, list }
@@ -11,6 +12,9 @@ enum ShelfSortOption { name, bookCount, dateCreated, dateModified }
 
 /// Sort options for books within a shelf.
 enum BookSortOption { title, author, progress, dateAdded }
+
+/// Filter types for books within a shelf.
+enum BookFilterType { all, reading, favorites, finished, unread }
 
 /// Provider for shelves page state management.
 /// Uses DataStore as the single source of truth.
@@ -37,6 +41,10 @@ class ShelvesProvider extends ChangeNotifier {
   // Sorting state for books within shelves
   BookSortOption _bookSortOption = BookSortOption.title;
   bool _bookSortAscending = true;
+
+  // Book filtering state (for shelf contents page)
+  String _bookSearchQuery = '';
+  final Set<BookFilterType> _activeBookFilters = {BookFilterType.all};
 
   /// Attach to a DataStore instance.
   void attach(DataStore dataStore) {
@@ -99,6 +107,14 @@ class ShelvesProvider extends ChangeNotifier {
 
   BookSortOption get bookSortOption => _bookSortOption;
   bool get bookSortAscending => _bookSortAscending;
+
+  String get bookSearchQuery => _bookSearchQuery;
+  Set<BookFilterType> get activeBookFilters =>
+      Set.unmodifiable(_activeBookFilters);
+
+  /// Whether a specific book filter is active.
+  bool isBookFilterActive(BookFilterType filter) =>
+      _activeBookFilters.contains(filter);
 
   /// Get total book count across all shelves.
   int get totalBookCount {
@@ -224,6 +240,115 @@ class ShelvesProvider extends ChangeNotifier {
       return _bookSortAscending ? result : -result;
     });
     return sorted;
+  }
+
+  /// Sets the book search query for shelf contents.
+  void setBookSearchQuery(String query) {
+    if (_bookSearchQuery != query) {
+      _bookSearchQuery = query;
+      notifyListeners();
+    }
+  }
+
+  /// Clears the book search query.
+  void clearBookSearch() {
+    if (_bookSearchQuery.isNotEmpty) {
+      _bookSearchQuery = '';
+      notifyListeners();
+    }
+  }
+
+  /// Toggles a book filter type.
+  void toggleBookFilter(BookFilterType filter) {
+    if (filter == BookFilterType.all) {
+      _activeBookFilters.clear();
+      _activeBookFilters.add(BookFilterType.all);
+    } else {
+      _activeBookFilters.remove(BookFilterType.all);
+      if (_activeBookFilters.contains(filter)) {
+        _activeBookFilters.remove(filter);
+        if (_activeBookFilters.isEmpty) {
+          _activeBookFilters.add(BookFilterType.all);
+        }
+      } else {
+        _activeBookFilters.add(filter);
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Add a book filter to active filters.
+  void addBookFilter(BookFilterType filter) {
+    if (filter != BookFilterType.all) {
+      _activeBookFilters.remove(BookFilterType.all);
+    }
+    _activeBookFilters.add(filter);
+    notifyListeners();
+  }
+
+  /// Remove a book filter from active filters.
+  void removeBookFilter(BookFilterType filter) {
+    _activeBookFilters.remove(filter);
+    if (_activeBookFilters.isEmpty) {
+      _activeBookFilters.add(BookFilterType.all);
+    }
+    notifyListeners();
+  }
+
+  /// Resets all book filters to default.
+  void resetBookFilters() {
+    _activeBookFilters.clear();
+    _activeBookFilters.add(BookFilterType.all);
+    _bookSearchQuery = '';
+    notifyListeners();
+  }
+
+  /// Gets child shelves of a parent shelf.
+  List<Shelf> getChildShelves(String parentShelfId) {
+    if (_dataStore == null) return [];
+    return _dataStore!.getChildShelves(parentShelfId);
+  }
+
+  /// Gets filtered and sorted books for a shelf, applying search and filters.
+  List<Book> getFilteredBooksForShelf(
+    String shelfId, {
+    bool Function(String bookId)? isFavorite,
+  }) {
+    if (_dataStore == null) return [];
+
+    var books = _dataStore!.getBooksInShelf(shelfId);
+
+    // Apply book search using SearchQueryParser
+    if (_bookSearchQuery.isNotEmpty) {
+      final searchQuery = SearchQueryParser.parse(_bookSearchQuery);
+      if (searchQuery.isNotEmpty) {
+        books = books
+            .where((book) => searchQuery.matches(book, dataStore: _dataStore))
+            .toList();
+      }
+    }
+
+    // Apply book filters (AND logic — each active filter narrows the list)
+    if (!_activeBookFilters.contains(BookFilterType.all)) {
+      if (_activeBookFilters.contains(BookFilterType.reading)) {
+        books = books.where((book) => book.isReading).toList();
+      }
+      if (_activeBookFilters.contains(BookFilterType.favorites)) {
+        books = books.where((book) {
+          return isFavorite?.call(book.id) ?? book.isFavorite;
+        }).toList();
+      }
+      if (_activeBookFilters.contains(BookFilterType.finished)) {
+        books = books.where((book) => book.isFinished).toList();
+      }
+      if (_activeBookFilters.contains(BookFilterType.unread)) {
+        books = books
+            .where((book) => book.readingStatus == ReadingStatus.notStarted)
+            .toList();
+      }
+    }
+
+    return sortBooks(books);
   }
 
   /// Selects a shelf for detail view.

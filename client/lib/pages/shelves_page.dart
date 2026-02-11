@@ -3,13 +3,13 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:go_router/go_router.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
 import 'package:papyrus/widgets/shelves/shelf_card.dart';
-import 'package:papyrus/widgets/shelves/shelf_detail_sheet.dart';
 import 'package:provider/provider.dart';
 
 /// Shelves page for managing book collections.
@@ -115,6 +115,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
                 ],
               ),
             ),
+            SizedBox(height: Spacing.md),
             // Row 2: Count + View toggle
             Padding(
               padding: const EdgeInsets.only(
@@ -334,25 +335,36 @@ class _ShelvesPageState extends State<ShelvesPage> {
   Widget _buildShelfGrid(BuildContext context, ShelvesProvider provider) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Responsive columns
+    // Match book-card proportions for visual consistency
     int crossAxisCount;
+    double spacing;
+    double childAspectRatio;
+
     if (screenWidth >= Breakpoints.desktopLarge) {
-      crossAxisCount = 5;
+      crossAxisCount = 6;
+      spacing = Spacing.md;
+      childAspectRatio = 0.55;
     } else if (screenWidth >= Breakpoints.desktopSmall) {
-      crossAxisCount = 4;
+      crossAxisCount = 5;
+      spacing = Spacing.md;
+      childAspectRatio = 0.55;
     } else if (screenWidth >= Breakpoints.tablet) {
-      crossAxisCount = 3;
+      crossAxisCount = 4;
+      spacing = Spacing.sm + 4;
+      childAspectRatio = 0.55;
     } else {
       crossAxisCount = 2;
+      spacing = Spacing.sm;
+      childAspectRatio = 0.58;
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(Spacing.md),
+      padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.md),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        mainAxisSpacing: Spacing.md,
-        crossAxisSpacing: Spacing.md,
-        childAspectRatio: 0.85,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: provider.shelves.length,
       itemBuilder: (context, index) {
@@ -361,6 +373,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
           shelf: shelf,
           onTap: () => _showShelfDetail(context, shelf),
           onMoreTap: () => _showShelfOptions(context, shelf),
+          onLongPress: () => _showShelfOptions(context, shelf),
         );
       },
     );
@@ -377,6 +390,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
           isListItem: true,
           onTap: () => _showShelfDetail(context, shelf),
           onMoreTap: () => _showShelfOptions(context, shelf),
+          onLongPress: () => _showShelfOptions(context, shelf),
         );
       },
     );
@@ -429,23 +443,8 @@ class _ShelvesPageState extends State<ShelvesPage> {
     );
   }
 
-  void _showShelfDetail(BuildContext context, ShelfData shelf) async {
-    final books = _provider.getBooksForShelf(shelf.id);
-
-    final result = await ShelfDetailSheet.show(
-      context,
-      shelf: shelf,
-      books: books,
-      onDelete: () => _provider.deleteShelf(shelf.id),
-      onRemoveBook: (book) {
-        _provider.removeBookFromShelf(shelfId: shelf.id, bookId: book.id);
-      },
-    );
-
-    if (!mounted) return;
-    if (result == 'edit') {
-      _showEditShelfSheet(this.context, shelf);
-    }
+  void _showShelfDetail(BuildContext context, ShelfData shelf) {
+    context.go('/library/shelves/${shelf.id}');
   }
 
   void _showShelfOptions(BuildContext context, ShelfData shelf) {
@@ -477,14 +476,6 @@ class _ShelvesPageState extends State<ShelvesPage> {
               ),
               const SizedBox(height: Spacing.md),
               // Options
-              ListTile(
-                leading: const Icon(Icons.visibility_outlined),
-                title: const Text('View shelf'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showShelfDetail(context, shelf);
-                },
-              ),
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Edit shelf'),

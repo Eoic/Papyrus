@@ -9,6 +9,7 @@ import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
+import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {
@@ -96,7 +97,7 @@ void main() {
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.byType(SegmentedButton<LibraryViewMode>), findsOneWidget);
+        expect(find.byType(ViewModeToggle), findsOneWidget);
         expect(find.byIcon(Icons.grid_view), findsOneWidget);
         expect(find.byIcon(Icons.view_list), findsOneWidget);
       });
@@ -183,7 +184,7 @@ void main() {
         await tester.pumpWidget(buildPage(screenSize: desktopSize));
         await tester.pumpAndSettle();
 
-        expect(find.byType(ToggleButtons), findsOneWidget);
+        expect(find.byType(ViewModeToggle), findsOneWidget);
       });
 
       testWidgets('shows grid view by default on desktop', (tester) async {
@@ -378,11 +379,9 @@ void main() {
         await tester.pumpWidget(buildPage(screenSize: desktopSize));
         await tester.pumpAndSettle();
 
-        // Tap the list view toggle (second icon in ToggleButtons)
-        final toggleButtons = find.byType(ToggleButtons);
-        expect(toggleButtons, findsOneWidget);
+        // Tap the list view toggle
+        expect(find.byType(ViewModeToggle), findsOneWidget);
 
-        // The ToggleButtons has grid_view and view_list icons
         await tester.tap(find.byIcon(Icons.view_list));
         await tester.pumpAndSettle();
 

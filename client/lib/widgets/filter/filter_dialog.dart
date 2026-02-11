@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/data/data_store.dart';
-import 'package:papyrus/models/search_filter.dart';
-import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
-import 'package:papyrus/utils/search_query_parser.dart';
 import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
-import 'package:provider/provider.dart';
 
 /// Dialog for building filters visually (used on desktop).
 /// Returns the same [AppliedFilters] as [FilterBottomSheet].
 class FilterDialog extends StatefulWidget {
-  const FilterDialog({super.key});
+  /// Available filter options for dropdowns.
+  final FilterOptions filterOptions;
+
+  /// Initial filter values to populate the dialog.
+  final AppliedFilters? initialFilters;
+
+  const FilterDialog({
+    super.key,
+    required this.filterOptions,
+    this.initialFilters,
+  });
 
   /// Show the filter dialog and return the applied filters.
-  static Future<AppliedFilters?> show(BuildContext context) {
+  static Future<AppliedFilters?> show(
+    BuildContext context, {
+    required FilterOptions filterOptions,
+    AppliedFilters? initialFilters,
+  }) {
     return showDialog<AppliedFilters>(
       context: context,
-      builder: (context) => const FilterDialog(),
+      builder: (context) => FilterDialog(
+        filterOptions: filterOptions,
+        initialFilters: initialFilters,
+      ),
     );
   }
 
@@ -44,62 +56,26 @@ class _FilterDialogState extends State<FilterDialog> {
   @override
   void initState() {
     super.initState();
-    _loadCurrentFilters();
+    _loadInitialFilters();
   }
 
-  void _loadCurrentFilters() {
-    final libraryProvider = context.read<LibraryProvider>();
-    final query = libraryProvider.searchQuery;
+  void _loadInitialFilters() {
+    final initial = widget.initialFilters;
+    if (initial == null) return;
 
     setState(() {
-      _filterReading = libraryProvider.isFilterActive(
-        LibraryFilterType.reading,
-      );
-      _filterFavorites = libraryProvider.isFilterActive(
-        LibraryFilterType.favorites,
-      );
-      _filterFinished = libraryProvider.isFilterActive(
-        LibraryFilterType.finished,
-      );
-      _filterUnread = libraryProvider.isFilterActive(LibraryFilterType.unread);
-      _selectedShelf = libraryProvider.selectedShelf;
-      _selectedTopic = libraryProvider.selectedTopic;
-
-      // Parse existing search query to restore advanced filter values
-      if (query.isNotEmpty) {
-        double progressMin = 0;
-        double progressMax = 100;
-        bool hasProgress = false;
-
-        final parsed = SearchQueryParser.parse(query);
-        for (final filter in parsed.filters) {
-          switch (filter.field) {
-            case SearchField.author:
-              _selectedAuthor = filter.value;
-            case SearchField.format:
-              _selectedFormat = filter.value;
-            case SearchField.status:
-              _selectedStatus = filter.value;
-            case SearchField.shelf:
-              _selectedShelf ??= filter.value;
-            case SearchField.topic:
-              _selectedTopic ??= filter.value;
-            case SearchField.progress:
-              hasProgress = true;
-              if (filter.operator == SearchOperator.greaterThan) {
-                progressMin = double.tryParse(filter.value) ?? 0;
-              } else if (filter.operator == SearchOperator.lessThan) {
-                progressMax = double.tryParse(filter.value) ?? 100;
-              }
-            default:
-              break;
-          }
-        }
-
-        if (hasProgress) {
-          _useProgressFilter = true;
-          _progressRange = RangeValues(progressMin, progressMax);
-        }
+      _selectedAuthor = initial.author;
+      _selectedFormat = initial.format;
+      _selectedShelf = initial.shelf;
+      _selectedTopic = initial.topic;
+      _selectedStatus = initial.status;
+      _filterReading = initial.filterReading;
+      _filterFavorites = initial.filterFavorites;
+      _filterFinished = initial.filterFinished;
+      _filterUnread = initial.filterUnread;
+      if (initial.progressRange != null) {
+        _progressRange = initial.progressRange!;
+        _useProgressFilter = true;
       }
     });
   }
@@ -140,12 +116,9 @@ class _FilterDialogState extends State<FilterDialog> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Get unique values from DataStore for dropdowns
-    final dataStore = context.read<DataStore>();
-    final formats = dataStore.books.map((b) => b.formatLabel).toSet().toList()
-      ..sort();
-    final shelves = dataStore.shelves.map((s) => s.name).toList()..sort();
-    final topics = dataStore.tags.map((t) => t.name).toList()..sort();
+    final formats = widget.filterOptions.formats;
+    final shelves = widget.filterOptions.shelves;
+    final topics = widget.filterOptions.topics;
 
     return AlertDialog(
       title: Row(
@@ -219,6 +192,7 @@ class _FilterDialogState extends State<FilterDialog> {
                   hintText: 'Enter author name...',
                   prefixIcon: Icon(Icons.person_outline),
                 ),
+                controller: TextEditingController(text: _selectedAuthor),
                 onChanged: (v) => _selectedAuthor = v,
               ),
               const SizedBox(height: Spacing.md),
@@ -238,7 +212,7 @@ class _FilterDialogState extends State<FilterDialog> {
                   ...formats.map(
                     (f) => DropdownMenuItem(
                       value: f.toLowerCase(),
-                      child: Text(f),
+                      child: Text(f.toUpperCase()),
                     ),
                   ),
                 ],

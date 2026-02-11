@@ -53,7 +53,7 @@ class LibraryDrawer extends StatelessWidget {
                   _DrawerNavItem(
                     icon: Icons.shelves,
                     label: 'Shelves',
-                    isSelected: currentPath == '/library/shelves',
+                    isSelected: currentPath.startsWith('/library/shelves'),
                     onTap: () {
                       Navigator.of(context).pop();
                       context.go('/library/shelves');

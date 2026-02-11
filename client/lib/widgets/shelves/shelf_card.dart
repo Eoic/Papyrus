@@ -16,6 +16,9 @@ class ShelfCard extends StatefulWidget {
   /// Called when the more menu is tapped.
   final VoidCallback? onMoreTap;
 
+  /// Called when the card is long-pressed.
+  final VoidCallback? onLongPress;
+
   /// Whether to show as list item (vs grid card).
   final bool isListItem;
 
@@ -24,6 +27,7 @@ class ShelfCard extends StatefulWidget {
     required this.shelf,
     this.onTap,
     this.onMoreTap,
+    this.onLongPress,
     this.isListItem = false,
   });
 
@@ -39,8 +43,13 @@ class _ShelfCardState extends State<ShelfCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isListItem) return _buildListItem(context);
-    return _buildGridCard(context);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: widget.isListItem
+          ? _buildListItem(context)
+          : _buildGridCard(context),
+    );
   }
 
   // ============================================================================
@@ -52,170 +61,199 @@ class _ShelfCardState extends State<ShelfCard> {
     final textTheme = Theme.of(context).textTheme;
     final shelfColor = widget.shelf.color ?? colorScheme.primary;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: AppElevation.level1,
-        child: InkWell(
-          onTap: widget.onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Cover preview area
-              Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildCoverPreview(context, shelfColor),
-                    // Color indicator bar
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: AppElevation.level1,
+      child: InkWell(
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Cover preview area
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildCoverMosaic(context, shelfColor),
+                  // More button (desktop hover)
+                  if (_isDesktop && widget.onMoreTap != null)
                     Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 4,
-                      child: Container(color: shelfColor),
-                    ),
-                    // More button (desktop hover)
-                    if (_isDesktop && widget.onMoreTap != null)
-                      Positioned(
-                        top: Spacing.xs,
-                        right: Spacing.xs,
-                        child: AnimatedOpacity(
-                          opacity: _isHovered ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 150),
-                          child: _buildMoreButton(context),
-                        ),
+                      top: Spacing.xs,
+                      right: Spacing.xs,
+                      child: AnimatedOpacity(
+                        opacity: _isHovered ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: _buildMoreButton(context),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-              // Shelf info
-              Padding(
-                padding: const EdgeInsets.all(Spacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Icon and title row
-                    Row(
-                      children: [
-                        Icon(
-                          widget.shelf.displayIcon,
-                          size: IconSizes.small,
-                          color: shelfColor,
-                        ),
-                        const SizedBox(width: Spacing.xs),
-                        Expanded(
-                          child: Text(
-                            widget.shelf.name,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+            ),
+            // Shelf info
+            Padding(
+              padding: const EdgeInsets.all(Spacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon and title row
+                  Row(
+                    children: [
+                      Icon(
+                        widget.shelf.displayIcon,
+                        size: IconSizes.small,
+                        color: shelfColor,
+                      ),
+                      const SizedBox(width: Spacing.xs),
+                      Expanded(
+                        child: Text(
+                          widget.shelf.name,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.shelf.bookCountLabel,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.shelf.bookCountLabel,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildCoverPreview(BuildContext context, Color shelfColor) {
+  /// Builds a 2x2 mosaic.
+  ///
+  /// Adapts layout based on available covers:
+  /// - 4+: 2x2 grid
+  /// - 3: top row = 2, bottom = 1 spanning full width
+  /// - 2: side by side, full height
+  /// - 1: single cover fills the area
+  /// - 0: shelf color gradient with centered icon
+  Widget _buildCoverMosaic(BuildContext context, Color shelfColor) {
     final colorScheme = Theme.of(context).colorScheme;
     final covers = widget.shelf.coverPreviewUrls;
+    const double gap = 2.0;
 
     if (covers.isEmpty) {
-      // Empty shelf placeholder
       return Container(
-        color: colorScheme.surfaceContainerHighest,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                widget.shelf.displayIcon,
-                size: 48,
-                color: shelfColor.withValues(alpha: 0.5),
-              ),
-              const SizedBox(height: Spacing.xs),
-              Text(
-                'No books',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
-              ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              shelfColor.withValues(alpha: 0.3),
+              shelfColor.withValues(alpha: 0.15),
             ],
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            widget.shelf.displayIcon,
+            size: 48,
+            color: shelfColor.withValues(alpha: 0.6),
           ),
         ),
       );
     }
 
-    // Stack up to 3 covers offset diagonally
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.all(Spacing.sm),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final coverWidth = (constraints.maxWidth - Spacing.lg) * 0.55;
-          final coverHeight = coverWidth * 1.5;
+    if (covers.length == 1) {
+      return _buildCoverImage(covers[0], colorScheme);
+    }
 
-          return Stack(
-            children: [
-              for (int i = 0; i < covers.length.clamp(0, 3); i++)
-                Positioned(
-                  left: Spacing.xs + (i * 12),
-                  top: Spacing.xs + (i * 8),
-                  child: Container(
-                    width: coverWidth,
-                    height: coverHeight,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.shadow.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: CachedNetworkImage(
-                        imageUrl: covers[covers.length - 1 - i],
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Container(
-                          color: colorScheme.surfaceContainerHigh,
-                          child: Icon(
-                            Icons.menu_book,
-                            size: 24,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        placeholder: (context, url) =>
-                            Container(color: colorScheme.surfaceContainerHigh),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
+    if (covers.length == 2) {
+      return Container(
+        color: shelfColor,
+        child: Row(
+          children: [
+            Expanded(child: _buildCoverImage(covers[0], colorScheme)),
+            const SizedBox(width: gap),
+            Expanded(child: _buildCoverImage(covers[1], colorScheme)),
+          ],
+        ),
+      );
+    }
+
+    if (covers.length == 3) {
+      return Container(
+        color: shelfColor,
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(child: _buildCoverImage(covers[0], colorScheme)),
+                  const SizedBox(width: gap),
+                  Expanded(child: _buildCoverImage(covers[1], colorScheme)),
+                ],
+              ),
+            ),
+            const SizedBox(height: gap),
+            Expanded(child: _buildCoverImage(covers[2], colorScheme)),
+          ],
+        ),
+      );
+    }
+
+    // 4+ covers: 2x2 grid
+    return Container(
+      color: shelfColor,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _buildCoverImage(covers[0], colorScheme)),
+                const SizedBox(width: gap),
+                Expanded(child: _buildCoverImage(covers[1], colorScheme)),
+              ],
+            ),
+          ),
+          const SizedBox(height: gap),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _buildCoverImage(covers[2], colorScheme)),
+                const SizedBox(width: gap),
+                Expanded(child: _buildCoverImage(covers[3], colorScheme)),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildCoverImage(String url, ColorScheme colorScheme) {
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      imageBuilder: (context, imageProvider) => Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        color: colorScheme.surfaceContainerHigh,
+        child: Icon(
+          Icons.menu_book,
+          size: 24,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      placeholder: (context, url) =>
+          Container(color: colorScheme.surfaceContainerHigh),
     );
   }
 
@@ -249,13 +287,21 @@ class _ShelfCardState extends State<ShelfCard> {
     final textTheme = Theme.of(context).textTheme;
     final shelfColor = widget.shelf.color ?? colorScheme.primary;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: Spacing.xs),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.md),
+        onLongPress: widget.onLongPress,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.md,
+            vertical: Spacing.sm,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: colorScheme.outlineVariant),
+            ),
+          ),
           child: Row(
             children: [
               // Color indicator and icon
@@ -312,14 +358,19 @@ class _ShelfCardState extends State<ShelfCard> {
                   ),
                 ),
               ),
-              // More button
-              if (widget.onMoreTap != null) ...[
-                const SizedBox(width: Spacing.sm),
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: widget.onMoreTap,
+              // More button (desktop hover only)
+              if (_isDesktop && widget.onMoreTap != null)
+                AnimatedOpacity(
+                  opacity: _isHovered ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    iconSize: IconSizes.action,
+                    onPressed: widget.onMoreTap,
+                    tooltip: 'More options',
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
-              ],
             ],
           ),
         ),

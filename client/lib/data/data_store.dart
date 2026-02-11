@@ -132,6 +132,19 @@ class DataStore extends ChangeNotifier {
     return _bookShelfRelations.where((r) => r.shelfId == shelfId).length;
   }
 
+  /// Get child shelves of a parent shelf, enriched with bookCount/coverPreviewUrls.
+  List<Shelf> getChildShelves(String parentShelfId) {
+    return _shelves.values
+        .where((s) => s.parentShelfId == parentShelfId)
+        .map(
+          (shelf) => shelf.copyWith(
+            bookCount: getBookCountForShelf(shelf.id),
+            coverPreviewUrls: getCoverPreviewsForShelf(shelf.id),
+          ),
+        )
+        .toList();
+  }
+
   /// Get cover preview URLs for a shelf (up to 4 books).
   List<String> getCoverPreviewsForShelf(String shelfId, {int limit = 4}) {
     final books = getBooksInShelf(shelfId);

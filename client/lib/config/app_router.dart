@@ -15,6 +15,7 @@ import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
 import 'package:papyrus/pages/search_options_page.dart';
 import 'package:papyrus/pages/settings_page.dart';
+import 'package:papyrus/pages/shelf_contents_page.dart';
 import 'package:papyrus/pages/shelves_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
 import 'package:papyrus/pages/annotations_page.dart';
@@ -106,6 +107,19 @@ class AppRouter {
                   key: state.pageKey,
                   child: const ShelvesPage(),
                 ),
+                routes: [
+                  GoRoute(
+                    name: 'SHELF_CONTENTS',
+                    path: ':shelfId',
+                    pageBuilder: (context, state) {
+                      final shelfId = state.pathParameters['shelfId'];
+                      return NoTransitionPage(
+                        key: state.pageKey,
+                        child: ShelfContentsPage(shelfId: shelfId),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 name: 'BOOKMARKS',

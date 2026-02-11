@@ -284,7 +284,33 @@ class _LibraryPageState extends State<LibraryPage> {
 
   /// Show the filter dialog (desktop).
   Future<void> _showFilterDialog(BuildContext context) async {
-    final result = await FilterDialog.show(context);
+    final libraryProvider = context.read<LibraryProvider>();
+    final dataStore = context.read<DataStore>();
+    final filterOptions = FilterOptions.fromBooks(
+      dataStore.books,
+      shelfNames: dataStore.shelves.map((s) => s.name).toList(),
+      topicNames: dataStore.tags.map((t) => t.name).toList(),
+    );
+
+    final result = await FilterDialog.show(
+      context,
+      filterOptions: filterOptions,
+      initialFilters: AppliedFilters.fromQueryString(
+        libraryProvider.searchQuery,
+        filterReading: libraryProvider.isFilterActive(
+          LibraryFilterType.reading,
+        ),
+        filterFavorites: libraryProvider.isFilterActive(
+          LibraryFilterType.favorites,
+        ),
+        filterFinished: libraryProvider.isFilterActive(
+          LibraryFilterType.finished,
+        ),
+        filterUnread: libraryProvider.isFilterActive(LibraryFilterType.unread),
+        shelf: libraryProvider.selectedShelf,
+        topic: libraryProvider.selectedTopic,
+      ),
+    );
     if (result != null) {
       _applyFilterResult(result);
     }
