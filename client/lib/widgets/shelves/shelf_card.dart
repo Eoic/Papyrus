@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/shelf.dart';
+import 'package:papyrus/models/shelf.dart' show CoverPreview, ShelfData;
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Card widget for displaying a shelf in grid or list view.
@@ -143,7 +143,7 @@ class _ShelfCardState extends State<ShelfCard> {
   /// - 0: shelf color gradient with centered icon
   Widget _buildCoverMosaic(BuildContext context, Color shelfColor) {
     final colorScheme = Theme.of(context).colorScheme;
-    final covers = widget.shelf.coverPreviewUrls;
+    final covers = widget.shelf.coverPreviews;
     const double gap = 2.0;
 
     if (covers.isEmpty) {
@@ -174,7 +174,7 @@ class _ShelfCardState extends State<ShelfCard> {
 
     if (covers.length == 2) {
       return Container(
-        color: shelfColor,
+        color: colorScheme.surfaceContainerHighest,
         child: Row(
           children: [
             Expanded(child: _buildCoverImage(covers[0], colorScheme)),
@@ -187,7 +187,7 @@ class _ShelfCardState extends State<ShelfCard> {
 
     if (covers.length == 3) {
       return Container(
-        color: shelfColor,
+        color: colorScheme.surfaceContainerHighest,
         child: Column(
           children: [
             Expanded(
@@ -208,7 +208,7 @@ class _ShelfCardState extends State<ShelfCard> {
 
     // 4+ covers: 2x2 grid
     return Container(
-      color: shelfColor,
+      color: colorScheme.surfaceContainerHighest,
       child: Column(
         children: [
           Expanded(
@@ -235,25 +235,53 @@ class _ShelfCardState extends State<ShelfCard> {
     );
   }
 
-  Widget _buildCoverImage(String url, ColorScheme colorScheme) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      imageBuilder: (context, imageProvider) => Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+  Widget _buildCoverImage(CoverPreview cover, ColorScheme colorScheme) {
+    if (cover.url != null && cover.url!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: cover.url!,
+        fit: BoxFit.cover,
+        imageBuilder: (context, imageProvider) => Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+          ),
         ),
+        errorWidget: (context, url, error) =>
+            _buildCoverPlaceholder(colorScheme, cover.title),
+        placeholder: (context, url) =>
+            Container(color: colorScheme.surfaceContainerHighest),
+      );
+    }
+
+    return _buildCoverPlaceholder(colorScheme, cover.title);
+  }
+
+  Widget _buildCoverPlaceholder(ColorScheme colorScheme, String title) {
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.menu_book,
+            size: IconSizes.display,
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: Spacing.xs),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 11,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
-      errorWidget: (context, url, error) => Container(
-        color: colorScheme.surfaceContainerHigh,
-        child: Icon(
-          Icons.menu_book,
-          size: 24,
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-      placeholder: (context, url) =>
-          Container(color: colorScheme.surfaceContainerHigh),
     );
   }
 

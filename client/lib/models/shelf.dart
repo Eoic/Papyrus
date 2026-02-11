@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 /// Backwards compatibility alias.
 typedef ShelfData = Shelf;
 
+/// Lightweight cover preview data for shelf mosaic.
+class CoverPreview {
+  final String? url;
+  final String title;
+
+  const CoverPreview({this.url, required this.title});
+}
+
 /// Data model for a book shelf (collection).
 class Shelf {
   final String id;
@@ -19,7 +27,7 @@ class Shelf {
 
   // Computed properties (populated from DataStore)
   final int bookCount;
-  final List<String> coverPreviewUrls;
+  final List<CoverPreview> coverPreviews;
 
   const Shelf({
     required this.id,
@@ -34,7 +42,7 @@ class Shelf {
     required this.createdAt,
     required this.updatedAt,
     this.bookCount = 0,
-    this.coverPreviewUrls = const [],
+    this.coverPreviews = const [],
   });
 
   /// Get display text for book count.
@@ -71,7 +79,7 @@ class Shelf {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? bookCount,
-    List<String>? coverPreviewUrls,
+    List<CoverPreview>? coverPreviews,
   }) {
     return Shelf(
       id: id ?? this.id,
@@ -86,7 +94,7 @@ class Shelf {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       bookCount: bookCount ?? this.bookCount,
-      coverPreviewUrls: coverPreviewUrls ?? this.coverPreviewUrls,
+      coverPreviews: coverPreviews ?? this.coverPreviews,
     );
   }
 

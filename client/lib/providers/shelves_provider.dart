@@ -505,8 +505,8 @@ class ShelvesProvider extends ChangeNotifier {
     return _dataStore!.getBookCountForShelf(shelfId);
   }
 
-  /// Get cover preview URLs for a shelf.
-  List<String> getCoverPreviewsForShelf(String shelfId) {
+  /// Get cover previews for a shelf.
+  List<CoverPreview> getCoverPreviewsForShelf(String shelfId) {
     if (_dataStore == null) return [];
     return _dataStore!.getCoverPreviewsForShelf(shelfId);
   }

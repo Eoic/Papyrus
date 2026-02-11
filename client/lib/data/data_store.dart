@@ -39,14 +39,11 @@ class DataStore extends ChangeNotifier {
 
   List<Book> get books => _books.values.toList();
 
-  /// Get all shelves with computed bookCount and coverPreviewUrls.
+  /// Get all shelves with computed bookCount and coverPreviews.
   List<Shelf> get shelves => _shelves.values.map((shelf) {
     final bookCount = getBookCountForShelf(shelf.id);
     final coverPreviews = getCoverPreviewsForShelf(shelf.id);
-    return shelf.copyWith(
-      bookCount: bookCount,
-      coverPreviewUrls: coverPreviews,
-    );
+    return shelf.copyWith(bookCount: bookCount, coverPreviews: coverPreviews);
   }).toList();
 
   List<Tag> get tags => _tags.values.toList();
@@ -93,13 +90,13 @@ class DataStore extends ChangeNotifier {
   // Shelf CRUD
   // ============================================================
 
-  /// Get a shelf by ID with computed bookCount and coverPreviewUrls.
+  /// Get a shelf by ID with computed bookCount and coverPreviews.
   Shelf? getShelf(String id) {
     final shelf = _shelves[id];
     if (shelf == null) return null;
     return shelf.copyWith(
       bookCount: getBookCountForShelf(id),
-      coverPreviewUrls: getCoverPreviewsForShelf(id),
+      coverPreviews: getCoverPreviewsForShelf(id),
     );
   }
 
@@ -132,26 +129,25 @@ class DataStore extends ChangeNotifier {
     return _bookShelfRelations.where((r) => r.shelfId == shelfId).length;
   }
 
-  /// Get child shelves of a parent shelf, enriched with bookCount/coverPreviewUrls.
+  /// Get child shelves of a parent shelf, enriched with bookCount/coverPreviews.
   List<Shelf> getChildShelves(String parentShelfId) {
     return _shelves.values
         .where((s) => s.parentShelfId == parentShelfId)
         .map(
           (shelf) => shelf.copyWith(
             bookCount: getBookCountForShelf(shelf.id),
-            coverPreviewUrls: getCoverPreviewsForShelf(shelf.id),
+            coverPreviews: getCoverPreviewsForShelf(shelf.id),
           ),
         )
         .toList();
   }
 
-  /// Get cover preview URLs for a shelf (up to 4 books).
-  List<String> getCoverPreviewsForShelf(String shelfId, {int limit = 4}) {
+  /// Get cover previews for a shelf (up to 4 books).
+  List<CoverPreview> getCoverPreviewsForShelf(String shelfId, {int limit = 4}) {
     final books = getBooksInShelf(shelfId);
     return books
-        .where((b) => b.coverUrl != null)
         .take(limit)
-        .map((b) => b.coverUrl!)
+        .map((b) => CoverPreview(url: b.coverUrl, title: b.title))
         .toList();
   }
 
