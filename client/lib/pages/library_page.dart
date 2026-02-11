@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/active_filter.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/bulk_book_actions.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
 import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
 import 'package:papyrus/widgets/filter/filter_dialog.dart';
@@ -12,6 +14,7 @@ import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
+import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
@@ -113,61 +116,74 @@ class _LibraryPageState extends State<LibraryPage> {
     List<Book> books,
     LibraryProvider libraryProvider,
   ) {
+    final isSelectionMode = libraryProvider.isSelectionMode;
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: const LibraryDrawer(),
       body: SafeArea(
         child: Column(
           children: [
-            // Search bar section with drawer button
+            // Header: selection header or normal header
             Padding(
               padding: const EdgeInsets.only(
                 top: Spacing.md,
                 left: Spacing.md,
                 right: Spacing.md,
               ),
-              child: Row(
-                children: [
-                  // Drawer hamburger button
-                  IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
-                    },
-                    tooltip: 'Library sections',
-                  ),
-                  const SizedBox(width: Spacing.xs),
-                  // Search bar
-                  Expanded(child: _buildSearchBar(libraryProvider)),
-                  const SizedBox(width: Spacing.sm),
-                  _buildSortButton(libraryProvider),
-                ],
-              ),
+              child: isSelectionMode
+                  ? SelectionHeader(
+                      selectedCount: libraryProvider.selectedCount,
+                      totalCount: books.length,
+                      onClose: libraryProvider.exitSelectionMode,
+                      onSelectAll: () => libraryProvider.selectAll(
+                        books.map((b) => b.id).toList(),
+                      ),
+                      onDeselectAll: libraryProvider.deselectAll,
+                    )
+                  : Row(
+                      children: [
+                        // Drawer hamburger button
+                        IconButton(
+                          icon: const Icon(Icons.menu),
+                          onPressed: () {
+                            _scaffoldKey.currentState?.openDrawer();
+                          },
+                          tooltip: 'Library sections',
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        // Search bar
+                        Expanded(child: _buildSearchBar(libraryProvider)),
+                        const SizedBox(width: Spacing.sm),
+                        _buildSortButton(libraryProvider),
+                      ],
+                    ),
             ),
 
             // Quick filter chips
             const LibraryFilterChips(),
 
             // View toggle row
-            Padding(
-              padding: const EdgeInsets.only(
-                left: Spacing.md,
-                right: Spacing.md,
-                bottom: Spacing.md,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${books.length} ${books.length == 1 ? 'book' : 'books'}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+            if (!isSelectionMode)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: Spacing.md,
+                  right: Spacing.md,
+                  bottom: Spacing.md,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${books.length} ${books.length == 1 ? 'book' : 'books'}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  _buildViewToggle(libraryProvider),
-                ],
+                    _buildViewToggle(libraryProvider),
+                  ],
+                ),
               ),
-            ),
 
             // Book grid or list
             Expanded(
@@ -184,10 +200,15 @@ class _LibraryPageState extends State<LibraryPage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => AddBookChoiceSheet.show(context),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: isSelectionMode
+          ? null
+          : FloatingActionButton(
+              onPressed: () => AddBookChoiceSheet.show(context),
+              child: const Icon(Icons.add),
+            ),
+      bottomNavigationBar: isSelectionMode
+          ? buildMobileBottomActionBar(context, libraryProvider)
+          : null,
     );
   }
 
@@ -484,80 +505,108 @@ class _LibraryPageState extends State<LibraryPage> {
     LibraryProvider libraryProvider,
   ) {
     const double controlHeight = 40.0;
+    final isSelectionMode = libraryProvider.isSelectionMode;
 
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row
-          Container(
-            padding: const EdgeInsets.only(
-              top: Spacing.lg,
-              left: Spacing.lg,
-              right: Spacing.lg,
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final useCompactLayout = constraints.maxWidth < 800;
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (libraryProvider.isSelectionMode) {
+            libraryProvider.exitSelectionMode();
+          }
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              Container(
+                padding: const EdgeInsets.only(
+                  top: Spacing.lg,
+                  left: Spacing.lg,
+                  right: Spacing.lg,
+                ),
+                child: isSelectionMode
+                    ? SelectionHeader(
+                        selectedCount: libraryProvider.selectedCount,
+                        totalCount: books.length,
+                        onClose: libraryProvider.exitSelectionMode,
+                        onSelectAll: () => libraryProvider.selectAll(
+                          books.map((b) => b.id).toList(),
+                        ),
+                        onDeselectAll: libraryProvider.deselectAll,
+                        actions: buildBulkActionBar(context, libraryProvider),
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final useCompactLayout = constraints.maxWidth < 800;
 
-                if (useCompactLayout) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: _buildSearchBar(libraryProvider)),
-                          const SizedBox(width: Spacing.sm),
-                          _buildSortButton(libraryProvider),
-                        ],
+                          if (useCompactLayout) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSearchBar(libraryProvider),
+                                    ),
+                                    const SizedBox(width: Spacing.sm),
+                                    _buildSortButton(libraryProvider),
+                                  ],
+                                ),
+                                const SizedBox(height: Spacing.md),
+                                Row(
+                                  children: [
+                                    const Spacer(),
+                                    _buildViewToggle(libraryProvider),
+                                    const SizedBox(width: Spacing.sm),
+                                    _buildAddBookButton(controlHeight),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: _buildSearchBar(libraryProvider)),
+                              const SizedBox(width: Spacing.md),
+                              _buildSortButton(libraryProvider),
+                              const SizedBox(width: Spacing.md),
+                              _buildViewToggle(libraryProvider),
+                              const SizedBox(width: Spacing.md),
+                              _buildAddBookButton(controlHeight),
+                            ],
+                          );
+                        },
                       ),
-                      const SizedBox(height: Spacing.md),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          _buildViewToggle(libraryProvider),
-                          const SizedBox(width: Spacing.sm),
-                          _buildAddBookButton(controlHeight),
-                        ],
+              ),
+              // Filter chips
+              const LibraryFilterChips(horizontalPadding: Spacing.lg),
+              // Book grid or list
+              Expanded(
+                child: books.isEmpty
+                    ? _buildEmptyState()
+                    : libraryProvider.isListView
+                    ? _buildBookList(context, books)
+                    : BookGrid(
+                        books: books,
+                        onBookTap: (book) =>
+                            _navigateToBookDetails(context, book),
                       ),
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: _buildSearchBar(libraryProvider)),
-                    const SizedBox(width: Spacing.md),
-                    _buildSortButton(libraryProvider),
-                    const SizedBox(width: Spacing.md),
-                    _buildViewToggle(libraryProvider),
-                    const SizedBox(width: Spacing.md),
-                    _buildAddBookButton(controlHeight),
-                  ],
-                );
-              },
-            ),
+              ),
+            ],
           ),
-          // Filter chips
-          const LibraryFilterChips(horizontalPadding: Spacing.lg),
-          // Book grid or list
-          Expanded(
-            child: books.isEmpty
-                ? _buildEmptyState()
-                : libraryProvider.isListView
-                ? _buildBookList(context, books)
-                : BookGrid(
-                    books: books,
-                    onBookTap: (book) => _navigateToBookDetails(context, book),
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildBookList(BuildContext context, List<Book> books) {
-    final libraryProvider = context.read<LibraryProvider>();
+    final libraryProvider = context.watch<LibraryProvider>();
+    final isSelectionMode = libraryProvider.isSelectionMode;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
@@ -572,6 +621,9 @@ class _LibraryPageState extends State<LibraryPage> {
           book: book,
           isFavorite: isFavorite,
           onTap: () => _navigateToBookDetails(context, book),
+          isSelectionMode: isSelectionMode,
+          isSelected: libraryProvider.isBookSelected(book.id),
+          onSelectToggle: () => libraryProvider.toggleBookSelection(book.id),
         );
       },
     );

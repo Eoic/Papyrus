@@ -37,9 +37,22 @@ class LibraryProvider extends ChangeNotifier {
   String? _selectedShelf;
   String? _selectedTopic;
 
+  // Selection mode state
+  bool _isSelectionMode = false;
+  final Set<String> _selectedBookIds = {};
+
   /// Track favorite status overrides for books.
   /// Key is book ID, value is the overridden favorite status.
   final Map<String, bool> _favoriteOverrides = {};
+
+  /// Whether selection mode is active.
+  bool get isSelectionMode => _isSelectionMode;
+
+  /// Currently selected book IDs.
+  Set<String> get selectedBookIds => Set.unmodifiable(_selectedBookIds);
+
+  /// Number of selected books.
+  int get selectedCount => _selectedBookIds.length;
 
   /// Current view mode (grid or list).
   LibraryViewMode get viewMode => _viewMode;
@@ -239,5 +252,50 @@ class LibraryProvider extends ChangeNotifier {
   /// Get the effective favorite status for a book.
   bool? getFavoriteOverride(String bookId) {
     return _favoriteOverrides[bookId];
+  }
+
+  // ===========================================================================
+  // Selection mode
+  // ===========================================================================
+
+  /// Enter selection mode, optionally pre-selecting a book.
+  void enterSelectionMode([String? initialBookId]) {
+    _isSelectionMode = true;
+    _selectedBookIds.clear();
+    if (initialBookId != null) _selectedBookIds.add(initialBookId);
+    notifyListeners();
+  }
+
+  /// Exit selection mode and clear selection.
+  void exitSelectionMode() {
+    _isSelectionMode = false;
+    _selectedBookIds.clear();
+    notifyListeners();
+  }
+
+  /// Toggle selection of a single book.
+  void toggleBookSelection(String bookId) {
+    if (_selectedBookIds.contains(bookId)) {
+      _selectedBookIds.remove(bookId);
+      if (_selectedBookIds.isEmpty) exitSelectionMode();
+    } else {
+      _selectedBookIds.add(bookId);
+    }
+    notifyListeners();
+  }
+
+  /// Whether a specific book is selected.
+  bool isBookSelected(String bookId) => _selectedBookIds.contains(bookId);
+
+  /// Select all given book IDs.
+  void selectAll(List<String> bookIds) {
+    _selectedBookIds.addAll(bookIds);
+    notifyListeners();
+  }
+
+  /// Deselect all books (stays in selection mode).
+  void deselectAll() {
+    _selectedBookIds.clear();
+    notifyListeners();
   }
 }

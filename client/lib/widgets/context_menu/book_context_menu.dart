@@ -11,6 +11,7 @@ class BookContextMenu {
     required Book book,
     required bool isFavorite,
     Offset? tapPosition,
+    VoidCallback? onSelect,
     VoidCallback? onFavoriteToggle,
     VoidCallback? onEdit,
     VoidCallback? onMoveToShelf,
@@ -27,6 +28,7 @@ class BookContextMenu {
         position: tapPosition,
         book: book,
         isFavorite: isFavorite,
+        onSelect: onSelect,
         onFavoriteToggle: onFavoriteToggle,
         onEdit: onEdit,
         onMoveToShelf: onMoveToShelf,
@@ -39,6 +41,7 @@ class BookContextMenu {
         context: context,
         book: book,
         isFavorite: isFavorite,
+        onSelect: onSelect,
         onFavoriteToggle: onFavoriteToggle,
         onEdit: onEdit,
         onMoveToShelf: onMoveToShelf,
@@ -54,6 +57,7 @@ class BookContextMenu {
     required Offset position,
     required Book book,
     required bool isFavorite,
+    VoidCallback? onSelect,
     VoidCallback? onFavoriteToggle,
     VoidCallback? onEdit,
     VoidCallback? onMoveToShelf,
@@ -75,6 +79,12 @@ class BookContextMenu {
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       items: [
+        const PopupMenuItem(
+          value: 'select',
+          height: 40,
+          child: _MenuItemRow(icon: Icons.checklist, label: 'Select'),
+        ),
+        const PopupMenuDivider(),
         PopupMenuItem(
           value: 'favorite',
           height: 40,
@@ -141,6 +151,8 @@ class BookContextMenu {
       if (!context.mounted) return;
 
       switch (value) {
+        case 'select':
+          onSelect?.call();
         case 'favorite':
           onFavoriteToggle?.call();
         case 'edit':
@@ -163,6 +175,7 @@ class BookContextMenu {
     required BuildContext context,
     required Book book,
     required bool isFavorite,
+    VoidCallback? onSelect,
     VoidCallback? onFavoriteToggle,
     VoidCallback? onEdit,
     VoidCallback? onMoveToShelf,
@@ -181,6 +194,7 @@ class BookContextMenu {
       builder: (context) => _BookContextBottomSheet(
         book: book,
         isFavorite: isFavorite,
+        onSelect: onSelect,
         onFavoriteToggle: onFavoriteToggle,
         onEdit: onEdit,
         onMoveToShelf: onMoveToShelf,
@@ -265,6 +279,7 @@ class _MenuItemRow extends StatelessWidget {
 class _BookContextBottomSheet extends StatelessWidget {
   final Book book;
   final bool isFavorite;
+  final VoidCallback? onSelect;
   final VoidCallback? onFavoriteToggle;
   final VoidCallback? onEdit;
   final VoidCallback? onMoveToShelf;
@@ -275,6 +290,7 @@ class _BookContextBottomSheet extends StatelessWidget {
   const _BookContextBottomSheet({
     required this.book,
     required this.isFavorite,
+    this.onSelect,
     this.onFavoriteToggle,
     this.onEdit,
     this.onMoveToShelf,
@@ -342,6 +358,17 @@ class _BookContextBottomSheet extends StatelessWidget {
             ),
 
             const SizedBox(height: Spacing.md),
+            const Divider(),
+
+            // Select action
+            _BottomSheetItem(
+              icon: Icons.checklist,
+              label: 'Select',
+              onTap: () {
+                Navigator.pop(context);
+                onSelect?.call();
+              },
+            ),
             const Divider(),
 
             // Action items

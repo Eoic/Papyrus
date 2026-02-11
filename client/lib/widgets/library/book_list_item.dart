@@ -12,6 +12,9 @@ class BookListItem extends StatefulWidget {
   final VoidCallback? onTap;
   final bool showProgress;
   final bool isFavorite;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onSelectToggle;
 
   const BookListItem({
     super.key,
@@ -19,6 +22,9 @@ class BookListItem extends StatefulWidget {
     this.onTap,
     this.showProgress = true,
     required this.isFavorite,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectToggle,
   });
 
   @override
@@ -34,6 +40,7 @@ class _BookListItemState extends State<BookListItem> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final inSelection = widget.isSelectionMode;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -49,9 +56,11 @@ class _BookListItemState extends State<BookListItem> {
                 );
               },
         child: Material(
-          color: Colors.transparent,
+          color: inSelection && widget.isSelected
+              ? colorScheme.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
           child: InkWell(
-            onTap: widget.onTap,
+            onTap: inSelection ? widget.onSelectToggle : widget.onTap,
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: Spacing.md,
@@ -64,6 +73,14 @@ class _BookListItemState extends State<BookListItem> {
               ),
               child: Row(
                 children: [
+                  // Selection checkbox (leading)
+                  if (inSelection) ...[
+                    Checkbox(
+                      value: widget.isSelected,
+                      onChanged: (_) => widget.onSelectToggle?.call(),
+                    ),
+                    const SizedBox(width: Spacing.sm),
+                  ],
                   // Cover thumbnail
                   SizedBox(
                     width: ComponentSizes.bookCoverWidthList,
@@ -128,59 +145,60 @@ class _BookListItemState extends State<BookListItem> {
                   ),
 
                   // Trailing indicators and actions
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Format badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: Text(
-                          widget.book.formatLabel,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                      const SizedBox(width: Spacing.sm),
-                      // Favorite indicator
-                      Icon(
-                        widget.isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        size: IconSizes.indicator,
-                        color: widget.isFavorite
-                            ? colorScheme.error
-                            : colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.5,
-                              ),
-                      ),
-                      // Overflow menu - show on hover (desktop only)
-                      if (_isDesktop)
-                        AnimatedOpacity(
-                          opacity: _isHovered ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 150),
-                          child: IconButton(
-                            icon: const Icon(Icons.more_vert),
-                            iconSize: IconSizes.action,
-                            onPressed: () => showBookContextMenu(
-                              context: context,
-                              book: widget.book,
-                            ),
-                            tooltip: 'More options',
-                            visualDensity: VisualDensity.compact,
+                  if (!inSelection)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Format badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            widget.book.formatLabel,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
-                    ],
-                  ),
+                        const SizedBox(width: Spacing.sm),
+                        // Favorite indicator
+                        Icon(
+                          widget.isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          size: IconSizes.indicator,
+                          color: widget.isFavorite
+                              ? colorScheme.error
+                              : colorScheme.onSurfaceVariant.withValues(
+                                  alpha: 0.5,
+                                ),
+                        ),
+                        // Overflow menu - show on hover (desktop only)
+                        if (_isDesktop)
+                          AnimatedOpacity(
+                            opacity: _isHovered ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 150),
+                            child: IconButton(
+                              icon: const Icon(Icons.more_vert),
+                              iconSize: IconSizes.action,
+                              onPressed: () => showBookContextMenu(
+                                context: context,
+                                book: widget.book,
+                              ),
+                              tooltip: 'More options',
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                      ],
+                    ),
                 ],
               ),
             ),

@@ -49,6 +49,7 @@ class BookGrid extends StatelessWidget {
     }
 
     final libraryProvider = context.watch<LibraryProvider>();
+    final isSelectionMode = libraryProvider.isSelectionMode;
 
     return MediaQuery.removePadding(
       context: context,
@@ -81,6 +82,11 @@ class BookGrid extends StatelessWidget {
             onToggleFavorite: (current) =>
                 libraryProvider.toggleFavorite(book.id, current),
             onTap: onBookTap != null ? () => onBookTap!(book) : null,
+            isSelectionMode: isSelectionMode,
+            isSelected: libraryProvider.isBookSelected(book.id),
+            onSelectToggle: () => libraryProvider.toggleBookSelection(book.id),
+            onEnterSelectionMode: () =>
+                libraryProvider.enterSelectionMode(book.id),
           );
         },
       ),

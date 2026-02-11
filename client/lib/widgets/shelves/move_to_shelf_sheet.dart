@@ -8,17 +8,22 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
 import 'package:provider/provider.dart';
 
-/// Bottom sheet for moving a book to one or more shelves.
+/// Bottom sheet for moving a book (or multiple books) to one or more shelves.
 class MoveToShelfSheet extends StatefulWidget {
-  /// The book to move.
-  final Book book;
+  /// The book to move (single-book mode).
+  final Book? book;
+
+  /// Book IDs for bulk mode.
+  final List<String>? bulkBookIds;
 
   /// Called when shelf assignments change.
   final void Function(List<String> shelfIds)? onSave;
 
-  const MoveToShelfSheet({super.key, required this.book, this.onSave});
+  const MoveToShelfSheet({super.key, this.book, this.bulkBookIds, this.onSave});
 
-  /// Shows the move to shelf sheet.
+  bool get isBulkMode => bulkBookIds != null && bulkBookIds!.isNotEmpty;
+
+  /// Shows the move to shelf sheet for a single book.
   static Future<void> show(
     BuildContext context, {
     required Book book,
@@ -34,6 +39,23 @@ class MoveToShelfSheet extends StatefulWidget {
     );
   }
 
+  /// Shows the move to shelf sheet for multiple books (bulk mode).
+  static Future<void> showBulk(
+    BuildContext context, {
+    required List<String> bookIds,
+    void Function(List<String> shelfIds)? onSave,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (context) =>
+          MoveToShelfSheet(bulkBookIds: bookIds, onSave: onSave),
+    );
+  }
+
   @override
   State<MoveToShelfSheet> createState() => _MoveToShelfSheetState();
 }
@@ -46,9 +68,12 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
   @override
   void initState() {
     super.initState();
-    // Initialize with current shelf assignments
-    final dataStore = context.read<DataStore>();
-    _selectedShelfIds = dataStore.getShelfIdsForBook(widget.book.id).toSet();
+    if (widget.isBulkMode) {
+      _selectedShelfIds = {};
+    } else {
+      final dataStore = context.read<DataStore>();
+      _selectedShelfIds = dataStore.getShelfIdsForBook(widget.book!.id).toSet();
+    }
   }
 
   @override
@@ -86,31 +111,52 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
             // Header with book info
             Row(
               children: [
-                // Book cover
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: SizedBox(
+                // Book cover or bulk icon
+                if (widget.isBulkMode)
+                  Container(
                     width: 40,
                     height: 60,
-                    child: _buildCover(context),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Icon(
+                      Icons.library_books,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  )
+                else
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: SizedBox(
+                      width: 40,
+                      height: 60,
+                      child: _buildCover(context),
+                    ),
                   ),
-                ),
                 const SizedBox(width: Spacing.md),
                 // Title
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Add to shelves', style: textTheme.titleLarge),
-                      const SizedBox(height: 2),
                       Text(
-                        widget.book.title,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        widget.isBulkMode
+                            ? 'Add ${widget.bulkBookIds!.length} books to shelves'
+                            : 'Add to shelves',
+                        style: textTheme.titleLarge,
                       ),
+                      if (!widget.isBulkMode) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.book!.title,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -193,10 +239,11 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
 
   Widget _buildCover(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final book = widget.book;
 
-    if (widget.book.coverURL != null && widget.book.coverURL!.isNotEmpty) {
+    if (book != null && book.coverURL != null && book.coverURL!.isNotEmpty) {
       return Image.network(
-        widget.book.coverURL!,
+        book.coverURL!,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: colorScheme.surfaceContainerHighest,

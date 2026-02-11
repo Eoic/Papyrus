@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
@@ -6,12 +7,14 @@ import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/bulk_book_actions.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
 import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
 import 'package:papyrus/widgets/filter/filter_dialog.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
+import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shared/quick_filter_chips.dart';
@@ -125,6 +128,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final shelfColor = shelf.color ?? colorScheme.primary;
+    final isSelectionMode = libraryProvider.isSelectionMode;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -132,70 +136,83 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Row 1: Back icon + Search + Sort
+            // Row 1: Selection header or Back + Search + Sort
             Padding(
               padding: const EdgeInsets.only(
                 top: Spacing.md,
                 left: Spacing.md,
                 right: Spacing.md,
               ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.go('/library/shelves'),
-                  ),
-                  const SizedBox(width: Spacing.xs),
-                  Expanded(child: _buildSearchBar(provider, isDesktop: false)),
-                  const SizedBox(width: Spacing.sm),
-                  _buildSortButton(provider),
-                ],
-              ),
+              child: isSelectionMode
+                  ? SelectionHeader(
+                      selectedCount: libraryProvider.selectedCount,
+                      totalCount: books.length,
+                      onClose: libraryProvider.exitSelectionMode,
+                      onSelectAll: () => libraryProvider.selectAll(
+                        books.map((b) => b.id).toList(),
+                      ),
+                      onDeselectAll: libraryProvider.deselectAll,
+                    )
+                  : Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => context.go('/library/shelves'),
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        Expanded(
+                          child: _buildSearchBar(provider, isDesktop: false),
+                        ),
+                        const SizedBox(width: Spacing.sm),
+                        _buildSortButton(provider),
+                      ],
+                    ),
             ),
             // Filter chips
             _buildFilterChips(provider),
-            // Row 2: Shelf info + View toggle
-            Padding(
-              padding: const EdgeInsets.only(
-                left: Spacing.md,
-                right: Spacing.md,
-                bottom: Spacing.md,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          shelf.displayIcon,
-                          size: IconSizes.small,
-                          color: shelfColor,
-                        ),
-                        const SizedBox(width: Spacing.xs),
-                        Flexible(
-                          child: Text(
-                            shelf.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+            // Row 2: Shelf info + View toggle (hidden during selection)
+            if (!isSelectionMode)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: Spacing.md,
+                  right: Spacing.md,
+                  bottom: Spacing.md,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            shelf.displayIcon,
+                            size: IconSizes.small,
+                            color: shelfColor,
+                          ),
+                          const SizedBox(width: Spacing.xs),
+                          Flexible(
+                            child: Text(
+                              shelf.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: Spacing.sm),
-                        Text(
-                          '\u00b7 ${books.length} ${books.length == 1 ? 'book' : 'books'}',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                          const SizedBox(width: Spacing.sm),
+                          Text(
+                            '\u00b7 ${books.length} ${books.length == 1 ? 'book' : 'books'}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  _buildViewToggle(provider),
-                ],
+                    const SizedBox(width: Spacing.sm),
+                    _buildViewToggle(provider),
+                  ],
+                ),
               ),
-            ),
             // Content grid/list
             Expanded(
               child: _buildContent(
@@ -209,6 +226,9 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
           ],
         ),
       ),
+      bottomNavigationBar: isSelectionMode
+          ? buildMobileBottomActionBar(context, libraryProvider)
+          : null,
     );
   }
 
@@ -234,67 +254,103 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
       },
     );
 
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.only(
-              top: Spacing.lg,
-              left: Spacing.lg,
-              right: Spacing.lg,
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final useCompactLayout = constraints.maxWidth < 800;
+    final isSelectionMode = libraryProvider.isSelectionMode;
 
-                if (useCompactLayout) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildSearchBar(provider, isDesktop: true),
-                          ),
-                          const SizedBox(width: Spacing.sm),
-                          _buildSortButton(provider),
-                        ],
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      Row(
-                        children: [const Spacer(), _buildViewToggle(provider)],
-                      ),
-                    ],
-                  );
-                }
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (libraryProvider.isSelectionMode) {
+            libraryProvider.exitSelectionMode();
+          }
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.only(
+                  top: Spacing.lg,
+                  left: Spacing.lg,
+                  right: Spacing.lg,
+                ),
+                child: isSelectionMode
+                    ? SelectionHeader(
+                        selectedCount: libraryProvider.selectedCount,
+                        totalCount: books.length,
+                        onClose: libraryProvider.exitSelectionMode,
+                        onSelectAll: () => libraryProvider.selectAll(
+                          books.map((b) => b.id).toList(),
+                        ),
+                        onDeselectAll: libraryProvider.deselectAll,
+                        actions: buildBulkActionBar(context, libraryProvider),
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final useCompactLayout = constraints.maxWidth < 800;
 
-                return Row(
-                  children: [
-                    Expanded(child: _buildSearchBar(provider, isDesktop: true)),
-                    const SizedBox(width: Spacing.md),
-                    _buildSortButton(provider),
-                    const SizedBox(width: Spacing.md),
-                    _buildViewToggle(provider),
-                  ],
-                );
-              },
-            ),
+                          if (useCompactLayout) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildSearchBar(
+                                        provider,
+                                        isDesktop: true,
+                                      ),
+                                    ),
+                                    const SizedBox(width: Spacing.sm),
+                                    _buildSortButton(provider),
+                                  ],
+                                ),
+                                const SizedBox(height: Spacing.md),
+                                Row(
+                                  children: [
+                                    const Spacer(),
+                                    _buildViewToggle(provider),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: _buildSearchBar(
+                                  provider,
+                                  isDesktop: true,
+                                ),
+                              ),
+                              const SizedBox(width: Spacing.md),
+                              _buildSortButton(provider),
+                              const SizedBox(width: Spacing.md),
+                              _buildViewToggle(provider),
+                            ],
+                          );
+                        },
+                      ),
+              ),
+              // Filter chips
+              _buildFilterChips(provider, horizontalPadding: Spacing.lg),
+              // Content grid/list
+              Expanded(
+                child: _buildContent(
+                  context,
+                  childShelves,
+                  books,
+                  provider,
+                  libraryProvider,
+                ),
+              ),
+            ],
           ),
-          // Filter chips
-          _buildFilterChips(provider, horizontalPadding: Spacing.lg),
-          // Content grid/list
-          Expanded(
-            child: _buildContent(
-              context,
-              childShelves,
-              books,
-              provider,
-              libraryProvider,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -600,9 +656,15 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
           book.id,
           book.isFavorite,
         );
+        final isSelectionMode = libraryProvider.isSelectionMode;
         return BookCard(
           book: book,
           isFavorite: isFavorite,
+          isSelectionMode: isSelectionMode,
+          isSelected: libraryProvider.isBookSelected(book.id),
+          onSelectToggle: () => libraryProvider.toggleBookSelection(book.id),
+          onEnterSelectionMode: () =>
+              libraryProvider.enterSelectionMode(book.id),
           onToggleFavorite: (current) =>
               libraryProvider.toggleFavorite(book.id, current),
           onTap: () => context.go('/library/details/${book.id}'),
@@ -641,6 +703,9 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
         return BookListItem(
           book: book,
           isFavorite: isFavorite,
+          isSelectionMode: libraryProvider.isSelectionMode,
+          isSelected: libraryProvider.isBookSelected(book.id),
+          onSelectToggle: () => libraryProvider.toggleBookSelection(book.id),
           onTap: () => context.go('/library/details/${book.id}'),
         );
       },

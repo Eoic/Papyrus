@@ -14,6 +14,10 @@ class BookCard extends StatefulWidget {
   final bool showProgress;
   final bool isFavorite;
   final void Function(bool)? onToggleFavorite;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onSelectToggle;
+  final VoidCallback? onEnterSelectionMode;
 
   const BookCard({
     super.key,
@@ -22,6 +26,10 @@ class BookCard extends StatefulWidget {
     this.showProgress = true,
     required this.isFavorite,
     this.onToggleFavorite,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectToggle,
+    this.onEnterSelectionMode,
   });
 
   @override
@@ -37,6 +45,7 @@ class _BookCardState extends State<BookCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final inSelection = widget.isSelectionMode;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -55,7 +64,7 @@ class _BookCardState extends State<BookCard> {
           clipBehavior: Clip.antiAlias,
           elevation: AppElevation.level1,
           child: InkWell(
-            onTap: widget.onTap,
+            onTap: inSelection ? widget.onSelectToggle : widget.onTap,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -65,37 +74,69 @@ class _BookCardState extends State<BookCard> {
                     fit: StackFit.expand,
                     children: [
                       _buildCover(context),
-                      // Favorite button - always visible
-                      Positioned(
-                        top: Spacing.xs,
-                        left: Spacing.xs,
-                        child: _CardIconButton(
-                          icon: widget.isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: widget.isFavorite
-                              ? colorScheme.error
-                              : Colors.white,
-                          onTap: widget.onToggleFavorite != null
-                              ? () =>
-                                    widget.onToggleFavorite!(widget.isFavorite)
-                              : null,
+                      // Selection tint overlay
+                      if (inSelection && widget.isSelected)
+                        Container(
+                          color: colorScheme.primary.withValues(alpha: 0.15),
                         ),
-                      ),
-                      // Overflow menu button - show on hover (desktop only)
-                      if (_isDesktop)
+                      // Favorite button - hidden in selection mode
+                      if (!inSelection)
+                        Positioned(
+                          top: Spacing.xs,
+                          left: Spacing.xs,
+                          child: _CardIconButton(
+                            icon: widget.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: widget.isFavorite
+                                ? colorScheme.error
+                                : Colors.white,
+                            onTap: widget.onToggleFavorite != null
+                                ? () => widget.onToggleFavorite!(
+                                    widget.isFavorite,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      // Selection mode: checkbox overlay (top-right)
+                      if (inSelection)
+                        Positioned(
+                          top: Spacing.xs,
+                          right: Spacing.xs,
+                          child: _CardIconButton(
+                            icon: widget.isSelected
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: widget.isSelected
+                                ? colorScheme.primary
+                                : Colors.white,
+                            onTap: widget.onSelectToggle,
+                          ),
+                        ),
+                      // Desktop hover: checkbox to enter selection mode
+                      if (!inSelection && _isDesktop)
                         Positioned(
                           top: Spacing.xs,
                           right: Spacing.xs,
                           child: AnimatedOpacity(
                             opacity: _isHovered ? 1.0 : 0.0,
                             duration: const Duration(milliseconds: 150),
-                            child: _CardIconButton(
-                              icon: Icons.more_vert,
-                              onTap: () => showBookContextMenu(
-                                context: context,
-                                book: widget.book,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _CardIconButton(
+                                  icon: Icons.radio_button_unchecked,
+                                  onTap: widget.onEnterSelectionMode,
+                                ),
+                                const SizedBox(width: Spacing.xs),
+                                _CardIconButton(
+                                  icon: Icons.more_vert,
+                                  onTap: () => showBookContextMenu(
+                                    context: context,
+                                    book: widget.book,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

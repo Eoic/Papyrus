@@ -26,6 +26,9 @@ void showBookContextMenu({
     book: book,
     isFavorite: isFavorite,
     tapPosition: position,
+    onSelect: () {
+      libraryProvider.enterSelectionMode(book.id);
+    },
     onFavoriteToggle: () {
       libraryProvider.toggleFavorite(book.id, isFavorite);
     },

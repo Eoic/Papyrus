@@ -8,17 +8,27 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/topics/add_topic_sheet.dart';
 import 'package:provider/provider.dart';
 
-/// Bottom sheet for managing topic assignments for a book.
+/// Bottom sheet for managing topic assignments for a book or multiple books.
 class ManageTopicsSheet extends StatefulWidget {
-  /// The book to manage topics for.
-  final Book book;
+  /// The book to manage topics for (single-book mode).
+  final Book? book;
+
+  /// Book IDs for bulk mode.
+  final List<String>? bulkBookIds;
 
   /// Called when topic assignments change.
   final void Function(List<String> tagIds)? onSave;
 
-  const ManageTopicsSheet({super.key, required this.book, this.onSave});
+  const ManageTopicsSheet({
+    super.key,
+    this.book,
+    this.bulkBookIds,
+    this.onSave,
+  });
 
-  /// Shows the manage topics sheet.
+  bool get isBulkMode => bulkBookIds != null && bulkBookIds!.isNotEmpty;
+
+  /// Shows the manage topics sheet for a single book.
   static Future<void> show(
     BuildContext context, {
     required Book book,
@@ -34,6 +44,23 @@ class ManageTopicsSheet extends StatefulWidget {
     );
   }
 
+  /// Shows the manage topics sheet for multiple books (bulk mode).
+  static Future<void> showBulk(
+    BuildContext context, {
+    required List<String> bookIds,
+    void Function(List<String> tagIds)? onSave,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (context) =>
+          ManageTopicsSheet(bulkBookIds: bookIds, onSave: onSave),
+    );
+  }
+
   @override
   State<ManageTopicsSheet> createState() => _ManageTopicsSheetState();
 }
@@ -46,8 +73,12 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
   @override
   void initState() {
     super.initState();
-    final dataStore = context.read<DataStore>();
-    _selectedTagIds = dataStore.getTagIdsForBook(widget.book.id).toSet();
+    if (widget.isBulkMode) {
+      _selectedTagIds = {};
+    } else {
+      final dataStore = context.read<DataStore>();
+      _selectedTagIds = dataStore.getTagIdsForBook(widget.book!.id).toSet();
+    }
   }
 
   @override
@@ -85,31 +116,52 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
             // Header with book info
             Row(
               children: [
-                // Book cover
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: SizedBox(
+                // Book cover or bulk icon
+                if (widget.isBulkMode)
+                  Container(
                     width: 40,
                     height: 60,
-                    child: _buildCover(context),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Icon(
+                      Icons.library_books,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  )
+                else
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: SizedBox(
+                      width: 40,
+                      height: 60,
+                      child: _buildCover(context),
+                    ),
                   ),
-                ),
                 const SizedBox(width: Spacing.md),
                 // Title
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Manage topics', style: textTheme.titleLarge),
-                      const SizedBox(height: 2),
                       Text(
-                        widget.book.title,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        widget.isBulkMode
+                            ? 'Add topics to ${widget.bulkBookIds!.length} books'
+                            : 'Manage topics',
+                        style: textTheme.titleLarge,
                       ),
+                      if (!widget.isBulkMode) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.book!.title,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -194,10 +246,11 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
 
   Widget _buildCover(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final book = widget.book;
 
-    if (widget.book.coverURL != null && widget.book.coverURL!.isNotEmpty) {
+    if (book != null && book.coverURL != null && book.coverURL!.isNotEmpty) {
       return Image.network(
-        widget.book.coverURL!,
+        book.coverURL!,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
           color: colorScheme.surfaceContainerHighest,
