@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/pages/book_details_page.dart';
+import 'package:papyrus/providers/google_sign_in_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:papyrus/pages/bookmarks_page.dart';
 import 'package:papyrus/pages/book_edit_page.dart';
 import 'package:papyrus/pages/dashboard_page.dart';
@@ -225,7 +227,12 @@ class AppRouter {
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {
-      if (FirebaseAuth.instance.currentUser == null) {
+      final isOffline = Provider.of<GoogleSignInProvider>(
+        context,
+        listen: false,
+      ).isOfflineMode;
+
+      if (FirebaseAuth.instance.currentUser == null && !isOffline) {
         if (state.uri.toString().contains('/login') ||
             state.uri.toString().contains('/register') ||
             state.uri.toString().contains('/forgot-password')) {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/providers/google_sign_in_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
+import 'package:provider/provider.dart';
 
 /// Welcome page for the Papyrus book management application.
 /// Provides responsive layouts for mobile and desktop displays.
@@ -395,7 +397,10 @@ class _OfflineModeLink extends StatelessWidget {
     final theme = Theme.of(context);
 
     return TextButton(
-      onPressed: () => context.goNamed('LIBRARY'),
+      onPressed: () {
+        context.read<GoogleSignInProvider>().setOfflineMode(true);
+        context.goNamed('LIBRARY');
+      },
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.md,

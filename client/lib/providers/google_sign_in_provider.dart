@@ -11,6 +11,9 @@ class GoogleSignInProvider extends ChangeNotifier {
   User? _user;
   User? get user => _user;
 
+  bool _isOfflineMode = false;
+  bool get isOfflineMode => _isOfflineMode;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -179,6 +182,11 @@ class GoogleSignInProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void setOfflineMode(bool value) {
+    _isOfflineMode = value;
     notifyListeners();
   }
 
