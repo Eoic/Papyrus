@@ -609,6 +609,7 @@ class PagesReadLineChart extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                interval: 1,
                 getTitlesWidget: (value, meta) => _buildBottomLabel(
                   value,
                   activities,
@@ -729,6 +730,7 @@ class PagesReadLineChart extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                interval: 1,
                 getTitlesWidget: (value, meta) => _buildBucketBottomLabel(
                   value,
                   buckets,
