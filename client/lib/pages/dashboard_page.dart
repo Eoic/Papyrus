@@ -76,26 +76,14 @@ class _DashboardPageState extends State<DashboardPage> {
   /// Builds the mobile layout with vertically stacked cards.
   Widget _buildMobileLayout(BuildContext context, DashboardProvider provider) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
-      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: provider.refresh,
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: Spacing.md),
             children: [
-              DashboardGreeting(
-                greeting: provider.greeting,
-                todayReadingLabel: provider.todayReadingLabel,
-              ),
-              const SizedBox(height: Spacing.lg),
+              DashboardGreeting(greeting: provider.greeting),
+              const SizedBox(height: Spacing.sm),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
                 child: ContinueReadingCard(book: provider.currentBook),
@@ -116,8 +104,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   canGoToNextPeriod: provider.canGoToNextPeriod,
                 ),
               ),
-              const SizedBox(height: Spacing.lg),
-              RecentlyAddedSection(books: provider.recentlyAdded),
+              const SizedBox(height: Spacing.md),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
+                child: _buildMobileRecentlyAddedCard(context, provider),
+              ),
               const SizedBox(height: Spacing.lg),
             ],
           ),
@@ -139,11 +130,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DashboardGreeting(
-                greeting: provider.greeting,
-                todayReadingLabel: provider.todayReadingLabel,
-                isDesktop: true,
-              ),
+              DashboardGreeting(greeting: provider.greeting, isDesktop: true),
               const SizedBox(height: Spacing.lg),
               _buildTopCards(context, provider),
               const SizedBox(height: Spacing.lg),
@@ -220,6 +207,28 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(height: Spacing.lg),
         ReadingGoalCard(goals: provider.activeGoals, isDesktop: true),
       ],
+    );
+  }
+
+  /// Wraps the recently added section in a bordered card for mobile layout.
+  Widget _buildMobileRecentlyAddedCard(
+    BuildContext context,
+    DashboardProvider provider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: BorderWidths.thin,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: RecentlyAddedSection(books: provider.recentlyAdded),
     );
   }
 

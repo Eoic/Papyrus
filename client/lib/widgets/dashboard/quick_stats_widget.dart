@@ -62,7 +62,7 @@ class QuickStatsWidget extends StatelessWidget {
           _buildStatRow(
             context,
             icon: Icons.menu_book_outlined,
-            label: 'Books in library',
+            label: 'Books',
             value: totalBooks.toString(),
           ),
           const SizedBox(height: Spacing.sm),
@@ -83,7 +83,7 @@ class QuickStatsWidget extends StatelessWidget {
           _buildStatRow(
             context,
             icon: Icons.schedule_outlined,
-            label: 'Total reading',
+            label: 'Reading time',
             value: totalReadingLabel,
           ),
         ],
