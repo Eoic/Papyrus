@@ -27,8 +27,11 @@ class GoogleSignInProvider extends ChangeNotifier {
       notifyListeners();
     });
 
-    // Initialize Google Sign-In and listen to its events
-    _initGoogleSignIn();
+    // Initialize Google Sign-In and listen to its events (not needed on web,
+    // where Firebase Auth's signInWithPopup is used directly)
+    if (!kIsWeb) {
+      _initGoogleSignIn();
+    }
   }
 
   Future<void> _initGoogleSignIn() async {
