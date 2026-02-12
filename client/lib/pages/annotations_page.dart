@@ -26,7 +26,6 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnnotationsProvider _provider;
   final _searchController = TextEditingController();
-  bool _showMobileSearch = false;
   final Set<String> _collapsedGroups = {};
 
   @override
@@ -81,9 +80,13 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Row 1: Menu + Search + Sort
             Padding(
-              padding: const EdgeInsets.all(Spacing.md),
+              padding: const EdgeInsets.only(
+                top: Spacing.md,
+                left: Spacing.md,
+                right: Spacing.md,
+              ),
               child: Row(
                 children: [
                   IconButton(
@@ -93,63 +96,17 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
                     },
                     tooltip: 'Library sections',
                   ),
+                  const SizedBox(width: Spacing.xs),
+                  Expanded(child: _buildSearchField(provider)),
                   const SizedBox(width: Spacing.sm),
-                  Text(
-                    'Annotations',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      _showMobileSearch ? Icons.search_off : Icons.search,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showMobileSearch = !_showMobileSearch;
-                        if (!_showMobileSearch) {
-                          _searchController.clear();
-                          provider.clearSearch();
-                        }
-                      });
-                    },
-                    tooltip: 'Search annotations',
-                  ),
                   _buildSortButton(provider),
                 ],
               ),
             ),
-
-            // Count
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-              child: Row(
-                children: [
-                  Text(
-                    '${provider.totalCount} ${provider.totalCount == 1 ? 'annotation' : 'annotations'}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Search bar (toggled)
-            if (_showMobileSearch) ...[
-              const SizedBox(height: Spacing.sm),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-                child: _buildSearchField(provider),
-              ),
-            ],
+            const SizedBox(height: Spacing.md),
 
             // Color filter chips
-            if (provider.hasAnnotations) ...[
-              const SizedBox(height: Spacing.sm),
-              _buildColorFilterChips(provider),
-            ],
+            if (provider.hasAnnotations) _buildColorFilterChips(provider),
 
             const SizedBox(height: Spacing.sm),
 
@@ -169,32 +126,26 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
     BuildContext context,
     AnnotationsProvider provider,
   ) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row
-          Padding(
-            padding: const EdgeInsets.all(Spacing.lg),
+          Container(
+            padding: const EdgeInsets.only(
+              top: Spacing.lg,
+              left: Spacing.lg,
+              right: Spacing.lg,
+            ),
             child: Row(
               children: [
-                Text('Annotations', style: textTheme.headlineMedium),
-                const SizedBox(width: Spacing.lg),
-                Text(
-                  '${provider.totalCount} ${provider.totalCount == 1 ? 'annotation' : 'annotations'}',
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(width: 300, child: _buildSearchField(provider)),
+                Expanded(child: _buildSearchField(provider)),
                 const SizedBox(width: Spacing.md),
                 _buildSortButton(provider),
               ],
             ),
           ),
+          const SizedBox(height: Spacing.md),
 
           // Color filter chips
           if (provider.hasAnnotations) _buildColorFilterChips(provider),
@@ -226,11 +177,9 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
                 },
               )
             : null,
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(vertical: Spacing.sm),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: Spacing.md,
-          vertical: Spacing.sm,
-        ),
       ),
     );
   }

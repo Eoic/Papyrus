@@ -36,7 +36,6 @@ class _BookmarksPageState extends State<BookmarksPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late BookmarksProvider _provider;
   final _searchController = TextEditingController();
-  bool _showMobileSearch = false;
   final Set<String> _collapsedGroups = {};
 
   @override
@@ -88,9 +87,13 @@ class _BookmarksPageState extends State<BookmarksPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Row 1: Menu + Search + Sort
             Padding(
-              padding: const EdgeInsets.all(Spacing.md),
+              padding: const EdgeInsets.only(
+                top: Spacing.md,
+                left: Spacing.md,
+                right: Spacing.md,
+              ),
               child: Row(
                 children: [
                   IconButton(
@@ -100,63 +103,17 @@ class _BookmarksPageState extends State<BookmarksPage> {
                     },
                     tooltip: 'Library sections',
                   ),
+                  const SizedBox(width: Spacing.xs),
+                  Expanded(child: _buildSearchField(provider)),
                   const SizedBox(width: Spacing.sm),
-                  Text(
-                    'Bookmarks',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      _showMobileSearch ? Icons.search_off : Icons.search,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showMobileSearch = !_showMobileSearch;
-                        if (!_showMobileSearch) {
-                          _searchController.clear();
-                          provider.clearSearch();
-                        }
-                      });
-                    },
-                    tooltip: 'Search bookmarks',
-                  ),
                   _buildSortButton(provider),
                 ],
               ),
             ),
-
-            // Count
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-              child: Row(
-                children: [
-                  Text(
-                    '${provider.totalCount} ${provider.totalCount == 1 ? 'bookmark' : 'bookmarks'}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Search bar (toggled)
-            if (_showMobileSearch) ...[
-              const SizedBox(height: Spacing.sm),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-                child: _buildSearchField(provider),
-              ),
-            ],
+            const SizedBox(height: Spacing.md),
 
             // Color filter chips
-            if (provider.hasBookmarks) ...[
-              const SizedBox(height: Spacing.sm),
-              _buildColorFilterChips(provider),
-            ],
+            if (provider.hasBookmarks) _buildColorFilterChips(provider),
 
             const SizedBox(height: Spacing.sm),
 
@@ -173,32 +130,26 @@ class _BookmarksPageState extends State<BookmarksPage> {
   // ============================================================================
 
   Widget _buildDesktopLayout(BuildContext context, BookmarksProvider provider) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row
-          Padding(
-            padding: const EdgeInsets.all(Spacing.lg),
+          Container(
+            padding: const EdgeInsets.only(
+              top: Spacing.lg,
+              left: Spacing.lg,
+              right: Spacing.lg,
+            ),
             child: Row(
               children: [
-                Text('Bookmarks', style: textTheme.headlineMedium),
-                const SizedBox(width: Spacing.lg),
-                Text(
-                  '${provider.totalCount} ${provider.totalCount == 1 ? 'bookmark' : 'bookmarks'}',
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(width: 300, child: _buildSearchField(provider)),
+                Expanded(child: _buildSearchField(provider)),
                 const SizedBox(width: Spacing.md),
                 _buildSortButton(provider),
               ],
             ),
           ),
+          const SizedBox(height: Spacing.md),
 
           // Color filter chips
           if (provider.hasBookmarks) _buildColorFilterChips(provider),
@@ -230,11 +181,9 @@ class _BookmarksPageState extends State<BookmarksPage> {
                 },
               )
             : null,
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(vertical: Spacing.sm),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: Spacing.md,
-          vertical: Spacing.sm,
-        ),
       ),
     );
   }
