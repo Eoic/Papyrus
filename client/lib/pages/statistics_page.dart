@@ -113,9 +113,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 ),
               ),
               const SizedBox(height: Spacing.lg),
-              // Session stats
-              _buildSessionStatsCard(context, provider),
-              const SizedBox(height: Spacing.lg),
               // Books per month (for year/all time views)
               if (provider.selectedPeriod == StatsPeriod.year ||
                   provider.selectedPeriod == StatsPeriod.allTime) ...[
@@ -130,8 +127,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
               // Genre distribution
               _buildGenreDistributionCard(context, provider),
               const SizedBox(height: Spacing.lg),
-              // Streak section
-              _buildStreakCard(context, provider),
+              // Reading insights (session stats + streaks)
+              _buildInsightsCard(context, provider),
             ],
           ),
         ),
@@ -268,59 +265,52 @@ class _StatisticsPageState extends State<StatisticsPage> {
     BuildContext context,
     StatisticsProvider provider,
   ) {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                value: provider.totalBooks.toString(),
-                label: 'Books read',
-                icon: Icons.menu_book_outlined,
-              ),
-            ),
-            const SizedBox(width: Spacing.md),
-            Expanded(
-              child: StatCard(
-                value: provider.pagesRead.toString(),
-                label: 'Pages read',
-                icon: Icons.article_outlined,
-              ),
-            ),
-          ],
+        Expanded(
+          child: CompactStatCard(
+            value: provider.totalBooks.toString(),
+            label: 'Books',
+          ),
         ),
-        const SizedBox(height: Spacing.md),
-        Row(
-          children: [
-            Expanded(
-              child: StatCard(
-                value: provider.totalReadingLabel,
-                label: 'Total reading time',
-                icon: Icons.schedule_outlined,
-              ),
-            ),
-            const SizedBox(width: Spacing.md),
-            Expanded(
-              child: StatCard(
-                value: provider.goalsCompleted.toString(),
-                label: 'Goals completed',
-                icon: Icons.flag_outlined,
-              ),
-            ),
-          ],
+        const SizedBox(width: Spacing.sm),
+        Expanded(
+          child: CompactStatCard(
+            value: provider.pagesRead.toString(),
+            label: 'Pages',
+          ),
+        ),
+        const SizedBox(width: Spacing.sm),
+        Expanded(
+          child: CompactStatCard(
+            value: provider.totalReadingLabel,
+            label: 'Reading time',
+          ),
+        ),
+        const SizedBox(width: Spacing.sm),
+        Expanded(
+          child: CompactStatCard(
+            value: provider.goalsCompleted.toString(),
+            label: 'Goals',
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSessionStatsCard(
+  Widget _buildInsightsCard(
     BuildContext context,
-    StatisticsProvider provider,
-  ) {
+    StatisticsProvider provider, {
+    bool isDesktop = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
     final sessionStats = provider.sessionStats;
+    final streak = provider.streak;
+    final rowGap = SizedBox(height: isDesktop ? Spacing.md : Spacing.sm);
 
     return StatSectionCard(
-      title: 'Session statistics',
+      title: 'Reading insights',
+      isDesktop: isDesktop,
       child: Column(
         children: [
           _buildStatRow(
@@ -329,26 +319,56 @@ class _StatisticsPageState extends State<StatisticsPage> {
             label: 'Average session',
             value: sessionStats.averageSessionLabel,
           ),
-          const SizedBox(height: Spacing.sm),
+          rowGap,
           _buildStatRow(
             context,
             icon: Icons.speed_outlined,
             label: 'Reading velocity',
             value: sessionStats.velocityLabel,
           ),
-          const SizedBox(height: Spacing.sm),
+          rowGap,
           _buildStatRow(
             context,
             icon: Icons.repeat_outlined,
             label: 'Total sessions',
             value: '${sessionStats.totalSessions}',
           ),
-          const SizedBox(height: Spacing.sm),
+          rowGap,
           _buildStatRow(
             context,
             icon: Icons.show_chart_outlined,
             label: 'Avg. daily reading',
             value: provider.averageReadingLabel,
+          ),
+          Divider(
+            height: isDesktop ? Spacing.xl : Spacing.lg,
+            color: colorScheme.outlineVariant,
+          ),
+          _buildStreakRow(
+            context,
+            icon: Icons.local_fire_department,
+            iconColor: streak.hasActiveStreak
+                ? colorScheme.tertiary
+                : colorScheme.onSurfaceVariant,
+            label: 'Current streak',
+            value: '${streak.currentStreak} days',
+            isHighlighted: streak.isCurrentBest,
+          ),
+          rowGap,
+          _buildStreakRow(
+            context,
+            icon: Icons.emoji_events_outlined,
+            iconColor: colorScheme.primary,
+            label: 'Best streak',
+            value: '${streak.bestStreak} days',
+          ),
+          rowGap,
+          _buildStreakRow(
+            context,
+            icon: Icons.calendar_month_outlined,
+            iconColor: colorScheme.onSurfaceVariant,
+            label: 'Days this month',
+            value: '${streak.daysThisMonth} of ${streak.totalDaysInMonth}',
           ),
         ],
       ),
@@ -387,6 +407,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
     BuildContext context,
     StatisticsProvider provider,
   ) {
+    return _buildGenreBarsCard(context, provider);
+  }
+
+  Widget _buildGenreBarsCard(
+    BuildContext context,
+    StatisticsProvider provider, {
+    bool isDesktop = false,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final genres = provider.genreDistribution;
@@ -394,6 +422,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     if (genres.isEmpty) {
       return StatSectionCard(
         title: 'Books by genre',
+        isDesktop: isDesktop,
         child: Center(
           child: Text(
             'No genre data available',
@@ -405,7 +434,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
       );
     }
 
-    // Harmonious color palette based on primary
     final chartColors = [
       colorScheme.primary,
       colorScheme.primary.withValues(alpha: 0.7),
@@ -415,112 +443,53 @@ class _StatisticsPageState extends State<StatisticsPage> {
       colorScheme.secondary.withValues(alpha: 0.7),
     ];
 
-    final genreData = genres.asMap().entries.map((entry) {
-      return (
-        genre: entry.value.genre,
-        percentage: entry.value.percentage,
-        color: chartColors[entry.key % chartColors.length],
-      );
-    }).toList();
-
     return StatSectionCard(
       title: 'Books by genre',
-      child: SizedBox(
-        height: 140,
-        child: Row(
-          children: [
-            GenrePieChart(genres: genreData),
-            const SizedBox(width: Spacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: genreData.map((genre) {
-                  return _buildLegendItem(
-                    context,
-                    color: genre.color,
-                    label: genre.genre,
-                    percentage: (genre.percentage * 100).round(),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(
-    BuildContext context, {
-    required Color color,
-    required String label,
-    required int percentage,
-  }) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: Spacing.sm),
-          Expanded(
-            child: Text(
-              label,
-              style: textTheme.bodySmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            '$percentage%',
-            style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStreakCard(BuildContext context, StatisticsProvider provider) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final streak = provider.streak;
-
-    return StatSectionCard(
-      title: 'Reading streaks',
+      isDesktop: isDesktop,
       child: Column(
-        children: [
-          _buildStreakRow(
-            context,
-            icon: Icons.local_fire_department,
-            iconColor: streak.hasActiveStreak
-                ? colorScheme.tertiary
-                : colorScheme.onSurfaceVariant,
-            label: 'Current streak',
-            value: '${streak.currentStreak} days',
-            isHighlighted: streak.isCurrentBest,
-          ),
-          const SizedBox(height: Spacing.sm),
-          _buildStreakRow(
-            context,
-            icon: Icons.emoji_events_outlined,
-            iconColor: colorScheme.primary,
-            label: 'Best streak',
-            value: '${streak.bestStreak} days',
-          ),
-          const SizedBox(height: Spacing.sm),
-          _buildStreakRow(
-            context,
-            icon: Icons.calendar_month_outlined,
-            iconColor: colorScheme.onSurfaceVariant,
-            label: 'Days this month',
-            value: '${streak.daysThisMonth} of ${streak.totalDaysInMonth}',
-          ),
-        ],
+        children: genres.asMap().entries.map((entry) {
+          final genre = entry.value;
+          final color = chartColors[entry.key % chartColors.length];
+          final pct = (genre.percentage * 100).round();
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: entry.key < genres.length - 1 ? Spacing.md : 0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      genre.genre,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      '$pct%',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: LinearProgressIndicator(
+                    value: genre.percentage.clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -616,39 +585,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 ),
               ),
               const SizedBox(height: Spacing.lg),
-              // Second row: Session stats + Books per month (if applicable)
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _buildDesktopSessionStatsCard(context, provider),
-                    ),
-                    const SizedBox(width: Spacing.lg),
-                    if (provider.selectedPeriod == StatsPeriod.year ||
-                        provider.selectedPeriod == StatsPeriod.allTime)
-                      Expanded(
-                        child: StatSectionCard(
-                          title: 'Books per month',
-                          isDesktop: true,
-                          child: BooksPerMonthChart(
-                            monthlyStats: provider.monthlyStats,
-                            isDesktop: true,
-                          ),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: _buildDesktopGenreDistributionCard(
-                          context,
-                          provider,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: Spacing.lg),
-              // Third row: Genre distribution (if year view) + Streaks
+              // Second row: Genre + Books per month (if applicable)
               if (provider.selectedPeriod == StatsPeriod.year ||
                   provider.selectedPeriod == StatsPeriod.allTime)
                 IntrinsicHeight(
@@ -663,13 +600,23 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       ),
                       const SizedBox(width: Spacing.lg),
                       Expanded(
-                        child: _buildDesktopStreakCard(context, provider),
+                        child: StatSectionCard(
+                          title: 'Books per month',
+                          isDesktop: true,
+                          child: BooksPerMonthChart(
+                            monthlyStats: provider.monthlyStats,
+                            isDesktop: true,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 )
               else
-                _buildDesktopStreakCard(context, provider),
+                _buildDesktopGenreDistributionCard(context, provider),
+              const SizedBox(height: Spacing.lg),
+              // Reading insights (session stats + streaks)
+              _buildInsightsCard(context, provider, isDesktop: true),
             ],
           ),
         ),
@@ -684,37 +631,33 @@ class _StatisticsPageState extends State<StatisticsPage> {
     return Row(
       children: [
         Expanded(
-          child: StatCard(
+          child: CompactStatCard(
             value: provider.totalBooks.toString(),
-            label: 'Books read',
-            icon: Icons.menu_book_outlined,
+            label: 'Books',
             isDesktop: true,
           ),
         ),
         const SizedBox(width: Spacing.md),
         Expanded(
-          child: StatCard(
+          child: CompactStatCard(
             value: provider.pagesRead.toString(),
-            label: 'Pages read',
-            icon: Icons.article_outlined,
+            label: 'Pages',
             isDesktop: true,
           ),
         ),
         const SizedBox(width: Spacing.md),
         Expanded(
-          child: StatCard(
+          child: CompactStatCard(
             value: provider.totalReadingLabel,
-            label: 'Total reading time',
-            icon: Icons.schedule_outlined,
+            label: 'Reading time',
             isDesktop: true,
           ),
         ),
         const SizedBox(width: Spacing.md),
         Expanded(
-          child: StatCard(
+          child: CompactStatCard(
             value: provider.goalsCompleted.toString(),
-            label: 'Goals completed',
-            icon: Icons.flag_outlined,
+            label: 'Goals',
             isDesktop: true,
           ),
         ),
@@ -722,160 +665,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildDesktopSessionStatsCard(
-    BuildContext context,
-    StatisticsProvider provider,
-  ) {
-    final sessionStats = provider.sessionStats;
-
-    return StatSectionCard(
-      title: 'Session statistics',
-      isDesktop: true,
-      child: Column(
-        children: [
-          _buildStatRow(
-            context,
-            icon: Icons.timer_outlined,
-            label: 'Average session',
-            value: sessionStats.averageSessionLabel,
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildStatRow(
-            context,
-            icon: Icons.speed_outlined,
-            label: 'Reading velocity',
-            value: sessionStats.velocityLabel,
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildStatRow(
-            context,
-            icon: Icons.repeat_outlined,
-            label: 'Total sessions',
-            value: '${sessionStats.totalSessions}',
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildStatRow(
-            context,
-            icon: Icons.show_chart_outlined,
-            label: 'Avg. daily reading',
-            value: provider.averageReadingLabel,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDesktopGenreDistributionCard(
     BuildContext context,
     StatisticsProvider provider,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final genres = provider.genreDistribution;
-
-    if (genres.isEmpty) {
-      return StatSectionCard(
-        title: 'Books by genre',
-        isDesktop: true,
-        child: Center(
-          child: Text(
-            'No genre data available',
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Harmonious color palette based on primary
-    final chartColors = [
-      colorScheme.primary,
-      colorScheme.primary.withValues(alpha: 0.7),
-      colorScheme.tertiary,
-      colorScheme.tertiary.withValues(alpha: 0.7),
-      colorScheme.secondary,
-      colorScheme.secondary.withValues(alpha: 0.7),
-    ];
-
-    final genreData = genres.asMap().entries.map((entry) {
-      return (
-        genre: entry.value.genre,
-        percentage: entry.value.percentage,
-        color: chartColors[entry.key % chartColors.length],
-      );
-    }).toList();
-
-    return StatSectionCard(
-      title: 'Books by genre',
-      isDesktop: true,
-      child: SizedBox(
-        height: 180,
-        child: Row(
-          children: [
-            GenrePieChart(genres: genreData, isDesktop: true),
-            const SizedBox(width: Spacing.xl),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: genreData.map((genre) {
-                  return _buildLegendItem(
-                    context,
-                    color: genre.color,
-                    label: genre.genre,
-                    percentage: (genre.percentage * 100).round(),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDesktopStreakCard(
-    BuildContext context,
-    StatisticsProvider provider,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final streak = provider.streak;
-
-    return StatSectionCard(
-      title: 'Reading streaks',
-      isDesktop: true,
-      child: Column(
-        children: [
-          _buildStreakRow(
-            context,
-            icon: Icons.local_fire_department,
-            iconColor: streak.hasActiveStreak
-                ? colorScheme.tertiary
-                : colorScheme.onSurfaceVariant,
-            label: 'Current streak',
-            value: '${streak.currentStreak} days',
-            isHighlighted: streak.isCurrentBest,
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildStreakRow(
-            context,
-            icon: Icons.emoji_events_outlined,
-            iconColor: colorScheme.primary,
-            label: 'Best streak',
-            value: '${streak.bestStreak} days',
-          ),
-          const SizedBox(height: Spacing.md),
-          _buildStreakRow(
-            context,
-            icon: Icons.calendar_month_outlined,
-            iconColor: colorScheme.onSurfaceVariant,
-            label: 'Days this month',
-            value: '${streak.daysThisMonth} of ${streak.totalDaysInMonth}',
-          ),
-        ],
-      ),
-    );
+    return _buildGenreBarsCard(context, provider, isDesktop: true);
   }
 
   // ============================================================================
