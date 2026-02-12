@@ -88,7 +88,9 @@ class CompletedGoalChip extends StatelessWidget {
             const SizedBox(height: Spacing.sm),
             // Target achieved
             Text(
-              '${goal.target} ${goal.typeLabel}',
+              goal.type == GoalType.minutes
+                  ? formatDuration(goal.target)
+                  : '${goal.target} ${goal.typeLabel}',
               style: textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -166,7 +168,9 @@ class CompletedGoalChip extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${goal.target} ${goal.typeLabel}',
+                          goal.type == GoalType.minutes
+                              ? formatDuration(goal.target)
+                              : '${goal.target} ${goal.typeLabel}',
                           style: textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -260,7 +264,15 @@ class CompletedGoalChip extends StatelessWidget {
   // DETAILS BOTTOM SHEET
   // ============================================================================
 
-  void _showDetailsSheet(BuildContext context) {
+  /// Shows the completed goal details bottom sheet.
+  ///
+  /// Can be called externally to show details for a completed goal
+  /// without needing a [CompletedGoalChip] instance.
+  static void showDetailsSheet(
+    BuildContext context, {
+    required ReadingGoal goal,
+    VoidCallback? onDelete,
+  }) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -269,6 +281,10 @@ class CompletedGoalChip extends StatelessWidget {
       builder: (context) =>
           _CompletedGoalDetailsSheet(goal: goal, onDelete: onDelete),
     );
+  }
+
+  void _showDetailsSheet(BuildContext context) {
+    showDetailsSheet(context, goal: goal, onDelete: onDelete);
   }
 
   // ============================================================================
@@ -410,7 +426,9 @@ class _CompletedGoalDetailsSheet extends StatelessWidget {
                   context,
                   icon: Icons.track_changes,
                   label: 'Target achieved',
-                  value: '${goal.current} of ${goal.target} ${goal.typeLabel}',
+                  value: goal.type == GoalType.minutes
+                      ? '${formatDuration(goal.current)} of ${formatDuration(goal.target)}'
+                      : '${goal.current} of ${goal.target} ${goal.typeLabel}',
                 ),
                 const Divider(height: Spacing.lg),
                 _buildDetailRow(

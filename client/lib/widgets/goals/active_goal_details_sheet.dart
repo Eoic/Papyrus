@@ -265,43 +265,59 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
           ),
           const SizedBox(height: Spacing.sm),
           if (_isEditingProgress) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _progressController,
-                    keyboardType: TextInputType.number,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: Spacing.sm,
-                        vertical: Spacing.sm,
+            if (widget.goal.type == GoalType.minutes)
+              _buildDurationStepper(
+                value: _currentProgress,
+                onChanged: (v) => setState(() => _currentProgress = v),
+                onSave: () {
+                  widget.onUpdateProgress?.call(_currentProgress);
+                  setState(() => _isEditingProgress = false);
+                },
+                onCancel: () {
+                  setState(() {
+                    _currentProgress = widget.goal.current;
+                    _isEditingProgress = false;
+                  });
+                },
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _progressController,
+                      keyboardType: TextInputType.number,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: Spacing.sm,
+                          vertical: Spacing.sm,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        suffixText: 'of $_currentTarget',
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      suffixText: 'of $_currentTarget',
                     ),
                   ),
-                ),
-                const SizedBox(width: Spacing.sm),
-                IconButton.filled(
-                  onPressed: _saveProgress,
-                  icon: const Icon(Icons.check, size: 20),
-                ),
-                const SizedBox(width: Spacing.xs),
-                IconButton.outlined(
-                  onPressed: () {
-                    setState(() {
-                      _isEditingProgress = false;
-                      _progressController.text = _currentProgress.toString();
-                    });
-                  },
-                  icon: const Icon(Icons.close, size: 20),
-                ),
-              ],
-            ),
+                  const SizedBox(width: Spacing.sm),
+                  IconButton.filled(
+                    onPressed: _saveProgress,
+                    icon: const Icon(Icons.check, size: 20),
+                  ),
+                  const SizedBox(width: Spacing.xs),
+                  IconButton.outlined(
+                    onPressed: () {
+                      setState(() {
+                        _isEditingProgress = false;
+                        _progressController.text = _currentProgress.toString();
+                      });
+                    },
+                    icon: const Icon(Icons.close, size: 20),
+                  ),
+                ],
+              ),
           ] else ...[
             Builder(
               builder: (context) {
@@ -319,7 +335,9 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '$_currentProgress of $_currentTarget ${widget.goal.typeLabel}',
+                            widget.goal.type == GoalType.minutes
+                                ? '${formatDuration(_currentProgress)} of ${formatDuration(_currentTarget)}'
+                                : '$_currentProgress of $_currentTarget ${widget.goal.typeLabel}',
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -396,57 +414,81 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
             ],
           ),
           const SizedBox(height: Spacing.sm),
-          // Fixed height container to prevent layout shifts
-          SizedBox(
-            height: 36,
-            child: _isEditingTarget
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _targetController,
-                          keyboardType: TextInputType.number,
-                          autofocus: true,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: Spacing.sm,
-                              vertical: Spacing.sm,
+          if (_isEditingTarget)
+            widget.goal.type == GoalType.minutes
+                ? _buildDurationStepper(
+                    value: _currentTarget,
+                    minValue: 5,
+                    onChanged: (v) => setState(() => _currentTarget = v),
+                    onSave: () {
+                      widget.onEdit?.call(_currentTarget);
+                      setState(() => _isEditingTarget = false);
+                    },
+                    onCancel: () {
+                      setState(() {
+                        _currentTarget = widget.goal.target;
+                        _isEditingTarget = false;
+                      });
+                    },
+                  )
+                : SizedBox(
+                    height: 36,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _targetController,
+                            keyboardType: TextInputType.number,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: Spacing.sm,
+                                vertical: Spacing.sm,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                              ),
+                              suffixText: widget.goal.typeLabel,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                            ),
-                            suffixText: widget.goal.typeLabel,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: Spacing.sm),
-                      IconButton.filled(
-                        onPressed: _saveTarget,
-                        icon: const Icon(Icons.check, size: 20),
-                      ),
-                      const SizedBox(width: Spacing.xs),
-                      IconButton.outlined(
-                        onPressed: () {
-                          setState(() {
-                            _isEditingTarget = false;
-                            _targetController.text = _currentTarget.toString();
-                          });
-                        },
-                        icon: const Icon(Icons.close, size: 20),
-                      ),
-                    ],
-                  )
-                : Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '$_currentTarget ${widget.goal.typeLabel}',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                        const SizedBox(width: Spacing.sm),
+                        IconButton.filled(
+                          onPressed: _saveTarget,
+                          icon: const Icon(Icons.check, size: 20),
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        IconButton.outlined(
+                          onPressed: () {
+                            setState(() {
+                              _isEditingTarget = false;
+                              _targetController.text = _currentTarget
+                                  .toString();
+                            });
+                          },
+                          icon: const Icon(Icons.close, size: 20),
+                        ),
+                      ],
                     ),
+                  )
+          else
+            SizedBox(
+              height: 36,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.goal.type == GoalType.minutes
+                      ? formatDuration(_currentTarget)
+                      : '$_currentTarget ${widget.goal.typeLabel}',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-          ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -479,6 +521,73 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
             fontWeight: FontWeight.w600,
             color: valueColor,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDurationStepper({
+    required int value,
+    required ValueChanged<int> onChanged,
+    required VoidCallback onSave,
+    required VoidCallback onCancel,
+    int minValue = 0,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sm,
+              vertical: Spacing.xs,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(color: colorScheme.outline),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: value > minValue
+                      ? () {
+                          final step = value > 60 ? 15 : 5;
+                          onChanged((value - step).clamp(minValue, value));
+                        }
+                      : null,
+                  icon: const Icon(Icons.remove, size: 20),
+                  visualDensity: VisualDensity.compact,
+                ),
+                Text(
+                  formatDuration(value),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    final step = value >= 60 ? 15 : 5;
+                    onChanged(value + step);
+                  },
+                  icon: const Icon(Icons.add, size: 20),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: Spacing.sm),
+        IconButton.filled(
+          onPressed: onSave,
+          icon: const Icon(Icons.check, size: 20),
+        ),
+        const SizedBox(width: Spacing.xs),
+        IconButton.outlined(
+          onPressed: onCancel,
+          icon: const Icon(Icons.close, size: 20),
         ),
       ],
     );

@@ -78,7 +78,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildMobileLayout(BuildContext context, StatisticsProvider provider) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Statistics')),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: provider.refresh,
@@ -567,8 +566,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
     BuildContext context,
     StatisticsProvider provider,
   ) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -576,11 +573,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with period toggle
-              // TODO: Fix unconstrained width issue with Row in SingleChildScrollView
-              // The OutlinedButton gets infinite width constraints from the scroll view
-              Text('Statistics', style: textTheme.displaySmall),
-              const SizedBox(height: Spacing.md),
+              // Period toggle
               _buildPeriodSegmentedButton(context, provider),
               // Custom range indicator
               if (provider.hasCustomRange) ...[

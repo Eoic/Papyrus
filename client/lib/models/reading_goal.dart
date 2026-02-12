@@ -1,3 +1,14 @@
+/// Formats a duration in minutes to a short human-readable string.
+///
+/// Examples: 0 → "0m", 30 → "30m", 60 → "1h", 90 → "1h 30m", 6000 → "100h"
+String formatDuration(int minutes) {
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  if (h == 0) return '${m}m';
+  if (m == 0) return '${h}h';
+  return '${h}h ${m}m';
+}
+
 /// Type of reading goal.
 enum GoalType { books, pages, minutes }
 
@@ -101,10 +112,24 @@ class ReadingGoal {
   }
 
   String _formatDateRange() {
-    final start = '${startDate.day}/${startDate.month}';
-    final end = '${endDate.day}/${endDate.month}';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final start = '${months[startDate.month - 1]} ${startDate.day}';
+    final end = '${months[endDate.month - 1]} ${endDate.day}';
     if (startDate.year != endDate.year) {
-      return '$start/${startDate.year} - $end/${endDate.year}';
+      return '$start, ${startDate.year} - $end, ${endDate.year}';
     }
     return '$start - $end';
   }
@@ -121,10 +146,11 @@ class ReadingGoal {
   /// Full goal description.
   String get description {
     if (goalDescription != null) return goalDescription!;
-    if (isCustomPeriod) {
-      return 'Read $targetValue $typeLabel';
-    }
-    return 'Read $targetValue $typeLabel $periodLabel';
+    final valueStr = type == GoalType.minutes
+        ? formatDuration(targetValue)
+        : '$targetValue $typeLabel';
+    if (isCustomPeriod) return 'Read $valueStr';
+    return 'Read $valueStr $periodLabel';
   }
 
   /// Display title for the goal.
@@ -138,7 +164,10 @@ class ReadingGoal {
     if (isCompleted) {
       return 'Goal completed!';
     }
-    return '$remaining $typeLabel to go';
+    final remainStr = type == GoalType.minutes
+        ? formatDuration(remaining)
+        : '$remaining $typeLabel';
+    return '$remainStr to go';
   }
 
   /// Recurrence label for display.

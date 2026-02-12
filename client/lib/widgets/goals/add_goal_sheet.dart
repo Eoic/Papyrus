@@ -57,6 +57,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   GoalType _selectedType = GoalType.books;
   GoalPeriod _selectedPeriod = GoalPeriod.yearly;
   final _targetController = TextEditingController(text: '12');
+  int _durationMinutes = 30;
 
   // Custom date range
   DateTime _startDate = DateTime.now();
@@ -184,6 +185,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
                   setState(() {
                     _selectedType = value;
                     _targetController.text = _getDefaultTarget(value);
+                    if (value == GoalType.minutes) _durationMinutes = 30;
                   });
                 }
               },
@@ -198,20 +200,23 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
               ),
             ),
             const SizedBox(height: Spacing.sm),
-            TextFormField(
-              controller: _targetController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+            if (_selectedType == GoalType.minutes)
+              _buildDurationPicker(colorScheme, textTheme)
+            else
+              TextFormField(
+                controller: _targetController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.md,
+                    vertical: Spacing.sm,
+                  ),
+                  suffixText: _getTypeSuffix(_selectedType),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.md,
-                  vertical: Spacing.sm,
-                ),
-                suffixText: _getTypeSuffix(_selectedType),
               ),
-            ),
             const SizedBox(height: Spacing.lg),
 
             // Period selection (for recurring and one-off)
@@ -303,6 +308,77 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
     );
   }
 
+  Widget _buildDurationPicker(ColorScheme colorScheme, TextTheme textTheme) {
+    const presets = [15, 30, 60, 120];
+    const presetLabels = ['15m', '30m', '1h', '2h'];
+
+    return Column(
+      children: [
+        // Preset chips
+        Wrap(
+          spacing: Spacing.sm,
+          children: List.generate(presets.length, (i) {
+            return ChoiceChip(
+              label: Text(presetLabels[i]),
+              selected: _durationMinutes == presets[i],
+              onSelected: (_) {
+                setState(() => _durationMinutes = presets[i]);
+              },
+            );
+          }),
+        ),
+        const SizedBox(height: Spacing.md),
+        // Stepper row
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.md,
+            vertical: Spacing.sm,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(color: colorScheme.outline),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: _durationMinutes > 5
+                    ? () {
+                        setState(() {
+                          final step = _durationMinutes > 60 ? 15 : 5;
+                          _durationMinutes = (_durationMinutes - step).clamp(
+                            5,
+                            _durationMinutes,
+                          );
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.remove),
+              ),
+              const SizedBox(width: Spacing.md),
+              Text(
+                formatDuration(_durationMinutes),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: Spacing.md),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    final step = _durationMinutes >= 60 ? 15 : 5;
+                    _durationMinutes += step;
+                  });
+                },
+                icon: const Icon(Icons.add),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildDateButton(
     BuildContext context, {
     required String label,
@@ -379,7 +455,9 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   }
 
   void _onCreate() {
-    final target = int.tryParse(_targetController.text) ?? 0;
+    final target = _selectedType == GoalType.minutes
+        ? _durationMinutes
+        : (int.tryParse(_targetController.text) ?? 0);
     if (target <= 0) return;
 
     final GoalPeriod period;

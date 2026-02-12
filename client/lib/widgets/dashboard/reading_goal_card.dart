@@ -95,7 +95,9 @@ class ReadingGoalCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${goal.current}/${goal.target}',
+                goal.type == GoalType.minutes
+                    ? '${formatDuration(goal.current)}/${formatDuration(goal.target)}'
+                    : '${goal.current}/${goal.target}',
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
