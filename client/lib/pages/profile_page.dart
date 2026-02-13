@@ -334,8 +334,6 @@ class _ProfilePageState extends State<ProfilePage> {
       width: 240,
       child: Column(
         children: [
-          _buildNavHeader(context),
-          Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: Spacing.sm),
           Expanded(
             child: SingleChildScrollView(
@@ -422,43 +420,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildNavHeader(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(Spacing.md),
-      child: Row(
-        children: [
-          _buildAvatar(context, size: 48),
-          const SizedBox(width: Spacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getDisplayName(),
-                  style: textTheme.titleSmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _getEmail(),
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildNavItem(
     BuildContext context, {
     required IconData icon,
@@ -534,10 +495,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildDesktopContent(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(Spacing.xl),
-      child: Align(
-        alignment: Alignment.topLeft,
+    return Align(
+      alignment: Alignment.topLeft,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(Spacing.xl),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
