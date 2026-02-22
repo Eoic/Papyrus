@@ -181,8 +181,8 @@ Releases are automated via GitHub Actions. To create a new release:
 
 | Resource | Description |
 |----------|-------------|
-| [Documentation]([https://karolis-1.gitbook.io/papyrus-project/](https://eoic.github.io/Papyrus/) | Full project specification |
-| [API specification](docs/src/api/openapi.yaml) | OpenAPI |
+| [Documentation](https://eoic.github.io/Papyrus/) | Full project specification |
+| [API specification](docs/src/api/openapi.yaml) | OAS |
 
 ## License
 
