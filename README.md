@@ -181,10 +181,8 @@ Releases are automated via GitHub Actions. To create a new release:
 
 | Resource | Description |
 |----------|-------------|
-| [Documentation](https://karolis-1.gitbook.io/papyrus-project/) | Full project specification |
-| [API specification](docs/src/api/openapi.yaml) | OpenAPI/Swagger definition |
-| [Figma prototype](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus) | UI/UX design |
-| [Trello board](https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus) | Project management |
+| [Documentation]([https://karolis-1.gitbook.io/papyrus-project/](https://eoic.github.io/Papyrus/) | Full project specification |
+| [API specification](docs/src/api/openapi.yaml) | OpenAPI |
 
 ## License
 
