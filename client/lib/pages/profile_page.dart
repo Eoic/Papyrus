@@ -1376,9 +1376,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _navigateToEditProfile(BuildContext context) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Edit profile coming soon')));
+    context.go('/profile/edit');
   }
 
   void _showLicenses(BuildContext context) {

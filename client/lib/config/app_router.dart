@@ -13,6 +13,7 @@ import 'package:papyrus/pages/goals_page.dart';
 import 'package:papyrus/pages/library_page.dart';
 import 'package:papyrus/pages/forgot_password_page.dart';
 import 'package:papyrus/pages/login_page.dart';
+import 'package:papyrus/pages/edit_profile_page.dart';
 import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
 import 'package:papyrus/pages/search_options_page.dart';
@@ -202,6 +203,16 @@ class AppRouter {
               key: state.pageKey,
               child: const ProfilePage(),
             ),
+            routes: [
+              GoRoute(
+                name: 'EDIT_PROFILE',
+                path: 'edit',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: const EditProfilePage(),
+                ),
+              ),
+            ],
           ),
           // Developer Options (debug only)
           if (kDebugMode)
