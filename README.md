@@ -6,8 +6,6 @@
 
   <p>
     <a href="https://eoic.github.io/Papyrus/"><img src="https://img.shields.io/badge/Documentation-blue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
-    <a href="https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus"><img src="https://img.shields.io/badge/Trello-Board-blue?logo=trello&logoColor=white" alt="Trello Board"/></a>
-    <a href="https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus"><img src="https://img.shields.io/badge/Figma-Prototype-orange?logo=figma&logoColor=white" alt="Figma Prototype"/></a>
     <a href="https://codecov.io/gh/Eoic/Papyrus"><img src="https://codecov.io/gh/Eoic/Papyrus/branch/master/graph/badge.svg" alt="Coverage"/></a>
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"/>
   </p>
@@ -183,10 +181,8 @@ Releases are automated via GitHub Actions. To create a new release:
 
 | Resource | Description |
 |----------|-------------|
-| [Documentation](https://karolis-1.gitbook.io/papyrus-project/) | Full project specification |
-| [API specification](docs/src/api/openapi.yaml) | OpenAPI/Swagger definition |
-| [Figma prototype](https://www.figma.com/design/nnL41KQvrlVU4ecF8mtB07/Papyrus) | UI/UX design |
-| [Trello board](https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus) | Project management |
+| [Documentation](https://eoic.github.io/Papyrus/) | Full project specification |
+| [API specification](docs/src/api/openapi.yaml) | OAS |
 
 ## License
 
