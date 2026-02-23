@@ -17,9 +17,7 @@ router = APIRouter()
 
 
 @router.post("", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
-async def create_review(
-    user_id: CurrentUserId, request: CreateReviewRequest
-) -> ReviewResponse:
+async def create_review(user_id: CurrentUserId, request: CreateReviewRequest) -> ReviewResponse:
     """Create a review for a book."""
     return ReviewResponse(
         review_id=uuid4(),

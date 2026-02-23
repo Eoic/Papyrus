@@ -32,9 +32,7 @@ async def get_own_profile(user_id: CurrentUserId) -> CommunityProfile:
 
 
 @router.patch("/me", response_model=CommunityProfile, summary="Update community profile")
-async def update_profile(
-    user_id: CurrentUserId, request: UpdateProfileRequest
-) -> CommunityProfile:
+async def update_profile(user_id: CurrentUserId, request: UpdateProfileRequest) -> CommunityProfile:
     """Update the authenticated user's community profile."""
     return CommunityProfile(
         user_id=user_id,
@@ -53,12 +51,8 @@ async def update_profile(
     )
 
 
-@router.get(
-    "/{username}", response_model=CommunityProfile, summary="Get user profile by username"
-)
-async def get_profile_by_username(
-    user_id: CurrentUserId, username: str
-) -> CommunityProfile:
+@router.get("/{username}", response_model=CommunityProfile, summary="Get user profile by username")
+async def get_profile_by_username(user_id: CurrentUserId, username: str) -> CommunityProfile:
     """Return a user's public community profile."""
     return CommunityProfile(
         user_id=uuid4(),

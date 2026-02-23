@@ -10,9 +10,7 @@ router = APIRouter()
 
 
 @router.get("", response_model=ActivityFeed, summary="Personal feed")
-async def get_personal_feed(
-    user_id: CurrentUserId, pagination: Pagination
-) -> ActivityFeed:
+async def get_personal_feed(user_id: CurrentUserId, pagination: Pagination) -> ActivityFeed:
     """Get activity feed from followed users."""
     return ActivityFeed(
         activities=[],
@@ -28,9 +26,7 @@ async def get_personal_feed(
 
 
 @router.get("/global", response_model=ActivityFeed, summary="Global feed")
-async def get_global_feed(
-    user_id: CurrentUserId, pagination: Pagination
-) -> ActivityFeed:
+async def get_global_feed(user_id: CurrentUserId, pagination: Pagination) -> ActivityFeed:
     """Get global/trending activity feed."""
     return ActivityFeed(
         activities=[],

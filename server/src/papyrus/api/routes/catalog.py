@@ -72,9 +72,7 @@ async def add_catalog_book(
     )
 
 
-@router.get(
-    "/books/{book_id}/reviews", response_model=ReviewList, summary="Get book reviews"
-)
+@router.get("/books/{book_id}/reviews", response_model=ReviewList, summary="Get book reviews")
 async def get_book_reviews(
     user_id: CurrentUserId, book_id: UUID, pagination: Pagination
 ) -> ReviewList:
@@ -97,9 +95,7 @@ async def get_book_reviews(
     response_model=BookRatingsSummary,
     summary="Get rating distribution",
 )
-async def get_ratings_distribution(
-    user_id: CurrentUserId, book_id: UUID
-) -> BookRatingsSummary:
+async def get_ratings_distribution(user_id: CurrentUserId, book_id: UUID) -> BookRatingsSummary:
     """Get rating distribution for a catalog book."""
     return BookRatingsSummary(
         catalog_book_id=book_id, average_rating=None, rating_count=0, distribution=[]
