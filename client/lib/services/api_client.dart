@@ -108,7 +108,9 @@ class ApiResponse {
 
   bool get isSuccess => statusCode >= 200 && statusCode < 300;
 
-  Map<String, dynamic> get json => jsonDecode(body) as Map<String, dynamic>;
+  Map<String, dynamic>? get json =>
+      body.isNotEmpty ? jsonDecode(body) as Map<String, dynamic> : null;
 
-  List<dynamic> get jsonList => jsonDecode(body) as List<dynamic>;
+  List<dynamic>? get jsonList =>
+      body.isNotEmpty ? jsonDecode(body) as List<dynamic> : null;
 }

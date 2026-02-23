@@ -77,7 +77,7 @@ async def react_to_review(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.delete("/{review_id}/react", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_reaction(user_id: CurrentUserId, review_id: UUID) -> Response:
-    """Remove a reaction from a review."""
+@router.delete("/{review_id}/react/{reaction_type}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_reaction(user_id: CurrentUserId, review_id: UUID, reaction_type: str) -> Response:
+    """Remove a specific reaction from a review."""
     return Response(status_code=status.HTTP_204_NO_CONTENT)

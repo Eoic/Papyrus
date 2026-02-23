@@ -58,7 +58,7 @@ def test_react_to_review(client: TestClient, auth_headers: dict[str, str]):
 
 def test_remove_reaction(client: TestClient, auth_headers: dict[str, str]):
     review_id = str(uuid4())
-    response = client.delete(f"/v1/reviews/{review_id}/react", headers=auth_headers)
+    response = client.delete(f"/v1/reviews/{review_id}/react/like", headers=auth_headers)
     assert response.status_code == 204
 
 
