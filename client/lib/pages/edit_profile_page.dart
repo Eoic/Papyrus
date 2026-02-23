@@ -80,7 +80,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
       body: SafeArea(
-        child: isDesktop ? _buildDesktopBody(context) : _buildMobileBody(context),
+        child: isDesktop
+            ? _buildDesktopBody(context)
+            : _buildMobileBody(context),
       ),
     );
   }
@@ -325,9 +327,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 title: Text(
                   'Remove photo',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
                 onTap: () {
                   Navigator.pop(sheetContext);
