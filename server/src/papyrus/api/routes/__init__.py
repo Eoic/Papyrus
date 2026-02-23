@@ -16,6 +16,7 @@ from papyrus.api.routes import (
     saved_filters,
     series,
     shelves,
+    social,
     storage,
     sync,
     tags,
@@ -43,3 +44,4 @@ api_router.include_router(
 )
 api_router.include_router(saved_filters.router, prefix="/saved-filters", tags=["Saved Filters"])
 api_router.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
+api_router.include_router(social.router, prefix="/social", tags=["Social"])
