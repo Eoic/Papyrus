@@ -1,0 +1,75 @@
+.pillars {
+  padding: var(--space-5xl) 0;
+}
+
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-lg);
+}
+
+.pillar-card {
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  text-align: center;
+  transition: border-color var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.pillar-card:hover {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.pillar-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-light);
+  margin-bottom: var(--space-md);
+}
+
+.pillar-icon svg {
+  color: var(--color-accent);
+}
+
+.pillar-heading {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+  letter-spacing: -0.01em;
+}
+
+.pillar-body {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+// --- Tablet (< 840px) ---
+@media (max-width: 839px) {
+  .pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// --- Mobile (< 600px) ---
+@media (max-width: 599px) {
+  .pillars {
+    padding: var(--space-4xl) 0;
+  }
+
+  .pillars-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .pillar-card {
+    padding: var(--space-lg) var(--space-md);
+  }
+}

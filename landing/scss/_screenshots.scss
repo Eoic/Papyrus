@@ -1,0 +1,256 @@
+.screenshot-frame {
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border-light);
+}
+
+.screenshot-frame--sm {
+  max-width: 440px;
+}
+
+.screenshot-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--color-bg-alt);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.screenshot-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.screenshot-body {
+  display: flex;
+  min-height: 280px;
+}
+
+.screenshot-sidebar {
+  width: 52px;
+  background: var(--color-bg-alt);
+  border-right: 1px solid var(--color-border-light);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.screenshot-sidebar--mini {
+  width: 44px;
+  padding: 10px 6px;
+}
+
+.screenshot-sidebar-item {
+  height: 8px;
+  border-radius: 3px;
+  background: var(--color-border);
+  opacity: 0.5;
+}
+
+.screenshot-sidebar-item.active {
+  background: var(--color-accent);
+  opacity: 1;
+}
+
+.screenshot-main {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.screenshot-toolbar {
+  height: 10px;
+  width: 60%;
+  border-radius: 3px;
+  background: var(--color-bg-alt);
+}
+
+/* Library grid mockup */
+.screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  flex: 1;
+}
+
+.screenshot-book {
+  background: var(--book-color, var(--color-border));
+  border-radius: 3px;
+  aspect-ratio: 2 / 3;
+  opacity: 0.85;
+}
+
+/* Shelves mockup */
+.screenshot-shelves {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.screenshot-shelf-label {
+  height: 6px;
+  width: 40%;
+  border-radius: 3px;
+  background: var(--color-text-tertiary);
+  opacity: 0.3;
+  margin-top: 4px;
+}
+
+.screenshot-shelf-row {
+  display: flex;
+  gap: 6px;
+}
+
+.screenshot-book-sm {
+  width: 36px;
+  height: 52px;
+  background: var(--book-color, var(--color-border));
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+/* Reader mockup */
+.screenshot-body--reader {
+  display: flex;
+  min-height: 260px;
+}
+
+.screenshot-reader {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  justify-content: center;
+}
+
+.screenshot-reader-line {
+  height: 5px;
+  border-radius: 2px;
+  background: var(--color-border);
+  opacity: 0.4;
+  width: 85%;
+}
+
+.screenshot-reader-line.long { width: 95%; }
+.screenshot-reader-line.med { width: 70%; }
+.screenshot-reader-line.short { width: 45%; }
+
+.screenshot-reader-settings {
+  width: 100px;
+  background: var(--color-bg-alt);
+  border-left: 1px solid var(--color-border-light);
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.screenshot-setting-row {
+  height: 8px;
+  border-radius: 3px;
+  background: var(--color-border);
+  opacity: 0.5;
+}
+
+/* Annotations mockup */
+.screenshot-body--annotations {
+  min-height: 260px;
+}
+
+.screenshot-annotations {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.screenshot-highlight {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.screenshot-hl-bar {
+  width: 3px;
+  min-height: 28px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--hl-color, var(--color-accent));
+  flex-shrink: 0;
+}
+
+.screenshot-hl-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 4px 0;
+}
+
+.screenshot-hl-note {
+  width: 100%;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--hl-color, var(--color-accent));
+  opacity: 0.1;
+  margin-top: 4px;
+}
+
+/* Stats mockup */
+.screenshot-body--stats {
+  min-height: 260px;
+}
+
+.screenshot-stats {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.screenshot-stat-cards {
+  display: flex;
+  gap: 8px;
+}
+
+.screenshot-stat-card {
+  flex: 1;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--color-bg-alt);
+}
+
+.screenshot-chart {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.screenshot-bar {
+  flex: 1;
+  height: var(--bar-h, 50%);
+  border-radius: 3px 3px 0 0;
+  background: var(--color-accent);
+  opacity: 0.6;
+}
+
+.screenshot-bar:nth-child(even) {
+  background: var(--color-sage);
+  opacity: 0.5;
+}

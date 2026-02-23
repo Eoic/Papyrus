@@ -1,0 +1,13 @@
+{
+  "name": "papyrus-landing",
+  "private": true,
+  "scripts": {
+    "build": "sass scss/style.scss css/style.css --style=expanded --no-source-map",
+    "watch": "sass scss/style.scss css/style.css --style=expanded --no-source-map --watch",
+    "dev": "concurrently -n scss,serve -c blue,green \"npm run watch\" \"python3 -m http.server 8090\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "sass": "^1.80.0"
+  }
+}

@@ -2,3 +2,5 @@ docs/site/
 NOTES.md
 firebase-debug.log
 .worktrees/
+landing/node_modules/
+landing/css/

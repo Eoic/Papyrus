@@ -1,0 +1,105 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.5rem;
+  transition: all var(--duration-normal) var(--ease-out);
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+
+.btn svg {
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  font-size: 0.875rem;
+  padding: 0.5rem 1.25rem;
+}
+
+.btn-lg {
+  font-size: 1rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: var(--radius-md);
+}
+
+.btn-xl {
+  font-size: 1.0625rem;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-lg);
+}
+
+/* Primary — amber accent */
+.btn-primary {
+  background: var(--color-accent);
+  color: #FFFFFF;
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  box-shadow: 0 4px 16px rgba(196, 125, 43, 0.3);
+}
+
+/* Outline — dark text */
+.btn-outline {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn-outline:hover {
+  border-color: var(--color-text);
+  background: rgba(45, 42, 38, 0.03);
+}
+
+/* Light — for dark backgrounds */
+.btn-light {
+  background: var(--color-dark-text);
+  color: var(--color-dark);
+}
+
+.btn-light:hover {
+  background: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(250, 247, 242, 0.3);
+}
+
+.btn-outline-light {
+  background: transparent;
+  color: var(--color-dark-text);
+  border-color: rgba(250, 247, 242, 0.25);
+}
+
+.btn-outline-light:hover {
+  border-color: rgba(250, 247, 242, 0.5);
+  background: rgba(250, 247, 242, 0.05);
+}
+
+/* Dark — for CTA section */
+.btn-dark {
+  background: var(--color-dark);
+  color: var(--color-dark-text);
+}
+
+.btn-dark:hover {
+  background: #1A1815;
+  box-shadow: 0 4px 16px rgba(45, 42, 38, 0.4);
+}
+
+.btn-outline-dark {
+  background: transparent;
+  color: var(--color-dark);
+  border-color: rgba(45, 42, 38, 0.2);
+}
+
+.btn-outline-dark:hover {
+  border-color: rgba(45, 42, 38, 0.4);
+  background: rgba(45, 42, 38, 0.03);
+}

@@ -1,0 +1,83 @@
+:root {
+  /* Colors — warm paper palette */
+  --color-bg: #FDFAF5;
+  --color-bg-alt: #F3EDE4;
+  --color-surface: #FFFFFF;
+  --color-text: #2D2A26;
+  --color-text-secondary: #736B63;
+  --color-text-tertiary: #9B9490;
+
+  /* Accent — aged manuscript gold */
+  --color-accent: #C47D2B;
+  --color-accent-hover: #A86820;
+  --color-accent-light: rgba(196, 125, 43, 0.08);
+
+  /* Dark sections */
+  --color-dark: #2D2A26;
+  --color-dark-surface: #3A3632;
+  --color-dark-text: #FAF7F2;
+  --color-dark-text-secondary: #B5AEA6;
+
+  /* CTA section */
+  --color-cta-bg: #C47D2B;
+  --color-cta-bg-end: #A86820;
+
+  /* Borders */
+  --color-border: #E8E1D8;
+  --color-border-light: #F0EBE3;
+
+  /* Sage green accent */
+  --color-sage: #5B7065;
+
+  /* Typography */
+  --font-display: 'Fraunces', 'Georgia', serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+  --space-5xl: 8rem;
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-padding: 1.5rem;
+  --nav-height: 64px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(45, 42, 38, 0.06);
+  --shadow-md: 0 4px 12px rgba(45, 42, 38, 0.08);
+  --shadow-lg: 0 8px 30px rgba(45, 42, 38, 0.1);
+  --shadow-xl: 0 16px 50px rgba(45, 42, 38, 0.12);
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+}
+
+@media (max-width: 839px) {
+  :root {
+    --container-padding: 1.25rem;
+  }
+}
+
+@media (max-width: 599px) {
+  :root {
+    --container-padding: 1rem;
+    --nav-height: 56px;
+  }
+}
