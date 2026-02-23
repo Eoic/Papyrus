@@ -43,9 +43,7 @@ def test_get_book_reviews(client: TestClient, auth_headers: dict[str, str]):
 
 def test_get_ratings_distribution(client: TestClient, auth_headers: dict[str, str]):
     book_id = str(uuid4())
-    response = client.get(
-        f"/v1/catalog/books/{book_id}/ratings/distribution", headers=auth_headers
-    )
+    response = client.get(f"/v1/catalog/books/{book_id}/ratings/distribution", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert "catalog_book_id" in data
