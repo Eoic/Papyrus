@@ -7,6 +7,7 @@ from papyrus.api.routes import (
     auth,
     bookmarks,
     books,
+    catalog,
     files,
     goals,
     notes,
@@ -45,3 +46,4 @@ api_router.include_router(
 api_router.include_router(saved_filters.router, prefix="/saved-filters", tags=["Saved Filters"])
 api_router.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
 api_router.include_router(social.router, prefix="/social", tags=["Social"])
+api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
