@@ -13,6 +13,7 @@ from papyrus.api.routes import (
     notes,
     profiles,
     progress,
+    ratings,
     reading_profiles,
     saved_filters,
     series,
@@ -47,3 +48,4 @@ api_router.include_router(saved_filters.router, prefix="/saved-filters", tags=["
 api_router.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
 api_router.include_router(social.router, prefix="/social", tags=["Social"])
 api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
+api_router.include_router(ratings.router, prefix="/ratings", tags=["Ratings"])
