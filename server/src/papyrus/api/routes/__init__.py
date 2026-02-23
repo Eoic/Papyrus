@@ -8,6 +8,7 @@ from papyrus.api.routes import (
     bookmarks,
     books,
     catalog,
+    feed,
     files,
     goals,
     notes,
@@ -23,6 +24,7 @@ from papyrus.api.routes import (
     storage,
     sync,
     tags,
+    user_books,
     users,
 )
 
@@ -51,3 +53,5 @@ api_router.include_router(social.router, prefix="/social", tags=["Social"])
 api_router.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
 api_router.include_router(ratings.router, prefix="/ratings", tags=["Ratings"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["Reviews"])
+api_router.include_router(user_books.router, prefix="/user-books", tags=["User Books"])
+api_router.include_router(feed.router, prefix="/feed", tags=["Feed"])
