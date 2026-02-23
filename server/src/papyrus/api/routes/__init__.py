@@ -10,6 +10,7 @@ from papyrus.api.routes import (
     files,
     goals,
     notes,
+    profiles,
     progress,
     reading_profiles,
     saved_filters,
@@ -41,3 +42,4 @@ api_router.include_router(
     reading_profiles.router, prefix="/reading-profiles", tags=["Reading Profiles"]
 )
 api_router.include_router(saved_filters.router, prefix="/saved-filters", tags=["Saved Filters"])
+api_router.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
