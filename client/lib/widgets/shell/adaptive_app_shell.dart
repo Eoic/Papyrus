@@ -79,6 +79,12 @@ class AdaptiveAppShell extends StatelessWidget {
       ],
     ),
     AppShellNavItem(
+      path: '/community',
+      label: 'Community',
+      icon: Icons.people_outlined,
+      selectedIcon: Icons.people,
+    ),
+    AppShellNavItem(
       path: '/goals',
       label: 'Goals',
       icon: Icons.emoji_events_outlined,

@@ -2,9 +2,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/data/sample_data.dart';
+import 'package:papyrus/providers/community_provider.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/google_sign_in_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
+import 'package:papyrus/providers/social_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sidebar_provider.dart';
 import 'package:papyrus/themes/app_theme.dart';
@@ -62,6 +64,8 @@ class _PapyrusState extends State<Papyrus> {
         ChangeNotifierProvider(
           create: (_) => PreferencesProvider(widget.prefs),
         ),
+        ChangeNotifierProvider(create: (_) => CommunityProvider()),
+        ChangeNotifierProvider(create: (_) => SocialProvider()),
       ],
       child: Consumer2<DisplayModeProvider, PreferencesProvider>(
         builder: (context, displayModeProvider, preferencesProvider, child) {

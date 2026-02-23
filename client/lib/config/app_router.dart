@@ -22,7 +22,11 @@ import 'package:papyrus/pages/shelves_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
 import 'package:papyrus/pages/annotations_page.dart';
 import 'package:papyrus/pages/notes_page.dart';
+import 'package:papyrus/pages/community_book_page.dart';
+import 'package:papyrus/pages/community_page.dart';
+import 'package:papyrus/pages/user_profile_page.dart';
 import 'package:papyrus/pages/welcome_page.dart';
+import 'package:papyrus/pages/write_review_page.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 
 class AppRouter {
@@ -176,6 +180,50 @@ class AppRouter {
                     child: BookEditPage(id: bookId),
                   );
                 },
+              ),
+            ],
+          ),
+          // Community
+          GoRoute(
+            name: 'COMMUNITY',
+            path: '/community',
+            pageBuilder: (context, state) => NoTransitionPage(
+              key: state.pageKey,
+              child: const CommunityPage(),
+            ),
+            routes: [
+              GoRoute(
+                name: 'USER_PROFILE',
+                path: 'user/:userId',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: UserProfilePage(
+                    userId: state.pathParameters['userId'],
+                  ),
+                ),
+              ),
+              GoRoute(
+                name: 'COMMUNITY_BOOK',
+                path: 'book/:catalogBookId',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  key: state.pageKey,
+                  child: CommunityBookPage(
+                    catalogBookId: state.pathParameters['catalogBookId'],
+                  ),
+                ),
+                routes: [
+                  GoRoute(
+                    name: 'WRITE_REVIEW',
+                    path: 'review',
+                    pageBuilder: (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: WriteReviewPage(
+                        catalogBookId: state.pathParameters['catalogBookId'],
+                        bookTitle: state.uri.queryParameters['title'],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
