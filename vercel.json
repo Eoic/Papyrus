@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm --prefix landing ci && npm --prefix landing run build",
+  "outputDirectory": "landing",
+  "framework": null
+}
