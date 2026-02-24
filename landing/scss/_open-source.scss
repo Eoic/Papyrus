@@ -21,10 +21,14 @@
   background: var(--color-dark-surface);
 }
 
-.oss-item svg {
+.oss-item > i,
+.oss-item > svg {
   color: var(--color-accent);
   flex-shrink: 0;
   margin-top: 2px;
+  font-size: 1.25rem;
+  width: 24px;
+  text-align: center;
 }
 
 .oss-item p {

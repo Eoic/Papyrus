@@ -10,7 +10,7 @@
 }
 
 .nav.scrolled {
-  background: rgba(253, 250, 245, 0.92);
+  background: var(--color-nav-bg-scrolled);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 1px 0 var(--color-border);
@@ -34,8 +34,10 @@
   flex-shrink: 0;
 }
 
-.nav-logo svg {
+.nav-logo > i,
+.nav-logo > svg {
   color: var(--color-accent);
+  font-size: 1.375rem;
 }
 
 .nav-links {
@@ -75,6 +77,110 @@
 .nav-cta {
   margin-left: var(--space-lg);
   flex-shrink: 0;
+}
+
+// ── Theme Toggle (fixed top-right corner) ────────────────
+.theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: var(--container-padding);
+  z-index: 1002;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.theme-toggle-btn:hover {
+  color: var(--color-text);
+  background: var(--color-accent-light);
+}
+
+.theme-toggle-btn > i {
+  font-size: 1rem;
+}
+
+// Dropdown uses explicit light/dark surface so label contrast
+// is always correct regardless of active theme.
+.theme-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  --_dd-bg: #FFFFFF;
+  --_dd-border: #E0DCD6;
+  --_dd-text: #2D2A26;
+  --_dd-text-dim: #736B63;
+  --_dd-hover: #F3EDE4;
+  --_dd-shadow: rgba(0, 0, 0, 0.12);
+  background: var(--_dd-bg);
+  border: 1px solid var(--_dd-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 30px var(--_dd-shadow);
+  padding: var(--space-xs);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--duration-fast), visibility 0s var(--duration-fast), transform var(--duration-fast);
+  z-index: 1003;
+}
+
+html[data-theme="dark-gold"] .theme-dropdown,
+html[data-theme="dark-purple"] .theme-dropdown {
+  --_dd-bg: #2A2620;
+  --_dd-border: #3A3632;
+  --_dd-text: #F0EBE3;
+  --_dd-text-dim: #B5AEA6;
+  --_dd-hover: rgba(255, 255, 255, 0.06);
+  --_dd-shadow: rgba(0, 0, 0, 0.3);
+}
+
+.theme-dropdown.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity var(--duration-fast), visibility 0s, transform var(--duration-fast);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--_dd-text);
+  transition: background var(--duration-fast);
+}
+
+.theme-option:hover {
+  background: var(--_dd-hover);
+}
+
+.theme-option.is-active {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.theme-option-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--_dd-border);
+  flex-shrink: 0;
+}
+
+.theme-option.is-active .theme-option-swatch {
+  border-color: var(--color-accent);
 }
 
 .nav-toggle {

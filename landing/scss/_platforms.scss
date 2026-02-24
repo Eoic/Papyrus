@@ -6,26 +6,34 @@
 
 .platform-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: var(--space-lg);
   margin-bottom: var(--space-2xl);
 }
 
+// Button reset + card styles
 .platform-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   padding: var(--space-2xl) var(--space-lg);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border-light);
-  transition: all var(--duration-normal) var(--ease-out);
+  transition: border-color var(--duration-normal) var(--ease-out),
+              background var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  outline-offset: 2px;
+  position: relative;
 }
 
 .platform-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
   border-color: var(--color-accent);
 }
 
@@ -33,9 +41,22 @@
   color: var(--color-accent);
 }
 
+.platform-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+}
+
+.platform-card[aria-expanded="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+
+.platform-card[aria-expanded="true"] .platform-icon {
+  color: var(--color-accent);
+}
+
 .platform-icon {
-  width: 36px;
-  height: 36px;
+  font-size: 2rem;
+  line-height: 1;
   color: var(--color-text-secondary);
   transition: color var(--duration-normal);
 }
@@ -46,13 +67,184 @@
   color: var(--color-text);
 }
 
-.platform-card--detected {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-md);
+// ── Expansion panel (instant show/hide) ──────────────────
+.platform-details {
+  display: none;
 }
 
-.platform-card--detected .platform-icon {
+.platform-details.is-open {
+  display: block;
+  margin-bottom: var(--space-2xl);
+}
+
+// Panel container — single column by default
+.platform-details-inner {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-2xl);
+  position: relative;
+}
+
+// Two-column layout when QR code is present
+.platform-details-inner--with-qr {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+// Accent bar on the left
+.platform-details-inner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--space-lg);
+  bottom: var(--space-lg);
+  width: 3px;
+  background: var(--color-accent);
+  border-radius: 0 3px 3px 0;
+}
+
+// ── Left column (header + actions) ──────────────────────
+.platform-details-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xl);
+  padding-right: var(--space-2xl);
+}
+
+.platform-details-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+
+.platform-details-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.platform-details-version {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+// ── Actions ─────────────────────────────────────────────
+.platform-details-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.platform-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+// ── Download button ──────────────────────────────────────
+.platform-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.75rem 1.5rem;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.platform-download-btn:hover {
+  background: var(--color-accent-hover);
+}
+
+.platform-download-btn > i {
+  font-size: 0.875rem;
+}
+
+.platform-download-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+}
+
+// ── Store badges ─────────────────────────────────────────
+.platform-store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface);
+  text-decoration: none;
+  transition: border-color var(--duration-fast);
+}
+
+.platform-store-badge:hover {
+  border-color: var(--color-accent);
+}
+
+.platform-store-badge > i {
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+}
+
+// ── QR code (right column, full height) ─────────────────
+.platform-details-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding-left: var(--space-2xl);
+  border-left: 1px solid var(--color-border-light);
+}
+
+.platform-qr-code {
+  width: 148px;
+  height: 148px;
+  background: #fff;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.platform-qr-label {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+// ── Noscript fallback ────────────────────────────────────
+.platforms-noscript {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.platforms-noscript a {
   color: var(--color-accent);
+  font-weight: 500;
 }
 
 .platforms-note {
@@ -61,14 +253,38 @@
   color: var(--color-text-secondary);
 }
 
-// --- Tablet (< 840px) ---
+// ── Tablet (< 840px) ────────────────────────────────────
 @media (max-width: 839px) {
   .platform-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .platform-details-inner--with-qr {
+    flex-direction: column;
+  }
+
+  .platform-details-left {
+    padding-right: 0;
+    padding-bottom: var(--space-xl);
+  }
+
+  .platform-details-qr {
+    flex-direction: row;
+    gap: var(--space-md);
+    align-items: center;
+    padding-left: 0;
+    padding-top: var(--space-xl);
+    border-left: none;
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .platform-qr-code {
+    width: 100px;
+    height: 100px;
   }
 }
 
-// --- Mobile (< 600px) ---
+// ── Mobile (< 600px) ────────────────────────────────────
 @media (max-width: 599px) {
   .platforms {
     padding: var(--space-4xl) 0;
@@ -81,5 +297,38 @@
 
   .platform-card {
     padding: var(--space-lg);
+  }
+
+  .platform-details-inner {
+    padding: var(--space-lg);
+    padding-left: calc(var(--space-lg) + 3px);
+  }
+
+  .platform-details-header {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .platform-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .platform-download-btn {
+    justify-content: center;
+  }
+
+  .platform-store-badge {
+    justify-content: center;
+  }
+
+  .platform-details-qr {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .platform-qr-code {
+    width: 140px;
+    height: 140px;
   }
 }

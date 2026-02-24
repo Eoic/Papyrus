@@ -34,8 +34,10 @@
   margin-bottom: var(--space-md);
 }
 
-.pillar-icon svg {
+.pillar-icon > i,
+.pillar-icon > svg {
   color: var(--color-accent);
+  font-size: 1.375rem;
 }
 
 .pillar-heading {

@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Papyrus — Your books, your data, every device</title>
-  <meta name="description" content="A free, open-source e-book reader and library manager. No subscriptions. No tracking. No lock-in. Available on Android, iOS, Windows, macOS, Linux, Web, and e-ink devices.">
-  <meta name="theme-color" content="#FDFAF5">
+  <meta name="description" content="A free, open-source e-book reader and library manager. No subscriptions. No tracking. No lock-in. Available on Android, iOS, Windows, macOS, Linux, and Web.">
+  <meta name="theme-color" content="#FDFAF5" id="meta-theme-color">
+  <script>(function(){try{var t=localStorage.getItem('papyrus-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}})()</script>
 
   <!-- Open Graph -->
   <meta property="og:title" content="Papyrus — Your books, your data, every device">
@@ -15,6 +16,9 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 4C6 2.9 6.9 2 8 2h12l8 8v18c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2V4z' fill='%23C47D2B'/%3E%3Cpath d='M20 2v6c0 1.1.9 2 2 2h6' fill='none' stroke='%23A86820' stroke-width='1.5'/%3E%3Cpath d='M10 16h12M10 20h12M10 24h8' stroke='%23fff' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+
+  <!-- Icons -->
+  <script src="https://kit.fontawesome.com/ad3b985a78.js" crossorigin="anonymous"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,11 +33,7 @@
   <nav class="nav" id="nav">
     <div class="nav-inner container">
       <a href="#" class="nav-logo" aria-label="Papyrus home">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M6 4C6 2.9 6.9 2 8 2h12l8 8v18c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2V4z" fill="currentColor"/>
-          <path d="M20 2v6c0 1.1.9 2 2 2h6" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-          <path d="M10 16h12M10 20h12M10 24h8" stroke="#FDFAF5" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
+        <i class="fa-solid fa-scroll" aria-hidden="true"></i>
         <span>Papyrus</span>
       </a>
 
@@ -54,6 +54,30 @@
     </div>
   </nav>
 
+  <div class="theme-toggle" id="theme-toggle">
+    <button class="theme-toggle-btn" aria-label="Change theme" aria-haspopup="true" aria-expanded="false">
+      <i class="fa-solid fa-palette" aria-hidden="true"></i>
+    </button>
+    <div class="theme-dropdown" id="theme-dropdown" role="menu">
+      <button class="theme-option" role="menuitem" data-theme="light-gold">
+        <span class="theme-option-swatch" style="background: #FDFAF5; border-color: #C47D2B"></span>
+        Light gold
+      </button>
+      <button class="theme-option" role="menuitem" data-theme="dark-gold">
+        <span class="theme-option-swatch" style="background: #1A1814; border-color: #D4933A"></span>
+        Dark gold
+      </button>
+      <button class="theme-option" role="menuitem" data-theme="light-purple">
+        <span class="theme-option-swatch" style="background: #FAFAFE; border-color: #673AB7"></span>
+        Light purple
+      </button>
+      <button class="theme-option" role="menuitem" data-theme="dark-purple">
+        <span class="theme-option-swatch" style="background: #151318; border-color: #9C7AE8"></span>
+        Dark purple
+      </button>
+    </div>
+  </div>
+
   <main>
 
     <!-- ========== HERO ========== -->
@@ -65,11 +89,11 @@
           <div class="hero-actions">
             <a href="#platforms" class="btn btn-primary btn-lg">Download Papyrus</a>
             <a href="https://github.com/Eoic/Papyrus" class="btn btn-outline btn-lg" target="_blank" rel="noopener">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <i class="fa-brands fa-github" aria-hidden="true"></i>
               View on GitHub
             </a>
           </div>
-          <p class="hero-platforms">Available for Android, iOS, Windows, macOS, Linux, Web, and e-ink devices</p>
+          <p class="hero-platforms">Available for Android, iOS, Windows, macOS, Linux, and Web. E-ink friendly mode included.</p>
         </div>
 
         <div class="hero-visual">
@@ -90,15 +114,15 @@
               <div class="screenshot-main">
                 <div class="screenshot-toolbar"></div>
                 <div class="screenshot-grid">
-                  <div class="screenshot-book" style="--book-color: #C47D2B"></div>
-                  <div class="screenshot-book" style="--book-color: #5B7065"></div>
-                  <div class="screenshot-book" style="--book-color: #8B6B4D"></div>
-                  <div class="screenshot-book" style="--book-color: #6B7F99"></div>
-                  <div class="screenshot-book" style="--book-color: #9B6B6B"></div>
-                  <div class="screenshot-book" style="--book-color: #7B8B6B"></div>
-                  <div class="screenshot-book" style="--book-color: #A0845B"></div>
-                  <div class="screenshot-book" style="--book-color: #5B6B7F"></div>
-                  <div class="screenshot-book" style="--book-color: #8B7065"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
+                  <div class="screenshot-book"></div>
                 </div>
               </div>
             </div>
@@ -107,10 +131,7 @@
       </div>
 
       <div class="hero-scroll" aria-hidden="true">
-        <svg width="20" height="28" viewBox="0 0 20 28" fill="none">
-          <rect x="1" y="1" width="18" height="26" rx="9" stroke="currentColor" stroke-width="1.5"/>
-          <circle class="scroll-dot" cx="10" cy="8" r="2" fill="currentColor"/>
-        </svg>
+        <i class="fa-solid fa-angles-down"></i>
       </div>
     </section>
 
@@ -119,23 +140,23 @@
       <div class="container">
         <div class="trust-items">
           <div class="trust-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
             <span>Open source (AGPL-3.0)</span>
           </div>
           <div class="trust-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-            <span>7 platforms</span>
+            <i class="fa-solid fa-display" aria-hidden="true"></i>
+            <span>6 platforms</span>
           </div>
           <div class="trust-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
             <span>7 e-book formats</span>
           </div>
           <div class="trust-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <i class="fa-solid fa-eye-slash" aria-hidden="true"></i>
             <span>Privacy by default</span>
           </div>
           <div class="trust-item">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+            <i class="fa-solid fa-plane" aria-hidden="true"></i>
             <span>Works offline</span>
           </div>
         </div>
@@ -150,7 +171,7 @@
         <div class="pillars-grid">
           <div class="pillar-card">
             <div class="pillar-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><rect x="5" y="14" width="6" height="3" rx="1" fill="currentColor" opacity="0.2"/></svg>
+              <i class="fa-solid fa-laptop" aria-hidden="true"></i>
             </div>
             <h3 class="pillar-heading">Runs everywhere you read</h3>
             <p class="pillar-body">One app for your phone, tablet, laptop, and e-reader. Your library and reading position follow you across devices.</p>
@@ -158,7 +179,7 @@
 
           <div class="pillar-card">
             <div class="pillar-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
+              <i class="fa-solid fa-plane" aria-hidden="true"></i>
             </div>
             <h3 class="pillar-heading">No internet required</h3>
             <p class="pillar-body">Everything works offline. Import, read, annotate, and track your progress without going online. Sync when you choose to.</p>
@@ -166,7 +187,7 @@
 
           <div class="pillar-card">
             <div class="pillar-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+              <i class="fa-solid fa-lock" aria-hidden="true"></i>
             </div>
             <h3 class="pillar-heading">Your data stays yours</h3>
             <p class="pillar-body">No analytics. No tracking. No account required. Store books locally, on your own server, or on any cloud provider you trust.</p>
@@ -174,7 +195,7 @@
 
           <div class="pillar-card">
             <div class="pillar-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              <i class="fa-solid fa-heart" aria-hidden="true"></i>
             </div>
             <h3 class="pillar-heading">Free, forever</h3>
             <p class="pillar-body">No subscriptions, no premium tiers, no ads. Papyrus is open-source software that belongs to its community.</p>
@@ -219,14 +240,14 @@
                   <div class="screenshot-shelves">
                     <div class="screenshot-shelf-label"></div>
                     <div class="screenshot-shelf-row">
-                      <div class="screenshot-book-sm" style="--book-color: #C47D2B"></div>
-                      <div class="screenshot-book-sm" style="--book-color: #5B7065"></div>
-                      <div class="screenshot-book-sm" style="--book-color: #8B6B4D"></div>
+                      <div class="screenshot-book-sm"></div>
+                      <div class="screenshot-book-sm"></div>
+                      <div class="screenshot-book-sm"></div>
                     </div>
                     <div class="screenshot-shelf-label"></div>
                     <div class="screenshot-shelf-row">
-                      <div class="screenshot-book-sm" style="--book-color: #6B7F99"></div>
-                      <div class="screenshot-book-sm" style="--book-color: #9B6B6B"></div>
+                      <div class="screenshot-book-sm"></div>
+                      <div class="screenshot-book-sm"></div>
                     </div>
                   </div>
                 </div>
@@ -298,7 +319,7 @@
               </div>
               <div class="screenshot-body screenshot-body--annotations">
                 <div class="screenshot-annotations">
-                  <div class="screenshot-highlight" style="--hl-color: #C47D2B">
+                  <div class="screenshot-highlight">
                     <div class="screenshot-hl-bar"></div>
                     <div class="screenshot-hl-lines">
                       <div class="screenshot-reader-line long"></div>
@@ -306,14 +327,14 @@
                     </div>
                     <div class="screenshot-hl-note"></div>
                   </div>
-                  <div class="screenshot-highlight" style="--hl-color: #5B7065">
+                  <div class="screenshot-highlight">
                     <div class="screenshot-hl-bar"></div>
                     <div class="screenshot-hl-lines">
                       <div class="screenshot-reader-line long"></div>
                       <div class="screenshot-reader-line"></div>
                     </div>
                   </div>
-                  <div class="screenshot-highlight" style="--hl-color: #6B7F99">
+                  <div class="screenshot-highlight">
                     <div class="screenshot-hl-bar"></div>
                     <div class="screenshot-hl-lines">
                       <div class="screenshot-reader-line med"></div>
@@ -374,37 +395,41 @@
         <h2 class="section-headline">One app. Every platform.</h2>
 
         <div class="platform-grid">
-          <a href="https://github.com/Eoic/Papyrus/releases" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.523 2c-.846.006-1.855.134-2.908.392C13.56 2.137 12.55 2.007 11.703 2c-1.2-.01-2.163.283-2.688 1.04-.527.758-.54 1.856-.155 3.22-1.073 1.18-1.636 2.537-1.481 3.876.263 2.27 1.81 3.428 3.49 3.992-.328.47-.506 1.028-.547 1.58-.37.16-.783.25-1.2.254-.56.007-1.05-.22-1.516-.814-.233-.296-.488-.702-.888-.97-.398-.266-.822-.37-1.218-.36l-.135.005c-.462.03-.644.278-.592.532.052.254.287.48.522.65.32.232.654.37.92.73.204.274.362.637.544.963.413.738 1.28 1.225 2.194 1.347.364.05.724.057 1.068.04.003.382.01.703.02.897L7.84 19.5c-.017.256.184.5.64.5h7.04c.456 0 .657-.244.64-.5l-.003-.042c.006-.16.012-.462.018-.825 1.14-.218 2.074-.704 2.744-1.456.86-.967 1.24-2.266 1.27-3.736.005-.255-.014-.512-.052-.768 1.645-.582 3.04-1.74 3.284-3.906.155-1.34-.408-2.697-1.48-3.877.384-1.364.37-2.462-.157-3.22C21.26 1.413 19.128 1.987 17.523 2z"/></svg>
+          <button class="platform-card" data-platform="android" aria-expanded="false" aria-controls="platform-details">
+            <i class="platform-icon fa-brands fa-android" aria-hidden="true"></i>
             <span class="platform-name">Android</span>
-          </a>
-          <a href="https://github.com/Eoic/Papyrus/releases" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          </button>
+          <button class="platform-card" data-platform="ios" aria-expanded="false" aria-controls="platform-details">
+            <i class="platform-icon fa-brands fa-apple" aria-hidden="true"></i>
             <span class="platform-name">iOS</span>
-          </a>
-          <a href="https://github.com/Eoic/Papyrus/releases" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          </button>
+          <button class="platform-card" data-platform="windows" aria-expanded="false" aria-controls="platform-details">
+            <i class="platform-icon fa-brands fa-windows" aria-hidden="true"></i>
             <span class="platform-name">Windows</span>
-          </a>
-          <a href="https://github.com/Eoic/Papyrus/releases" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          </button>
+          <button class="platform-card" data-platform="macos" aria-expanded="false" aria-controls="platform-details">
+            <i class="platform-icon fa-brands fa-apple" aria-hidden="true"></i>
             <span class="platform-name">macOS</span>
-          </a>
-          <a href="https://github.com/Eoic/Papyrus/releases" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.504 0c-.155 0-.311.004-.466.013l.082.028c.327.118.69.302 1.032.577.338.27.662.644.87 1.136l.019.046c.163.42.238.88.238 1.332 0 .607-.12 1.197-.373 1.712-.248.51-.629.96-1.158 1.24-.22.117-.468.204-.732.256-.264.052-.545.072-.835.072-.257 0-.52-.018-.78-.055a5.55 5.55 0 01-.752-.142 3.91 3.91 0 01-.69-.24 3.156 3.156 0 01-.305-.17 2.46 2.46 0 01-.245-.168c-.043-.034-.082-.066-.115-.097-.023-.022-.04-.039-.055-.053L8.24 4.486c-.089.012-.176.028-.263.047-.443.098-.836.292-1.11.532-.272.24-.427.527-.427.836 0 .233.09.468.26.683.17.214.426.41.756.56.66.3 1.586.44 2.544.44.522 0 1.076.066 1.534.282.459.217.826.6.977 1.148.083.3.096.568.058.826-.038.258-.118.508-.228.76-.22.502-.56 1.016-.948 1.504-.777.975-1.72 1.835-2.204 2.44L8.1 15.073c-.273.349-.39.718-.39 1.07 0 .353.117.694.334.993.42.577 1.153.924 1.957.924.283 0 .554-.052.787-.127a2.87 2.87 0 00.593-.274c.38-.228.707-.535.997-.857.29-.322.552-.66.793-.972l.072-.094c.238-.31.478-.602.716-.848.238-.246.478-.445.712-.569a1.48 1.48 0 01.717-.192c.32 0 .677.113 1.012.348.335.234.645.578.889 1.012.488.87.765 2.043.765 3.3 0 .576-.056 1.166-.187 1.717a5.13 5.13 0 01-.58 1.491c-.522.86-1.33 1.497-2.393 1.742a5.55 5.55 0 01-1.306.156c-.622 0-1.258-.115-1.878-.39C11.05 22.96 10.42 22.5 9.9 21.82c-.08-.105-.157-.217-.232-.336-.02.127-.05.253-.087.378-.14.47-.43.916-.872 1.248-.441.332-1.035.553-1.785.553-.53 0-1.122-.116-1.73-.412-.608-.296-1.234-.773-1.819-1.53-.7-.905-1.094-1.928-1.243-2.918-.15-.99-.058-1.964.21-2.77.266-.808.706-1.445 1.269-1.879.563-.433 1.253-.667 1.99-.667.257 0 .52.027.78.078.26.052.516.13.76.234.49.21.925.519 1.283.87a1.09 1.09 0 00-.012-.15c-.013-.098-.035-.212-.048-.335a3.36 3.36 0 010-.824c.037-.277.117-.563.258-.838.14-.275.344-.543.627-.782a2.8 2.8 0 011.04-.56c.197-.058.406-.1.622-.126V6.12c-.437-.08-.827-.224-1.152-.422a2.88 2.88 0 01-.817-.73 2.903 2.903 0 01-.453-.917c-.122-.396-.167-.795-.167-1.192 0-.564.1-1.13.325-1.616.225-.487.57-.898 1.04-1.167A3.2 3.2 0 0112.504 0z"/></svg>
+          </button>
+          <button class="platform-card" data-platform="linux" aria-expanded="false" aria-controls="platform-details">
+            <i class="platform-icon fa-brands fa-linux" aria-hidden="true"></i>
             <span class="platform-name">Linux</span>
-          </a>
-          <a href="https://github.com/Eoic/Papyrus" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </button>
+          <button class="platform-card" data-platform="web" aria-expanded="false" aria-controls="platform-details">
+            <i class="platform-icon fa-solid fa-globe" aria-hidden="true"></i>
             <span class="platform-name">Web</span>
-          </a>
-          <a href="https://github.com/Eoic/Papyrus/releases" class="platform-card" target="_blank" rel="noopener">
-            <svg class="platform-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="12" cy="20" r="0.5" fill="currentColor"/></svg>
-            <span class="platform-name">E-ink</span>
-          </a>
+          </button>
         </div>
 
-        <p class="platforms-note">Your library syncs seamlessly across all of them.</p>
+        <div class="platform-details" id="platform-details" role="region" aria-live="polite" hidden></div>
+
+        <noscript>
+          <p class="platforms-noscript">
+            <a href="https://github.com/Eoic/Papyrus/releases">Download Papyrus from GitHub releases</a>
+          </p>
+        </noscript>
+
+        <p class="platforms-note">Your library syncs seamlessly across all of them. Includes a dedicated e-ink friendly mode for comfortable reading on e-paper displays.</p>
       </div>
     </section>
 
@@ -417,31 +442,31 @@
         <div class="storage-grid">
           <div class="storage-item">
             <div class="storage-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+              <i class="fa-solid fa-folder" aria-hidden="true"></i>
             </div>
             <span>Local</span>
           </div>
           <div class="storage-item">
             <div class="storage-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="6" cy="18" r="1" fill="currentColor"/></svg>
+              <i class="fa-solid fa-server" aria-hidden="true"></i>
             </div>
             <span>Self-hosted</span>
           </div>
           <div class="storage-item">
             <div class="storage-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              <i class="fa-brands fa-google-drive" aria-hidden="true"></i>
             </div>
             <span>Google Drive</span>
           </div>
           <div class="storage-item">
             <div class="storage-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+              <i class="fa-solid fa-cloud" aria-hidden="true"></i>
             </div>
             <span>WebDAV</span>
           </div>
           <div class="storage-item">
             <div class="storage-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              <i class="fa-solid fa-cubes" aria-hidden="true"></i>
             </div>
             <span>S3-compatible</span>
           </div>
@@ -449,7 +474,7 @@
 
         <a href="https://github.com/Eoic/Papyrus/tree/master/docs" class="storage-link" target="_blank" rel="noopener">
           Learn more about self-hosting
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
         </a>
       </div>
     </section>
@@ -461,59 +486,29 @@
 
         <div class="oss-grid">
           <div class="oss-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <p>Full source code on GitHub under AGPL-3.0</p>
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <p>Full source code available on GitHub, licensed under AGPL-3.0</p>
           </div>
           <div class="oss-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <p>Built with Flutter and FastAPI — contributions welcome</p>
+            <i class="fa-solid fa-code" aria-hidden="true"></i>
+            <p>Built with Flutter and FastAPI — pull requests always welcome</p>
           </div>
           <div class="oss-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <p>No hidden telemetry. Audit the code yourself.</p>
+            <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            <p>Zero telemetry, zero tracking. Audit every line of code yourself.</p>
           </div>
           <div class="oss-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
-            <p>Active development with a public roadmap</p>
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+            <p>Actively maintained with a public roadmap and regular releases</p>
           </div>
         </div>
 
         <div class="oss-actions">
           <a href="https://github.com/Eoic/Papyrus" class="btn btn-light btn-lg" target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <i class="fa-brands fa-github" aria-hidden="true"></i>
             View on GitHub
           </a>
           <a href="https://github.com/Eoic/Papyrus/tree/master/docs" class="btn btn-outline-light btn-lg" target="_blank" rel="noopener">Read the documentation</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== FINAL CTA ========== -->
-    <section class="final-cta">
-      <div class="container">
-        <h2 class="final-cta-headline">Start reading on your terms.</h2>
-        <p class="final-cta-sub">Download Papyrus and take control of your library.</p>
-        <div class="final-cta-actions">
-          <a href="#platforms" class="btn btn-dark btn-xl">Download Papyrus</a>
-          <a href="https://github.com/Eoic/Papyrus" class="btn btn-outline-dark btn-xl" target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-            View on GitHub
-          </a>
-        </div>
-        <div class="final-cta-platforms">
-          <span>Android</span>
-          <span class="dot-sep" aria-hidden="true"></span>
-          <span>iOS</span>
-          <span class="dot-sep" aria-hidden="true"></span>
-          <span>Windows</span>
-          <span class="dot-sep" aria-hidden="true"></span>
-          <span>macOS</span>
-          <span class="dot-sep" aria-hidden="true"></span>
-          <span>Linux</span>
-          <span class="dot-sep" aria-hidden="true"></span>
-          <span>Web</span>
-          <span class="dot-sep" aria-hidden="true"></span>
-          <span>E-ink</span>
         </div>
       </div>
     </section>
@@ -546,16 +541,14 @@
 
       <div class="footer-bottom">
         <div class="footer-brand">
-          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M6 4C6 2.9 6.9 2 8 2h12l8 8v18c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2V4z" fill="currentColor" opacity="0.5"/>
-            <path d="M10 16h12M10 20h12M10 24h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
+          <i class="fa-solid fa-scroll" aria-hidden="true"></i>
           <span>Papyrus is free and open-source software.</span>
         </div>
       </div>
     </div>
   </footer>
 
+  <script src="https://unpkg.com/qr-code-styling@1.8.4/lib/qr-code-styling.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

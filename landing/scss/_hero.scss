@@ -8,8 +8,8 @@
   padding-bottom: var(--space-3xl);
   position: relative;
   background:
-    radial-gradient(ellipse 80% 60% at 30% 40%, rgba(196, 125, 43, 0.04), transparent),
-    radial-gradient(ellipse 60% 50% at 80% 60%, rgba(91, 112, 101, 0.03), transparent),
+    radial-gradient(ellipse 80% 60% at 30% 40%, var(--color-hero-glow-1), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 60%, var(--color-hero-glow-2), transparent),
     var(--color-bg);
 }
 
@@ -45,7 +45,7 @@
     right: -4px;
     bottom: 2px;
     height: 40%;
-    background: rgba(196, 125, 43, 0.25);
+    background: var(--color-highlight-underline);
     border-radius: 2px 4px 3px 4px;
     z-index: -1;
     transform: rotate(-0.5deg) skewX(-2deg);
@@ -84,16 +84,17 @@
   left: 50%;
   transform: translateX(-50%);
   color: var(--color-text-tertiary);
-  opacity: 0.5;
+  font-size: 1.25rem;
 }
 
-.scroll-dot {
+.hero-scroll > i {
+  display: block;
   animation: scrollBounce 2s var(--ease-in-out) infinite;
 }
 
 @keyframes scrollBounce {
-  0%, 100% { transform: translateY(0); opacity: 1; }
-  50% { transform: translateY(8px); opacity: 0.3; }
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(8px); opacity: 0.2; }
 }
 
 // --- Tablet (< 840px) ---

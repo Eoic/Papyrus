@@ -57,3 +57,10 @@ button {
   border: none;
   cursor: pointer;
 }
+
+// Dark theme grain adjustment
+html[data-theme="dark-gold"] body::after,
+html[data-theme="dark-purple"] body::after {
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+}

@@ -53,8 +53,10 @@
   opacity: 0.7;
 }
 
-.footer-brand svg {
+.footer-brand > i,
+.footer-brand > svg {
   flex-shrink: 0;
+  font-size: 1rem;
 }
 
 // --- Mobile (< 600px) ---

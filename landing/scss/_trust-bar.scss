@@ -21,9 +21,13 @@
   color: var(--color-text-secondary);
 }
 
-.trust-item svg {
+.trust-item > i,
+.trust-item > svg {
   color: var(--color-accent);
   flex-shrink: 0;
+  font-size: 1.25rem;
+  width: 22px;
+  text-align: center;
 }
 
 // --- Mobile (< 600px) ---
