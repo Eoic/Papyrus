@@ -1,8 +1,14 @@
 {
   "name": "papyrus-landing",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "sass scss/style.scss css/style.css --style=expanded --no-source-map",
+    "clean": "rm -rf build",
+    "build:scss": "sass scss/style.scss build/css/style.css --style=compressed --no-source-map",
+    "build:html": "cp index.html build/ && node scripts/stamp-version.js",
+    "build:js": "cp -r js build/",
+    "build:assets": "cp -r public build/",
+    "build": "npm run clean && mkdir -p build/css build/js build/public && npm run build:scss && npm run build:html && npm run build:js && npm run build:assets",
     "watch": "sass scss/style.scss css/style.css --style=expanded --no-source-map --watch",
     "dev": "concurrently -n scss,serve -c blue,green \"npm run watch\" \"python3 -m http.server 8090\""
   },
