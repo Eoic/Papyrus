@@ -12,9 +12,9 @@
 
   const THEMES = {
     'light-gold': { metaColor: '#FDFAF5', qrDot: '#2D2A26' },
-    'dark-gold': { metaColor: '#1A1814', qrDot: '#F0EBE3' },
+    'dark-gold': { metaColor: '#1A1814', qrDot: '#2D2A26' },
     'light-purple': { metaColor: '#FAFAFE', qrDot: '#1C1B1F' },
-    'dark-purple': { metaColor: '#151318', qrDot: '#E8E0F0' },
+    'dark-purple': { metaColor: '#151318', qrDot: '#1C1B1F' },
   };
 
   const DEFAULT_THEME = 'light-gold';
