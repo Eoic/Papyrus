@@ -46,6 +46,7 @@ app.*.map.json
 
 # Config.
 google-services.json
+.dart_defines
 
 # Tests.
 test/data/files

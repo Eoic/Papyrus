@@ -47,8 +47,8 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Create google-services.json
-        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+      - name: Create .dart_defines
+        run: echo '{"SUPABASE_URL":"${{ secrets.SUPABASE_URL }}","SUPABASE_ANON_KEY":"${{ secrets.SUPABASE_ANON_KEY }}"}' > .dart_defines
 
       - name: Install dependencies
         run: flutter pub get
@@ -56,6 +56,7 @@ jobs:
       - name: Build APK
         run: |
           flutter build apk --release \
+            --dart-define-from-file=.dart_defines \
             --build-name=${{ needs.version.outputs.version }} \
             --build-number=${{ needs.version.outputs.build_number }}
 
@@ -87,12 +88,16 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Create .dart_defines
+        run: echo '{"SUPABASE_URL":"${{ secrets.SUPABASE_URL }}","SUPABASE_ANON_KEY":"${{ secrets.SUPABASE_ANON_KEY }}"}' > .dart_defines
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build web
         run: |
           flutter build web --release \
+            --dart-define-from-file=.dart_defines \
             --build-name=${{ needs.version.outputs.version }} \
             --build-number=${{ needs.version.outputs.build_number }}
 
@@ -129,12 +134,16 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Create .dart_defines
+        run: echo '{"SUPABASE_URL":"${{ secrets.SUPABASE_URL }}","SUPABASE_ANON_KEY":"${{ secrets.SUPABASE_ANON_KEY }}"}' > .dart_defines
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Linux
         run: |
           flutter build linux --release \
+            --dart-define-from-file=.dart_defines \
             --build-name=${{ needs.version.outputs.version }} \
             --build-number=${{ needs.version.outputs.build_number }}
 
@@ -166,12 +175,16 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Create .dart_defines
+        run: echo '{"SUPABASE_URL":"${{ secrets.SUPABASE_URL }}","SUPABASE_ANON_KEY":"${{ secrets.SUPABASE_ANON_KEY }}"}' > .dart_defines
+
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Windows
         run: |
           flutter build windows --release `
+            --dart-define-from-file=.dart_defines `
             --build-name=${{ needs.version.outputs.version }} `
             --build-number=${{ needs.version.outputs.build_number }}
 

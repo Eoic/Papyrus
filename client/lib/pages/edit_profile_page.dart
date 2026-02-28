@@ -1,14 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Page for editing user profile information (display name and avatar).
 ///
-/// Reads current values from Firebase Auth and writes back on save.
+/// Reads current values from Supabase Auth and writes back on save.
 /// Mobile: full-screen form with AppBar save action.
 /// Desktop: top-centered card within the adaptive shell.
 class EditProfilePage extends StatefulWidget {
@@ -31,8 +31,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    _nameController = TextEditingController(text: user?.displayName ?? '');
+    final user = Supabase.instance.client.auth.currentUser;
+    final displayName = user?.userMetadata?['full_name'] as String? ?? '';
+    _nameController = TextEditingController(text: displayName);
   }
 
   @override
@@ -42,9 +43,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   bool get _hasChanges {
-    final user = FirebaseAuth.instance.currentUser;
-    final nameChanged =
-        _nameController.text.trim() != (user?.displayName ?? '');
+    final user = Supabase.instance.client.auth.currentUser;
+    final currentName = user?.userMetadata?['full_name'] as String? ?? '';
+    final nameChanged = _nameController.text.trim() != currentName;
     return nameChanged || _pickedImageBytes != null || _photoRemoved;
   }
 
@@ -282,7 +283,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     // Show existing network photo if not removed.
     if (!_photoRemoved) {
-      final photoUrl = FirebaseAuth.instance.currentUser?.photoURL;
+      final photoUrl = Supabase.instance.client.auth.currentUser
+          ?.userMetadata?['avatar_url'] as String?;
       if (photoUrl != null && photoUrl.isNotEmpty) {
         return Image.network(
           photoUrl,
@@ -300,7 +302,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool get _hasExistingPhoto {
     if (_photoRemoved) return false;
     if (_pickedImageBytes != null) return true;
-    final photoUrl = FirebaseAuth.instance.currentUser?.photoURL;
+    final photoUrl = Supabase.instance.client.auth.currentUser
+        ?.userMetadata?['avatar_url'] as String?;
     return photoUrl != null && photoUrl.isNotEmpty;
   }
 
@@ -377,8 +380,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final client = Supabase.instance.client;
+      if (client.auth.currentUser == null) {
         setState(() {
           _errorMessage = 'Not signed in';
           _isSaving = false;
@@ -387,28 +390,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
 
       final newName = _nameController.text.trim();
+      final currentName =
+          client.auth.currentUser?.userMetadata?['full_name'] as String? ?? '';
 
-      // Update display name if changed.
-      if (newName != (user.displayName ?? '')) {
-        await user.updateDisplayName(newName);
+      final Map<String, dynamic> data = {};
+      if (newName != currentName) data['full_name'] = newName;
+      // Note: uploading a new photo requires a storage backend which isn't
+      // configured yet. Picked images are shown as a local preview but won't
+      // persist across devices until storage is set up.
+      if (_photoRemoved) data['avatar_url'] = null;
+
+      if (data.isNotEmpty) {
+        await client.auth.updateUser(UserAttributes(data: data));
       }
-
-      // Update photo URL if removed.
-      // Note: uploading a new photo requires a storage backend (Firebase Storage
-      // or similar) which isn't configured yet. Picked images are shown as a
-      // local preview but won't persist across devices until storage is set up.
-      if (_photoRemoved) {
-        await user.updatePhotoURL(null);
-      }
-
-      await user.reload();
 
       if (context.mounted) {
         context.pop();
       }
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       setState(() {
-        _errorMessage = e.message ?? 'Failed to update profile';
+        _errorMessage = e.message;
         _isSaving = false;
       });
     } catch (e) {
@@ -453,11 +454,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // ===========================================================================
 
   String _getEmail() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user?.email == null || user!.email!.trim().isEmpty) {
-      return 'No email provided';
-    }
-    return user.email!;
+    final email = Supabase.instance.client.auth.currentUser?.email;
+    if (email == null || email.trim().isEmpty) return 'No email provided';
+    return email;
   }
 
   String get _initials {

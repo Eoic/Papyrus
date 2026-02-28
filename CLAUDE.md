@@ -42,7 +42,7 @@ flutter test
 
 ### Architecture (`client/lib/`)
 
-- **`main.dart`** - Entry point; Firebase init, MultiProvider setup
+- **`main.dart`** - Entry point; Supabase init, MultiProvider setup
 - **`config/`** - GoRouter routing (`app_router.dart`)
 - **`pages/`** - 20 full-screen views (auth, library, book management, goals, statistics, profile, settings, developer options)
 - **`providers/`** - 13 ChangeNotifier providers (auth, library, book details/edit, shelves, goals, statistics, dashboard, annotations, bookmarks, notes, display mode, sidebar)
@@ -64,7 +64,7 @@ flutter test
 - Library drawer: Books, Shelves, Topics, Bookmarks, Annotations, Notes
 - Routes in `config/app_router.dart`
 
-**Authentication**: Firebase Auth with Google Sign-In.
+**Authentication**: Supabase Auth with Google Sign-In (hybrid: `google_sign_in` on mobile/desktop, OAuth redirect on web).
 
 **Responsive Design**: `utils/responsive.dart` with breakpoints defined in `themes/design_tokens.dart` — mobile (<600), tablet (600-839), desktop (840+), large desktop (1200+). Grid columns, gutters, and margins adapt per breakpoint.
 

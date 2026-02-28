@@ -64,8 +64,8 @@ dependencies:
   cached_network_image: ^3.3.0 # Image caching
 
   # Authentication
-  firebase_auth: ^4.0.0     # Firebase auth
-  google_sign_in: ^6.1.0    # Google OAuth
+  supabase_flutter: ^2.0.0  # Supabase auth
+  google_sign_in: ^7.0.0    # Google OAuth
 ```
 
 ### Architecture: clean architecture
@@ -438,7 +438,7 @@ pytest tests/
 
 | Service | Purpose | Required |
 |---------|---------|----------|
-| Firebase Auth | Authentication | Optional |
+| Supabase Auth | Authentication | Optional |
 | Google Books API | Metadata | Optional |
 | Open Library API | Metadata | Optional |
 | Sentry | Error tracking | Optional |
