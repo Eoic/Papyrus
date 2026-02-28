@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:papyrus/providers/google_sign_in_provider.dart';
+import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
 import 'package:provider/provider.dart';
@@ -398,7 +398,7 @@ class _OfflineModeLink extends StatelessWidget {
 
     return TextButton(
       onPressed: () {
-        context.read<GoogleSignInProvider>().setOfflineMode(true);
+        context.read<AuthProvider>().setOfflineMode(true);
         context.goNamed('LIBRARY');
       },
       style: TextButton.styleFrom(

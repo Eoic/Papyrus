@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Greeting section for the dashboard displaying time-based greeting.
@@ -22,8 +22,9 @@ class DashboardGreeting extends StatelessWidget {
 
   /// Returns the current user's first name, or "reader" as fallback.
   String get _userName {
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName ?? 'reader';
+    final user = Supabase.instance.client.auth.currentUser;
+    final displayName =
+        (user?.userMetadata?['full_name'] as String?) ?? 'reader';
     return displayName.split(' ').first;
   }
 
