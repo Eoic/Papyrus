@@ -21,10 +21,17 @@ Future main() async {
   runApp(Papyrus(prefs: prefs));
 }
 
-class Papyrus extends StatelessWidget {
+class Papyrus extends StatefulWidget {
   final SharedPreferences prefs;
 
   const Papyrus({super.key, required this.prefs});
+
+  @override
+  State<Papyrus> createState() => _PapyrusState();
+}
+
+class _PapyrusState extends State<Papyrus> {
+  late final AppRouter _appRouter = AppRouter();
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +59,9 @@ class Papyrus extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DisplayModeProvider()),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
-        ChangeNotifierProvider(create: (_) => PreferencesProvider(prefs)),
+        ChangeNotifierProvider(
+          create: (_) => PreferencesProvider(widget.prefs),
+        ),
       ],
       child: Consumer2<DisplayModeProvider, PreferencesProvider>(
         builder: (context, displayModeProvider, preferencesProvider, child) {
@@ -68,7 +77,7 @@ class Papyrus extends StatelessWidget {
             themeMode: displayModeProvider.isEinkMode
                 ? ThemeMode.light
                 : preferencesProvider.themeMode,
-            routerConfig: AppRouter().router,
+            routerConfig: _appRouter.router,
           );
         },
       ),

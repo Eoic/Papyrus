@@ -1,0 +1,291 @@
+// ══════════════════════════════════════════════════════════
+// Theme: Light Gold (default)
+// ══════════════════════════════════════════════════════════
+:root,
+[data-theme="light-gold"] {
+  /* Colors — warm paper palette */
+  --color-bg: #FDFAF5;
+  --color-bg-alt: #F3EDE4;
+  --color-surface: #FFFFFF;
+  --color-text: #2D2A26;
+  --color-text-secondary: #736B63;
+  --color-text-tertiary: #9B9490;
+
+  /* Accent — aged manuscript gold */
+  --color-accent: #C47D2B;
+  --color-accent-hover: #A86820;
+  --color-accent-light: rgba(196, 125, 43, 0.08);
+  --color-accent-shadow: rgba(196, 125, 43, 0.3);
+
+  /* Dark sections (OSS, footer) */
+  --color-dark: #2D2A26;
+  --color-dark-surface: #3A3632;
+  --color-dark-text: #FAF7F2;
+  --color-dark-text-secondary: #B5AEA6;
+
+  /* Borders */
+  --color-border: #E8E1D8;
+  --color-border-light: #F0EBE3;
+
+  /* Secondary accent */
+  --color-sage: #5B7065;
+
+  /* Derived — hero, nav, buttons */
+  --color-hero-glow-1: rgba(196, 125, 43, 0.04);
+  --color-hero-glow-2: rgba(91, 112, 101, 0.03);
+  --color-highlight-underline: rgba(196, 125, 43, 0.2);
+  --color-nav-bg-scrolled: rgba(253, 250, 245, 0.92);
+  --color-text-alpha-3: rgba(45, 42, 38, 0.03);
+  --color-text-alpha-20: rgba(45, 42, 38, 0.2);
+  --color-text-alpha-40: rgba(45, 42, 38, 0.4);
+  --color-light-alpha-5: rgba(250, 247, 242, 0.05);
+  --color-light-alpha-25: rgba(250, 247, 242, 0.25);
+  --color-light-alpha-30: rgba(250, 247, 242, 0.3);
+  --color-light-alpha-50: rgba(250, 247, 242, 0.5);
+  --color-btn-dark-hover-bg: #1A1815;
+  --color-on-accent: #FFFFFF;
+
+  /* Mock book covers */
+  --book-1: #C47D2B;
+  --book-2: #5B7065;
+  --book-3: #8B6B4D;
+  --book-4: #6B7F99;
+  --book-5: #9B6B6B;
+
+  /* Mock highlight colors */
+  --hl-1: #C47D2B;
+  --hl-2: #5B7065;
+  --hl-3: #6B7F99;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(45, 42, 38, 0.06);
+  --shadow-md: 0 4px 12px rgba(45, 42, 38, 0.08);
+  --shadow-lg: 0 8px 30px rgba(45, 42, 38, 0.1);
+  --shadow-xl: 0 16px 50px rgba(45, 42, 38, 0.12);
+}
+
+// ══════════════════════════════════════════════════════════
+// Theme: Dark Gold
+// ══════════════════════════════════════════════════════════
+[data-theme="dark-gold"] {
+  --color-bg: #1A1814;
+  --color-bg-alt: #232018;
+  --color-surface: #2A2620;
+  --color-text: #F0EBE3;
+  --color-text-secondary: #B5AEA6;
+  --color-text-tertiary: #8A847D;
+
+  --color-accent: #D4933A;
+  --color-accent-hover: #E0A34E;
+  --color-accent-light: rgba(212, 147, 58, 0.12);
+  --color-accent-shadow: rgba(212, 147, 58, 0.35);
+
+  --color-dark: #141210;
+  --color-dark-surface: #1E1B17;
+  --color-dark-text: #F0EBE3;
+  --color-dark-text-secondary: #9B9490;
+
+  --color-border: #3A3632;
+  --color-border-light: #322E28;
+
+  --color-sage: #7A9B8B;
+
+  --color-hero-glow-1: rgba(212, 147, 58, 0.06);
+  --color-hero-glow-2: rgba(122, 155, 139, 0.04);
+  --color-highlight-underline: rgba(212, 147, 58, 0.25);
+  --color-nav-bg-scrolled: rgba(26, 24, 20, 0.92);
+  --color-text-alpha-3: rgba(240, 235, 227, 0.03);
+  --color-text-alpha-20: rgba(240, 235, 227, 0.2);
+  --color-text-alpha-40: rgba(240, 235, 227, 0.4);
+  --color-light-alpha-5: rgba(240, 235, 227, 0.05);
+  --color-light-alpha-25: rgba(240, 235, 227, 0.25);
+  --color-light-alpha-30: rgba(240, 235, 227, 0.3);
+  --color-light-alpha-50: rgba(240, 235, 227, 0.5);
+  --color-btn-dark-hover-bg: #0F0D0B;
+  --color-on-accent: #FFFFFF;
+
+  --book-1: #D4933A;
+  --book-2: #7A9B8B;
+  --book-3: #A08060;
+  --book-4: #7B90A8;
+  --book-5: #B08080;
+
+  --hl-1: #D4933A;
+  --hl-2: #7A9B8B;
+  --hl-3: #7B90A8;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.35);
+}
+
+// ══════════════════════════════════════════════════════════
+// Theme: Light Purple
+// ══════════════════════════════════════════════════════════
+[data-theme="light-purple"] {
+  --color-bg: #FAFAFE;
+  --color-bg-alt: #F0EDF6;
+  --color-surface: #FFFFFF;
+  --color-text: #1C1B1F;
+  --color-text-secondary: #625B71;
+  --color-text-tertiary: #938F99;
+
+  --color-accent: #673AB7;
+  --color-accent-hover: #5E35B1;
+  --color-accent-light: rgba(103, 58, 183, 0.08);
+  --color-accent-shadow: rgba(103, 58, 183, 0.3);
+
+  --color-dark: #1C1B1F;
+  --color-dark-surface: #2D2A33;
+  --color-dark-text: #F5F0FF;
+  --color-dark-text-secondary: #B0A6C0;
+
+  --color-border: #DDD6E8;
+  --color-border-light: #ECE8F2;
+
+  --color-sage: #7E57C2;
+
+  --color-hero-glow-1: rgba(103, 58, 183, 0.04);
+  --color-hero-glow-2: rgba(126, 87, 194, 0.03);
+  --color-highlight-underline: rgba(103, 58, 183, 0.2);
+  --color-nav-bg-scrolled: rgba(250, 250, 254, 0.92);
+  --color-text-alpha-3: rgba(28, 27, 31, 0.03);
+  --color-text-alpha-20: rgba(28, 27, 31, 0.2);
+  --color-text-alpha-40: rgba(28, 27, 31, 0.4);
+  --color-light-alpha-5: rgba(245, 240, 255, 0.05);
+  --color-light-alpha-25: rgba(245, 240, 255, 0.25);
+  --color-light-alpha-30: rgba(245, 240, 255, 0.3);
+  --color-light-alpha-50: rgba(245, 240, 255, 0.5);
+  --color-btn-dark-hover-bg: #16151A;
+  --color-on-accent: #FFFFFF;
+
+  --book-1: #673AB7;
+  --book-2: #7E57C2;
+  --book-3: #5C6BC0;
+  --book-4: #9575CD;
+  --book-5: #7986CB;
+
+  --hl-1: #673AB7;
+  --hl-2: #7E57C2;
+  --hl-3: #B39DDB;
+
+  --shadow-sm: 0 1px 3px rgba(28, 27, 31, 0.06);
+  --shadow-md: 0 4px 12px rgba(28, 27, 31, 0.08);
+  --shadow-lg: 0 8px 30px rgba(28, 27, 31, 0.1);
+  --shadow-xl: 0 16px 50px rgba(28, 27, 31, 0.12);
+}
+
+// ══════════════════════════════════════════════════════════
+// Theme: Dark Purple
+// ══════════════════════════════════════════════════════════
+[data-theme="dark-purple"] {
+  --color-bg: #151318;
+  --color-bg-alt: #1E1B24;
+  --color-surface: #252230;
+  --color-text: #E8E0F0;
+  --color-text-secondary: #B0A6C0;
+  --color-text-tertiary: #7E7690;
+
+  --color-accent: #9C7AE8;
+  --color-accent-hover: #B094F0;
+  --color-accent-light: rgba(156, 122, 232, 0.12);
+  --color-accent-shadow: rgba(156, 122, 232, 0.35);
+
+  --color-dark: #0E0C12;
+  --color-dark-surface: #18161E;
+  --color-dark-text: #E8E0F0;
+  --color-dark-text-secondary: #8A82A0;
+
+  --color-border: #332E40;
+  --color-border-light: #2A263A;
+
+  --color-sage: #9C7AE8;
+
+  --color-hero-glow-1: rgba(156, 122, 232, 0.06);
+  --color-hero-glow-2: rgba(126, 87, 194, 0.04);
+  --color-highlight-underline: rgba(156, 122, 232, 0.25);
+  --color-nav-bg-scrolled: rgba(21, 19, 24, 0.92);
+  --color-text-alpha-3: rgba(232, 224, 240, 0.03);
+  --color-text-alpha-20: rgba(232, 224, 240, 0.2);
+  --color-text-alpha-40: rgba(232, 224, 240, 0.4);
+  --color-light-alpha-5: rgba(232, 224, 240, 0.05);
+  --color-light-alpha-25: rgba(232, 224, 240, 0.25);
+  --color-light-alpha-30: rgba(232, 224, 240, 0.3);
+  --color-light-alpha-50: rgba(232, 224, 240, 0.5);
+  --color-btn-dark-hover-bg: #0A090D;
+  --color-on-accent: #FFFFFF;
+
+  --book-1: #9C7AE8;
+  --book-2: #7E57C2;
+  --book-3: #6B78B8;
+  --book-4: #B094F0;
+  --book-5: #8B96D0;
+
+  --hl-1: #9C7AE8;
+  --hl-2: #7E57C2;
+  --hl-3: #B094F0;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.35);
+}
+
+// ══════════════════════════════════════════════════════════
+// Shared (non-themed)
+// ══════════════════════════════════════════════════════════
+:root {
+  /* Typography */
+  --font-display: 'Fraunces', 'Georgia', serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+  --space-5xl: 8rem;
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-padding: 1.5rem;
+  --nav-height: 64px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+}
+
+@media (max-width: 839px) {
+  :root {
+    --container-padding: 1.25rem;
+  }
+}
+
+@media (max-width: 599px) {
+  :root {
+    --container-padding: 1rem;
+    --nav-height: 56px;
+  }
+}
+
+// ── Theme switch transition ─────────────────────────────
+html[data-theme-transitioning] *,
+html[data-theme-transitioning] *::before,
+html[data-theme-transitioning] *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}

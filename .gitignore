@@ -1,4 +1,7 @@
 docs/site/
 NOTES.md
 .google-cloud-oauth
+firebase-debug.log
 .worktrees/
+landing/node_modules/
+landing/css/

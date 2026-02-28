@@ -1,0 +1,276 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  z-index: 1000;
+  transition: background var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.nav.scrolled {
+  background: var(--color-nav-bg-scrolled);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: var(--space-xl);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.nav-logo > i,
+.nav-logo > svg {
+  color: var(--color-accent);
+  font-size: 1.375rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-left: auto;
+  margin-right: 40px;
+}
+
+.nav-link {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast);
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--color-accent);
+  transition: width var(--duration-normal) var(--ease-out);
+}
+
+.nav-link:hover {
+  color: var(--color-text);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+// ── Theme Toggle (fixed top-right corner) ────────────────
+.theme-toggle {
+  position: fixed;
+  top: 11px;
+  right: var(--container-padding);
+  z-index: 1002;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.theme-toggle-btn:hover {
+  color: var(--color-text);
+  background-color: var(--color-text-alpha-20);
+}
+
+.theme-toggle-btn > i {
+  font-size: 1rem;
+}
+
+// Dropdown uses explicit light/dark surface so label contrast
+// is always correct regardless of active theme.
+.theme-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  --_dd-bg: #FFFFFF;
+  --_dd-border: #E0DCD6;
+  --_dd-text: #2D2A26;
+  --_dd-text-dim: #736B63;
+  --_dd-hover: #F3EDE4;
+  --_dd-shadow: rgba(0, 0, 0, 0.12);
+  background: var(--_dd-bg);
+  border: 1px solid var(--_dd-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 30px var(--_dd-shadow);
+  padding: var(--space-xs);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--duration-fast), visibility 0s var(--duration-fast), transform var(--duration-fast);
+  z-index: 1003;
+}
+
+html[data-theme="dark-gold"] .theme-dropdown,
+html[data-theme="dark-purple"] .theme-dropdown {
+  --_dd-bg: #2A2620;
+  --_dd-border: #3A3632;
+  --_dd-text: #F0EBE3;
+  --_dd-text-dim: #B5AEA6;
+  --_dd-hover: rgba(255, 255, 255, 0.06);
+  --_dd-shadow: rgba(0, 0, 0, 0.3);
+}
+
+.theme-dropdown.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity var(--duration-fast), visibility 0s, transform var(--duration-fast);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--_dd-text);
+  transition: background var(--duration-fast);
+}
+
+.theme-option:hover {
+  background: var(--_dd-hover);
+}
+
+.theme-option.is-active {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.theme-option-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--_dd-border);
+  flex-shrink: 0;
+}
+
+.theme-option.is-active .theme-option-swatch {
+  border-color: var(--color-accent);
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: color var(--duration-fast), background-color var(--duration-fast);
+  margin-left: auto;
+}
+
+.nav-toggle:hover {
+  color: var(--color-text);
+  background-color: var(--color-text-alpha-20);
+}
+
+.nav-toggle span {
+  display: block;
+  width: 22px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+  transition: all var(--duration-normal) var(--ease-out);
+  transform-origin: center;
+}
+
+.nav-toggle.active span:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+
+.nav-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle.active span:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+@media (max-width: 599px) {
+  .theme-toggle {
+    right: calc(var(--container-padding) + 40px);
+  }
+}
+
+@media (max-width: 599px) {
+  .nav-links {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: var(--color-surface);
+    flex-direction: column;
+    padding: var(--space-lg);
+    gap: 0;
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-110%);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform var(--duration-normal) var(--ease-out),
+                opacity var(--duration-normal) var(--ease-out),
+                visibility 0s var(--duration-normal);
+  }
+
+  .nav-links.open {
+    transform: translateY(0);
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition: transform var(--duration-normal) var(--ease-out),
+                opacity var(--duration-normal) var(--ease-out),
+                visibility 0s;
+  }
+
+  .nav-link {
+    display: block;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: 1rem;
+  }
+
+  .nav-link::after {
+    display: none;
+  }
+
+  .nav-toggle {
+    display: flex;
+    width: 36px;
+    height: 36px;
+  }
+}

@@ -1,0 +1,107 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.5rem;
+  transition: all var(--duration-normal) var(--ease-out);
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+
+.btn > i,
+.btn > svg {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+}
+
+.btn-sm {
+  font-size: 0.875rem;
+  padding: 0.5rem 1.25rem;
+}
+
+.btn-lg {
+  font-size: 1rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: var(--radius-md);
+}
+
+.btn-xl {
+  font-size: 1.0625rem;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-lg);
+}
+
+/* Primary — amber accent */
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  box-shadow: 0 4px 16px var(--color-accent-shadow);
+}
+
+/* Outline — dark text */
+.btn-outline {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn-outline:hover {
+  border-color: var(--color-text);
+  background: var(--color-text-alpha-3);
+}
+
+/* Light — for dark backgrounds */
+.btn-light {
+  background: var(--color-dark-text);
+  color: var(--color-dark);
+}
+
+.btn-light:hover {
+  background: var(--color-surface);
+  box-shadow: 0 4px 16px var(--color-light-alpha-30);
+}
+
+.btn-outline-light {
+  background: transparent;
+  color: var(--color-dark-text);
+  border-color: var(--color-light-alpha-25);
+}
+
+.btn-outline-light:hover {
+  border-color: var(--color-light-alpha-50);
+  background: var(--color-light-alpha-5);
+}
+
+/* Dark — for CTA section */
+.btn-dark {
+  background: var(--color-dark);
+  color: var(--color-dark-text);
+}
+
+.btn-dark:hover {
+  background: var(--color-btn-dark-hover-bg);
+  box-shadow: 0 4px 16px var(--color-text-alpha-40);
+}
+
+.btn-outline-dark {
+  background: transparent;
+  color: var(--color-dark);
+  border-color: var(--color-text-alpha-20);
+}
+
+.btn-outline-dark:hover {
+  border-color: var(--color-text-alpha-40);
+  background: var(--color-text-alpha-3);
+}

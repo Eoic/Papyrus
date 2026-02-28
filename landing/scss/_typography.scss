@@ -1,0 +1,25 @@
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.section-headline {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  text-align: center;
+  margin-bottom: var(--space-3xl);
+  color: var(--color-text);
+}
+
+.section-headline--light {
+  color: var(--color-dark-text);
+}
+
+.section-sub {
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  max-width: 580px;
+  margin: calc(-1 * var(--space-xl)) auto var(--space-3xl);
+}
