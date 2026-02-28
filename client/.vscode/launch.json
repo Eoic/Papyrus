@@ -2,25 +2,25 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "papyrus (web)",
+      "name": "Papyrus (web)",
       "request": "launch",
       "type": "dart",
       "args": ["--dart-define-from-file=.dart_defines"]
     },
     {
-      "name": "papyrus (android)",
+      "name": "Papyrus (android)",
       "request": "launch",
       "type": "dart",
       "args": ["--dart-define-from-file=.dart_defines"]
     },
     {
-      "name": "papyrus (iOS)",
+      "name": "Papyrus (iOS)",
       "request": "launch",
       "type": "dart",
       "args": ["--dart-define-from-file=.dart_defines"]
     },
     {
-      "name": "papyrus (desktop)",
+      "name": "Papyrus (desktop)",
       "request": "launch",
       "type": "dart",
       "args": ["--dart-define-from-file=.dart_defines"]
