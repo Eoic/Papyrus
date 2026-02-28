@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/widgets/buttons/google_sign_in.dart';
 import 'package:papyrus/widgets/input/email_input.dart';
 import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -22,27 +22,11 @@ class _LoginForm extends State<LoginForm> {
   );
   final passwordController = TextEditingController(text: "");
 
-  Future<UserCredential> signIn() async {
-    return FirebaseAuth.instance
-        .signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        )
-        .then((UserCredential user) {
-          return user;
-        })
-        .catchError((error) async {
-          if (!mounted) return error;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(seconds: 5),
-              content: const Text("Incorrect username or password."),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-
-          return error;
-        });
+  Future<AuthResponse> signIn() async {
+    return Supabase.instance.client.auth.signInWithPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
   }
 
   Future<void> _handleLogin() async {
@@ -69,10 +53,17 @@ class _LoginForm extends State<LoginForm> {
       setState(() => isLoginDisabled = false);
       Navigator.of(context).pop();
       context.goNamed('LIBRARY');
-    } catch (error) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => isLoginDisabled = false);
       Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 5),
+          content: const Text("Incorrect username or password."),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 

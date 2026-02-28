@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/widgets/buttons/google_sign_in.dart';
 import 'package:papyrus/widgets/input/email_input.dart';
 import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -21,33 +21,11 @@ class _RegisterForm extends State<RegisterForm> {
   final passwordController = TextEditingController();
   final repeatPasswordController = TextEditingController();
 
-  Future<UserCredential> signUp() async {
-    return FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text,
-        )
-        .then((UserCredential user) {
-          return user;
-        })
-        .catchError((error) async {
-          if (!mounted) return error;
-          var errorMessage = "Account creation failed.";
-
-          if (error.code == "email-already-in-use") {
-            errorMessage = "Account with this email already exists.";
-          }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(seconds: 5),
-              content: Text(errorMessage),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-
-          return error;
-        });
+  Future<AuthResponse> signUp() async {
+    return Supabase.instance.client.auth.signUp(
+      email: emailController.text.trim(),
+      password: passwordController.text,
+    );
   }
 
   Future<void> _handleRegister() async {
@@ -74,10 +52,22 @@ class _RegisterForm extends State<RegisterForm> {
       setState(() => isRegisterDisabled = false);
       Navigator.of(context).pop();
       context.goNamed("LIBRARY");
-    } catch (error) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => isRegisterDisabled = false);
       Navigator.of(context).pop();
+      var errorMessage = "Account creation failed.";
+      if (e is AuthException &&
+          e.message.toLowerCase().contains('user already registered')) {
+        errorMessage = "Account with this email already exists.";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 5),
+          content: Text(errorMessage),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 

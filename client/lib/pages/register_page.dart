@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
@@ -59,32 +59,27 @@ class _RegisterPageState extends State<RegisterPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
+        data: {'full_name': _displayNameController.text.trim()},
       );
 
       if (!mounted) return;
       context.goNamed('LIBRARY');
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       if (!mounted) return;
 
       String message;
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'An account already exists with this email.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address.';
-          break;
-        case 'operation-not-allowed':
-          message = 'Email/password registration is not enabled.';
-          break;
-        case 'weak-password':
-          message = 'Password is too weak. Please use a stronger password.';
-          break;
-        default:
-          message = 'Registration failed. Please try again.';
+      final msg = e.message.toLowerCase();
+      if (msg.contains('user already registered') ||
+          msg.contains('already been registered')) {
+        message = 'An account already exists with this email.';
+      } else if (msg.contains('password should be at least') ||
+          msg.contains('weak password')) {
+        message = 'Password is too weak. Please use a stronger password.';
+      } else {
+        message = 'Registration failed. Please try again.';
       }
 
       _showErrorSnackBar(message);

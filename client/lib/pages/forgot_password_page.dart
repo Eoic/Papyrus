@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
@@ -44,8 +44,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: _emailController.text.trim(),
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        _emailController.text.trim(),
       );
 
       if (!mounted) return;
@@ -53,22 +53,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         _isLoading = false;
         _emailSent = true;
       });
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       if (!mounted) return;
 
       String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No account found with this email.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address.';
-          break;
-        case 'too-many-requests':
-          message = 'Too many attempts. Please try again later.';
-          break;
-        default:
-          message = 'Failed to send reset email. Please try again.';
+      final msg = e.message.toLowerCase();
+      if (msg.contains('too many requests')) {
+        message = 'Too many attempts. Please try again later.';
+      } else {
+        message = 'Failed to send reset email. Please try again.';
       }
 
       setState(() => _isLoading = false);

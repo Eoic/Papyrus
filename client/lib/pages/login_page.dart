@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/responsive.dart';
@@ -50,35 +50,27 @@ class _LoginPageState extends State<LoginPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
       if (!mounted) return;
       context.goNamed('LIBRARY');
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       if (!mounted) return;
 
       String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No account found with this email.';
-          break;
-        case 'wrong-password':
-          message = 'Incorrect password.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address.';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-        case 'too-many-requests':
-          message = 'Too many attempts. Please try again later.';
-          break;
-        default:
-          message = 'Incorrect email or password.';
+      final msg = e.message.toLowerCase();
+      if (msg.contains('invalid login credentials') ||
+          msg.contains('invalid email or password')) {
+        message = 'Incorrect email or password.';
+      } else if (msg.contains('email not confirmed')) {
+        message = 'Please verify your email before signing in.';
+      } else if (msg.contains('too many requests')) {
+        message = 'Too many attempts. Please try again later.';
+      } else {
+        message = 'Incorrect email or password.';
       }
 
       _showErrorSnackBar(message);

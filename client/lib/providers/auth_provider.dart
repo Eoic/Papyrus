@@ -1,12 +1,13 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class GoogleSignInProvider extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class AuthProvider extends ChangeNotifier {
+  final SupabaseClient _client = Supabase.instance.client;
   bool _initialized = false;
+  late final StreamSubscription<AuthState> _authSubscription;
 
   User? _user;
   User? get user => _user;
@@ -20,18 +21,23 @@ class GoogleSignInProvider extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  GoogleSignInProvider() {
-    // Listen to Firebase auth state changes
-    _auth.authStateChanges().listen((User? user) {
-      _user = user;
+  AuthProvider() {
+    // Listen to Supabase auth state changes
+    _authSubscription = _client.auth.onAuthStateChange.listen((data) {
+      _user = data.session?.user;
       notifyListeners();
     });
 
-    // Initialize Google Sign-In and listen to its events (not needed on web,
-    // where Firebase Auth's signInWithPopup is used directly)
+    // Initialize Google Sign-In (not needed on web, where Supabase OAuth handles it)
     if (!kIsWeb) {
       _initGoogleSignIn();
     }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
   }
 
   Future<void> _initGoogleSignIn() async {
@@ -47,7 +53,7 @@ class GoogleSignInProvider extends ChangeNotifier {
           if (event is GoogleSignInAuthenticationEventSignIn) {
             await _handleGoogleSignInEvent(event.user);
           } else if (event is GoogleSignInAuthenticationEventSignOut) {
-            // Google signed out, but Firebase auth state listener handles this
+            // Google signed out; Supabase auth state listener handles state update
           }
         },
         onError: (error) {
@@ -59,17 +65,15 @@ class GoogleSignInProvider extends ChangeNotifier {
       );
 
       // Attempt lightweight authentication (silent sign-in)
-      if (!kIsWeb) {
-        unawaited(
-          GoogleSignIn.instance.attemptLightweightAuthentication()?.then((
-            account,
-          ) async {
-            if (account != null) {
-              await _handleGoogleSignInEvent(account);
-            }
-          }),
-        );
-      }
+      unawaited(
+        GoogleSignIn.instance.attemptLightweightAuthentication()?.then((
+          account,
+        ) async {
+          if (account != null) {
+            await _handleGoogleSignInEvent(account);
+          }
+        }),
+      );
     } catch (e) {
       debugPrint('Google Sign-In initialization error: $e');
     }
@@ -80,15 +84,15 @@ class GoogleSignInProvider extends ChangeNotifier {
       final idToken = account.authentication.idToken;
 
       if (idToken != null) {
-        final OAuthCredential credential = GoogleAuthProvider.credential(
+        final response = await _client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
           idToken: idToken,
         );
-
-        await _auth.signInWithCredential(credential);
+        _user = response.user;
       }
     } catch (e) {
       _error = e.toString();
-      debugPrint('Firebase credential sign-in error: $e');
+      debugPrint('Supabase credential sign-in error: $e');
     }
   }
 
@@ -99,14 +103,10 @@ class GoogleSignInProvider extends ChangeNotifier {
 
     try {
       if (kIsWeb) {
-        // Web sign-in flow uses Firebase directly with popup
-        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        final UserCredential userCredential = await _auth.signInWithPopup(
-          googleProvider,
-        );
-        _user = userCredential.user;
+        // Web: redirect to Google OAuth via Supabase; user is set via onAuthStateChange after return
+        await _client.auth.signInWithOAuth(OAuthProvider.google);
       } else {
-        // Mobile/Desktop sign-in flow
+        // Mobile/Desktop: use google_sign_in for native dialog, exchange token with Supabase
         await _initGoogleSignIn();
 
         if (!GoogleSignIn.instance.supportsAuthenticate()) {
@@ -119,20 +119,17 @@ class GoogleSignInProvider extends ChangeNotifier {
             _error = 'Sign-in not available on this platform';
           }
         } else {
-          // Use full authenticate flow
-          final GoogleSignInAccount account = await GoogleSignIn.instance
-              .authenticate();
+          final GoogleSignInAccount account =
+              await GoogleSignIn.instance.authenticate();
 
           final idToken = account.authentication.idToken;
 
           if (idToken != null) {
-            final OAuthCredential credential = GoogleAuthProvider.credential(
+            final response = await _client.auth.signInWithIdToken(
+              provider: OAuthProvider.google,
               idToken: idToken,
             );
-
-            final UserCredential userCredential = await _auth
-                .signInWithCredential(credential);
-            _user = userCredential.user;
+            _user = response.user;
           }
         }
       }
@@ -140,11 +137,11 @@ class GoogleSignInProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return _user;
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       _error = e.message;
       _isLoading = false;
       notifyListeners();
-      debugPrint('Firebase Auth Error: ${e.code} - ${e.message}');
+      debugPrint('Supabase Auth Error: ${e.message}');
       return null;
     } on GoogleSignInException catch (e) {
       // Handle user cancellation gracefully
@@ -171,7 +168,7 @@ class GoogleSignInProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _auth.signOut();
+      await _client.auth.signOut();
 
       if (!kIsWeb && _initialized) {
         await GoogleSignIn.instance.signOut();

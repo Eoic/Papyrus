@@ -1,22 +1,24 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/data/sample_data.dart';
+import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
-import 'package:papyrus/providers/google_sign_in_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sidebar_provider.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/app_router.dart';
-import 'firebase_options.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Supabase.initialize(
+    url: const String.fromEnvironment('SUPABASE_URL'),
+    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+  );
   final prefs = await SharedPreferences.getInstance();
   runApp(Papyrus(prefs: prefs));
 }
@@ -55,7 +57,7 @@ class _PapyrusState extends State<Papyrus> {
             ),
         ),
         // Auth and UI state providers
-        ChangeNotifierProvider(create: (_) => GoogleSignInProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DisplayModeProvider()),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),

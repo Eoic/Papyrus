@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:papyrus/providers/google_sign_in_provider.dart';
+import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:provider/provider.dart';
 
@@ -35,7 +35,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
     setState(() => _isSigningIn = true);
 
     try {
-      final provider = Provider.of<GoogleSignInProvider>(
+      final provider = Provider.of<AuthProvider>(
         context,
         listen: false,
       );

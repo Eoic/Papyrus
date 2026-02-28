@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
-import 'package:papyrus/providers/google_sign_in_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:papyrus/widgets/settings/settings_section.dart';
@@ -1296,20 +1296,20 @@ class _ProfilePageState extends State<ProfilePage> {
   // ============================================================================
 
   String _getDisplayName() {
-    final user = FirebaseAuth.instance.currentUser;
-    return user?.displayName ?? 'Anonymous User';
+    final user = Supabase.instance.client.auth.currentUser;
+    return (user?.userMetadata?['full_name'] as String?) ?? 'Anonymous User';
   }
 
   String _getEmail() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user?.email == null || user!.email!.trim().isEmpty) {
-      return 'No email provided';
-    }
-    return user.email!;
+    final user = Supabase.instance.client.auth.currentUser;
+    final email = user?.email;
+    if (email == null || email.trim().isEmpty) return 'No email provided';
+    return email;
   }
 
   String? _getAvatarUrl() {
-    return FirebaseAuth.instance.currentUser?.photoURL;
+    return Supabase.instance.client.auth.currentUser
+        ?.userMetadata?['avatar_url'] as String?;
   }
 
   String get _initials {
@@ -1322,9 +1322,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   bool _isGoogleLinked() {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return false;
-    return user.providerData.any((p) => p.providerId == 'google.com');
+    return user.appMetadata['provider'] == 'google' ||
+        (user.identities?.any((i) => i.provider == 'google') ?? false);
   }
 
   // ============================================================================
@@ -1332,23 +1333,8 @@ class _ProfilePageState extends State<ProfilePage> {
   // ============================================================================
 
   Future<void> _handleLogout(BuildContext context) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final googleProvider = Provider.of<GoogleSignInProvider>(
-      context,
-      listen: false,
-    );
-
-    for (var providerData in user.providerData) {
-      if (providerData.providerId == 'google.com') {
-        await googleProvider.signOut();
-        if (context.mounted) context.go('/login');
-        return;
-      }
-    }
-
-    await FirebaseAuth.instance.signOut();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.signOut();
     if (context.mounted) context.go('/login');
   }
 
