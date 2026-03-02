@@ -2,22 +2,48 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start PostgreSQL",
+      "label": "Papyrus (web)",
       "type": "shell",
-      "command": "docker rm -f papyrus-postgres || true && docker run --name papyrus-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=papyrus -p 5432:5432 -v papyrus_postgres_data:/var/lib/postgresql/data postgres:17",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-      }
+      "command": "flutter run",
+      "args": [
+        "-d",
+        "chrome",
+         "--dart-define-from-file",
+         ".dart_defines"
+      ]
     },
     {
-      "label": "Stop PostgreSQL",
+      "label": "Papyrus (android)",
       "type": "shell",
-      "command": "docker stop papyrus-postgres",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-      }
+      "command": "flutter run",
+      "args": [
+        "-d",
+        "android",
+         "--dart-define-from-file",
+         ".dart_defines"
+      ]
+    },
+    {
+      "label": "Papyrus (iOS)",
+      "type": "shell",
+      "command": "flutter run",
+      "args": [
+        "-d",
+        "ios",
+         "--dart-define-from-file",
+         ".dart_defines"
+      ]
+    },
+    {
+      "label": "Papyrus (desktop)",
+      "type": "shell",
+      "command": "flutter run",
+      "args": [
+        "-d",
+        "desktop",
+         "--dart-define-from-file",
+         ".dart_defines"
+      ]
     }
   ]
 }
