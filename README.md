@@ -45,29 +45,26 @@ Many reading applications offer partial solutions but fall short on essential fe
 
 ## Supported platforms
 
-| Platform | Status | Notes |
-|----------|--------|-------|
-| Android | Supported | Primary mobile target |
-| iOS | Supported | Requires Xcode for building |
-| Web | Supported | PWA with offline support |
-| Windows | Supported | Native desktop experience |
-| macOS | Supported | Requires Xcode for building |
-| Linux | Supported | AppImage/Snap distribution |
+- Android
+- iOS
+- macOS
+- Linux
+- Windows
+- Web
 
 ## Getting started
 
 ### Prerequisites
 
-- **Flutter SDK 3.x**: [Installation guide](https://flutter.dev/docs/get-started/install)
-- **Dart SDK 3.x**: Included with Flutter
+- Flutter SDK 3.x: [Installation guide](https://flutter.dev/docs/get-started/install)
 
 ### Installation
 
 1. **Clone the repository**
 
    ```bash
-   git clone git@github.com:Eoic/Papyrus.git
-   cd Papyrus
+   git clone git@github.com:PapyrusReader/client.git
+   cd client
    ```
 
 2. **Install dependencies**
@@ -87,33 +84,22 @@ Many reading applications offer partial solutions but fall short on essential fe
    flutter run -d chrome
 
    # Desktop
-   flutter run -d windows    # or: macos, linux
+   flutter run -d windows  # or: macos, linux
    ```
 
 ## Documentation
 
-Project documentation is available in the `/spec/` directory and can be built into a browsable static site using MkDocs.
-
-```bash
-# Install documentation dependencies
-pip install -r docs-requirements.txt
-
-# Serve documentation locally (http://127.0.0.1:8000)
-mkdocs serve
-
-# Build static site
-mkdocs build
-```
+See [PapyrusReader/docs](https://github.com/PapyrusReader/docs).
 
 ## Technology stack
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Frontend | Flutter / Dart | Cross-platform UI |
-| Backend | FastAPI / Python | REST API server |
-| Database | PostgreSQL | Primary data store |
-| Cache | Redis | Sessions, caching |
-| Storage | Multiple backends | Book file storage |
+| Layer        | Technology         |
+|--------------|--------------------|
+| Frontend     | Flutter / Dart     |
+| Backend      | FastAPI / Python   |
+| Database     | PostgreSQL         |
+| Cache        | Redis              |
+| File storage | Multiple (e.g., Google Drive, S3, [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system), self-hosted)  |
 
 ## Contributing
 
@@ -139,7 +125,6 @@ mkdocs build
 2. Make your changes and ensure quality checks pass:
 
    ```bash
-   cd client
    dart format .
    dart analyze
    flutter test
@@ -148,42 +133,16 @@ mkdocs build
 3. Commit your changes and push:
 
    ```bash
-   git commit -m "Add: description of your changes"
+   git commit -m "feat: description of your changes"
    git push origin feature/your-feature-name
    ```
 
 4. Open a pull request
 
-### Code style
-
-- Run `dart format .` before committing
-- Ensure `dart analyze` passes with no issues
-- Use sentence case for UI text (e.g., "Apply filters" not "Apply Filters")
-
-## Releases
-
-Releases are automated via GitHub Actions. To create a new release:
-
-1. Ensure all changes are merged to `master`
-2. Create and push a version tag:
-
-   ```bash
-   git tag v1.2.3
-   git push origin v1.2.3
-   ```
-
-3. GitHub Actions will automatically:
-   - Build all platforms (Android, Web, Linux, Windows)
-   - Create a GitHub Release with auto-generated release notes
-   - Attach versioned artifacts to the release
-
 ## Resources
 
-| Resource | Description |
-|----------|-------------|
-| [Documentation](https://eoic.github.io/Papyrus/) | Full project specification |
-| [API specification](docs/src/api/openapi.yaml) | OAS |
-
-## License
-
-This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+| Repository | Description |
+|---|---|
+| [server](https://github.com/PapyrusReader/server) | Back-end for self-hosted sync and file storage |
+| [website](https://github.com/PapyrusReader/website) | Landing page |
+| [docs](https://github.com/PapyrusReader/docs) | Documentation |
