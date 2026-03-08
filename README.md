@@ -40,7 +40,7 @@ Many reading applications offer partial solutions but fall short on essential fe
 | **Progress** | Reading time tracking, page/percentage progress, statistics |
 | **Goals** | Reading goals (books, pages, time) with streak tracking |
 | **Sync** | Cross-device synchronization via self-hostable server |
-| **Storage** | Multiple backends: Seff-hosted, Google Drive, WebDAV, MinIO, S3 |
+| **Storage** | Multiple backends: self-hosted, Google Drive, WebDAV, S3 |
 | **Accessibility** | E-ink optimization, dark/light themes, customizable fonts |
 
 ## Supported platforms
