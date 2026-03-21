@@ -5,7 +5,7 @@
   <p><strong>A cross-platform book management application</strong></p>
 
   <p>
-    <a href="https://eoic.github.io/Papyrus/"><img src="https://img.shields.io/badge/Documentation-blue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
+    <a href="https://papyrusreader.github.io/docs/"><img src="https://img.shields.io/badge/Documentation-blue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
     <a href="https://codecov.io/gh/Eoic/Papyrus"><img src="https://codecov.io/gh/Eoic/Papyrus/branch/master/graph/badge.svg" alt="Coverage"/></a>
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"/>
   </p>
