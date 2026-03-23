@@ -11,7 +11,9 @@ class CoverImagePicker extends StatefulWidget {
   final void Function(Uint8List? bytes) onFileChanged;
   final bool isDesktop;
   final double? coverWidth;
-  final double? coverHeight;
+
+  /// Standard book cover aspect ratio (width / height).
+  static const double coverAspectRatio = 2 / 3;
 
   const CoverImagePicker({
     super.key,
@@ -21,7 +23,6 @@ class CoverImagePicker extends StatefulWidget {
     required this.onFileChanged,
     this.isDesktop = false,
     this.coverWidth,
-    this.coverHeight,
   });
 
   @override
@@ -78,11 +79,6 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     _urlController.dispose();
     super.dispose();
   }
-
-  double get _coverWidth =>
-      widget.coverWidth ?? (widget.isDesktop ? 280.0 : 180.0);
-  double get _coverHeight =>
-      widget.coverHeight ?? (widget.isDesktop ? 420.0 : 270.0);
 
   @override
   Widget build(BuildContext context) {
@@ -171,30 +167,38 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
   Widget _buildCoverPreview(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTap: _pickImage,
-      child: AspectRatio(
-        aspectRatio: _coverWidth / _coverHeight,
-        child: Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: _buildCoverImage(context),
-          ),
+    final cover = AspectRatio(
+      aspectRatio: CoverImagePicker.coverAspectRatio,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: colorScheme.outlineVariant),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: _buildCoverImage(context),
         ),
       ),
     );
+
+    if (widget.coverWidth != null) {
+      return GestureDetector(
+        onTap: _pickImage,
+        child: Center(
+          child: SizedBox(width: widget.coverWidth, child: cover),
+        ),
+      );
+    }
+
+    return GestureDetector(onTap: _pickImage, child: cover);
   }
 
   Widget _buildCoverImage(BuildContext context) {

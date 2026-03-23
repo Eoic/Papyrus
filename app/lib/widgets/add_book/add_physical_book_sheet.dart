@@ -336,8 +336,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
                               _coverImageBytes = bytes;
                               if (bytes != null) _coverUrl = null;
                             }),
-                            coverWidth: 205.0,
-                            coverHeight: 315.0,
+                            coverWidth: 240,
                           ),
                         ),
                       ),

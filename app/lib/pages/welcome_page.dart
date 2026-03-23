@@ -7,70 +7,14 @@ import 'package:provider/provider.dart';
 
 /// Welcome page for the Papyrus book management application.
 /// Provides responsive layouts for mobile and desktop displays.
-class WelcomePage extends StatefulWidget {
+class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
-
-  @override
-  State<WelcomePage> createState() => _WelcomePageState();
-}
-
-class _WelcomePageState extends State<WelcomePage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: AnimationDurations.complex,
-      vsync: this,
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
-          ),
-        );
-
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
-    );
-
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(
-      mobile: (context) => _MobileWelcomeLayout(
-        fadeAnimation: _fadeAnimation,
-        slideAnimation: _slideAnimation,
-        scaleAnimation: _scaleAnimation,
-      ),
-      desktop: (context) => _DesktopWelcomeLayout(
-        fadeAnimation: _fadeAnimation,
-        slideAnimation: _slideAnimation,
-        scaleAnimation: _scaleAnimation,
-      ),
+      mobile: (context) => const _MobileWelcomeLayout(),
+      desktop: (context) => const _DesktopWelcomeLayout(),
     );
   }
 }
@@ -80,15 +24,7 @@ class _WelcomePageState extends State<WelcomePage>
 // =============================================================================
 
 class _MobileWelcomeLayout extends StatelessWidget {
-  final Animation<double> fadeAnimation;
-  final Animation<Offset> slideAnimation;
-  final Animation<double> scaleAnimation;
-
-  const _MobileWelcomeLayout({
-    required this.fadeAnimation,
-    required this.slideAnimation,
-    required this.scaleAnimation,
-  });
+  const _MobileWelcomeLayout();
 
   @override
   Widget build(BuildContext context) {
@@ -104,9 +40,7 @@ class _MobileWelcomeLayout extends StatelessWidget {
             children: [
               const Spacer(flex: 2),
               // Logo and branding section
-              _AnimatedBrandingSection(
-                fadeAnimation: fadeAnimation,
-                scaleAnimation: scaleAnimation,
+              _BrandingContent(
                 logoSize: ComponentSizes.logoWelcomeMobile,
                 titleStyle: theme.textTheme.headlineLarge?.copyWith(
                   fontSize: 48,
@@ -118,11 +52,7 @@ class _MobileWelcomeLayout extends StatelessWidget {
               ),
               const Spacer(flex: 3),
               // Action buttons section
-              _AnimatedButtonsSection(
-                fadeAnimation: fadeAnimation,
-                slideAnimation: slideAnimation,
-                buttonWidth: double.infinity,
-              ),
+              const _ButtonsContent(buttonWidth: double.infinity),
               const SizedBox(height: Spacing.md),
             ],
           ),
@@ -137,15 +67,7 @@ class _MobileWelcomeLayout extends StatelessWidget {
 // =============================================================================
 
 class _DesktopWelcomeLayout extends StatelessWidget {
-  final Animation<double> fadeAnimation;
-  final Animation<Offset> slideAnimation;
-  final Animation<double> scaleAnimation;
-
-  const _DesktopWelcomeLayout({
-    required this.fadeAnimation,
-    required this.slideAnimation,
-    required this.scaleAnimation,
-  });
+  const _DesktopWelcomeLayout();
 
   @override
   Widget build(BuildContext context) {
@@ -166,9 +88,7 @@ class _DesktopWelcomeLayout extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Logo and branding section
-                    _AnimatedBrandingSection(
-                      fadeAnimation: fadeAnimation,
-                      scaleAnimation: scaleAnimation,
+                    _BrandingContent(
                       logoSize: ComponentSizes.logoWelcomeDesktop,
                       titleStyle: theme.textTheme.displaySmall?.copyWith(
                         fontSize: 56,
@@ -182,11 +102,7 @@ class _DesktopWelcomeLayout extends StatelessWidget {
                     ),
                     const SizedBox(height: Spacing.xl),
                     // Action buttons section
-                    _AnimatedButtonsSection(
-                      fadeAnimation: fadeAnimation,
-                      slideAnimation: slideAnimation,
-                      buttonWidth: 320,
-                    ),
+                    const _ButtonsContent(buttonWidth: 320),
                   ],
                 ),
               ),
@@ -201,38 +117,6 @@ class _DesktopWelcomeLayout extends StatelessWidget {
 // =============================================================================
 // SHARED COMPONENTS
 // =============================================================================
-
-/// Animated branding section with logo, title, and tagline.
-class _AnimatedBrandingSection extends StatelessWidget {
-  final Animation<double> fadeAnimation;
-  final Animation<double> scaleAnimation;
-  final double logoSize;
-  final TextStyle? titleStyle;
-  final TextStyle? taglineStyle;
-
-  const _AnimatedBrandingSection({
-    required this.fadeAnimation,
-    required this.scaleAnimation,
-    required this.logoSize,
-    required this.titleStyle,
-    required this.taglineStyle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: fadeAnimation,
-      child: ScaleTransition(
-        scale: scaleAnimation,
-        child: _BrandingContent(
-          logoSize: logoSize,
-          titleStyle: titleStyle,
-          taglineStyle: taglineStyle,
-        ),
-      ),
-    );
-  }
-}
 
 /// Static branding content (logo, title, tagline).
 class _BrandingContent extends StatelessWidget {
@@ -269,30 +153,6 @@ class _BrandingContent extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-}
-
-/// Animated buttons section with primary and secondary actions.
-class _AnimatedButtonsSection extends StatelessWidget {
-  final Animation<double> fadeAnimation;
-  final Animation<Offset> slideAnimation;
-  final double buttonWidth;
-
-  const _AnimatedButtonsSection({
-    required this.fadeAnimation,
-    required this.slideAnimation,
-    required this.buttonWidth,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: fadeAnimation,
-      child: SlideTransition(
-        position: slideAnimation,
-        child: _ButtonsContent(buttonWidth: buttonWidth),
-      ),
     );
   }
 }

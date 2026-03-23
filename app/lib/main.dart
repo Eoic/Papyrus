@@ -57,7 +57,7 @@ class _PapyrusState extends State<Papyrus> {
             ),
         ),
         // Auth and UI state providers
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider(widget.prefs)),
         ChangeNotifierProvider(create: (_) => DisplayModeProvider()),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),

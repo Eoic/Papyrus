@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client = Supabase.instance.client;
+  final SharedPreferences _prefs;
   bool _initialized = false;
   late final StreamSubscription<AuthState> _authSubscription;
+
+  static const _keyOfflineMode = 'offline_mode';
 
   User? _user;
   User? get user => _user;
@@ -21,7 +25,8 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  AuthProvider() {
+  AuthProvider(this._prefs) {
+    _isOfflineMode = _prefs.getBool(_keyOfflineMode) ?? false;
     // Listen to Supabase auth state changes
     _authSubscription = _client.auth.onAuthStateChange.listen((data) {
       _user = data.session?.user;
@@ -176,6 +181,7 @@ class AuthProvider extends ChangeNotifier {
 
       _user = null;
       _error = null;
+      setOfflineMode(false);
     } catch (e) {
       _error = e.toString();
       debugPrint('Sign-Out Error: $e');
@@ -187,6 +193,7 @@ class AuthProvider extends ChangeNotifier {
 
   void setOfflineMode(bool value) {
     _isOfflineMode = value;
+    _prefs.setBool(_keyOfflineMode, value);
     notifyListeners();
   }
 
