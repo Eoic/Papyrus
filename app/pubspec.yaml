@@ -55,6 +55,7 @@ flutter:
     - assets/images/book_placeholder_2.jpg
     - assets/images/profile.png
     - assets/images/auth-illustration.png
+    - assets/images/welcome-illustration.png
 
   fonts:
     - family: MadimiOne
