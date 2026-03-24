@@ -5,7 +5,6 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
 import 'package:provider/provider.dart';
 
-/// Clean welcome screen with a full-screen illustration background and three actions.
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 

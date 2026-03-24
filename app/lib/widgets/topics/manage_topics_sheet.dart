@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/tag.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/text_utils.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/topics/add_topic_sheet.dart';
@@ -95,7 +96,6 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
     final tags = dataStore.tags;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
       minChildSize: 0.4,
       maxChildSize: 0.9,
       expand: false,
@@ -117,20 +117,7 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
             Row(
               children: [
                 // Book cover or bulk icon
-                if (widget.isBulkMode)
-                  Container(
-                    width: 40,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Icon(
-                      Icons.library_books,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  )
-                else
+                if (!widget.isBulkMode)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: SizedBox(
@@ -139,7 +126,6 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                       child: _buildCover(context),
                     ),
                   ),
-                const SizedBox(width: Spacing.md),
                 // Title
                 Expanded(
                   child: Column(
@@ -147,7 +133,7 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                     children: [
                       Text(
                         widget.isBulkMode
-                            ? 'Add topics to ${widget.bulkBookIds!.length} books'
+                            ? 'Add topics to ${widget.bulkBookIds!.length} ${maybePluralize(widget.bulkBookIds!.length, "topic")}'
                             : 'Manage topics',
                         style: textTheme.titleLarge,
                       ),
@@ -219,12 +205,12 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                       },
                     ),
             ),
-            Divider(height: Spacing.md, color: colorScheme.outlineVariant),
 
             // Action buttons
             Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.sm,
+                top: Spacing.md,
+                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.md,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,

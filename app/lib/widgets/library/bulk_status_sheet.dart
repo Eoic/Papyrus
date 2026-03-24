@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/text_utils.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+
+final statusTiles = [
+  (
+    icon: Icons.auto_stories,
+    status: ReadingStatus.inProgress,
+    title: "in progress",
+  ),
+  (
+    icon: Icons.check_circle_outline,
+    status: ReadingStatus.completed,
+    title: "finished",
+  ),
+  (
+    icon: Icons.bookmark_add_outlined,
+    status: ReadingStatus.notStarted,
+    title: "unread",
+  ),
+];
 
 /// Bottom sheet for changing reading status of multiple books.
 class BulkStatusSheet extends StatelessWidget {
@@ -40,58 +59,50 @@ class BulkStatusSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const BottomSheetHandle(),
-            const SizedBox(height: Spacing.lg),
-            Text(
-              'Change status for $bookCount ${bookCount == 1 ? 'book' : 'books'}',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: Spacing.md),
+          const BottomSheetHandle(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.lg,
+              Spacing.lg,
+              Spacing.lg,
+              0,
+            ),
+            child: Text(
+              'Change status for $bookCount ${maybePluralize(bookCount, "book")}',
               style: textTheme.titleLarge,
             ),
-            const SizedBox(height: Spacing.md),
-            ListTile(
-              leading: const Icon(Icons.auto_stories),
-              title: const Text('Mark as reading'),
-              onTap: () {
-                Navigator.pop(context);
-                onStatusSelected(ReadingStatus.inProgress);
-              },
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Spacing.md,
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sm,
+              vertical: Spacing.md,
             ),
-            ListTile(
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Mark as finished'),
-              onTap: () {
-                Navigator.pop(context);
-                onStatusSelected(ReadingStatus.completed);
-              },
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Spacing.md,
-              ),
+            child: Column(
+              children: [
+                for (final tile in statusTiles)
+                  ListTile(
+                    leading: Icon(tile.icon),
+                    title: Text('Mark as ${tile.title}'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(24)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onStatusSelected(tile.status);
+                    },
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.md,
+                    ),
+                  ),
+              ],
             ),
-            ListTile(
-              leading: Icon(
-                Icons.bookmark_outline,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              title: const Text('Mark as unread'),
-              onTap: () {
-                Navigator.pop(context);
-                onStatusSelected(ReadingStatus.notStarted);
-              },
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: Spacing.md,
-              ),
-            ),
-            const SizedBox(height: Spacing.md),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

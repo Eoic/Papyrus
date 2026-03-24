@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/text_utils.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
@@ -90,7 +91,6 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
     final shelves = dataStore.shelves;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
       minChildSize: 0.4,
       maxChildSize: 0.9,
       expand: false,
@@ -112,20 +112,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
             Row(
               children: [
                 // Book cover or bulk icon
-                if (widget.isBulkMode)
-                  Container(
-                    width: 40,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Icon(
-                      Icons.library_books,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  )
-                else
+                if (!widget.isBulkMode)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: SizedBox(
@@ -134,7 +121,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                       child: _buildCover(context),
                     ),
                   ),
-                const SizedBox(width: Spacing.md),
+                // const SizedBox(width: Spacing.md),
                 // Title
                 Expanded(
                   child: Column(
@@ -142,7 +129,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                     children: [
                       Text(
                         widget.isBulkMode
-                            ? 'Add ${widget.bulkBookIds!.length} books to shelves'
+                            ? 'Add ${widget.bulkBookIds!.length} ${maybePluralize(widget.bulkBookIds!.length, "book")} to shelves'
                             : 'Add to shelves',
                         style: textTheme.titleLarge,
                       ),
@@ -186,9 +173,9 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                       ? shelves
                       : shelves
                             .where(
-                              (s) => s.name.toLowerCase().contains(
-                                _searchQuery.toLowerCase(),
-                              ),
+                              (searchString) => searchString.name
+                                  .toLowerCase()
+                                  .contains(_searchQuery.toLowerCase()),
                             )
                             .toList();
 
@@ -212,12 +199,12 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                 },
               ),
             ),
-            Divider(height: Spacing.md, color: colorScheme.outlineVariant),
 
             // Action buttons
             Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.sm,
+                top: Spacing.md,
+                bottom: MediaQuery.of(context).viewInsets.bottom + Spacing.md,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,

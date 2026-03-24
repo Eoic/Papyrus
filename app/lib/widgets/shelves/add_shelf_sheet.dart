@@ -185,7 +185,6 @@ class _AddShelfSheetState extends State<AddShelfSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: Spacing.md),
           ],
         ),
       ),
