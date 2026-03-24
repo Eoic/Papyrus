@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shell/desktop_sidebar.dart';
@@ -14,6 +15,7 @@ class AppShellNavItem {
   final IconData icon;
   final IconData? selectedIcon;
   final List<AppShellNavItem>? children;
+  final int? count;
 
   const AppShellNavItem({
     required this.path,
@@ -21,6 +23,7 @@ class AppShellNavItem {
     required this.icon,
     this.selectedIcon,
     this.children,
+    this.count,
   });
 }
 
@@ -33,96 +36,108 @@ class AdaptiveAppShell extends StatelessWidget {
 
   const AdaptiveAppShell({super.key, required this.child});
 
-  static const List<AppShellNavItem> mainNavItems = [
-    AppShellNavItem(
-      path: '/dashboard',
-      label: 'Dashboard',
-      icon: Icons.dashboard_outlined,
-      selectedIcon: Icons.dashboard,
-    ),
-    AppShellNavItem(
-      path: '/library',
-      label: 'Library',
-      icon: Icons.library_books_outlined,
-      selectedIcon: Icons.library_books,
-      children: [
-        AppShellNavItem(
-          path: '/library/books',
-          label: 'Books',
-          icon: Icons.menu_book_outlined,
-          selectedIcon: Icons.menu_book,
-        ),
-        AppShellNavItem(
-          path: '/library/shelves',
-          label: 'Shelves',
-          icon: Icons.shelves,
-          selectedIcon: Icons.shelves,
-        ),
-        AppShellNavItem(
-          path: '/library/bookmarks',
-          label: 'Bookmarks',
-          icon: Icons.bookmark_outline,
-          selectedIcon: Icons.bookmark,
-        ),
-        AppShellNavItem(
-          path: '/library/annotations',
-          label: 'Annotations',
-          icon: Icons.border_color_outlined,
-          selectedIcon: Icons.border_color,
-        ),
-        AppShellNavItem(
-          path: '/library/notes',
-          label: 'Notes',
-          icon: Icons.notes_outlined,
-          selectedIcon: Icons.notes,
-        ),
-      ],
-    ),
-    AppShellNavItem(
-      path: '/goals',
-      label: 'Goals',
-      icon: Icons.emoji_events_outlined,
-      selectedIcon: Icons.emoji_events,
-    ),
-    AppShellNavItem(
-      path: '/statistics',
-      label: 'Statistics',
-      icon: Icons.bar_chart_outlined,
-      selectedIcon: Icons.bar_chart,
-    ),
-    AppShellNavItem(
-      path: '/profile',
-      label: 'Profile',
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-    ),
-  ];
+  static List<AppShellNavItem> buildNavItems(DataStore dataStore) {
+    return [
+      const AppShellNavItem(
+        path: '/dashboard',
+        label: 'Dashboard',
+        icon: Icons.dashboard_outlined,
+        selectedIcon: Icons.dashboard,
+      ),
+      AppShellNavItem(
+        path: '/library',
+        label: 'Library',
+        icon: Icons.library_books_outlined,
+        selectedIcon: Icons.library_books,
+        children: [
+          AppShellNavItem(
+            path: '/library/books',
+            label: 'Books',
+            icon: Icons.menu_book_outlined,
+            count: dataStore.books.length,
+            selectedIcon: Icons.menu_book,
+          ),
+          AppShellNavItem(
+            path: '/library/shelves',
+            label: 'Shelves',
+            icon: Icons.shelves,
+            count: dataStore.shelves.length,
+            selectedIcon: Icons.shelves,
+          ),
+          AppShellNavItem(
+            path: '/library/bookmarks',
+            label: 'Bookmarks',
+            icon: Icons.bookmark_outline,
+            count: dataStore.bookmarks.length,
+            selectedIcon: Icons.bookmark,
+          ),
+          AppShellNavItem(
+            path: '/library/annotations',
+            label: 'Annotations',
+            icon: Icons.border_color_outlined,
+            count: dataStore.annotations.length,
+            selectedIcon: Icons.border_color,
+          ),
+          AppShellNavItem(
+            path: '/library/notes',
+            label: 'Notes',
+            icon: Icons.notes_outlined,
+            count: dataStore.notes.length,
+            selectedIcon: Icons.notes,
+          ),
+        ],
+      ),
+      const AppShellNavItem(
+        path: '/goals',
+        label: 'Goals',
+        icon: Icons.emoji_events_outlined,
+        selectedIcon: Icons.emoji_events,
+      ),
+      const AppShellNavItem(
+        path: '/statistics',
+        label: 'Statistics',
+        icon: Icons.bar_chart_outlined,
+        selectedIcon: Icons.bar_chart,
+      ),
+      const AppShellNavItem(
+        path: '/profile',
+        label: 'Profile',
+        icon: Icons.person_outline,
+        selectedIcon: Icons.person,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final displayMode = context.watch<DisplayModeProvider>();
+    final dataStore = context.watch<DataStore>();
+    final navItems = buildNavItems(dataStore);
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     // E-ink mode uses special text-based navigation
     if (displayMode.isEinkMode) {
-      return _buildEinkShell(context);
+      return _buildEinkShell(context, navItems);
     }
 
     // Desktop uses sidebar, mobile uses bottom nav
     if (isDesktop) {
-      return _buildDesktopShell(context);
+      return _buildDesktopShell(context, navItems);
     } else {
-      return _buildMobileShell(context);
+      return _buildMobileShell(context, navItems);
     }
   }
 
-  Widget _buildDesktopShell(BuildContext context) {
+  Widget _buildDesktopShell(
+    BuildContext context,
+    List<AppShellNavItem> navItems,
+  ) {
     return Scaffold(
       body: Row(
         children: [
           DesktopSidebar(
-            items: mainNavItems,
+            items: navItems,
             currentPath: GoRouterState.of(context).uri.toString(),
             onNavigate: (path) => context.go(path),
           ),
@@ -132,35 +147,44 @@ class AdaptiveAppShell extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileShell(BuildContext context) {
+  Widget _buildMobileShell(
+    BuildContext context,
+    List<AppShellNavItem> navItems,
+  ) {
     final currentPath = GoRouterState.of(context).uri.toString();
     final isInLibrary = currentPath.startsWith('/library');
 
     return Scaffold(
       body: child,
       bottomNavigationBar: MobileBottomNav(
-        items: mainNavItems,
+        items: navItems,
         currentPath: currentPath,
         onNavigate: (path) => context.go(path),
       ),
-      drawer: isInLibrary ? _buildLibraryDrawer(context) : null,
+      drawer: isInLibrary ? _buildLibraryDrawer(context, navItems) : null,
     );
   }
 
-  Widget _buildEinkShell(BuildContext context) {
+  Widget _buildEinkShell(
+    BuildContext context,
+    List<AppShellNavItem> navItems,
+  ) {
     return Scaffold(
       body: child,
       bottomNavigationBar: EinkBottomNav(
-        items: mainNavItems,
+        items: navItems,
         currentPath: GoRouterState.of(context).uri.toString(),
         onNavigate: (path) => context.go(path),
       ),
     );
   }
 
-  Widget _buildLibraryDrawer(BuildContext context) {
+  Widget _buildLibraryDrawer(
+    BuildContext context,
+    List<AppShellNavItem> navItems,
+  ) {
     final currentPath = GoRouterState.of(context).uri.toString();
-    final libraryItem = mainNavItems.firstWhere(
+    final libraryItem = navItems.firstWhere(
       (item) => item.path == '/library',
     );
     final children = libraryItem.children ?? [];

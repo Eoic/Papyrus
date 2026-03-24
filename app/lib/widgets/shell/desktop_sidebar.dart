@@ -144,6 +144,7 @@ class DesktopSidebar extends StatelessWidget {
               sidebarProvider.setCollapsed(false);
               sidebarProvider.setLibraryExpanded(true);
             }
+
             onNavigate(item.path);
           },
           child: Container(
@@ -316,16 +317,57 @@ class DesktopSidebar extends StatelessWidget {
                 ),
                 const SizedBox(width: Spacing.sm),
                 Expanded(
-                  child: Text(
-                    item.label,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        item.label,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.onPrimaryContainer
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      Spacer(),
+
+                      if (item.count != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Spacing.sm,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer
+                                      .withValues(alpha: 0.12)
+                                : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                      .withValues(alpha: 0.12),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.full),
+                          ),
+                          child: Text(
+                            item.count.toString(),
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: isSelected
+                                      ? Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer
+                                      : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],

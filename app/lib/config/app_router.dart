@@ -84,7 +84,6 @@ class AppRouter {
             name: 'LIBRARY',
             path: '/library',
             redirect: (context, state) {
-              // Redirect /library to /library/books
               return state.uri.toString() == '/library'
                   ? '/library/books'
                   : null;
