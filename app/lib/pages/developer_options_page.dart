@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
+import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:papyrus/widgets/settings/settings_section.dart';
@@ -14,46 +14,28 @@ class DeveloperOptionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
+    final prefs = context.watch<PreferencesProvider>();
 
-    if (displayMode.isEinkMode) return _buildEinkLayout(context);
+    if (prefs.isEinkMode) return _buildEinkLayout(context);
     return _buildStandardLayout(context);
   }
 
   Widget _buildStandardLayout(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
+    context.watch<PreferencesProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Developer options')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(Spacing.md),
-          children: [
-            const SettingsSectionHeader(title: 'Display'),
-            SettingsToggleRow(
-              label: 'E-ink display mode',
-              value: displayMode.isEinkMode,
-              onChanged: (_) => displayMode.toggleEinkMode(),
-            ),
-            const SizedBox(height: Spacing.xs),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-              child: Text(
-                'Enable high-contrast mode optimized for e-ink displays. '
-                'Removes animations and increases touch targets.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
+          children: [],
         ),
       ),
     );
   }
 
   Widget _buildEinkLayout(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
+    context.watch<PreferencesProvider>();
 
     return Scaffold(
       body: Column(
@@ -63,68 +45,7 @@ class DeveloperOptionsPage extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(Spacing.pageMarginsEink),
-              children: [
-                const Text(
-                  'DISPLAY',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: Spacing.sm),
-                const Divider(color: Colors.black87, height: 1),
-                GestureDetector(
-                  onTap: () => displayMode.toggleEinkMode(),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minHeight: TouchTargets.einkMin,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.tablet_android,
-                          size: IconSizes.medium,
-                        ),
-                        const SizedBox(width: Spacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'E-INK DISPLAY MODE',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                displayMode.isEinkMode
-                                    ? 'High contrast mode active'
-                                    : 'Standard display mode',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        _buildEinkToggle(displayMode.isEinkMode),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(color: Colors.black87, height: 1),
-                const SizedBox(height: Spacing.md),
-                const Text(
-                  'Enable high-contrast mode optimized for e-ink displays. '
-                  'Removes animations and increases touch targets.',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-              ],
+              children: [],
             ),
           ),
         ],

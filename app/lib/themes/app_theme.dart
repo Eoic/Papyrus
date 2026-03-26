@@ -2,16 +2,6 @@ import 'package:flutter/material.dart';
 import 'color_schemes.g.dart';
 import 'design_tokens.dart';
 
-/// Display mode for the application.
-/// Determines which theme and layout adaptations to use.
-enum DisplayMode {
-  /// Standard display (phone, tablet, desktop)
-  standard,
-
-  /// E-ink display mode (high contrast, no animations)
-  eink,
-}
-
 /// Application theme configurations.
 /// Provides ThemeData for light, dark, and e-ink display modes.
 class AppTheme {

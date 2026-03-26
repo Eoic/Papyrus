@@ -54,13 +54,17 @@ class PreferencesProvider extends ChangeNotifier {
 
   // -- Theme ----------------------------------------------------------------
 
-  /// Current theme mode preference: 'light', 'dark', or 'system'.
+  /// Current theme mode preference: 'light', 'dark', 'eink', or 'system'.
   String get themeModePref => _prefs.getString(_keyThemeMode) ?? 'system';
+
+  /// Whether the e-ink theme is selected.
+  bool get isEinkMode => themeModePref == 'eink';
 
   /// Resolved [ThemeMode] for use in MaterialApp.
   ThemeMode get themeMode {
     switch (themeModePref) {
       case 'light':
+      case 'eink':
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;

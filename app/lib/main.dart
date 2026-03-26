@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/data/sample_data.dart';
 import 'package:papyrus/providers/auth_provider.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sidebar_provider.dart';
@@ -58,25 +57,21 @@ class _PapyrusState extends State<Papyrus> {
         ),
         // Auth and UI state providers
         ChangeNotifierProvider(create: (_) => AuthProvider(widget.prefs)),
-        ChangeNotifierProvider(create: (_) => DisplayModeProvider()),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
         ChangeNotifierProvider(
           create: (_) => PreferencesProvider(widget.prefs),
         ),
       ],
-      child: Consumer2<DisplayModeProvider, PreferencesProvider>(
-        builder: (context, displayModeProvider, preferencesProvider, child) {
+      child: Consumer<PreferencesProvider>(
+        builder: (context, preferencesProvider, child) {
+          final isEink = preferencesProvider.isEinkMode;
           return MaterialApp.router(
             title: 'Papyrus',
             debugShowCheckedModeBanner: false,
-            theme: displayModeProvider.isEinkMode
-                ? AppTheme.eink
-                : AppTheme.light,
-            darkTheme: displayModeProvider.isEinkMode
-                ? AppTheme.eink
-                : AppTheme.dark,
-            themeMode: displayModeProvider.isEinkMode
+            theme: isEink ? AppTheme.eink : AppTheme.light,
+            darkTheme: isEink ? AppTheme.eink : AppTheme.dark,
+            themeMode: isEink
                 ? ThemeMode.light
                 : preferencesProvider.themeMode,
             routerConfig: _appRouter.router,

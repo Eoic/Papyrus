@@ -67,7 +67,7 @@ class SettingsRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: Spacing.sm,
-            vertical: Spacing.md,
+            vertical: Spacing.sm,
           ),
           child: Row(
             children: [

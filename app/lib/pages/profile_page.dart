@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/providers/auth_provider.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -99,7 +98,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildMobileAppearanceSection(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
     final prefs = context.watch<PreferencesProvider>();
 
     return Column(
@@ -110,11 +108,6 @@ class _ProfilePageState extends State<ProfilePage> {
           label: 'Theme',
           value: _getThemeLabel(prefs.themeModePref),
           onTap: () => _showThemePicker(context),
-        ),
-        SettingsToggleRow(
-          label: 'E-ink mode',
-          value: displayMode.isEinkMode,
-          onChanged: (_) => displayMode.toggleEinkMode(),
         ),
       ],
     );
@@ -291,17 +284,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildMobileDeveloperSection(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
+    context.watch<PreferencesProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SettingsSectionHeader(title: 'Developer options'),
-        SettingsToggleRow(
-          label: 'E-ink display mode',
-          value: displayMode.isEinkMode,
-          onChanged: (_) => displayMode.toggleEinkMode(),
-        ),
         SettingsRow(label: 'Reload sample data', onTap: () {}),
         SettingsRow(label: 'Reset onboarding', onTap: () {}),
         SettingsRow(label: 'Performance overlay', onTap: () {}),
@@ -638,19 +626,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // -- Appearance -------------------------------------------------------------
 
   Widget _buildAppearanceContent(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
-
-    return SettingsCard(
-      children: [
-        _buildThemeRadioGroup(context),
-        const SizedBox(height: Spacing.lg),
-        SettingsToggleRow(
-          label: 'E-ink mode',
-          value: displayMode.isEinkMode,
-          onChanged: (_) => displayMode.toggleEinkMode(),
-        ),
-      ],
-    );
+    return SettingsCard(children: [_buildThemeRadioGroup(context)]);
   }
 
   Widget _buildThemeRadioGroup(BuildContext context) {
@@ -668,8 +644,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(height: Spacing.sm),
         _buildRadioTile('Light', 'light'),
-        _buildRadioTile('System', 'system'),
         _buildRadioTile('Dark', 'dark'),
+        _buildRadioTile('E-ink', 'eink'),
+        _buildRadioTile('System', 'system'),
       ],
     );
   }
@@ -1252,33 +1229,11 @@ class _ProfilePageState extends State<ProfilePage> {
   // -- Developer options ------------------------------------------------------
 
   Widget _buildDeveloperOptionsContent(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
+    context.watch<PreferencesProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SettingsCard(
-          title: 'Display',
-          children: [
-            SettingsToggleRow(
-              label: 'E-ink display mode',
-              value: displayMode.isEinkMode,
-              onChanged: (_) => displayMode.toggleEinkMode(),
-            ),
-            const SizedBox(height: Spacing.xs),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-              child: Text(
-                'Enable high-contrast mode optimized for e-ink displays. '
-                'Removes animations and increases touch targets.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: Spacing.lg),
         SettingsCard(
           title: 'Debug',
           children: [
@@ -1308,8 +1263,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String? _getAvatarUrl() {
-    return Supabase.instance.client.auth.currentUser
-        ?.userMetadata?['avatar_url'] as String?;
+    return Supabase
+            .instance
+            .client
+            .auth
+            .currentUser
+            ?.userMetadata?['avatar_url']
+        as String?;
   }
 
   String get _initials {
@@ -1468,9 +1428,11 @@ class _ProfilePageState extends State<ProfilePage> {
         return 'Light';
       case 'dark':
         return 'Dark';
+      case 'eink':
+        return 'E-ink';
       case 'system':
       default:
-        return 'System default';
+        return 'System';
     }
   }
 
@@ -1492,8 +1454,9 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
       items: [
         ('Light', 'light'),
-        ('System default', 'system'),
         ('Dark', 'dark'),
+        ('E-ink', 'eink'),
+        ('System', 'system'),
       ],
       selected: prefs.themeModePref,
       onSelected: (value) => prefs.themeModePref = value,

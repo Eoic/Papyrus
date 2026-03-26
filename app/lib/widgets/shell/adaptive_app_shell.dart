@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
-import 'package:papyrus/providers/display_mode_provider.dart';
+import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shell/desktop_sidebar.dart';
 import 'package:papyrus/widgets/shell/eink_bottom_nav.dart';
@@ -110,14 +110,14 @@ class AdaptiveAppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayMode = context.watch<DisplayModeProvider>();
+    final prefs = context.watch<PreferencesProvider>();
     final dataStore = context.watch<DataStore>();
     final navItems = buildNavItems(dataStore);
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
     // E-ink mode uses special text-based navigation
-    if (displayMode.isEinkMode) {
+    if (prefs.isEinkMode) {
       return _buildEinkShell(context, navItems);
     }
 
