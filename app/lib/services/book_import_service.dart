@@ -47,10 +47,71 @@ class BookImportResult {
 class BookImportService {
   web.Worker? _worker;
 
+  /// Pending requests keyed by '$action:$bookId'.
+  final Map<String, Completer<JSObject>> _pending = {};
+
   /// Returns the cached worker, creating it lazily on first access.
+  /// The single `onmessage` handler is registered here so concurrent calls
+  /// do not overwrite each other's handler.
   web.Worker _getWorker() {
-    _worker ??= web.Worker('book_worker.js'.toJS);
-    return _worker!;
+    if (_worker != null) return _worker!;
+
+    final worker = web.Worker('book_worker.js'.toJS);
+
+    worker.onmessage = (web.MessageEvent event) {
+      final data = event.data;
+      if (data == null || data.isNull || data.isUndefined) {
+        // Complete all pending requests with an error — we cannot identify
+        // which request this response belongs to without a bookId/action.
+        final error = Exception('Worker returned null data');
+        for (final c in _pending.values) {
+          if (!c.isCompleted) c.completeError(error);
+        }
+        _pending.clear();
+        return;
+      }
+
+      final obj = data as JSObject;
+      final type = _jsToNullableString(obj['type']);
+
+      if (type == 'error') {
+        final message =
+            _jsToNullableString(obj['message']) ?? 'Unknown error';
+        final error = Exception(message);
+        // Try to route to a specific completer first.
+        final action = _jsToNullableString(obj['action']);
+        final bookId = _jsToNullableString(obj['bookId']);
+        if (action != null && bookId != null) {
+          final key = '$action:$bookId';
+          final c = _pending.remove(key);
+          if (c != null && !c.isCompleted) {
+            c.completeError(error);
+            return;
+          }
+        }
+        // Fall back: complete all pending requests.
+        for (final c in _pending.values) {
+          if (!c.isCompleted) c.completeError(error);
+        }
+        _pending.clear();
+        return;
+      }
+
+      if (type == 'success') {
+        final action = _jsToNullableString(obj['action']);
+        final bookId = _jsToNullableString(obj['bookId']);
+        if (action == null || bookId == null) return;
+
+        final key = '$action:$bookId';
+        final c = _pending.remove(key);
+        if (c != null && !c.isCompleted) {
+          c.complete(obj);
+        }
+      }
+    }.toJS;
+
+    _worker = worker;
+    return worker;
   }
 
   /// Processes a book file and stores it in OPFS via the web worker.
@@ -69,36 +130,10 @@ class BookImportService {
     }
 
     final bookId = 'book-${DateTime.now().millisecondsSinceEpoch}';
-    final completer = Completer<BookImportResult>();
+    final completer = Completer<JSObject>();
     final worker = _getWorker();
 
-    worker.onmessage = (web.MessageEvent event) {
-      final data = event.data;
-      if (data == null || data.isNull || data.isUndefined) {
-        completer.completeError(Exception('Worker returned null data'));
-        return;
-      }
-      final obj = data as JSObject;
-
-      final type = _jsToNullableString(obj['type']);
-      if (type == 'error') {
-        final message = _jsToNullableString(obj['message']) ?? 'Unknown error';
-        completer.completeError(Exception(message));
-        return;
-      }
-
-      if (type == 'success') {
-        final action = _jsToNullableString(obj['action']);
-        if (action == 'process') {
-          try {
-            final result = _parseImportResult(obj, bookId);
-            completer.complete(result);
-          } catch (e, st) {
-            completer.completeError(e, st);
-          }
-        }
-      }
-    }.toJS;
+    _pending['process:$bookId'] = completer;
 
     // Transfer bytes as ArrayBuffer for zero-copy transfer.
     final jsBuffer = bytes.buffer.toJS;
@@ -111,7 +146,8 @@ class BookImportService {
 
     worker.postMessage(message, [jsBuffer].toJS);
 
-    return completer.future;
+    final obj = await completer.future;
+    return _parseImportResult(obj, bookId);
   }
 
   /// Deletes a stored book file from OPFS by [bookId].
@@ -122,27 +158,10 @@ class BookImportService {
       throw UnsupportedError('BookImportService is only supported on web.');
     }
 
-    final completer = Completer<void>();
+    final completer = Completer<JSObject>();
     final worker = _getWorker();
 
-    worker.onmessage = (web.MessageEvent event) {
-      final data = event.data;
-      if (data == null || data.isNull || data.isUndefined) {
-        completer.completeError(Exception('Worker returned null data'));
-        return;
-      }
-      final obj = data as JSObject;
-
-      final type = _jsToNullableString(obj['type']);
-      if (type == 'error') {
-        final message = _jsToNullableString(obj['message']) ?? 'Unknown error';
-        completer.completeError(Exception(message));
-        return;
-      }
-      if (type == 'success') {
-        completer.complete();
-      }
-    }.toJS;
+    _pending['delete:$bookId'] = completer;
 
     final message = {
       'type': 'delete'.toJS,
@@ -151,7 +170,7 @@ class BookImportService {
 
     worker.postMessage(message);
 
-    return completer.future;
+    await completer.future;
   }
 
   /// Retrieves the raw file bytes for a stored book from OPFS.
@@ -163,33 +182,10 @@ class BookImportService {
       throw UnsupportedError('BookImportService is only supported on web.');
     }
 
-    final completer = Completer<Uint8List?>();
+    final completer = Completer<JSObject>();
     final worker = _getWorker();
 
-    worker.onmessage = (web.MessageEvent event) {
-      final data = event.data;
-      if (data == null || data.isNull || data.isUndefined) {
-        completer.completeError(Exception('Worker returned null data'));
-        return;
-      }
-      final obj = data as JSObject;
-
-      final type = _jsToNullableString(obj['type']);
-      if (type == 'error') {
-        final message = _jsToNullableString(obj['message']) ?? 'Unknown error';
-        completer.completeError(Exception(message));
-        return;
-      }
-      if (type == 'success') {
-        final fileDataJs = obj['fileData'];
-        if (fileDataJs == null || fileDataJs.isNull || fileDataJs.isUndefined) {
-          completer.complete(null);
-        } else {
-          final bytes = (fileDataJs as JSArrayBuffer).toDart.asUint8List();
-          completer.complete(bytes);
-        }
-      }
-    }.toJS;
+    _pending['getFile:$bookId'] = completer;
 
     final message = {
       'type': 'getFile'.toJS,
@@ -198,13 +194,19 @@ class BookImportService {
 
     worker.postMessage(message);
 
-    return completer.future;
+    final obj = await completer.future;
+    final fileDataJs = obj['fileData'];
+    if (fileDataJs == null || fileDataJs.isNull || fileDataJs.isUndefined) {
+      return null;
+    }
+    return (fileDataJs as JSArrayBuffer).toDart.asUint8List();
   }
 
   /// Terminates the Web Worker and releases resources.
   void dispose() {
     _worker?.terminate();
     _worker = null;
+    _pending.clear();
   }
 
   // ---------------------------------------------------------------------------
@@ -212,7 +214,15 @@ class BookImportService {
   // ---------------------------------------------------------------------------
 
   BookImportResult _parseImportResult(JSObject data, String bookId) {
-    final metadataJs = data['metadata'] as JSObject;
+    final metadataRaw = data['metadata'];
+    if (metadataRaw == null ||
+        metadataRaw.isNull ||
+        metadataRaw.isUndefined) {
+      throw StateError(
+        'Worker response is missing required "metadata" field for book $bookId.',
+      );
+    }
+    final metadataJs = metadataRaw as JSObject;
 
     final title =
         _jsToNullableString(metadataJs['title']) ?? bookId;
@@ -244,7 +254,14 @@ class BookImportService {
     final coverMimeType = _jsToNullableString(data['coverMimeType']);
 
     final fileSize = (data['fileSize'] as JSNumber).toDartInt;
-    final fileHash = _jsToNullableString(data['fileHash']) ?? '';
+
+    final fileHashRaw = _jsToNullableString(data['fileHash']);
+    if (fileHashRaw == null) {
+      throw StateError(
+        'Worker response is missing required "fileHash" field for book $bookId.',
+      );
+    }
+    final fileHash = fileHashRaw;
 
     return BookImportResult(
       bookId: bookId,
