@@ -124,7 +124,7 @@ async function processEpub(bookId, fileData) {
     const coverEntry = zip.get(fullCoverPath);
     if (coverEntry) {
       const coverBytes = await inflateEntry(bytes, coverEntry);
-      coverData = coverBytes.buffer;
+      coverData = coverBytes.slice().buffer;
     }
   }
 
@@ -182,8 +182,11 @@ function parseZip(bytes) {
       view.getUint8(i + 2) === 0x05 &&
       view.getUint8(i + 3) === 0x06
     ) {
-      eocdOffset = i;
-      break;
+      const commentLength = view.getUint16(i + 20, true);
+      if (i + 22 + commentLength === bytes.length) {
+        eocdOffset = i;
+        break;
+      }
     }
   }
   if (eocdOffset === -1) {
@@ -200,9 +203,14 @@ function parseZip(bytes) {
   }
 
   const entries = new Map();
+  const decoder = new TextDecoder('utf-8');
   let pos = cdOffset;
+  const cdEnd = cdOffset + cdSize;
 
   for (let i = 0; i < cdCount; i++) {
+    if (pos + 46 > cdEnd) {
+      throw new Error("This file doesn't appear to be a valid EPUB");
+    }
     // Central directory file header signature: 0x02014b50
     if (
       view.getUint8(pos) !== 0x50 ||
@@ -222,7 +230,7 @@ function parseZip(bytes) {
     const localHeaderOffset = view.getUint32(pos + 42, true);
 
     const fileNameBytes = bytes.subarray(pos + 46, pos + 46 + fileNameLength);
-    const fileName = new TextDecoder('utf-8').decode(fileNameBytes);
+    const fileName = decoder.decode(fileNameBytes);
 
     entries.set(fileName, {
       compressionMethod,
@@ -332,9 +340,8 @@ function extractMetadata(opfDoc, bookId) {
   const title = getText('dc\\:title') || getText('title') || bookId;
   const subtitle = null; // Always null for now
 
-  const creators = getAll('dc\\:creator').length
-    ? getAll('dc\\:creator')
-    : getAll('creator');
+  const dcCreators = getAll('dc\\:creator');
+  const creators = dcCreators.length ? dcCreators : getAll('creator');
   const author = creators.length > 0 ? creators[0] : null;
   const coAuthors = creators.length > 1 ? creators.slice(1) : [];
 
