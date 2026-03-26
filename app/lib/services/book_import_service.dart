@@ -47,6 +47,9 @@ class BookImportResult {
 class BookImportService {
   web.Worker? _worker;
 
+  /// Incrementing counter used to guarantee unique book IDs.
+  int _nextId = 0;
+
   /// Pending requests keyed by '$action:$bookId'.
   final Map<String, Completer<JSObject>> _pending = {};
 
@@ -57,6 +60,14 @@ class BookImportService {
     if (_worker != null) return _worker!;
 
     final worker = web.Worker('book_worker.js'.toJS);
+
+    worker.onerror = (web.Event event) {
+      final error = Exception('Worker error');
+      for (final c in _pending.values) {
+        if (!c.isCompleted) c.completeError(error);
+      }
+      _pending.clear();
+    }.toJS;
 
     worker.onmessage = (web.MessageEvent event) {
       final data = event.data;
@@ -129,20 +140,24 @@ class BookImportService {
       throw ArgumentError('Unsupported format: $ext. Only epub is supported.');
     }
 
-    final bookId = 'book-${DateTime.now().millisecondsSinceEpoch}';
+    final bookId = 'book-${DateTime.now().millisecondsSinceEpoch}-${_nextId++}';
     final completer = Completer<JSObject>();
     final worker = _getWorker();
 
     _pending['process:$bookId'] = completer;
 
     // Transfer bytes as ArrayBuffer for zero-copy transfer.
-    final jsBuffer = bytes.buffer.toJS;
-    final message = {
-      'type': 'process'.toJS,
-      'format': 'epub'.toJS,
-      'bookId': bookId.toJS,
-      'fileData': jsBuffer,
-    }.jsify()!;
+    // Ensure we only send the actual byte range, not the whole backing buffer.
+    final actualBytes = bytes.offsetInBytes == 0 &&
+            bytes.lengthInBytes == bytes.buffer.lengthInBytes
+        ? bytes
+        : Uint8List.fromList(bytes);
+    final jsBuffer = actualBytes.buffer.toJS;
+    final message = JSObject();
+    message['type'] = 'process'.toJS;
+    message['format'] = ext.toJS;
+    message['bookId'] = bookId.toJS;
+    message['fileData'] = jsBuffer;
 
     worker.postMessage(message, [jsBuffer].toJS);
 
@@ -163,10 +178,9 @@ class BookImportService {
 
     _pending['delete:$bookId'] = completer;
 
-    final message = {
-      'type': 'delete'.toJS,
-      'bookId': bookId.toJS,
-    }.jsify()!;
+    final message = JSObject();
+    message['type'] = 'delete'.toJS;
+    message['bookId'] = bookId.toJS;
 
     worker.postMessage(message);
 
@@ -187,10 +201,9 @@ class BookImportService {
 
     _pending['getFile:$bookId'] = completer;
 
-    final message = {
-      'type': 'getFile'.toJS,
-      'bookId': bookId.toJS,
-    }.jsify()!;
+    final message = JSObject();
+    message['type'] = 'getFile'.toJS;
+    message['bookId'] = bookId.toJS;
 
     worker.postMessage(message);
 
@@ -206,6 +219,10 @@ class BookImportService {
   void dispose() {
     _worker?.terminate();
     _worker = null;
+    final error = StateError('BookImportService was disposed');
+    for (final c in _pending.values) {
+      if (!c.isCompleted) c.completeError(error);
+    }
     _pending.clear();
   }
 
@@ -253,7 +270,13 @@ class BookImportService {
     }
     final coverMimeType = _jsToNullableString(data['coverMimeType']);
 
-    final fileSize = (data['fileSize'] as JSNumber).toDartInt;
+    final fileSizeRaw = data['fileSize'];
+    if (fileSizeRaw == null || fileSizeRaw.isNull || fileSizeRaw.isUndefined) {
+      throw StateError(
+        'Worker response missing "fileSize" for book $bookId',
+      );
+    }
+    final fileSize = (fileSizeRaw as JSNumber).toDartInt;
 
     final fileHashRaw = _jsToNullableString(data['fileHash']);
     if (fileHashRaw == null) {
