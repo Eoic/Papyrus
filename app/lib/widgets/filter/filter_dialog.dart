@@ -121,13 +121,7 @@ class _FilterDialogState extends State<FilterDialog> {
     final topics = widget.filterOptions.topics;
 
     return AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.tune, color: colorScheme.primary),
-          const SizedBox(width: Spacing.sm),
-          const Text('Advanced filters'),
-        ],
-      ),
+      title: const Text('Advanced filters'),
       content: SizedBox(
         width: 480,
         child: SingleChildScrollView(

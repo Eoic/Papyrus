@@ -112,7 +112,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
             Row(
               children: [
                 // Book cover or bulk icon
-                if (!widget.isBulkMode)
+                if (!widget.isBulkMode) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: SizedBox(
@@ -121,6 +121,9 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                       child: _buildCover(context),
                     ),
                   ),
+
+                  SizedBox(width: Spacing.sm + Spacing.xs),
+                ],
                 // const SizedBox(width: Spacing.md),
                 // Title
                 Expanded(

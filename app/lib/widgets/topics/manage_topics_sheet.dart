@@ -117,7 +117,7 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
             Row(
               children: [
                 // Book cover or bulk icon
-                if (!widget.isBulkMode)
+                if (!widget.isBulkMode) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: SizedBox(
@@ -126,6 +126,8 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                       child: _buildCover(context),
                     ),
                   ),
+                  const SizedBox(width: Spacing.sm + Spacing.xs),
+                ],
                 // Title
                 Expanded(
                   child: Column(
