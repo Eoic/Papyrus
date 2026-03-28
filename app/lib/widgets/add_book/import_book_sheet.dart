@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/book_import_service_stub.dart'
@@ -93,42 +94,69 @@ class _ImportContentState extends State<_ImportContent> {
     super.dispose();
   }
 
+  /// Force Flutter to schedule a frame after setState.
+  ///
+  /// On web, setState called from a continuation resumed by a JS callback
+  /// (e.g. Web Worker message) may not trigger frame scheduling because the
+  /// callback runs outside Flutter's animation frame context.
+  void _ensureFrame() {
+    SchedulerBinding.instance.ensureVisualUpdate();
+  }
+
+  bool _picking = false;
+
   Future<void> _pickAndProcess() async {
-    final pickerResult = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['epub'],
-      withData: true,
-    );
-
-    if (pickerResult == null || pickerResult.files.isEmpty) return;
-
-    final file = pickerResult.files.first;
-    final bytes = file.bytes;
-    if (bytes == null) {
-      setState(() {
-        _state = _ImportState.error;
-        _errorMessage = 'Could not read the selected file.';
-      });
-      return;
-    }
-
-    setState(() {
-      _state = _ImportState.processing;
-      _filename = file.name;
-      _errorMessage = null;
-    });
+    if (_picking) return;
+    _picking = true;
 
     try {
-      final result = await _importService.importBook(bytes, file.name);
+      final pickerResult = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['epub'],
+        withData: true,
+      );
+
+      if (!mounted) return;
+      if (pickerResult == null || pickerResult.files.isEmpty) return;
+
+      final file = pickerResult.files.first;
+      final bytes = file.bytes;
+      if (bytes == null) {
+        setState(() {
+          _state = _ImportState.error;
+          _errorMessage = 'Could not read the selected file.';
+        });
+        _ensureFrame();
+        return;
+      }
+
+      setState(() {
+        _state = _ImportState.processing;
+        _filename = file.name;
+        _errorMessage = null;
+      });
+      _ensureFrame();
+
+      final results = await Future.wait([
+        _importService.importBook(bytes, file.name),
+        Future.delayed(const Duration(milliseconds: 800)),
+      ]);
+      final result = results[0] as BookImportResult;
+      if (!mounted) return;
       setState(() {
         _state = _ImportState.success;
         _result = result;
       });
+      _ensureFrame();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _state = _ImportState.error;
         _errorMessage = e.toString();
       });
+      _ensureFrame();
+    } finally {
+      _picking = false;
     }
   }
 

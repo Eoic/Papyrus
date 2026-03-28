@@ -39,7 +39,12 @@ self.onmessage = async (event) => {
         postMessage({ type: 'error', message: `Unknown message type: ${msg.type}` });
     }
   } catch (err) {
-    postMessage({ type: 'error', message: err.message || String(err) });
+    postMessage({
+      type: 'error',
+      action: msg.type,
+      bookId: msg.bookId,
+      message: err.message || String(err),
+    });
   }
 };
 
@@ -109,14 +114,13 @@ async function processEpub(bookId, fileData) {
     throw new Error('Could not read EPUB metadata');
   }
   const opfXml = decodeUtf8(await inflateEntry(bytes, opfEntry));
-  const opfDoc = new DOMParser().parseFromString(opfXml, 'application/xml');
 
   // 4. Extract Dublin Core metadata
-  const metadata = extractMetadata(opfDoc, bookId);
+  const metadata = extractMetadata(opfXml, bookId);
 
   // 5. Find cover image
   const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-  const { coverPath, coverMimeType } = findCoverPath(opfDoc);
+  const { coverPath, coverMimeType } = findCoverPath(opfXml);
   let coverData = null;
   let resolvedCoverMimeType = coverMimeType;
   if (coverPath) {
@@ -133,7 +137,7 @@ async function processEpub(bookId, fileData) {
   const fileHash = bufferToHex(hashBuffer);
 
   // 7. Estimate page count
-  const pageCount = estimatePageCount(opfDoc, opfDir, zip);
+  const pageCount = estimatePageCount(opfXml, opfDir, zip);
 
   // 8. Store original EPUB blob in OPFS
   await opfsWrite(bookId, 'epub', new Uint8Array(fileData));
@@ -282,7 +286,7 @@ async function inflateEntry(bytes, entry) {
   }
   if (entry.compressionMethod === 8) {
     // Raw deflate
-    const ds = new DecompressionStream('raw-deflate');
+    const ds = new DecompressionStream('deflate-raw');
     const writer = ds.writable.getWriter();
     const reader = ds.readable.getReader();
 
@@ -319,43 +323,75 @@ function decodeUtf8(bytes) {
 
 /**
  * Parses META-INF/container.xml and returns the rootfile full-path attribute.
+ * Uses regex since DOMParser is not available in Web Workers.
  */
 function parseContainerXml(xml) {
-  const doc = new DOMParser().parseFromString(xml, 'application/xml');
-  const rootfile = doc.querySelector('rootfile');
-  return rootfile ? rootfile.getAttribute('full-path') : null;
+  const match = xml.match(/<rootfile[^>]+full-path\s*=\s*"([^"]*)"/);
+  return match ? match[1] : null;
 }
 
 /**
- * Extracts Dublin Core metadata from the OPF document.
+ * Returns the text content of the first XML element matching the given tag name.
+ * Handles namespace prefixes (e.g. "dc:title" matches both <dc:title> and <title>).
  */
-function extractMetadata(opfDoc, bookId) {
-  const getText = (selector) => {
-    const el = opfDoc.querySelector(selector);
-    return el ? el.textContent.trim() : null;
-  };
-  const getAll = (selector) =>
-    Array.from(opfDoc.querySelectorAll(selector)).map((el) => el.textContent.trim());
+function xmlGetText(xml, tagName) {
+  // Match with or without namespace prefix
+  const pattern = new RegExp(`<(?:[a-zA-Z0-9_-]+:)?${tagName}[^>]*>([\\s\\S]*?)</(?:[a-zA-Z0-9_-]+:)?${tagName}>`, 'i');
+  const match = xml.match(pattern);
+  return match ? match[1].replace(/<[^>]*>/g, '').trim() : null;
+}
 
-  const title = getText('dc\\:title') || getText('title') || bookId;
-  const subtitle = null; // Always null for now
+/**
+ * Returns the text content of all XML elements matching the given tag name.
+ */
+function xmlGetAllText(xml, tagName) {
+  const pattern = new RegExp(`<(?:[a-zA-Z0-9_-]+:)?${tagName}[^>]*>([\\s\\S]*?)</(?:[a-zA-Z0-9_-]+:)?${tagName}>`, 'gi');
+  const results = [];
+  let match;
+  while ((match = pattern.exec(xml)) !== null) {
+    const text = match[1].replace(/<[^>]*>/g, '').trim();
+    if (text) results.push(text);
+  }
+  return results;
+}
 
-  const dcCreators = getAll('dc\\:creator');
-  const creators = dcCreators.length ? dcCreators : getAll('creator');
+/**
+ * Returns the value of a named attribute from an XML tag string.
+ */
+function xmlGetAttr(tag, attrName) {
+  const match = tag.match(new RegExp(`${attrName}\\s*=\\s*"([^"]*)"`));
+  return match ? match[1] : null;
+}
+
+/**
+ * Returns all <item ...> tags from the XML string.
+ */
+function xmlGetAllItems(xml) {
+  const results = [];
+  const pattern = /<item\s[^>]*>/gi;
+  let match;
+  while ((match = pattern.exec(xml)) !== null) {
+    results.push(match[0]);
+  }
+  return results;
+}
+
+/**
+ * Extracts Dublin Core metadata from OPF XML string.
+ */
+function extractMetadata(opfXml, bookId) {
+  const title = xmlGetText(opfXml, 'title') || bookId;
+  const subtitle = null;
+
+  const creators = xmlGetAllText(opfXml, 'creator');
   const author = creators.length > 0 ? creators[0] : null;
   const coAuthors = creators.length > 1 ? creators.slice(1) : [];
 
-  const publisher =
-    getText('dc\\:publisher') || getText('publisher') || null;
-  const description =
-    getText('dc\\:description') || getText('description') || null;
-  const language =
-    getText('dc\\:language') || getText('language') || null;
+  const publisher = xmlGetText(opfXml, 'publisher') || null;
+  const description = xmlGetText(opfXml, 'description') || null;
+  const language = xmlGetText(opfXml, 'language') || null;
 
-  // Scan all dc:identifier elements for ISBN (10 or 13 digits, possibly with hyphens)
-  const identifiers = getAll('dc\\:identifier').length
-    ? getAll('dc\\:identifier')
-    : getAll('identifier');
+  const identifiers = xmlGetAllText(opfXml, 'identifier');
   let isbn = null;
   for (const id of identifiers) {
     const digits = id.replace(/[-\s]/g, '');
@@ -369,38 +405,40 @@ function extractMetadata(opfDoc, bookId) {
 }
 
 /**
- * Finds the cover image path from the OPF document.
+ * Finds the cover image path from OPF XML string.
  * Returns { coverPath: string|null, coverMimeType: string|null }.
  *
  * Strategy A: <meta name="cover" content="item-id"> → resolve from manifest
  * Strategy B: <item properties="cover-image"> in manifest
  */
-function findCoverPath(opfDoc) {
-  // Strategy A
-  const metaCover = opfDoc.querySelector('meta[name="cover"]');
-  if (metaCover) {
-    const coverId = metaCover.getAttribute('content');
+function findCoverPath(opfXml) {
+  const items = xmlGetAllItems(opfXml);
+
+  // Strategy A: <meta name="cover" content="item-id">
+  const metaMatch = opfXml.match(/<meta[^>]+name\s*=\s*"cover"[^>]*>/i);
+  if (metaMatch) {
+    const coverId = xmlGetAttr(metaMatch[0], 'content');
     if (coverId) {
-      const item = opfDoc.querySelector(`manifest > item[id="${coverId}"]`) ||
-                   opfDoc.querySelector(`item[id="${coverId}"]`);
-      if (item) {
-        return {
-          coverPath: item.getAttribute('href'),
-          coverMimeType: item.getAttribute('media-type'),
-        };
+      for (const tag of items) {
+        if (xmlGetAttr(tag, 'id') === coverId) {
+          return {
+            coverPath: xmlGetAttr(tag, 'href'),
+            coverMimeType: xmlGetAttr(tag, 'media-type'),
+          };
+        }
       }
     }
   }
 
-  // Strategy B
-  const propItem =
-    opfDoc.querySelector('manifest > item[properties~="cover-image"]') ||
-    opfDoc.querySelector('item[properties~="cover-image"]');
-  if (propItem) {
-    return {
-      coverPath: propItem.getAttribute('href'),
-      coverMimeType: propItem.getAttribute('media-type'),
-    };
+  // Strategy B: <item properties="cover-image">
+  for (const tag of items) {
+    const props = xmlGetAttr(tag, 'properties') || '';
+    if (props.split(/\s+/).includes('cover-image')) {
+      return {
+        coverPath: xmlGetAttr(tag, 'href'),
+        coverMimeType: xmlGetAttr(tag, 'media-type'),
+      };
+    }
   }
 
   return { coverPath: null, coverMimeType: null };
@@ -410,21 +448,14 @@ function findCoverPath(opfDoc) {
  * Estimates page count by summing uncompressed sizes of all application/xhtml+xml
  * items in the manifest and dividing by 2000.
  */
-function estimatePageCount(opfDoc, opfDir, zip) {
-  const items = Array.from(
-    opfDoc.querySelectorAll('manifest > item[media-type="application/xhtml+xml"]'),
-  );
-  if (!items.length) {
-    // Fallback: query without namespace prefix
-    const fallback = Array.from(
-      opfDoc.querySelectorAll('item[media-type="application/xhtml+xml"]'),
-    );
-    if (fallback.length) items.push(...fallback);
-  }
-
+function estimatePageCount(opfXml, opfDir, zip) {
+  const items = xmlGetAllItems(opfXml);
   let totalBytes = 0;
-  for (const item of items) {
-    const href = item.getAttribute('href');
+
+  for (const tag of items) {
+    const mediaType = xmlGetAttr(tag, 'media-type');
+    if (mediaType !== 'application/xhtml+xml') continue;
+    const href = xmlGetAttr(tag, 'href');
     if (!href) continue;
     const fullPath = resolvePath(opfDir, href);
     const entry = zip.get(fullPath);

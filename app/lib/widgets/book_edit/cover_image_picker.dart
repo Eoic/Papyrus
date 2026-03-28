@@ -45,7 +45,9 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     _imageBytes = widget.initialBytes;
     _urlController.text = widget.initialUrl ?? '';
     _showUrlInput =
-        widget.initialUrl?.isNotEmpty == true && widget.initialBytes == null;
+        widget.initialUrl?.isNotEmpty == true &&
+        widget.initialBytes == null &&
+        !(widget.initialUrl?.startsWith('data:') ?? false);
   }
 
   @override
@@ -55,7 +57,12 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     if (widget.initialUrl != oldWidget.initialUrl) {
       setState(() {
         _imageUrl = widget.initialUrl;
-        _urlController.text = widget.initialUrl ?? '';
+        if (widget.initialUrl != null &&
+            !widget.initialUrl!.startsWith('data:')) {
+          _urlController.text = widget.initialUrl!;
+        } else {
+          _urlController.clear();
+        }
         // Clear bytes if URL changed from external source
         if (widget.initialUrl != null && widget.initialUrl!.isNotEmpty) {
           _imageBytes = null;

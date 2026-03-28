@@ -61,65 +61,71 @@ class BookImportService {
 
     final worker = web.Worker('book_worker.js'.toJS);
 
-    worker.onerror = (web.Event event) {
-      final error = Exception('Worker error');
-      for (final c in _pending.values) {
-        if (!c.isCompleted) c.completeError(error);
-      }
-      _pending.clear();
-    }.toJS;
-
-    worker.onmessage = (web.MessageEvent event) {
-      final data = event.data;
-      if (data == null || data.isNull || data.isUndefined) {
-        // Complete all pending requests with an error — we cannot identify
-        // which request this response belongs to without a bookId/action.
-        final error = Exception('Worker returned null data');
+    // Use web.Event (not web.MessageEvent) as the callback parameter type.
+    // dart2wasm may silently drop callbacks when the parameter type is a
+    // specific Event subclass that the runtime cannot match to the JS object.
+    worker.addEventListener(
+      'error',
+      ((web.Event _) {
+        final error = Exception('Worker error');
         for (final c in _pending.values) {
           if (!c.isCompleted) c.completeError(error);
         }
         _pending.clear();
-        return;
-      }
+      }).toJS,
+    );
 
-      final obj = data as JSObject;
-      final type = _jsToNullableString(obj['type']);
+    worker.addEventListener(
+      'message',
+      ((web.Event e) {
+        final event = e as web.MessageEvent;
+        final data = event.data;
+        if (data == null || data.isNull || data.isUndefined) {
+          final error = Exception('Worker returned null data');
+          for (final c in _pending.values) {
+            if (!c.isCompleted) c.completeError(error);
+          }
+          _pending.clear();
+          return;
+        }
 
-      if (type == 'error') {
-        final message =
-            _jsToNullableString(obj['message']) ?? 'Unknown error';
-        final error = Exception(message);
-        // Try to route to a specific completer first.
-        final action = _jsToNullableString(obj['action']);
-        final bookId = _jsToNullableString(obj['bookId']);
-        if (action != null && bookId != null) {
+        final obj = data as JSObject;
+        final type = _jsToNullableString(obj['type']);
+
+        if (type == 'error') {
+          final message =
+              _jsToNullableString(obj['message']) ?? 'Unknown error';
+          final error = Exception(message);
+          final action = _jsToNullableString(obj['action']);
+          final bookId = _jsToNullableString(obj['bookId']);
+          if (action != null && bookId != null) {
+            final key = '$action:$bookId';
+            final c = _pending.remove(key);
+            if (c != null && !c.isCompleted) {
+              c.completeError(error);
+              return;
+            }
+          }
+          for (final c in _pending.values) {
+            if (!c.isCompleted) c.completeError(error);
+          }
+          _pending.clear();
+          return;
+        }
+
+        if (type == 'success') {
+          final action = _jsToNullableString(obj['action']);
+          final bookId = _jsToNullableString(obj['bookId']);
+          if (action == null || bookId == null) return;
+
           final key = '$action:$bookId';
           final c = _pending.remove(key);
           if (c != null && !c.isCompleted) {
-            c.completeError(error);
-            return;
+            c.complete(obj);
           }
         }
-        // Fall back: complete all pending requests.
-        for (final c in _pending.values) {
-          if (!c.isCompleted) c.completeError(error);
-        }
-        _pending.clear();
-        return;
-      }
-
-      if (type == 'success') {
-        final action = _jsToNullableString(obj['action']);
-        final bookId = _jsToNullableString(obj['bookId']);
-        if (action == null || bookId == null) return;
-
-        final key = '$action:$bookId';
-        final c = _pending.remove(key);
-        if (c != null && !c.isCompleted) {
-          c.complete(obj);
-        }
-      }
-    }.toJS;
+      }).toJS,
+    );
 
     _worker = worker;
     return worker;
