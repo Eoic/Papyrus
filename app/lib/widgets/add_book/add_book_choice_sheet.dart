@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
+import 'package:papyrus/widgets/add_book/import_book_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Choice sheet for selecting how to add a book: digital import or physical.
@@ -72,8 +73,11 @@ class AddBookChoiceSheet extends StatelessWidget {
         _ChoiceOption(
           icon: Icons.upload_file,
           title: 'Import digital books',
-          subtitle: 'EPUB, PDF, MOBI, AZW3, TXT, CBR, CBZ',
-          onTap: () {},
+          subtitle: 'EPUB',
+          onTap: () {
+            Navigator.of(context).pop();
+            ImportBookSheet.show(callerContext);
+          },
         ),
         const SizedBox(height: Spacing.sm),
         _ChoiceOption(
