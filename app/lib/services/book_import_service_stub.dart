@@ -1,56 +1,103 @@
+import 'dart:io';
 import 'dart:typed_data';
 
-/// Result of importing a book file via the web worker.
-class BookImportResult {
-  final String bookId;
-  final String title;
-  final String? subtitle;
-  final String author;
-  final List<String> coAuthors;
-  final String? publisher;
-  final String? description;
-  final String? language;
-  final String? isbn;
-  final int? pageCount;
-  final Uint8List? coverImage;
-  final String? coverMimeType;
-  final int fileSize;
-  final String fileHash;
+import 'package:crypto/crypto.dart';
+import 'package:papyrus/services/book_import_result.dart';
+import 'package:papyrus/services/file_metadata_service.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
-  const BookImportResult({
-    required this.bookId,
-    required this.title,
-    this.subtitle,
-    required this.author,
-    this.coAuthors = const [],
-    this.publisher,
-    this.description,
-    this.language,
-    this.isbn,
-    this.pageCount,
-    this.coverImage,
-    this.coverMimeType,
-    required this.fileSize,
-    required this.fileHash,
-  });
-}
+export 'package:papyrus/services/book_import_result.dart';
 
-/// Stub [BookImportService] for non-web platforms.
+/// Native (non-web) implementation of [BookImportService].
 ///
-/// All methods throw [UnsupportedError] since book import currently
-/// requires a Web Worker.
+/// Uses [FileMetadataService] for metadata extraction and stores files
+/// in the application documents directory.
 class BookImportService {
-  Future<BookImportResult> importBook(Uint8List bytes, String filename) {
-    throw UnsupportedError('BookImportService is only supported on web.');
+  final _metadataService = FileMetadataService();
+
+  /// Incrementing counter used to guarantee unique book IDs.
+  int _nextId = 0;
+
+  /// Imports a book file: extracts metadata and stores the file locally.
+  ///
+  /// Supports all formats handled by [FileMetadataService]:
+  /// EPUB, PDF, MOBI, AZW3, CBZ, CBR, TXT.
+  Future<BookImportResult> importBook(Uint8List bytes, String filename) async {
+    final ext = p.extension(filename).toLowerCase().replaceFirst('.', '');
+    if (ext.isEmpty) {
+      throw ArgumentError('Filename has no extension: $filename');
+    }
+
+    final bookId = 'book-${DateTime.now().millisecondsSinceEpoch}-${_nextId++}';
+
+    // Extract metadata
+    final metadata = await _metadataService.extractMetadata(bytes, filename);
+
+    // Compute SHA-256 hash
+    final fileHash = sha256.convert(bytes).toString();
+
+    // Store the file
+    final booksDir = await _getBooksDirectory();
+    final file = File(p.join(booksDir.path, '$bookId.$ext'));
+    await file.writeAsBytes(bytes);
+
+    return BookImportResult(
+      bookId: bookId,
+      title: metadata.title ?? p.basenameWithoutExtension(filename),
+      subtitle: metadata.subtitle,
+      author: metadata.primaryAuthor,
+      coAuthors: metadata.coAuthors,
+      publisher: metadata.publisher,
+      description: metadata.description,
+      language: metadata.language,
+      isbn: metadata.isbn,
+      isbn13: metadata.isbn13,
+      pageCount: metadata.pageCount,
+      coverImage: metadata.coverImageBytes,
+      coverMimeType: metadata.coverImageMimeType,
+      fileSize: bytes.length,
+      fileHash: fileHash,
+      fileExtension: ext,
+    );
   }
 
-  Future<void> deleteBookFile(String bookId) {
-    throw UnsupportedError('BookImportService is only supported on web.');
+  /// Deletes the stored file for [bookId].
+  Future<void> deleteBookFile(String bookId) async {
+    final booksDir = await _getBooksDirectory();
+    final files = booksDir.listSync();
+    for (final entity in files) {
+      if (entity is File && p.basenameWithoutExtension(entity.path) == bookId) {
+        await entity.delete();
+        return;
+      }
+    }
   }
 
-  Future<Uint8List?> getBookFile(String bookId) {
-    throw UnsupportedError('BookImportService is only supported on web.');
+  /// Retrieves the raw file bytes for a stored book.
+  ///
+  /// Returns null if the file does not exist.
+  Future<Uint8List?> getBookFile(String bookId) async {
+    final booksDir = await _getBooksDirectory();
+    final files = booksDir.listSync();
+    for (final entity in files) {
+      if (entity is File && p.basenameWithoutExtension(entity.path) == bookId) {
+        return entity.readAsBytes();
+      }
+    }
+    return null;
   }
 
+  /// No-op on native — no worker to terminate.
   void dispose() {}
+
+  /// Returns (and creates if needed) the books storage directory.
+  Future<Directory> _getBooksDirectory() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final booksDir = Directory(p.join(appDir.path, 'books'));
+    if (!booksDir.existsSync()) {
+      await booksDir.create(recursive: true);
+    }
+    return booksDir;
+  }
 }

@@ -71,9 +71,7 @@ class _PapyrusState extends State<Papyrus> {
             debugShowCheckedModeBanner: false,
             theme: isEink ? AppTheme.eink : AppTheme.light,
             darkTheme: isEink ? AppTheme.eink : AppTheme.dark,
-            themeMode: isEink
-                ? ThemeMode.light
-                : preferencesProvider.themeMode,
+            themeMode: isEink ? ThemeMode.light : preferencesProvider.themeMode,
             routerConfig: _appRouter.router,
           );
         },

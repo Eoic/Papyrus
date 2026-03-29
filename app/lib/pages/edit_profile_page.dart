@@ -283,8 +283,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     // Show existing network photo if not removed.
     if (!_photoRemoved) {
-      final photoUrl = Supabase.instance.client.auth.currentUser
-          ?.userMetadata?['avatar_url'] as String?;
+      final photoUrl =
+          Supabase.instance.client.auth.currentUser?.userMetadata?['avatar_url']
+              as String?;
       if (photoUrl != null && photoUrl.isNotEmpty) {
         return Image.network(
           photoUrl,
@@ -302,8 +303,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool get _hasExistingPhoto {
     if (_photoRemoved) return false;
     if (_pickedImageBytes != null) return true;
-    final photoUrl = Supabase.instance.client.auth.currentUser
-        ?.userMetadata?['avatar_url'] as String?;
+    final photoUrl =
+        Supabase.instance.client.auth.currentUser?.userMetadata?['avatar_url']
+            as String?;
     return photoUrl != null && photoUrl.isNotEmpty;
   }
 

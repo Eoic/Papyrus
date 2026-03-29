@@ -3,42 +3,10 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
 import 'package:flutter/foundation.dart';
+import 'package:papyrus/services/book_import_result.dart';
 import 'package:web/web.dart' as web;
 
-/// Result of importing a book file via the web worker.
-class BookImportResult {
-  final String bookId;
-  final String title;
-  final String? subtitle;
-  final String author;
-  final List<String> coAuthors;
-  final String? publisher;
-  final String? description;
-  final String? language;
-  final String? isbn;
-  final int? pageCount;
-  final Uint8List? coverImage;
-  final String? coverMimeType;
-  final int fileSize;
-  final String fileHash;
-
-  const BookImportResult({
-    required this.bookId,
-    required this.title,
-    this.subtitle,
-    required this.author,
-    this.coAuthors = const [],
-    this.publisher,
-    this.description,
-    this.language,
-    this.isbn,
-    this.pageCount,
-    this.coverImage,
-    this.coverMimeType,
-    required this.fileSize,
-    required this.fileHash,
-  });
-}
+export 'package:papyrus/services/book_import_result.dart';
 
 /// Service that communicates with the book_worker.js Web Worker for
 /// EPUB processing and OPFS file storage.
@@ -46,6 +14,9 @@ class BookImportResult {
 /// Only available on web — methods throw [UnsupportedError] on other platforms.
 class BookImportService {
   web.Worker? _worker;
+
+  /// Timeout for worker operations before they are considered failed.
+  static const _timeout = Duration(seconds: 30);
 
   /// Incrementing counter used to guarantee unique book IDs.
   int _nextId = 0;
@@ -116,7 +87,13 @@ class BookImportService {
         if (type == 'success') {
           final action = _jsToNullableString(obj['action']);
           final bookId = _jsToNullableString(obj['bookId']);
-          if (action == null || bookId == null) return;
+          if (action == null || bookId == null) {
+            debugPrint(
+              'BookImportService: success message with null '
+              'action=$action bookId=$bookId — ignoring',
+            );
+            return;
+          }
 
           final key = '$action:$bookId';
           final c = _pending.remove(key);
@@ -154,7 +131,8 @@ class BookImportService {
 
     // Transfer bytes as ArrayBuffer for zero-copy transfer.
     // Ensure we only send the actual byte range, not the whole backing buffer.
-    final actualBytes = bytes.offsetInBytes == 0 &&
+    final actualBytes =
+        bytes.offsetInBytes == 0 &&
             bytes.lengthInBytes == bytes.buffer.lengthInBytes
         ? bytes
         : Uint8List.fromList(bytes);
@@ -167,8 +145,17 @@ class BookImportService {
 
     worker.postMessage(message, [jsBuffer].toJS);
 
-    final obj = await completer.future;
-    return _parseImportResult(obj, bookId);
+    final obj = await completer.future.timeout(
+      _timeout,
+      onTimeout: () {
+        _pending.remove('process:$bookId');
+        throw TimeoutException(
+          'Book import timed out after ${_timeout.inSeconds}s',
+          _timeout,
+        );
+      },
+    );
+    return _parseImportResult(obj, bookId, ext);
   }
 
   /// Deletes a stored book file from OPFS by [bookId].
@@ -190,7 +177,16 @@ class BookImportService {
 
     worker.postMessage(message);
 
-    await completer.future;
+    await completer.future.timeout(
+      _timeout,
+      onTimeout: () {
+        _pending.remove('delete:$bookId');
+        throw TimeoutException(
+          'Delete timed out after ${_timeout.inSeconds}s',
+          _timeout,
+        );
+      },
+    );
   }
 
   /// Retrieves the raw file bytes for a stored book from OPFS.
@@ -213,7 +209,16 @@ class BookImportService {
 
     worker.postMessage(message);
 
-    final obj = await completer.future;
+    final obj = await completer.future.timeout(
+      _timeout,
+      onTimeout: () {
+        _pending.remove('getFile:$bookId');
+        throw TimeoutException(
+          'Get file timed out after ${_timeout.inSeconds}s',
+          _timeout,
+        );
+      },
+    );
     final fileDataJs = obj['fileData'];
     if (fileDataJs == null || fileDataJs.isNull || fileDataJs.isUndefined) {
       return null;
@@ -236,19 +241,20 @@ class BookImportService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  BookImportResult _parseImportResult(JSObject data, String bookId) {
+  BookImportResult _parseImportResult(
+    JSObject data,
+    String bookId,
+    String fileExtension,
+  ) {
     final metadataRaw = data['metadata'];
-    if (metadataRaw == null ||
-        metadataRaw.isNull ||
-        metadataRaw.isUndefined) {
+    if (metadataRaw == null || metadataRaw.isNull || metadataRaw.isUndefined) {
       throw StateError(
         'Worker response is missing required "metadata" field for book $bookId.',
       );
     }
     final metadataJs = metadataRaw as JSObject;
 
-    final title =
-        _jsToNullableString(metadataJs['title']) ?? bookId;
+    final title = _jsToNullableString(metadataJs['title']) ?? bookId;
     final subtitle = _jsToNullableString(metadataJs['subtitle']);
     final author = _jsToNullableString(metadataJs['author']) ?? '';
     final publisher = _jsToNullableString(metadataJs['publisher']);
@@ -260,7 +266,9 @@ class BookImportService {
     // co-authors array
     final coAuthorsJs = metadataJs['coAuthors'];
     final coAuthors = <String>[];
-    if (coAuthorsJs != null && !coAuthorsJs.isNull && !coAuthorsJs.isUndefined) {
+    if (coAuthorsJs != null &&
+        !coAuthorsJs.isNull &&
+        !coAuthorsJs.isUndefined) {
       final arr = coAuthorsJs as JSArray<JSString>;
       for (var i = 0; i < arr.length; i++) {
         final item = _jsToNullableString(arr[i]);
@@ -271,16 +279,16 @@ class BookImportService {
     // Cover image
     Uint8List? coverImage;
     final coverDataJs = data['coverData'];
-    if (coverDataJs != null && !coverDataJs.isNull && !coverDataJs.isUndefined) {
+    if (coverDataJs != null &&
+        !coverDataJs.isNull &&
+        !coverDataJs.isUndefined) {
       coverImage = (coverDataJs as JSArrayBuffer).toDart.asUint8List();
     }
     final coverMimeType = _jsToNullableString(data['coverMimeType']);
 
     final fileSizeRaw = data['fileSize'];
     if (fileSizeRaw == null || fileSizeRaw.isNull || fileSizeRaw.isUndefined) {
-      throw StateError(
-        'Worker response missing "fileSize" for book $bookId',
-      );
+      throw StateError('Worker response missing "fileSize" for book $bookId');
     }
     final fileSize = (fileSizeRaw as JSNumber).toDartInt;
 
@@ -307,6 +315,7 @@ class BookImportService {
       coverMimeType: coverMimeType,
       fileSize: fileSize,
       fileHash: fileHash,
+      fileExtension: fileExtension,
     );
   }
 

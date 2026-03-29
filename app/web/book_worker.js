@@ -59,7 +59,12 @@ async function handleProcess(msg) {
       await processEpub(bookId, fileData);
       break;
     default:
-      postMessage({ type: 'error', message: `Unsupported format: ${format}` });
+      postMessage({
+        type: 'error',
+        action: 'process',
+        bookId,
+        message: `Unsupported format: ${format}`,
+      });
   }
 }
 

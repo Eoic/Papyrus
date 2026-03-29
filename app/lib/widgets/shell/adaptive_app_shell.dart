@@ -165,10 +165,7 @@ class AdaptiveAppShell extends StatelessWidget {
     );
   }
 
-  Widget _buildEinkShell(
-    BuildContext context,
-    List<AppShellNavItem> navItems,
-  ) {
+  Widget _buildEinkShell(BuildContext context, List<AppShellNavItem> navItems) {
     return Scaffold(
       body: child,
       bottomNavigationBar: EinkBottomNav(
@@ -184,9 +181,7 @@ class AdaptiveAppShell extends StatelessWidget {
     List<AppShellNavItem> navItems,
   ) {
     final currentPath = GoRouterState.of(context).uri.toString();
-    final libraryItem = navItems.firstWhere(
-      (item) => item.path == '/library',
-    );
+    final libraryItem = navItems.firstWhere((item) => item.path == '/library');
     final children = libraryItem.children ?? [];
 
     return Drawer(

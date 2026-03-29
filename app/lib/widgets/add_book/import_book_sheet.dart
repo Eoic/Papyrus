@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/book_import_service_stub.dart'
@@ -94,13 +96,29 @@ class _ImportContentState extends State<_ImportContent> {
     super.dispose();
   }
 
-  /// Force Flutter to schedule a frame after setState.
+  /// Allowed file extensions per platform.
+  static const _webExtensions = ['epub'];
+  static const _nativeExtensions = [
+    'epub',
+    'pdf',
+    'mobi',
+    'azw3',
+    'txt',
+    'cbr',
+    'cbz',
+  ];
+
+  /// Schedule a setState that is guaranteed to trigger a frame.
   ///
   /// On web, setState called from a continuation resumed by a JS callback
   /// (e.g. Web Worker message) may not trigger frame scheduling because the
-  /// callback runs outside Flutter's animation frame context.
-  void _ensureFrame() {
-    SchedulerBinding.instance.ensureVisualUpdate();
+  /// callback runs outside Flutter's animation frame context. Wrapping in
+  /// [Timer.run] pushes the call into the event loop proper.
+  void _safeSetState(VoidCallback fn) {
+    Timer.run(() {
+      if (!mounted) return;
+      setState(fn);
+    });
   }
 
   bool _picking = false;
@@ -110,9 +128,10 @@ class _ImportContentState extends State<_ImportContent> {
     _picking = true;
 
     try {
+      final extensions = kIsWeb ? _webExtensions : _nativeExtensions;
       final pickerResult = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['epub'],
+        allowedExtensions: extensions,
         withData: true,
       );
 
@@ -122,39 +141,33 @@ class _ImportContentState extends State<_ImportContent> {
       final file = pickerResult.files.first;
       final bytes = file.bytes;
       if (bytes == null) {
-        setState(() {
+        _safeSetState(() {
           _state = _ImportState.error;
           _errorMessage = 'Could not read the selected file.';
         });
-        _ensureFrame();
         return;
       }
 
-      setState(() {
+      _safeSetState(() {
         _state = _ImportState.processing;
         _filename = file.name;
         _errorMessage = null;
       });
-      _ensureFrame();
 
       final results = await Future.wait([
         _importService.importBook(bytes, file.name),
         Future.delayed(const Duration(milliseconds: 800)),
       ]);
       final result = results[0] as BookImportResult;
-      if (!mounted) return;
-      setState(() {
+      _safeSetState(() {
         _state = _ImportState.success;
         _result = result;
       });
-      _ensureFrame();
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
+      _safeSetState(() {
         _state = _ImportState.error;
         _errorMessage = e.toString();
       });
-      _ensureFrame();
     } finally {
       _picking = false;
     }
@@ -172,6 +185,11 @@ class _ImportContentState extends State<_ImportContent> {
       coverUrl = bytesToDataUri(result.coverImage!);
     }
 
+    final ext = result.fileExtension;
+    final filePath = kIsWeb
+        ? 'opfs://books/${result.bookId}.$ext'
+        : result.bookId; // Native resolves via BookImportService.getBookFile
+
     final book = Book(
       id: result.bookId,
       title: result.title,
@@ -184,8 +202,8 @@ class _ImportContentState extends State<_ImportContent> {
       isbn: result.isbn,
       pageCount: result.pageCount,
       coverUrl: coverUrl,
-      filePath: 'opfs://books/${result.bookId}.epub',
-      fileFormat: BookFormat.epub,
+      filePath: filePath,
+      fileFormat: BookFormat.values.where((f) => f.name == ext).firstOrNull,
       fileSize: result.fileSize,
       fileHash: result.fileHash,
       addedAt: now,
@@ -251,7 +269,10 @@ class _ImportContentState extends State<_ImportContent> {
             children: [
               Icon(Icons.upload_file, size: 48, color: colorScheme.primary),
               const SizedBox(height: Spacing.md),
-              Text('Select an EPUB file', style: textTheme.titleMedium),
+              Text(
+                kIsWeb ? 'Select an EPUB file' : 'Select a book file',
+                style: textTheme.titleMedium,
+              ),
               const SizedBox(height: Spacing.xs),
               Text(
                 'The file will be stored offline on this device',

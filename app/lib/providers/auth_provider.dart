@@ -124,8 +124,8 @@ class AuthProvider extends ChangeNotifier {
             _error = 'Sign-in not available on this platform';
           }
         } else {
-          final GoogleSignInAccount account =
-              await GoogleSignIn.instance.authenticate();
+          final GoogleSignInAccount account = await GoogleSignIn.instance
+              .authenticate();
 
           final idToken = account.authentication.idToken;
 

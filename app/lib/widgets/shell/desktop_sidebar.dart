@@ -344,26 +344,21 @@ class DesktopSidebar extends StatelessWidget {
                                       .colorScheme
                                       .onPrimaryContainer
                                       .withValues(alpha: 0.12)
-                                : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant
+                                : Theme.of(context).colorScheme.onSurfaceVariant
                                       .withValues(alpha: 0.12),
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.full),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
                           child: Text(
                             item.count.toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
+                            style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: isSelected
-                                      ? Theme.of(context)
-                                            .colorScheme
-                                            .onPrimaryContainer
-                                      : Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ),

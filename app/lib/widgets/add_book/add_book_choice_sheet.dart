@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
@@ -73,7 +74,7 @@ class AddBookChoiceSheet extends StatelessWidget {
         _ChoiceOption(
           icon: Icons.upload_file,
           title: 'Import digital books',
-          subtitle: 'EPUB',
+          subtitle: kIsWeb ? 'EPUB' : 'EPUB, PDF, MOBI & more',
           onTap: () {
             Navigator.of(context).pop();
             ImportBookSheet.show(callerContext);
