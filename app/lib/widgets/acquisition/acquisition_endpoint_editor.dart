@@ -43,6 +43,8 @@ Future<bool?> showAcquisitionEndpointEditor({
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       useSafeArea: true,
       showDragHandle: true,
       builder: (context) => KeyedSubtree(
@@ -59,6 +61,7 @@ Future<bool?> showAcquisitionEndpointEditor({
 
   return showDialog<bool>(
     context: context,
+    barrierDismissible: false,
     builder: (context) => Dialog(
       key: const Key('acquisition-endpoint-dialog'),
       child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560, maxHeight: 760), child: editor),
@@ -101,6 +104,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   bool _saving = false;
   String? _message;
   bool _messageIsError = false;
+  String? _connectionUrlError;
 
   bool get _busy => _testing || _saving;
 
@@ -133,174 +137,190 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      clipBehavior: Clip.antiAlias,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.lg, Spacing.lg, Spacing.md),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                widget.endpoint == null ? 'Add integration' : 'Edit integration',
-                style: Theme.of(context).textTheme.headlineSmall,
+    return PopScope(
+      canPop: !_busy,
+      child: Material(
+        color: Theme.of(context).colorScheme.surface,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.lg, Spacing.lg, Spacing.md),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  widget.endpoint == null ? 'Add integration' : 'Edit integration',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ),
             ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(Spacing.lg),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _SectionHeading(label: 'Integration'),
-                    const SizedBox(height: Spacing.formFieldSpacing),
-                    TextFormField(
-                      key: const Key('acquisition-name'),
-                      controller: _nameController,
-                      enabled: !_busy,
-                      decoration: const InputDecoration(labelText: 'Name'),
-                      textInputAction: TextInputAction.next,
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Enter a name' : null,
-                    ),
-                    const SizedBox(height: Spacing.formFieldSpacing),
-                    DropdownButtonFormField<AcquisitionEndpointKind>(
-                      key: const Key('acquisition-type'),
-                      initialValue: _kind,
-                      items: widget.endpointKinds
-                          .map((kind) => DropdownMenuItem(value: kind, child: Text(kind.label)))
-                          .toList(),
-                      onChanged: widget.endpoint == null && !_busy
-                          ? (kind) => setState(() {
-                              _kind = kind ?? _kind;
-                              _message = null;
-                            })
-                          : null,
-                      decoration: const InputDecoration(labelText: 'Type'),
-                    ),
-                    const SizedBox(height: Spacing.lg),
-                    _SectionHeading(label: 'Connection'),
-                    const SizedBox(height: Spacing.formFieldSpacing),
-                    TextFormField(
-                      key: const Key('acquisition-url'),
-                      controller: _urlController,
-                      enabled: !_busy,
-                      decoration: const InputDecoration(labelText: 'Server URL'),
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                      validator: _validateUrl,
-                    ),
-                    if (_usesApiKey) ...[
+            const Divider(height: 1),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(Spacing.lg),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _SectionHeading(label: 'Integration'),
                       const SizedBox(height: Spacing.formFieldSpacing),
                       TextFormField(
-                        key: const Key('acquisition-api-key'),
-                        controller: _apiKeyController,
+                        key: const Key('acquisition-name'),
+                        controller: _nameController,
                         enabled: !_busy,
-                        obscureText: !_showApiKey,
-                        decoration: InputDecoration(
-                          labelText: 'API key',
-                          suffixIcon: IconButton(
-                            tooltip: _showApiKey ? 'Hide API key' : 'Show API key',
-                            onPressed: _busy ? null : () => setState(() => _showApiKey = !_showApiKey),
-                            icon: Icon(_showApiKey ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (_usesUsername) ...[
-                      const SizedBox(height: Spacing.formFieldSpacing),
-                      TextFormField(
-                        key: const Key('acquisition-username'),
-                        controller: _usernameController,
-                        enabled: !_busy,
-                        decoration: const InputDecoration(labelText: 'Username'),
+                        decoration: const InputDecoration(labelText: 'Name'),
                         textInputAction: TextInputAction.next,
+                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter a name' : null,
                       ),
-                    ],
-                    if (_usesPassword) ...[
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      DropdownButtonFormField<AcquisitionEndpointKind>(
+                        key: const Key('acquisition-type'),
+                        initialValue: _kind,
+                        items: widget.endpointKinds
+                            .map((kind) => DropdownMenuItem(value: kind, child: Text(kind.label)))
+                            .toList(),
+                        onChanged: widget.endpoint == null && !_busy
+                            ? (kind) => setState(() {
+                                _kind = kind ?? _kind;
+                                _message = null;
+                              })
+                            : null,
+                        decoration: const InputDecoration(labelText: 'Type'),
+                      ),
+                      const SizedBox(height: Spacing.lg),
+                      _SectionHeading(label: 'Connection'),
                       const SizedBox(height: Spacing.formFieldSpacing),
                       TextFormField(
-                        key: const Key('acquisition-password'),
-                        controller: _passwordController,
+                        key: const Key('acquisition-url'),
+                        controller: _urlController,
                         enabled: !_busy,
-                        obscureText: !_showPassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          suffixIcon: IconButton(
-                            tooltip: _showPassword ? 'Hide password' : 'Show password',
-                            onPressed: _busy ? null : () => setState(() => _showPassword = !_showPassword),
-                            icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                        decoration: InputDecoration(labelText: 'Server URL', errorText: _connectionUrlError),
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.next,
+                        validator: _validateUrl,
+                        onChanged: (_) {
+                          if (_connectionUrlError != null) {
+                            setState(() => _connectionUrlError = null);
+                          }
+                        },
+                      ),
+                      if (_usesApiKey) ...[
+                        const SizedBox(height: Spacing.formFieldSpacing),
+                        TextFormField(
+                          key: const Key('acquisition-api-key'),
+                          controller: _apiKeyController,
+                          enabled: !_busy,
+                          obscureText: !_showApiKey,
+                          decoration: InputDecoration(
+                            labelText: 'API key',
+                            suffixIcon: IconButton(
+                              tooltip: _showApiKey ? 'Hide API key' : 'Show API key',
+                              onPressed: _busy ? null : () => setState(() => _showApiKey = !_showApiKey),
+                              icon: Icon(_showApiKey ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            ),
                           ),
                         ),
+                      ],
+                      if (_usesUsername) ...[
+                        const SizedBox(height: Spacing.formFieldSpacing),
+                        TextFormField(
+                          key: const Key('acquisition-username'),
+                          controller: _usernameController,
+                          enabled: !_busy,
+                          decoration: const InputDecoration(labelText: 'Username'),
+                          textInputAction: TextInputAction.next,
+                        ),
+                      ],
+                      if (_usesPassword) ...[
+                        const SizedBox(height: Spacing.formFieldSpacing),
+                        TextFormField(
+                          key: const Key('acquisition-password'),
+                          controller: _passwordController,
+                          enabled: !_busy,
+                          obscureText: !_showPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            suffixIcon: IconButton(
+                              tooltip: _showPassword ? 'Hide password' : 'Show password',
+                              onPressed: _busy ? null : () => setState(() => _showPassword = !_showPassword),
+                              icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Enabled'),
+                        value: _enabled,
+                        onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
                       ),
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: OutlinedButton.icon(
+                          key: const Key('acquisition-test-connection'),
+                          onPressed: _busy ? null : _testConnection,
+                          icon: _testing
+                              ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Icon(Icons.cable_outlined),
+                          label: const Text('Test connection'),
+                        ),
+                      ),
+                      if (_message != null) ...[
+                        const SizedBox(height: Spacing.sm),
+                        Text(
+                          _message!,
+                          style: TextStyle(color: _messageIsError ? Theme.of(context).colorScheme.error : null),
+                        ),
+                      ],
                     ],
-                    const SizedBox(height: Spacing.formFieldSpacing),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Enabled'),
-                      value: _enabled,
-                      onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
-                    ),
-                    const SizedBox(height: Spacing.formFieldSpacing),
-                    Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: OutlinedButton.icon(
-                        key: const Key('acquisition-test-connection'),
-                        onPressed: _busy ? null : _testConnection,
-                        icon: _testing
-                            ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.cable_outlined),
-                        label: const Text('Test connection'),
-                      ),
-                    ),
-                    if (_message != null) ...[
-                      const SizedBox(height: Spacing.sm),
-                      Text(
-                        _message!,
-                        style: TextStyle(color: _messageIsError ? Theme.of(context).colorScheme.error : null),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            key: const Key('acquisition-editor-footer'),
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(onPressed: _busy ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
-                const SizedBox(width: Spacing.sm),
-                FilledButton(
-                  key: const Key('acquisition-save'),
-                  onPressed: _busy ? null : _save,
-                  child: _saving
-                      ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Save'),
-                ),
-              ],
+            const Divider(height: 1),
+            Padding(
+              key: const Key('acquisition-editor-footer'),
+              padding: const EdgeInsets.all(Spacing.md),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _busy ? null : () => Navigator.pop(context, false),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: Spacing.sm),
+                  FilledButton(
+                    key: const Key('acquisition-save'),
+                    onPressed: _busy ? null : _save,
+                    child: _saving
+                        ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Save'),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _testConnection() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final urlError = _validateUrl(_urlController.text);
+    if (urlError != null) {
+      setState(() => _connectionUrlError = urlError);
+      return;
+    }
 
     final baseUrl = Uri.parse(_urlController.text.trim());
     setState(() {
       _testing = true;
       _message = null;
+      _connectionUrlError = null;
     });
 
     try {
@@ -330,6 +350,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   }
 
   Future<void> _save() async {
+    setState(() => _connectionUrlError = null);
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() {
@@ -347,7 +368,12 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         username: _usesUsername ? _optional(_usernameController.text) : null,
         password: _usesPassword ? _optional(_passwordController.text) : null,
       );
-      if (mounted) Navigator.pop(context, true);
+      if (!mounted) return;
+
+      setState(() => _saving = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pop(context, true);
+      });
     } catch (error) {
       if (!mounted) return;
 
@@ -356,7 +382,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         _messageIsError = true;
       });
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted && _saving) setState(() => _saving = false);
     }
   }
 

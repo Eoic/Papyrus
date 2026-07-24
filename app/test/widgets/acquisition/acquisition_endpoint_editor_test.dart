@@ -183,6 +183,28 @@ void main() {
     expect(find.text('Connection successful.'), findsOneWidget);
   });
 
+  testWidgets('tests valid connection details without requiring a name', (tester) async {
+    await _setWindowSize(tester, const Size(900, 900));
+    var testCalls = 0;
+    await tester.pumpWidget(
+      _EditorLauncher(
+        onTest: ({required kind, required baseUrl, apiKey, username, password}) async {
+          testCalls += 1;
+        },
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://prowlarr.local');
+
+    await tester.tap(find.byKey(const Key('acquisition-test-connection')));
+    await tester.pumpAndSettle();
+
+    expect(testCalls, 1);
+    expect(find.text('Enter a name'), findsNothing);
+    expect(find.text('Connection successful.'), findsOneWidget);
+  });
+
   testWidgets('reports connection errors locally', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(
@@ -266,6 +288,18 @@ void main() {
     expect(savedUsername, isNull);
     expect(savedPassword, isNull);
   });
+
+  testWidgets('pending save blocks sheet barrier dismissal', (tester) async {
+    await _expectPendingSaveBlocksDismissal(tester, _DismissAttempt.barrier);
+  });
+
+  testWidgets('pending save blocks system back dismissal', (tester) async {
+    await _expectPendingSaveBlocksDismissal(tester, _DismissAttempt.back);
+  });
+
+  testWidgets('pending save blocks sheet drag dismissal', (tester) async {
+    await _expectPendingSaveBlocksDismissal(tester, _DismissAttempt.drag);
+  });
 }
 
 class _EditorLauncher extends StatelessWidget {
@@ -328,6 +362,44 @@ Future<void> _enterRequiredFields(WidgetTester tester) async {
   await tester.enterText(find.byKey(const Key('acquisition-name')), 'Prowlarr');
   await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://prowlarr.local');
 }
+
+Future<void> _expectPendingSaveBlocksDismissal(WidgetTester tester, _DismissAttempt attempt) async {
+  await _setWindowSize(tester, const Size(390, 844));
+  final saveCompleter = Completer<void>();
+  await tester.pumpWidget(
+    _EditorLauncher(
+      onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) =>
+          saveCompleter.future,
+    ),
+  );
+  await tester.tap(find.text('Open'));
+  await tester.pumpAndSettle();
+  await _enterRequiredFields(tester);
+
+  await tester.tap(find.byKey(const Key('acquisition-save')));
+  await tester.pump();
+
+  expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Cancel')).onPressed, isNull);
+
+  switch (attempt) {
+    case _DismissAttempt.barrier:
+      await tester.tapAt(const Offset(4, 4));
+    case _DismissAttempt.back:
+      await tester.binding.handlePopRoute();
+    case _DismissAttempt.drag:
+      await tester.drag(find.byType(BottomSheet), const Offset(0, 700));
+  }
+  await tester.pump(const Duration(milliseconds: 500));
+
+  expect(find.byKey(const Key('acquisition-endpoint-sheet')), findsOneWidget);
+
+  saveCompleter.complete();
+  await tester.pumpAndSettle();
+
+  expect(find.byKey(const Key('acquisition-endpoint-sheet')), findsNothing);
+}
+
+enum _DismissAttempt { barrier, back, drag }
 
 final _endpoint = AcquisitionEndpoint(
   id: 'prowlarr-1',
