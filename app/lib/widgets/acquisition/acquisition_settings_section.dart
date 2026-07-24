@@ -20,10 +20,12 @@ class AcquisitionSettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final showsEmptyState = children.isEmpty && emptyMessage != null;
 
     return SettingsCard(
       children: [
         Row(
+          crossAxisAlignment: showsEmptyState ? CrossAxisAlignment.end : CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Semantics(
@@ -46,17 +48,14 @@ class AcquisitionSettingsSection extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: Spacing.md),
+        SizedBox(height: showsEmptyState ? Spacing.sm : Spacing.md),
         if (children.isNotEmpty)
           for (var index = 0; index < children.length; index++) ...[
             if (index > 0) const SizedBox(height: Spacing.sm),
             children[index],
           ]
         else if (emptyMessage != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-            child: Text(emptyMessage!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-          ),
+          Text(emptyMessage!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
       ],
     );
   }

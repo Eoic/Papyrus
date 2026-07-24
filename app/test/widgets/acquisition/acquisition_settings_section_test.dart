@@ -27,6 +27,23 @@ void main() {
     expect(find.text('No sources configured'), findsOneWidget);
   });
 
+  testWidgets('empty message aligns with the title and uses the compact vertical gap', (tester) async {
+    await pump(
+      tester,
+      AcquisitionSettingsSection(
+        title: 'Download clients',
+        emptyMessage: 'No download clients configured',
+        onAdd: () {},
+      ),
+    );
+
+    final titleBounds = tester.getRect(find.text('Download clients'));
+    final emptyBounds = tester.getRect(find.text('No download clients configured'));
+
+    expect(emptyBounds.left, titleBounds.left);
+    expect(emptyBounds.top - titleBounds.bottom, Spacing.sm);
+  });
+
   testWidgets('section Add invokes its callback', (tester) async {
     var addCalls = 0;
 

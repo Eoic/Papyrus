@@ -301,10 +301,12 @@ void main() {
     await tester.tap(find.widgetWithText(FilterChip, 'Indexer Two'));
     await tester.pump();
 
-    expect(tester.widget<TextField>(_searchField).enabled, isFalse);
+    expect(_searchField, findsNothing);
+    expect(find.text('Select at least one torrent indexer.'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
     await tester.pump();
+    expect(_searchField, findsOneWidget);
     await tester.enterText(_searchField, 'book');
     await tester.tap(find.byIcon(Icons.search));
     await tester.pumpAndSettle();
@@ -326,12 +328,35 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('available search uses a book-specific hint', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    final searchField = tester.widget<TextField>(_searchField);
+    expect(searchField.decoration?.hintText, 'Book title, author, or ISBN');
+    expect(searchField.decoration?.labelText, isNull);
+    expect(find.text('Title, author, movie, album, or series'), findsNothing);
+  });
+
+  testWidgets('unavailable search shows guidance instead of a disabled input', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient();
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(_searchField, findsNothing);
+    expect(find.text('Add an enabled Prowlarr or Torznab indexer first.'), findsOneWidget);
+  });
+
   testWidgets('search and submission requires an enabled download client', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
-    expect(tester.widget<TextField>(_searchField).enabled, isFalse);
+    expect(_searchField, findsNothing);
+    expect(find.text('Add an enabled download client before searching.'), findsOneWidget);
   });
 
   testWidgets('results stay hidden before an explicit search', (tester) async {
@@ -708,7 +733,7 @@ void main() {
   });
 }
 
-final _searchField = find.widgetWithText(TextField, 'Title, author, movie, album, or series');
+final _searchField = find.byKey(const Key('acquisition-search-field'));
 
 AcquisitionEndpointKind? _editorKind(WidgetTester tester) {
   return tester

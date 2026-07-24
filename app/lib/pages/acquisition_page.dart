@@ -543,34 +543,32 @@ class _SearchCard extends StatelessWidget {
           ),
           const SizedBox(height: Spacing.sm),
         ],
-        TextField(
-          controller: queryController,
-          enabled: canSearch && !searching,
-          onSubmitted: (_) => onSearch(),
-          decoration: InputDecoration(
-            labelText: 'Title, author, movie, album, or series',
-            suffixIcon: searching
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                  )
-                : IconButton(
-                    tooltip: 'Search releases',
-                    icon: const Icon(Icons.search),
-                    onPressed: canSearch ? onSearch : null,
-                  ),
-          ),
-        ),
-        if (!canSearch)
-          Padding(
-            padding: const EdgeInsets.only(top: Spacing.sm),
-            child: Text(
-              indexers.isEmpty
-                  ? 'Add an enabled Prowlarr or Torznab indexer first.'
-                  : !hasEnabledClient
-                  ? 'Add an enabled download client before searching.'
-                  : 'Select at least one torrent indexer.',
+        if (canSearch)
+          TextField(
+            key: const Key('acquisition-search-field'),
+            controller: queryController,
+            enabled: !searching,
+            onSubmitted: (_) => onSearch(),
+            decoration: InputDecoration(
+              hintText: 'Book title, author, or ISBN',
+              suffixIcon: searching
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                  : IconButton(tooltip: 'Search releases', icon: const Icon(Icons.search), onPressed: onSearch),
             ),
+          )
+        else
+          Text(
+            indexers.isEmpty
+                ? 'Add an enabled Prowlarr or Torznab indexer first.'
+                : !hasEnabledClient
+                ? 'Add an enabled download client before searching.'
+                : 'Select at least one torrent indexer.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
       ],
     );
