@@ -25,14 +25,18 @@ The integration editor opens as a modal bottom sheet at every window width. The 
 
 The sheet is:
 
+- sized to its content instead of being forced to fill the viewport;
 - scroll controlled and safe-area aware;
 - padded for the software keyboard;
-- constrained to 92 percent of the available height;
+- constrained to a maximum of 92 percent of the available height;
 - width constrained by the app's Material bottom-sheet behavior on larger windows;
-- explicitly closed with Cancel or Save;
-- protected from barrier, drag, and back dismissal while a connection test or save is pending.
+- bottom anchored with top-only rounded corners and a visible drag handle;
+- dismissible by drag, backdrop tap, Back, or Cancel while idle;
+- dynamically protected from barrier, drag, and back dismissal while a connection test or save is pending.
 
 The existing Integration and Connection groups, field validation, credential visibility controls, connection-test status, and footer actions remain unchanged.
+
+The editor reports its busy state to a focused route wrapper. The wrapper rebuilds the modal bottom-sheet route when that state changes so `isDismissible`, `enableDrag`, and the drag handle reflect the live operation state. This keeps standard sheet behavior while idle without allowing a pending mutation to disappear and skip the page reload.
 
 ### Arr Command Selection
 
@@ -62,7 +66,7 @@ The endpoint is deleted only after explicit confirmation.
 
 ## Shared Presentation
 
-Sheets reuse the existing Papyrus `BottomSheetHandle` and `BottomSheetHeader` patterns where their action model fits. Layout uses the existing spacing, radius, color, and typography tokens. Form sheets use keyboard insets and bounded scrolling so their actions remain reachable on small screens.
+Sheets reuse the existing Papyrus `BottomSheetHandle` and `BottomSheetHeader` patterns where their action model fits. Layout uses the existing spacing, radius, color, and typography tokens. Every sheet is bottom anchored with top-only corners and content-driven height. Form sheets use keyboard insets and bounded scrolling so their actions remain reachable on small screens.
 
 No new dependency or app-wide overlay abstraction is introduced. Acquisition-specific helpers may be extracted when they remove duplication without changing other features.
 
@@ -85,6 +89,10 @@ Every sheet has a readable title. Icon-only actions retain tooltips or semantic 
 Widget tests will prove:
 
 - the integration editor uses a bottom sheet on both narrow and wide windows;
+- short editor forms hug their content instead of occupying 92 percent of the viewport;
+- larger forms and keyboard-open forms stop at the height cap and scroll;
+- idle editor sheets expose drag, backdrop, and Back dismissal;
+- pending editor operations dynamically disable those dismissal paths and restore them afterward;
 - no acquisition editor dialog remains;
 - Arr ID entry and remove confirmation use bottom sheets instead of dialogs;
 - keyboard insets and constrained scrolling remain present for forms;
