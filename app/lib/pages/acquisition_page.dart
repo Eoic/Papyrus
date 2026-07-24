@@ -279,7 +279,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   }
 
   Future<void> _deleteEndpoint(AcquisitionEndpoint endpoint) async {
-    final confirmed = await showAcquisitionRemoveSheet(context: context, endpointName: endpoint.name);
+    final confirmed = await showAcquisitionRemoveDialog(context: context, endpointName: endpoint.name);
     if (confirmed != true) return;
 
     try {

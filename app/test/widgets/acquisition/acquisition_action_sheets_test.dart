@@ -77,17 +77,16 @@ void main() {
     expect(find.text('ids: null'), findsOneWidget);
   });
 
-  testWidgets('removal uses a destructive sheet and returns true', (tester) async {
+  testWidgets('removal uses the destructive shelf-style confirmation dialog and returns true', (tester) async {
     await tester.pumpWidget(const _ActionSheetLauncher());
 
     await tester.tap(find.text('Open removal'));
     await tester.pumpAndSettle();
 
-    final sheet = find.byKey(const Key('acquisition-remove-sheet'));
-    expect(sheet, findsOneWidget);
-    expect(find.byType(AlertDialog), findsNothing);
-    expect(find.text('Remove Readarr?'), findsOneWidget);
-    expect(find.text('Saved credentials for this integration will be removed.'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.text('Remove integration'), findsOneWidget);
+    expect(find.text('Remove "Readarr"? Saved credentials for this integration will be removed.'), findsOneWidget);
     expect(find.widgetWithText(TextButton, 'Cancel'), findsOneWidget);
 
     final removeFinder = find.widgetWithText(FilledButton, 'Remove');
@@ -95,7 +94,6 @@ void main() {
     final button = tester.widget<FilledButton>(removeFinder);
     final colorScheme = Theme.of(tester.element(removeFinder)).colorScheme;
     expect(button.style?.backgroundColor?.resolve(<WidgetState>{}), colorScheme.error);
-    expect(button.style?.foregroundColor?.resolve(<WidgetState>{}), colorScheme.onError);
 
     await tester.tap(removeFinder);
     await tester.pumpAndSettle();
@@ -167,7 +165,7 @@ class _ActionSheetLauncherState extends State<_ActionSheetLauncher> {
               ),
               FilledButton(
                 onPressed: () async {
-                  final result = await showAcquisitionRemoveSheet(context: context, endpointName: 'Readarr');
+                  final result = await showAcquisitionRemoveDialog(context: context, endpointName: 'Readarr');
 
                   if (mounted) {
                     setState(() => _removeResult = result?.toString() ?? 'null');

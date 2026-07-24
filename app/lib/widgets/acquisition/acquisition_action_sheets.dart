@@ -111,45 +111,23 @@ Future<List<int>?> showAcquisitionIdsSheet({required BuildContext context, requi
   );
 }
 
-Future<bool?> showAcquisitionRemoveSheet({required BuildContext context, required String endpointName}) {
-  return showModalBottomSheet<bool>(
+Future<bool?> showAcquisitionRemoveDialog({required BuildContext context, required String endpointName}) {
+  return showDialog<bool>(
     context: context,
-    useSafeArea: true,
-    showDragHandle: false,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
-    ),
-    builder: (sheetContext) {
-      final colorScheme = Theme.of(sheetContext).colorScheme;
+    builder: (dialogContext) {
+      final colorScheme = Theme.of(dialogContext).colorScheme;
 
-      return Padding(
-        key: const Key('acquisition-remove-sheet'),
-        padding: const EdgeInsets.all(Spacing.md),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const BottomSheetHandle(),
-              const SizedBox(height: Spacing.md),
-              BottomSheetHeader(title: 'Remove $endpointName?', onCancel: () => Navigator.of(sheetContext).pop(false)),
-              const SizedBox(height: Spacing.md),
-              const Text('Saved credentials for this integration will be removed.'),
-              const SizedBox(height: Spacing.lg),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(sheetContext).pop(true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.error,
-                    foregroundColor: colorScheme.onError,
-                  ),
-                  child: const Text('Remove'),
-                ),
-              ),
-            ],
+      return AlertDialog(
+        title: const Text('Remove integration'),
+        content: Text('Remove "$endpointName"? Saved credentials for this integration will be removed.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+            child: const Text('Remove'),
           ),
-        ),
+        ],
       );
     },
   );

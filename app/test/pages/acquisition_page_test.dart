@@ -635,7 +635,7 @@ void main() {
     expect(_sectionAdd('acquisition-apps-section'), findsNothing);
   });
 
-  testWidgets('remove action confirms through a bottom sheet', (tester) async {
+  testWidgets('remove action confirms through the shelf-style dialog', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
 
     await tester.pumpWidget(await _buildPage(apiClient));
@@ -643,9 +643,10 @@ void main() {
 
     await _tapEndpointMenuItem(tester, _indexerOne, 'Remove');
 
-    expect(find.byKey(const Key('acquisition-remove-sheet')), findsOneWidget);
-    expect(find.byType(AlertDialog), findsNothing);
-    expect(find.text('Saved credentials for this integration will be removed.'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.text('Remove integration'), findsOneWidget);
+    expect(find.text('Remove "Indexer One"? Saved credentials for this integration will be removed.'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
     await tester.pumpAndSettle();
