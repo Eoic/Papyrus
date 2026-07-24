@@ -112,6 +112,25 @@ void main() {
     expect(tester.getCenter(find.text('Server support')).dy, tester.getCenter(find.text('Available')).dy);
   });
 
+  testWidgets('value-only SettingsRow stays responsive at narrow width and large text', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: const Scaffold(
+            body: SizedBox(
+              width: 220,
+              child: SettingsRow(label: 'Server support', value: 'Checking server support…', showChevron: false),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Checking server support…'), findsOneWidget);
+  });
+
   testWidgets('SettingsRow meets the mobile target and grows for multiline content', (tester) async {
     await pump(tester, const SettingsRow(label: 'Short row', showChevron: false));
 

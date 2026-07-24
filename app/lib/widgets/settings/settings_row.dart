@@ -99,7 +99,13 @@ class SettingsRow extends StatelessWidget {
                 else if (showChevron && onTap != null)
                   Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: IconSizes.medium)
                 else if (showsValueAsTrailing)
-                  Text(value!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+                  Expanded(
+                    child: Text(
+                      value!,
+                      textAlign: TextAlign.end,
+                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
               ],
             ),
           ),
