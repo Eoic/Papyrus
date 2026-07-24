@@ -8,7 +8,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/acquisition/acquisition_endpoint_editor.dart';
 
 void main() {
-  testWidgets('uses a keyboard-aware bottom sheet on narrow windows', (tester) async {
+  testWidgets('uses a content-driven draggable bottom sheet on narrow windows', (tester) async {
     await _setWindowSize(tester, const Size(390, 844));
     await tester.pumpWidget(_EditorLauncher());
 
@@ -23,16 +23,16 @@ void main() {
         of: sheet,
         matching: find.byWidgetPredicate((widget) => widget is FractionallySizedBox && widget.heightFactor == .92),
       ),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.descendant(of: sheet, matching: find.byType(AnimatedPadding)), findsOneWidget);
+    expect(find.ancestor(of: sheet, matching: find.byType(AnimatedPadding)), findsOneWidget);
     final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
-    expect(bottomSheet.enableDrag, isFalse);
-    expect(bottomSheet.showDragHandle, isFalse);
+    expect(bottomSheet.enableDrag, isTrue);
+    expect(bottomSheet.showDragHandle, isTrue);
     expect(find.ancestor(of: sheet, matching: find.byType(SafeArea)), findsOneWidget);
   });
 
-  testWidgets('uses the integration editor sheet on wide windows', (tester) async {
+  testWidgets('short editor hugs its content on wide windows', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(_EditorLauncher());
 
@@ -47,9 +47,45 @@ void main() {
         of: sheet,
         matching: find.byWidgetPredicate((widget) => widget is FractionallySizedBox && widget.heightFactor == .92),
       ),
-      findsOneWidget,
+      findsNothing,
     );
+    expect(tester.getSize(sheet).height, lessThan(700));
     expect(find.ancestor(of: sheet, matching: find.byType(SafeArea)), findsOneWidget);
+  });
+
+  testWidgets('idle sheet dismisses from the backdrop', (tester) async {
+    await _expectIdleSheetDismisses(tester, _DismissAttempt.barrier);
+  });
+
+  testWidgets('idle sheet dismisses from system back', (tester) async {
+    await _expectIdleSheetDismisses(tester, _DismissAttempt.back);
+  });
+
+  testWidgets('idle sheet dismisses from a downward drag', (tester) async {
+    await _expectIdleSheetDismisses(tester, _DismissAttempt.drag);
+  });
+
+  testWidgets('credential-rich editor stays below the keyboard and scrolls to its footer', (tester) async {
+    await _setWindowSize(tester, const Size(390, 844));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(() => tester.view.viewInsets = FakeViewPadding.zero);
+    await tester.pumpWidget(_EditorLauncher(endpoint: _downloadClient));
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final sheet = find.byKey(const Key('acquisition-endpoint-sheet'));
+    final availableHeight = 844 - tester.view.viewInsets.bottom;
+    expect(tester.getSize(sheet).height, lessThanOrEqualTo(availableHeight * .92));
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+
+    final verticalScrollable = find
+        .byWidgetPredicate((widget) => widget is Scrollable && widget.axisDirection == AxisDirection.down)
+        .first;
+    await tester.scrollUntilVisible(find.byKey(const Key('acquisition-password')), 200, scrollable: verticalScrollable);
+
+    expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-editor-footer')), findsOneWidget);
   });
 
   testWidgets('groups fields and shows credentials required by integration type', (tester) async {
@@ -267,6 +303,39 @@ void main() {
     expect(find.text('Prowlarr connection test failed'), findsOneWidget);
   });
 
+  testWidgets('failed save restores idle drag and handle behavior', (tester) async {
+    final saveCompleter = Completer<void>();
+    await _setWindowSize(tester, const Size(390, 844));
+    await tester.pumpWidget(
+      _EditorLauncher(
+        onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) =>
+            saveCompleter.future,
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await _enterRequiredFields(tester);
+
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pump();
+
+    var bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+    expect(bottomSheet.enableDrag, isFalse);
+    expect(bottomSheet.showDragHandle, isFalse);
+
+    saveCompleter.completeError(const AuthApiException(statusCode: 502, message: 'Could not save integration'));
+    await tester.pumpAndSettle();
+
+    bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+    expect(bottomSheet.enableDrag, isTrue);
+    expect(bottomSheet.showDragHandle, isTrue);
+
+    await tester.drag(find.byType(BottomSheet), const Offset(0, 700));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-endpoint-sheet')), findsNothing);
+  });
+
   testWidgets('footer contains only Cancel and Save actions', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(_EditorLauncher());
@@ -407,6 +476,25 @@ Future<void> _enterRequiredFields(WidgetTester tester) async {
   await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://prowlarr.local');
 }
 
+Future<void> _expectIdleSheetDismisses(WidgetTester tester, _DismissAttempt attempt) async {
+  await _setWindowSize(tester, const Size(390, 844));
+  await tester.pumpWidget(_EditorLauncher());
+  await tester.tap(find.text('Open'));
+  await tester.pumpAndSettle();
+
+  switch (attempt) {
+    case _DismissAttempt.barrier:
+      await tester.tapAt(const Offset(4, 4));
+    case _DismissAttempt.back:
+      await tester.binding.handlePopRoute();
+    case _DismissAttempt.drag:
+      await tester.drag(find.byType(BottomSheet), const Offset(0, 700));
+  }
+  await tester.pumpAndSettle();
+
+  expect(find.byKey(const Key('acquisition-endpoint-sheet')), findsNothing);
+}
+
 Future<void> _expectPendingSaveBlocksDismissal(WidgetTester tester, _DismissAttempt attempt) async {
   await _setWindowSize(tester, const Size(390, 844));
   final saveCompleter = Completer<void>();
@@ -424,6 +512,9 @@ Future<void> _expectPendingSaveBlocksDismissal(WidgetTester tester, _DismissAtte
   await tester.pump();
 
   expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Cancel')).onPressed, isNull);
+  final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+  expect(bottomSheet.enableDrag, isFalse);
+  expect(bottomSheet.showDragHandle, isFalse);
 
   switch (attempt) {
     case _DismissAttempt.barrier:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/acquisition/guarded_bottom_sheet_route.dart';
 
 typedef AcquisitionEndpointTestCallback =
     Future<void> Function({
@@ -30,32 +31,44 @@ Future<bool?> showAcquisitionEndpointEditor({
   required AcquisitionEndpointSaveCallback onSave,
   AcquisitionEndpoint? endpoint,
   AcquisitionEndpointKind? initialKind,
-}) {
+}) async {
+  final busy = ValueNotifier(false);
+  final editorKey = GlobalKey();
   final editor = AcquisitionEndpointEditor(
+    key: editorKey,
     endpoint: endpoint,
     endpointKinds: endpointKinds,
     initialKind: initialKind,
     onTest: onTest,
     onSave: onSave,
+    onBusyChanged: (value) => busy.value = value,
   );
 
-  return showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
-    isDismissible: false,
-    enableDrag: false,
-    useSafeArea: true,
-    showDragHandle: false,
-    builder: (context) => KeyedSubtree(
-      key: const Key('acquisition-endpoint-sheet'),
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-        child: FractionallySizedBox(heightFactor: .92, child: editor),
+  try {
+    return await showGuardedModalBottomSheet<bool>(
+      context: context,
+      busy: busy,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
       ),
-    ),
-  );
+      builder: (sheetContext) {
+        final viewInsets = MediaQuery.viewInsetsOf(sheetContext);
+        final availableHeight = MediaQuery.sizeOf(sheetContext).height - viewInsets.bottom;
+
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: viewInsets.bottom),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: availableHeight * .92),
+            child: KeyedSubtree(key: const Key('acquisition-endpoint-sheet'), child: editor),
+          ),
+        );
+      },
+    );
+  } finally {
+    busy.dispose();
+  }
 }
 
 class AcquisitionEndpointEditor extends StatefulWidget {
@@ -63,6 +76,7 @@ class AcquisitionEndpointEditor extends StatefulWidget {
     required this.endpointKinds,
     required this.onTest,
     required this.onSave,
+    required this.onBusyChanged,
     this.endpoint,
     this.initialKind,
     super.key,
@@ -73,6 +87,7 @@ class AcquisitionEndpointEditor extends StatefulWidget {
   final AcquisitionEndpointKind? initialKind;
   final AcquisitionEndpointTestCallback onTest;
   final AcquisitionEndpointSaveCallback onSave;
+  final ValueChanged<bool> onBusyChanged;
 
   @override
   State<AcquisitionEndpointEditor> createState() => _AcquisitionEndpointEditorState();
@@ -128,176 +143,170 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_busy,
-      child: Material(
-        color: Theme.of(context).colorScheme.surface,
-        clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.lg, Spacing.lg, Spacing.md),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  widget.endpoint == null ? 'Add integration' : 'Edit integration',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.lg, Spacing.lg, Spacing.md),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                widget.endpoint == null ? 'Add integration' : 'Edit integration',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(Spacing.lg),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _SectionHeading(label: 'Integration'),
+          ),
+          const Divider(height: 1),
+          Flexible(
+            fit: FlexFit.loose,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(Spacing.lg),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionHeading(label: 'Integration'),
+                    const SizedBox(height: Spacing.formFieldSpacing),
+                    TextFormField(
+                      key: const Key('acquisition-name'),
+                      controller: _nameController,
+                      enabled: !_busy,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                      textInputAction: TextInputAction.next,
+                      validator: (value) => value == null || value.trim().isEmpty ? 'Enter a name' : null,
+                    ),
+                    const SizedBox(height: Spacing.formFieldSpacing),
+                    DropdownButtonFormField<AcquisitionEndpointKind>(
+                      key: const Key('acquisition-type'),
+                      initialValue: _kind,
+                      items: widget.endpointKinds
+                          .map((kind) => DropdownMenuItem(value: kind, child: Text(kind.label)))
+                          .toList(),
+                      onChanged: widget.endpoint == null && !_busy
+                          ? (kind) => setState(() {
+                              _kind = kind ?? _kind;
+                              _message = null;
+                            })
+                          : null,
+                      decoration: const InputDecoration(labelText: 'Type'),
+                    ),
+                    const SizedBox(height: Spacing.lg),
+                    _SectionHeading(label: 'Connection'),
+                    const SizedBox(height: Spacing.formFieldSpacing),
+                    FormField<String>(
+                      key: _urlFieldKey,
+                      initialValue: _urlController.text,
+                      validator: _validateUrl,
+                      builder: (field) {
+                        return TextField(
+                          key: const Key('acquisition-url'),
+                          controller: _urlController,
+                          enabled: !_busy,
+                          decoration: InputDecoration(labelText: 'Server URL', errorText: field.errorText),
+                          keyboardType: TextInputType.url,
+                          textInputAction: TextInputAction.next,
+                          onChanged: field.didChange,
+                        );
+                      },
+                    ),
+                    if (_usesApiKey) ...[
                       const SizedBox(height: Spacing.formFieldSpacing),
                       TextFormField(
-                        key: const Key('acquisition-name'),
-                        controller: _nameController,
+                        key: const Key('acquisition-api-key'),
+                        controller: _apiKeyController,
                         enabled: !_busy,
-                        decoration: const InputDecoration(labelText: 'Name'),
-                        textInputAction: TextInputAction.next,
-                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter a name' : null,
-                      ),
-                      const SizedBox(height: Spacing.formFieldSpacing),
-                      DropdownButtonFormField<AcquisitionEndpointKind>(
-                        key: const Key('acquisition-type'),
-                        initialValue: _kind,
-                        items: widget.endpointKinds
-                            .map((kind) => DropdownMenuItem(value: kind, child: Text(kind.label)))
-                            .toList(),
-                        onChanged: widget.endpoint == null && !_busy
-                            ? (kind) => setState(() {
-                                _kind = kind ?? _kind;
-                                _message = null;
-                              })
-                            : null,
-                        decoration: const InputDecoration(labelText: 'Type'),
-                      ),
-                      const SizedBox(height: Spacing.lg),
-                      _SectionHeading(label: 'Connection'),
-                      const SizedBox(height: Spacing.formFieldSpacing),
-                      FormField<String>(
-                        key: _urlFieldKey,
-                        initialValue: _urlController.text,
-                        validator: _validateUrl,
-                        builder: (field) {
-                          return TextField(
-                            key: const Key('acquisition-url'),
-                            controller: _urlController,
-                            enabled: !_busy,
-                            decoration: InputDecoration(labelText: 'Server URL', errorText: field.errorText),
-                            keyboardType: TextInputType.url,
-                            textInputAction: TextInputAction.next,
-                            onChanged: field.didChange,
-                          );
-                        },
-                      ),
-                      if (_usesApiKey) ...[
-                        const SizedBox(height: Spacing.formFieldSpacing),
-                        TextFormField(
-                          key: const Key('acquisition-api-key'),
-                          controller: _apiKeyController,
-                          enabled: !_busy,
-                          obscureText: !_showApiKey,
-                          decoration: InputDecoration(
-                            labelText: 'API key',
-                            suffixIcon: IconButton(
-                              tooltip: _showApiKey ? 'Hide API key' : 'Show API key',
-                              onPressed: _busy ? null : () => setState(() => _showApiKey = !_showApiKey),
-                              icon: Icon(_showApiKey ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                            ),
+                        obscureText: !_showApiKey,
+                        decoration: InputDecoration(
+                          labelText: 'API key',
+                          suffixIcon: IconButton(
+                            tooltip: _showApiKey ? 'Hide API key' : 'Show API key',
+                            onPressed: _busy ? null : () => setState(() => _showApiKey = !_showApiKey),
+                            icon: Icon(_showApiKey ? Icons.visibility_off_outlined : Icons.visibility_outlined),
                           ),
                         ),
-                      ],
-                      if (_usesUsername) ...[
-                        const SizedBox(height: Spacing.formFieldSpacing),
-                        TextFormField(
-                          key: const Key('acquisition-username'),
-                          controller: _usernameController,
-                          enabled: !_busy,
-                          decoration: const InputDecoration(labelText: 'Username'),
-                          textInputAction: TextInputAction.next,
-                        ),
-                      ],
-                      if (_usesPassword) ...[
-                        const SizedBox(height: Spacing.formFieldSpacing),
-                        TextFormField(
-                          key: const Key('acquisition-password'),
-                          controller: _passwordController,
-                          enabled: !_busy,
-                          obscureText: !_showPassword,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            suffixIcon: IconButton(
-                              tooltip: _showPassword ? 'Hide password' : 'Show password',
-                              onPressed: _busy ? null : () => setState(() => _showPassword = !_showPassword),
-                              icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                            ),
-                          ),
-                        ),
-                      ],
-                      if (widget.endpoint != null) ...[
-                        const SizedBox(height: Spacing.formFieldSpacing),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Enabled'),
-                          value: _enabled,
-                          onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
-                        ),
-                      ],
-                      const SizedBox(height: Spacing.formFieldSpacing),
-                      Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: OutlinedButton.icon(
-                          key: const Key('acquisition-test-connection'),
-                          onPressed: _busy ? null : _testConnection,
-                          icon: _testing
-                              ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.cable_outlined),
-                          label: const Text('Test connection'),
-                        ),
                       ),
-                      if (_message != null) ...[
-                        const SizedBox(height: Spacing.sm),
-                        Text(
-                          _message!,
-                          style: TextStyle(color: _messageIsError ? Theme.of(context).colorScheme.error : null),
-                        ),
-                      ],
                     ],
-                  ),
+                    if (_usesUsername) ...[
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      TextFormField(
+                        key: const Key('acquisition-username'),
+                        controller: _usernameController,
+                        enabled: !_busy,
+                        decoration: const InputDecoration(labelText: 'Username'),
+                        textInputAction: TextInputAction.next,
+                      ),
+                    ],
+                    if (_usesPassword) ...[
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      TextFormField(
+                        key: const Key('acquisition-password'),
+                        controller: _passwordController,
+                        enabled: !_busy,
+                        obscureText: !_showPassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          suffixIcon: IconButton(
+                            tooltip: _showPassword ? 'Hide password' : 'Show password',
+                            onPressed: _busy ? null : () => setState(() => _showPassword = !_showPassword),
+                            icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (widget.endpoint != null) ...[
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Enabled'),
+                        value: _enabled,
+                        onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
+                      ),
+                    ],
+                    const SizedBox(height: Spacing.formFieldSpacing),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: OutlinedButton.icon(
+                        key: const Key('acquisition-test-connection'),
+                        onPressed: _busy ? null : _testConnection,
+                        icon: _testing
+                            ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.cable_outlined),
+                        label: const Text('Test connection'),
+                      ),
+                    ),
+                    if (_message != null) ...[
+                      const SizedBox(height: Spacing.sm),
+                      Text(
+                        _message!,
+                        style: TextStyle(color: _messageIsError ? Theme.of(context).colorScheme.error : null),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
-            const Divider(height: 1),
-            Padding(
-              key: const Key('acquisition-editor-footer'),
-              padding: const EdgeInsets.all(Spacing.md),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: _busy ? null : () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  FilledButton(
-                    key: const Key('acquisition-save'),
-                    onPressed: _busy ? null : _save,
-                    child: _saving
-                        ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Save'),
-                  ),
-                ],
-              ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            key: const Key('acquisition-editor-footer'),
+            padding: const EdgeInsets.all(Spacing.md),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: _busy ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
+                const SizedBox(width: Spacing.sm),
+                FilledButton(
+                  key: const Key('acquisition-save'),
+                  onPressed: _busy ? null : _save,
+                  child: _saving
+                      ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Save'),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -310,6 +319,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
       _testing = true;
       _message = null;
     });
+    widget.onBusyChanged(_busy);
 
     try {
       await widget.onTest(
@@ -333,7 +343,10 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         _messageIsError = true;
       });
     } finally {
-      if (mounted) setState(() => _testing = false);
+      if (mounted) {
+        setState(() => _testing = false);
+        widget.onBusyChanged(_busy);
+      }
     }
   }
 
@@ -344,6 +357,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
       _saving = true;
       _message = null;
     });
+    widget.onBusyChanged(_busy);
 
     try {
       await widget.onSave(
@@ -358,6 +372,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
       if (!mounted) return;
 
       setState(() => _saving = false);
+      widget.onBusyChanged(_busy);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.pop(context, true);
       });
@@ -369,7 +384,10 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         _messageIsError = true;
       });
     } finally {
-      if (mounted && _saving) setState(() => _saving = false);
+      if (mounted && _saving) {
+        setState(() => _saving = false);
+        widget.onBusyChanged(_busy);
+      }
     }
   }
 
