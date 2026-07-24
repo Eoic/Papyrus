@@ -525,3 +525,140 @@ git status --short --branch
 ```
 
 Expected: no whitespace errors and a clean `feature/torrent-acquisition` branch containing only the planned commits.
+
+### Task 5: Correct the Editor to Behave as a Real Bottom Sheet
+
+**Files:**
+- Create: `app/lib/widgets/acquisition/guarded_bottom_sheet_route.dart`
+- Create: `app/test/widgets/acquisition/guarded_bottom_sheet_route_test.dart`
+- Modify: `app/lib/widgets/acquisition/acquisition_endpoint_editor.dart`
+- Modify: `app/test/widgets/acquisition/acquisition_endpoint_editor_test.dart`
+
+- [ ] **Step 1: Write failing sizing and idle-interaction tests**
+
+Replace the fixed `.92` height assertions with tests that prove:
+
+```dart
+final sheet = find.byKey(const Key('acquisition-endpoint-sheet'));
+expect(tester.getSize(sheet).height, lessThan(700));
+
+final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+expect(bottomSheet.enableDrag, isTrue);
+expect(bottomSheet.showDragHandle, isTrue);
+```
+
+At a `900 × 900` viewport, the short Prowlarr form must be substantially shorter than the old 828-pixel fixed height. Add separate idle tests that dismiss the editor by backdrop tap, Back, and downward drag.
+
+- [ ] **Step 2: Run the editor tests and verify RED**
+
+Run:
+
+```bash
+cd app
+flutter test --no-pub test/widgets/acquisition/acquisition_endpoint_editor_test.dart
+```
+
+Expected: FAIL because the editor is fixed at 92 percent height and the route is permanently non-dismissible and non-draggable.
+
+- [ ] **Step 3: Add a live guarded bottom-sheet route**
+
+Create a focused route helper that owns a `ValueListenable<bool>` busy signal and subclasses `ModalBottomSheetRoute<T>`. Override the route's `isDismissible`, `enableDrag`, and `showDragHandle` getters to return `!busy.value`, register a listener in `install()`, call `changedInternalState()` when busy changes, and remove the listener in `dispose()`.
+
+Expose:
+
+```dart
+Future<T?> showGuardedModalBottomSheet<T>({
+  required BuildContext context,
+  required ValueListenable<bool> busy,
+  required WidgetBuilder builder,
+  required ShapeBorder shape,
+});
+```
+
+Construct the route with the same navigator, captured inherited themes, Material localization barrier labels, modal barrier color, safe-area behavior, and scroll-controlled behavior used by Flutter's `showModalBottomSheet`.
+
+Add direct route tests proving its rendered `BottomSheet` transitions from draggable/dismissible with a visible handle to locked without a handle when the notifier becomes true, and restores the idle state when false.
+
+- [ ] **Step 4: Make the editor content-driven with a height cap**
+
+Make `showAcquisitionEndpointEditor` async, create a `ValueNotifier<bool>` for the operation state, await `showGuardedModalBottomSheet`, and dispose the notifier afterward.
+
+Replace `FractionallySizedBox(heightFactor: .92)` with:
+
+```dart
+final viewInsets = MediaQuery.viewInsetsOf(sheetContext);
+final availableHeight =
+    MediaQuery.sizeOf(sheetContext).height - viewInsets.bottom;
+
+return AnimatedPadding(
+  duration: const Duration(milliseconds: 150),
+  curve: Curves.easeOut,
+  padding: EdgeInsets.only(bottom: viewInsets.bottom),
+  child: ConstrainedBox(
+    constraints: BoxConstraints(maxHeight: availableHeight * .92),
+    child: editor,
+  ),
+);
+```
+
+Use the standard top-only `AppRadius.bottomSheet` route shape. Change the editor's root `Column` to `mainAxisSize: MainAxisSize.min` and its form body from `Expanded` to `Flexible(fit: FlexFit.loose)` so short forms hug content while long forms scroll.
+
+Add an `onBusyChanged` callback to `AcquisitionEndpointEditor`. Notify it whenever `_testing` or `_saving` changes. Keep the existing `PopScope`, disabled controls, local errors, successful post-frame pop, credential behavior, and callbacks.
+
+- [ ] **Step 5: Verify GREEN and commit**
+
+Run:
+
+```bash
+cd app
+flutter test --no-pub \
+  test/widgets/acquisition/guarded_bottom_sheet_route_test.dart \
+  test/widgets/acquisition/acquisition_endpoint_editor_test.dart
+flutter analyze --no-pub \
+  lib/widgets/acquisition/guarded_bottom_sheet_route.dart \
+  lib/widgets/acquisition/acquisition_endpoint_editor.dart \
+  test/widgets/acquisition/guarded_bottom_sheet_route_test.dart \
+  test/widgets/acquisition/acquisition_endpoint_editor_test.dart
+```
+
+Expected: short forms hug content, idle dismissal paths work, pending operations block all dismissal paths, and all focused tests pass.
+
+```bash
+git add app/lib/widgets/acquisition/guarded_bottom_sheet_route.dart \
+  app/lib/widgets/acquisition/acquisition_endpoint_editor.dart \
+  app/test/widgets/acquisition/guarded_bottom_sheet_route_test.dart \
+  app/test/widgets/acquisition/acquisition_endpoint_editor_test.dart
+git commit -m "fix: restore true acquisition sheet behavior"
+```
+
+### Task 6: Verify the Corrected Sheet Experience
+
+- [ ] **Step 1: Run formatting, analysis, focused tests, and the complete suite**
+
+Run:
+
+```bash
+cd app
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze --no-pub
+flutter test --no-pub \
+  test/pages/acquisition_page_test.dart \
+  test/widgets/acquisition/acquisition_action_sheets_test.dart \
+  test/widgets/acquisition/acquisition_endpoint_editor_test.dart \
+  test/widgets/acquisition/guarded_bottom_sheet_route_test.dart \
+  test/widgets/shared/bottom_sheet_header_test.dart
+flutter test --no-pub
+```
+
+Expected: formatter and analyzer are clean and all non-skipped tests pass.
+
+- [ ] **Step 2: Review repository state**
+
+Run:
+
+```bash
+git diff --check
+git status --short --branch
+```
+
+Expected: no whitespace errors and a clean feature branch ready for local visual testing.
