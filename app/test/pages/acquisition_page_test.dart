@@ -83,6 +83,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   final arrEndpointIds = <String>[];
   final arrCommands = <String>[];
   final arrIds = <List<int>>[];
+  final deletedEndpointIds = <String>[];
 
   @override
   Future<AcquisitionCapabilities> capabilities(String accessToken) async {
@@ -129,6 +130,11 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
     lastUpdatedPassword = password;
 
     return endpointsResult.singleWhere((endpoint) => endpoint.id == endpointId);
+  }
+
+  @override
+  Future<void> deleteEndpoint({required String accessToken, required String endpointId}) async {
+    deletedEndpointIds.add(endpointId);
   }
 
   @override
@@ -629,6 +635,25 @@ void main() {
     expect(_sectionAdd('acquisition-apps-section'), findsNothing);
   });
 
+  testWidgets('remove action confirms through a bottom sheet', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    _selectEndpointMenu(tester, _indexerOne, 'delete');
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-remove-sheet')), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Saved credentials for this integration will be removed.'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.deletedEndpointIds, ['indexer-1']);
+  });
+
   testWidgets('disabled Arr integration cannot run', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_disabledReadarr];
 
@@ -654,8 +679,16 @@ void main() {
 
     _selectEndpointMenu(tester, _readarr, 'run');
     await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-command-sheet')), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+
     await tester.tap(find.text('Search books'));
     await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-arr-ids-sheet')), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+
     await tester.enterText(find.widgetWithText(TextField, 'IDs'), '42, invalid, 84');
     await tester.tap(find.widgetWithText(FilledButton, 'Run'));
     await tester.pump();

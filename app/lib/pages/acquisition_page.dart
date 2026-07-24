@@ -8,6 +8,7 @@ import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/acquisition/acquisition_action_sheets.dart';
 import 'package:papyrus/widgets/acquisition/acquisition_endpoint_editor.dart';
 import 'package:papyrus/widgets/acquisition/acquisition_settings_section.dart';
 import 'package:papyrus/widgets/settings/settings_row.dart';
@@ -208,55 +209,17 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   }
 
   Future<String?> _pickArrCommand(AcquisitionEndpoint endpoint, List<String> commands) {
-    return showModalBottomSheet<String>(
+    return showAcquisitionCommandSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(title: Text(endpoint.name), subtitle: Text(endpoint.kind.label)),
-            ...commands.map(
-              (command) => ListTile(
-                leading: const Icon(Icons.play_arrow_outlined),
-                title: Text(_arrCommandLabel(command)),
-                subtitle: Text(command),
-                onTap: () => Navigator.pop(context, command),
-              ),
-            ),
-          ],
-        ),
-      ),
+      endpointName: endpoint.name,
+      endpointKindLabel: endpoint.kind.label,
+      commands: commands,
+      commandLabel: _arrCommandLabel,
     );
   }
 
-  Future<List<int>?> _askForIds(String command) async {
-    var enteredIds = '';
-
-    return showDialog<List<int>>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_arrCommandLabel(command)),
-        content: TextField(
-          onChanged: (value) => enteredIds = value,
-          decoration: const InputDecoration(
-            labelText: 'IDs',
-            helperText: 'Comma-separated IDs from the Arr application',
-          ),
-          keyboardType: TextInputType.text,
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              final ids = enteredIds.split(',').map((value) => int.tryParse(value.trim())).whereType<int>().toList();
-              Navigator.pop(context, ids);
-            },
-            child: const Text('Run'),
-          ),
-        ],
-      ),
-    );
+  Future<List<int>?> _askForIds(String command) {
+    return showAcquisitionIdsSheet(context: context, title: _arrCommandLabel(command));
   }
 
   Future<void> _showEndpointDialog({AcquisitionEndpoint? endpoint, List<AcquisitionEndpointKind>? allowedKinds}) async {
@@ -316,17 +279,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   }
 
   Future<void> _deleteEndpoint(AcquisitionEndpoint endpoint) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Remove ${endpoint.name}?'),
-        content: const Text('Saved credentials for this integration will be removed.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Remove')),
-        ],
-      ),
-    );
+    final confirmed = await showAcquisitionRemoveSheet(context: context, endpointName: endpoint.name);
     if (confirmed != true) return;
 
     try {
