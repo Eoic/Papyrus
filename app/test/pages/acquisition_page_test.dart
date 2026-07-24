@@ -76,6 +76,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   String? lastUpdatedPassword;
   List<AcquisitionEndpoint> endpointsResult = [];
   List<TorrentRelease> releasesResult = [];
+  Completer<List<TorrentRelease>>? searchCompleter;
   final searchEndpointIds = <List<String>?>[];
   final submissionCompleters = <String, Completer<AcquisitionJob>>{};
   Completer<AcquisitionJob>? arrCommandCompleter;
@@ -151,7 +152,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
     List<String>? endpointIds,
   }) async {
     searchEndpointIds.add(endpointIds);
-    return releasesResult;
+    return searchCompleter?.future ?? releasesResult;
   }
 
   @override
@@ -162,7 +163,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
     String? category,
     String? savePath,
   }) {
-    final key = '${release.downloadUrl}:$endpointId';
+    final key = _fakeSubmissionKey(release, endpointId);
     return submissionCompleters.putIfAbsent(key, Completer<AcquisitionJob>.new).future;
   }
 
@@ -372,6 +373,80 @@ void main() {
     expect(find.descendant(of: resultsSection, matching: find.text('Release One')), findsOneWidget);
   });
 
+  testWidgets('duplicate download URLs retain independent row and submission identities', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()
+      ..endpointsResult = [_indexerOne, _indexerTwo, _clientOne]
+      ..releasesResult = [_releaseOne, _releaseMirror];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+    await tester.enterText(_searchField, 'book');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+
+    final resultsSection = find.byKey(const Key('acquisition-results-section'));
+    final releaseRows = tester.widgetList<ListTile>(
+      find.descendant(of: resultsSection, matching: find.byType(ListTile)),
+    );
+
+    expect(releaseRows.map((row) => row.key).toSet(), hasLength(2));
+
+    _submissionMenu(tester, _releaseOne).onSelected?.call(_clientOne);
+    await tester.pump();
+
+    expect(_submissionItem(tester, _releaseOne, _clientOne).enabled, isFalse);
+    expect(_submissionItem(tester, _releaseMirror, _clientOne).enabled, isTrue);
+    expect(_submissionMenu(tester, _releaseMirror).enabled, isTrue);
+
+    apiClient.submissionCompleters[_fakeSubmissionKey(_releaseOne, _clientOne.id)]!.complete(_job(status: 'submitted'));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('refresh invalidates results from a pending search', (tester) async {
+    final searchCompleter = Completer<List<TorrentRelease>>();
+    final apiClient = _FakeAcquisitionApiClient()
+      ..endpointsResult = [_indexerOne, _clientOne]
+      ..searchCompleter = searchCompleter;
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+    await tester.enterText(_searchField, 'book');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pump();
+
+    await tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
+    await tester.pump();
+
+    searchCompleter.complete([_releaseOne]);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
+    expect(find.text('Release One'), findsNothing);
+  });
+
+  testWidgets('refresh prevents a stale search error from replacing current state', (tester) async {
+    final searchCompleter = Completer<List<TorrentRelease>>();
+    final apiClient = _FakeAcquisitionApiClient()
+      ..endpointsResult = [_indexerOne, _clientOne]
+      ..searchCompleter = searchCompleter;
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+    await tester.enterText(_searchField, 'book');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pump();
+
+    await tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
+    await tester.pump();
+
+    searchCompleter.completeError(const AuthApiException(statusCode: 502, message: 'Stale search failed'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
+    expect(find.text('Stale search failed'), findsNothing);
+    expect(find.text('Search failed. Check your torrent indexers.'), findsNothing);
+  });
+
   testWidgets('search and submission scopes progress and shows job failure', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()
       ..endpointsResult = [_indexerOne, _clientOne, _clientTwo]
@@ -404,7 +479,7 @@ void main() {
     );
     expect(tester.widget<PopupMenuButton<AcquisitionEndpoint>>(releaseTwoMenu).enabled, isTrue);
 
-    apiClient.submissionCompleters['${_releaseOne.downloadUrl}:${_clientOne.id}']!.complete(
+    apiClient.submissionCompleters[_fakeSubmissionKey(_releaseOne, _clientOne.id)]!.complete(
       _job(status: 'failed', error: 'Transmission rejected the release'),
     );
     await tester.pumpAndSettle();
@@ -665,14 +740,25 @@ PopupMenuItem<AcquisitionEndpoint> _submissionItem(
   TorrentRelease release,
   AcquisitionEndpoint client,
 ) {
+  final menu = _submissionMenu(tester, release);
   final releaseTile = find.ancestor(of: find.text(release.title), matching: find.byType(ListTile));
   final menuFinder = find.descendant(of: releaseTile, matching: find.byType(PopupMenuButton<AcquisitionEndpoint>));
-  final menu = tester.widget<PopupMenuButton<AcquisitionEndpoint>>(menuFinder);
 
   return menu
       .itemBuilder(tester.element(menuFinder))
       .whereType<PopupMenuItem<AcquisitionEndpoint>>()
-      .singleWhere((item) => item.key == Key('submission:${release.downloadUrl}:${client.id}'));
+      .singleWhere((item) => item.value == client);
+}
+
+PopupMenuButton<AcquisitionEndpoint> _submissionMenu(WidgetTester tester, TorrentRelease release) {
+  final releaseTile = find.ancestor(of: find.text(release.title), matching: find.byType(ListTile));
+  final menuFinder = find.descendant(of: releaseTile, matching: find.byType(PopupMenuButton<AcquisitionEndpoint>));
+
+  return tester.widget<PopupMenuButton<AcquisitionEndpoint>>(menuFinder);
+}
+
+String _fakeSubmissionKey(TorrentRelease release, String endpointId) {
+  return '${release.indexer}\u001f${release.downloadUrl}\u001f$endpointId';
 }
 
 final _indexerOne = AcquisitionEndpoint(
@@ -735,6 +821,12 @@ const _releaseTwo = TorrentRelease(
   downloadUrl: 'magnet:?xt=urn:btih:release-two',
   protocol: 'torrent',
   indexer: 'Indexer One',
+);
+const _releaseMirror = TorrentRelease(
+  title: 'Release Mirror',
+  downloadUrl: 'magnet:?xt=urn:btih:release-one',
+  protocol: 'torrent',
+  indexer: 'Indexer Two',
 );
 
 AcquisitionJob _job({required String status, String? error}) {

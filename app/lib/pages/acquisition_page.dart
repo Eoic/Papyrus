@@ -634,7 +634,7 @@ class _ReleaseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      key: Key('acquisition-release-${release.downloadUrl}'),
+      key: ValueKey('acquisition-release:${_releaseIdentity(release)}'),
       contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
       title: Text(release.title),
       subtitle: Text(
@@ -672,7 +672,11 @@ class _ReleaseTile extends StatelessWidget {
 }
 
 String _submissionKey(TorrentRelease release, AcquisitionEndpoint client) {
-  return '${release.downloadUrl}:${client.id}';
+  return '${_releaseIdentity(release)}\u001f${client.id}';
+}
+
+String _releaseIdentity(TorrentRelease release) {
+  return '${release.indexer}\u001f${release.downloadUrl}';
 }
 
 class _ErrorBanner extends StatelessWidget {
