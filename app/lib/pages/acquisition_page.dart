@@ -8,6 +8,7 @@ import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/acquisition/acquisition_endpoint_editor.dart';
 import 'package:papyrus/widgets/acquisition/acquisition_settings_section.dart';
 import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:provider/provider.dart';
@@ -243,53 +244,51 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     final capabilities = _capabilities;
     if (capabilities == null || capabilities.endpointKinds.isEmpty) return;
 
-    final saved = await showDialog<bool>(
+    final saved = await showAcquisitionEndpointEditor(
       context: context,
-      builder: (context) => _EndpointDialog(
-        endpoint: endpoint,
-        endpointKinds: capabilities.endpointKinds,
-        initialKind: initialKind,
-        onTest: ({required kind, required baseUrl, apiKey, username, password}) {
-          return _authenticated((token) {
-            return _apiClient.testEndpoint(
+      endpoint: endpoint,
+      endpointKinds: capabilities.endpointKinds,
+      initialKind: initialKind,
+      onTest: ({required kind, required baseUrl, apiKey, username, password}) {
+        return _authenticated((token) {
+          return _apiClient.testEndpoint(
+            accessToken: token,
+            endpointId: endpoint?.id,
+            kind: endpoint == null ? kind : null,
+            baseUrl: baseUrl,
+            apiKey: apiKey,
+            username: username,
+            password: password,
+          );
+        });
+      },
+      onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) async {
+        await _authenticated((token) async {
+          if (endpoint == null) {
+            await _apiClient.createEndpoint(
               accessToken: token,
-              endpointId: endpoint?.id,
-              kind: endpoint == null ? kind : null,
-              baseUrl: baseUrl,
-              apiKey: apiKey,
-              username: username,
-              password: password,
-            );
-          });
-        },
-        onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) async {
-          await _authenticated((token) async {
-            if (endpoint == null) {
-              await _apiClient.createEndpoint(
-                accessToken: token,
-                name: name,
-                kind: kind,
-                baseUrl: baseUrl,
-                apiKey: apiKey,
-                username: username,
-                password: password,
-              );
-              return;
-            }
-
-            await _apiClient.updateEndpoint(
-              accessToken: token,
-              endpointId: endpoint.id,
               name: name,
+              kind: kind,
               baseUrl: baseUrl,
               apiKey: apiKey,
               username: username,
               password: password,
-              enabled: enabled,
             );
-          });
-        },
-      ),
+            return;
+          }
+
+          await _apiClient.updateEndpoint(
+            accessToken: token,
+            endpointId: endpoint.id,
+            name: name,
+            baseUrl: baseUrl,
+            apiKey: apiKey,
+            username: username,
+            password: password,
+            enabled: enabled,
+          );
+        });
+      },
     );
 
     if (saved == true) await _load();
@@ -527,253 +526,6 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     AcquisitionEndpointKind.prowlarr || AcquisitionEndpointKind.torznab => Icons.travel_explore,
     _ => Icons.auto_awesome_motion_outlined,
   };
-}
-
-typedef _EndpointTestCallback =
-    Future<void> Function({
-      required AcquisitionEndpointKind kind,
-      required Uri baseUrl,
-      String? apiKey,
-      String? username,
-      String? password,
-    });
-
-typedef _EndpointSaveCallback =
-    Future<void> Function({
-      required String name,
-      required AcquisitionEndpointKind kind,
-      required Uri baseUrl,
-      required bool enabled,
-      String? apiKey,
-      String? username,
-      String? password,
-    });
-
-class _EndpointDialog extends StatefulWidget {
-  const _EndpointDialog({
-    required this.endpoint,
-    required this.endpointKinds,
-    required this.initialKind,
-    required this.onTest,
-    required this.onSave,
-  });
-
-  final AcquisitionEndpoint? endpoint;
-  final List<AcquisitionEndpointKind> endpointKinds;
-  final AcquisitionEndpointKind? initialKind;
-  final _EndpointTestCallback onTest;
-  final _EndpointSaveCallback onSave;
-
-  @override
-  State<_EndpointDialog> createState() => _EndpointDialogState();
-}
-
-class _EndpointDialogState extends State<_EndpointDialog> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _urlController;
-  final _apiKeyController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  late AcquisitionEndpointKind _kind;
-  late bool _enabled;
-  bool _testing = false;
-  bool _saving = false;
-  String? _message;
-  bool _messageIsError = false;
-
-  bool get _busy => _testing || _saving;
-
-  bool get _usesApiKey => _kind.isIndexer || _kind.isArr;
-
-  bool get _usesUsername =>
-      _kind == AcquisitionEndpointKind.qbittorrent || _kind == AcquisitionEndpointKind.transmission;
-
-  bool get _usesPassword => _usesUsername || _kind == AcquisitionEndpointKind.deluge;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.endpoint?.name ?? '');
-    _urlController = TextEditingController(text: widget.endpoint?.baseUrl.toString() ?? '');
-    _kind = widget.endpoint?.kind ?? widget.initialKind ?? widget.endpointKinds.first;
-    _enabled = widget.endpoint?.enabled ?? true;
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _urlController.dispose();
-    _apiKeyController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AlertDialog(
-      title: Text(widget.endpoint == null ? 'Add integration' : 'Edit integration'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              enabled: !_busy,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            DropdownButtonFormField<AcquisitionEndpointKind>(
-              initialValue: _kind,
-              items: widget.endpointKinds
-                  .map((value) => DropdownMenuItem(value: value, child: Text(value.label)))
-                  .toList(),
-              onChanged: widget.endpoint == null && !_busy ? (value) => setState(() => _kind = value ?? _kind) : null,
-              decoration: const InputDecoration(labelText: 'Type'),
-            ),
-            TextField(
-              controller: _urlController,
-              enabled: !_busy,
-              decoration: const InputDecoration(labelText: 'Server URL'),
-              keyboardType: TextInputType.url,
-            ),
-            if (_usesApiKey)
-              TextField(
-                controller: _apiKeyController,
-                enabled: !_busy,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'API key'),
-              ),
-            if (_usesUsername)
-              TextField(
-                controller: _usernameController,
-                enabled: !_busy,
-                decoration: const InputDecoration(labelText: 'Username'),
-              ),
-            if (_usesPassword)
-              TextField(
-                controller: _passwordController,
-                enabled: !_busy,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Enabled'),
-              value: _enabled,
-              onChanged: _busy ? null : (value) => setState(() => _enabled = value),
-            ),
-            if (_testing) const LinearProgressIndicator(),
-            if (_message != null)
-              Padding(
-                padding: const EdgeInsets.only(top: Spacing.sm),
-                child: Text(_message!, style: TextStyle(color: _messageIsError ? colorScheme.error : null)),
-              ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: _busy ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
-        OutlinedButton(
-          key: const Key('acquisition-test-connection'),
-          onPressed: _busy ? null : _testConnection,
-          child: const Text('Test connection'),
-        ),
-        FilledButton(key: const Key('acquisition-save'), onPressed: _busy ? null : _save, child: const Text('Save')),
-      ],
-    );
-  }
-
-  Future<void> _testConnection() async {
-    final baseUrl = _baseUrl();
-    if (baseUrl == null) return;
-
-    setState(() {
-      _testing = true;
-      _message = null;
-    });
-
-    try {
-      await widget.onTest(
-        kind: _kind,
-        baseUrl: baseUrl,
-        apiKey: _usesApiKey ? _optional(_apiKeyController.text) : null,
-        username: _usesUsername ? _optional(_usernameController.text) : null,
-        password: _usesPassword ? _optional(_passwordController.text) : null,
-      );
-      if (!mounted) return;
-      setState(() {
-        _message = 'Connection successful.';
-        _messageIsError = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _message = error is AuthApiException ? error.message : 'Could not connect to this integration.';
-        _messageIsError = true;
-      });
-    } finally {
-      if (mounted) setState(() => _testing = false);
-    }
-  }
-
-  Future<void> _save() async {
-    final name = _nameController.text.trim();
-    final baseUrl = _baseUrl();
-    if (name.isEmpty || baseUrl == null) {
-      if (name.isEmpty) {
-        setState(() {
-          _message = 'Name is required.';
-          _messageIsError = true;
-        });
-      }
-      return;
-    }
-
-    setState(() {
-      _saving = true;
-      _message = null;
-    });
-
-    try {
-      await widget.onSave(
-        name: name,
-        kind: _kind,
-        baseUrl: baseUrl,
-        enabled: _enabled,
-        apiKey: _usesApiKey ? _optional(_apiKeyController.text) : null,
-        username: _usesUsername ? _optional(_usernameController.text) : null,
-        password: _usesPassword ? _optional(_passwordController.text) : null,
-      );
-      if (mounted) Navigator.pop(context, true);
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _message = error is AuthApiException ? error.message : 'Could not save this integration.';
-        _messageIsError = true;
-      });
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  Uri? _baseUrl() {
-    final baseUrl = Uri.tryParse(_urlController.text.trim());
-    if (baseUrl == null || !baseUrl.hasScheme || !baseUrl.hasAuthority || baseUrl.userInfo.isNotEmpty) {
-      setState(() {
-        _message = 'Enter a valid server URL without embedded credentials.';
-        _messageIsError = true;
-      });
-      return null;
-    }
-    return baseUrl;
-  }
-
-  String? _optional(String value) {
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
 }
 
 class _SearchCard extends StatelessWidget {

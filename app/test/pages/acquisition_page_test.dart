@@ -66,6 +66,14 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   );
   Completer<void>? connectionTestCompleter;
   int connectionTestCalls = 0;
+  int listEndpointCalls = 0;
+  int createEndpointCalls = 0;
+  int updateEndpointCalls = 0;
+  String? lastCreatedName;
+  String? lastUpdatedEndpointId;
+  String? lastUpdatedApiKey;
+  String? lastUpdatedUsername;
+  String? lastUpdatedPassword;
   List<AcquisitionEndpoint> endpointsResult = [];
   List<TorrentRelease> releasesResult = [];
   final searchEndpointIds = <List<String>?>[];
@@ -82,7 +90,44 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
 
   @override
   Future<List<AcquisitionEndpoint>> listEndpoints(String accessToken) async {
+    listEndpointCalls += 1;
     return endpointsResult;
+  }
+
+  @override
+  Future<AcquisitionEndpoint> createEndpoint({
+    required String accessToken,
+    required String name,
+    required AcquisitionEndpointKind kind,
+    required Uri baseUrl,
+    String? apiKey,
+    String? username,
+    String? password,
+  }) async {
+    createEndpointCalls += 1;
+    lastCreatedName = name;
+
+    return AcquisitionEndpoint(id: 'created', name: name, kind: kind, baseUrl: baseUrl, enabled: true);
+  }
+
+  @override
+  Future<AcquisitionEndpoint> updateEndpoint({
+    required String accessToken,
+    required String endpointId,
+    String? name,
+    Uri? baseUrl,
+    String? apiKey,
+    String? username,
+    String? password,
+    bool? enabled,
+  }) async {
+    updateEndpointCalls += 1;
+    lastUpdatedEndpointId = endpointId;
+    lastUpdatedApiKey = apiKey;
+    lastUpdatedUsername = username;
+    lastUpdatedPassword = password;
+
+    return endpointsResult.singleWhere((endpoint) => endpoint.id == endpointId);
   }
 
   @override
@@ -149,27 +194,27 @@ void main() {
 
     await _tapSectionAdd(tester, 'acquisition-sources-section');
 
-    expect(find.widgetWithText(TextField, 'API key'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'Username'), findsNothing);
-    expect(find.widgetWithText(TextField, 'Password'), findsNothing);
+    expect(find.byKey(const Key('acquisition-api-key')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-username')), findsNothing);
+    expect(find.byKey(const Key('acquisition-password')), findsNothing);
 
     await tester.tap(find.byType(DropdownButtonFormField<AcquisitionEndpointKind>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('qBittorrent').last);
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextField, 'API key'), findsNothing);
-    expect(find.widgetWithText(TextField, 'Username'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-api-key')), findsNothing);
+    expect(find.byKey(const Key('acquisition-username')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
 
     await tester.tap(find.byType(DropdownButtonFormField<AcquisitionEndpointKind>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Deluge').last);
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextField, 'API key'), findsNothing);
-    expect(find.widgetWithText(TextField, 'Username'), findsNothing);
-    expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-api-key')), findsNothing);
+    expect(find.byKey(const Key('acquisition-username')), findsNothing);
+    expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
   });
 
   testWidgets('integration dialog locks actions and renders test errors', (tester) async {
@@ -180,7 +225,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await _tapSectionAdd(tester, 'acquisition-sources-section');
-    await tester.enterText(find.widgetWithText(TextField, 'Server URL'), 'http://prowlarr.local:9696');
+    await tester.enterText(find.byKey(const Key('acquisition-name')), 'Prowlarr');
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'http://prowlarr.local:9696');
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('acquisition-test-connection')),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.byKey(const Key('acquisition-test-connection')));
     await tester.pump();
 
@@ -196,6 +247,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Prowlarr connection test failed'), findsOneWidget);
+  });
+
+  testWidgets('integration editor creates and reloads through the authenticated page API', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient();
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    await _tapSectionAdd(tester, 'acquisition-sources-section');
+    await tester.enterText(find.byKey(const Key('acquisition-name')), 'Home Prowlarr');
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://prowlarr.local');
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.createEndpointCalls, 1);
+    expect(apiClient.lastCreatedName, 'Home Prowlarr');
+    expect(apiClient.listEndpointCalls, 2);
+  });
+
+  testWidgets('integration editor updates without replacing blank credentials', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('acquisition-endpoint-indexer-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.updateEndpointCalls, 1);
+    expect(apiClient.lastUpdatedEndpointId, _indexerOne.id);
+    expect(apiClient.lastUpdatedApiKey, isNull);
+    expect(apiClient.lastUpdatedUsername, isNull);
+    expect(apiClient.lastUpdatedPassword, isNull);
+    expect(apiClient.listEndpointCalls, 2);
   });
 
   testWidgets('search and submission requires selected indexer and client', (tester) async {
