@@ -46,7 +46,7 @@ Future<bool?> showAcquisitionEndpointEditor({
       isDismissible: false,
       enableDrag: false,
       useSafeArea: true,
-      showDragHandle: true,
+      showDragHandle: false,
       builder: (context) => KeyedSubtree(
         key: const Key('acquisition-endpoint-sheet'),
         child: AnimatedPadding(
@@ -91,6 +91,7 @@ class AcquisitionEndpointEditor extends StatefulWidget {
 
 class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   final _formKey = GlobalKey<FormState>();
+  final _urlFieldKey = GlobalKey<FormFieldState<String>>();
   late final TextEditingController _nameController;
   late final TextEditingController _urlController;
   final _apiKeyController = TextEditingController();
@@ -104,7 +105,6 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   bool _saving = false;
   String? _message;
   bool _messageIsError = false;
-  String? _connectionUrlError;
 
   bool get _busy => _testing || _saving;
 
@@ -192,18 +192,20 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
                       const SizedBox(height: Spacing.lg),
                       _SectionHeading(label: 'Connection'),
                       const SizedBox(height: Spacing.formFieldSpacing),
-                      TextFormField(
-                        key: const Key('acquisition-url'),
-                        controller: _urlController,
-                        enabled: !_busy,
-                        decoration: InputDecoration(labelText: 'Server URL', errorText: _connectionUrlError),
-                        keyboardType: TextInputType.url,
-                        textInputAction: TextInputAction.next,
+                      FormField<String>(
+                        key: _urlFieldKey,
+                        initialValue: _urlController.text,
                         validator: _validateUrl,
-                        onChanged: (_) {
-                          if (_connectionUrlError != null) {
-                            setState(() => _connectionUrlError = null);
-                          }
+                        builder: (field) {
+                          return TextField(
+                            key: const Key('acquisition-url'),
+                            controller: _urlController,
+                            enabled: !_busy,
+                            decoration: InputDecoration(labelText: 'Server URL', errorText: field.errorText),
+                            keyboardType: TextInputType.url,
+                            textInputAction: TextInputAction.next,
+                            onChanged: field.didChange,
+                          );
                         },
                       ),
                       if (_usesApiKey) ...[
@@ -310,17 +312,12 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   }
 
   Future<void> _testConnection() async {
-    final urlError = _validateUrl(_urlController.text);
-    if (urlError != null) {
-      setState(() => _connectionUrlError = urlError);
-      return;
-    }
+    if (!(_urlFieldKey.currentState?.validate() ?? false)) return;
 
     final baseUrl = Uri.parse(_urlController.text.trim());
     setState(() {
       _testing = true;
       _message = null;
-      _connectionUrlError = null;
     });
 
     try {
@@ -350,7 +347,6 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   }
 
   Future<void> _save() async {
-    setState(() => _connectionUrlError = null);
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() {

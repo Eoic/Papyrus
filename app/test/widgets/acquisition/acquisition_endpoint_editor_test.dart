@@ -26,7 +26,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.descendant(of: sheet, matching: find.byType(AnimatedPadding)), findsOneWidget);
-    expect(tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle, isTrue);
+    final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+    expect(bottomSheet.enableDrag, isFalse);
+    expect(bottomSheet.showDragHandle, isFalse);
     expect(find.ancestor(of: sheet, matching: find.byType(SafeArea)), findsOneWidget);
   });
 
@@ -202,6 +204,34 @@ void main() {
 
     expect(testCalls, 1);
     expect(find.text('Enter a name'), findsNothing);
+    expect(find.text('Connection successful.'), findsOneWidget);
+  });
+
+  testWidgets('testing a corrected URL clears the error from a failed save', (tester) async {
+    await _setWindowSize(tester, const Size(900, 900));
+    var testCalls = 0;
+    await tester.pumpWidget(
+      _EditorLauncher(
+        onTest: ({required kind, required baseUrl, apiKey, username, password}) async {
+          testCalls += 1;
+        },
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('acquisition-name')), 'Prowlarr');
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://');
+
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pump();
+    expect(find.text('Enter a valid server URL'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://prowlarr.local');
+    await tester.tap(find.byKey(const Key('acquisition-test-connection')));
+    await tester.pumpAndSettle();
+
+    expect(testCalls, 1);
+    expect(find.text('Enter a valid server URL'), findsNothing);
     expect(find.text('Connection successful.'), findsOneWidget);
   });
 
