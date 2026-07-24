@@ -259,15 +259,17 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     );
   }
 
-  Future<void> _showEndpointDialog({AcquisitionEndpoint? endpoint, AcquisitionEndpointKind? initialKind}) async {
+  Future<void> _showEndpointDialog({AcquisitionEndpoint? endpoint, List<AcquisitionEndpointKind>? allowedKinds}) async {
     final capabilities = _capabilities;
     if (capabilities == null || capabilities.endpointKinds.isEmpty) return;
+    final endpointKinds = allowedKinds ?? capabilities.endpointKinds;
+    if (endpointKinds.isEmpty) return;
 
     final saved = await showAcquisitionEndpointEditor(
       context: context,
       endpoint: endpoint,
-      endpointKinds: capabilities.endpointKinds,
-      initialKind: initialKind,
+      endpointKinds: endpointKinds,
+      initialKind: endpoint == null ? endpointKinds.first : null,
       onTest: ({required kind, required baseUrl, apiKey, username, password}) {
         return _authenticated((token) {
           return _apiClient.testEndpoint(
@@ -467,7 +469,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       key: key,
       title: title,
       emptyMessage: emptyMessage,
-      onAdd: addKinds.isEmpty ? null : () => _showEndpointDialog(initialKind: addKinds.first),
+      onAdd: addKinds.isEmpty ? null : () => _showEndpointDialog(allowedKinds: addKinds),
       children: endpoints
           .map(
             (endpoint) => SettingsRow(
@@ -599,7 +601,11 @@ class _SearchCard extends StatelessWidget {
                     padding: EdgeInsets.all(12),
                     child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                   )
-                : IconButton(icon: const Icon(Icons.search), onPressed: canSearch ? onSearch : null),
+                : IconButton(
+                    tooltip: 'Search releases',
+                    icon: const Icon(Icons.search),
+                    onPressed: canSearch ? onSearch : null,
+                  ),
           ),
         ),
         if (!canSearch)

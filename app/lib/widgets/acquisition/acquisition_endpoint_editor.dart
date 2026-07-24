@@ -252,13 +252,15 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: Spacing.formFieldSpacing),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Enabled'),
-                        value: _enabled,
-                        onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
-                      ),
+                      if (widget.endpoint != null) ...[
+                        const SizedBox(height: Spacing.formFieldSpacing),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Enabled'),
+                          value: _enabled,
+                          onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
+                        ),
+                      ],
                       const SizedBox(height: Spacing.formFieldSpacing),
                       Align(
                         alignment: AlignmentDirectional.centerStart,

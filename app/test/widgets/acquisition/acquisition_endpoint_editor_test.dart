@@ -91,6 +91,23 @@ void main() {
     expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
   });
 
+  testWidgets('shows Enabled only when editing an integration', (tester) async {
+    await _setWindowSize(tester, const Size(900, 900));
+    await tester.pumpWidget(_EditorLauncher());
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(SwitchListTile, 'Enabled'), findsNothing);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(_EditorLauncher(endpoint: _endpoint));
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(SwitchListTile, 'Enabled'), findsOneWidget);
+  });
+
   testWidgets('validates name and server URL inline', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(_EditorLauncher());
@@ -168,7 +185,6 @@ void main() {
           .onChanged,
       isNull,
     );
-    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).onChanged, isNull);
     expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Cancel')).onPressed, isNull);
     expect(
       tester

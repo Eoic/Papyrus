@@ -199,10 +199,9 @@ void main() {
     expect(find.byKey(const Key('acquisition-username')), findsNothing);
     expect(find.byKey(const Key('acquisition-password')), findsNothing);
 
-    await tester.tap(find.byType(DropdownButtonFormField<AcquisitionEndpointKind>));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('qBittorrent').last);
-    await tester.pumpAndSettle();
+    await _tapSectionAdd(tester, 'acquisition-clients-section');
 
     expect(find.byKey(const Key('acquisition-api-key')), findsNothing);
     expect(find.byKey(const Key('acquisition-username')), findsOneWidget);
@@ -307,6 +306,18 @@ void main() {
     expect(apiClient.searchEndpointIds, [
       ['indexer-1'],
     ]);
+  });
+
+  testWidgets('search action exposes an accessible label', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
+    final semantics = tester.ensureSemantics();
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Search releases'), findsOneWidget);
+    expect(find.bySemanticsLabel('Search releases'), findsOneWidget);
+    semantics.dispose();
   });
 
   testWidgets('search and submission requires an enabled download client', (tester) async {
@@ -576,45 +587,27 @@ void main() {
     expect(find.text('Edit integration'), findsOneWidget);
   });
 
-  testWidgets('section Add opens the first matching integration type', (tester) async {
+  testWidgets('section Add offers only matching integration types', (tester) async {
     final apiClient = _FakeAcquisitionApiClient();
 
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
     await _tapSectionAdd(tester, 'acquisition-sources-section');
-    expect(
-      tester
-          .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
-            find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
-          )
-          .initialValue,
-      AcquisitionEndpointKind.prowlarr,
-    );
+    expect(_editorKind(tester), AcquisitionEndpointKind.prowlarr);
+    expect(_editorKinds(tester), [AcquisitionEndpointKind.prowlarr]);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
     await _tapSectionAdd(tester, 'acquisition-clients-section');
-    expect(
-      tester
-          .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
-            find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
-          )
-          .initialValue,
-      AcquisitionEndpointKind.qbittorrent,
-    );
+    expect(_editorKind(tester), AcquisitionEndpointKind.qbittorrent);
+    expect(_editorKinds(tester), [AcquisitionEndpointKind.qbittorrent, AcquisitionEndpointKind.deluge]);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
     await _tapSectionAdd(tester, 'acquisition-apps-section');
-    expect(
-      tester
-          .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
-            find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
-          )
-          .initialValue,
-      AcquisitionEndpointKind.readarr,
-    );
+    expect(_editorKind(tester), AcquisitionEndpointKind.readarr);
+    expect(_editorKinds(tester), [AcquisitionEndpointKind.readarr]);
   });
 
   testWidgets('section Add is absent when the matching capability group is empty', (tester) async {
@@ -683,6 +676,21 @@ void main() {
 }
 
 final _searchField = find.widgetWithText(TextField, 'Title, author, movie, album, or series');
+
+AcquisitionEndpointKind? _editorKind(WidgetTester tester) {
+  return tester
+      .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
+        find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
+      )
+      .initialValue;
+}
+
+List<AcquisitionEndpointKind> _editorKinds(WidgetTester tester) {
+  final field = find.byType(DropdownButtonFormField<AcquisitionEndpointKind>);
+  final dropdown = find.descendant(of: field, matching: find.byType(DropdownButton<AcquisitionEndpointKind>));
+
+  return tester.widget<DropdownButton<AcquisitionEndpointKind>>(dropdown).items!.map((item) => item.value!).toList();
+}
 
 Finder _sectionAdd(String sectionKey) {
   return find.descendant(of: find.byKey(Key(sectionKey)), matching: find.widgetWithText(TextButton, 'Add'));
