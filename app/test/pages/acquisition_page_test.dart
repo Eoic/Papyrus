@@ -641,8 +641,7 @@ void main() {
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
-    _selectEndpointMenu(tester, _indexerOne, 'delete');
-    await tester.pumpAndSettle();
+    await _tapEndpointMenuItem(tester, _indexerOne, 'Remove');
 
     expect(find.byKey(const Key('acquisition-remove-sheet')), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
@@ -652,6 +651,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(apiClient.deletedEndpointIds, ['indexer-1']);
+    expect(apiClient.listEndpointCalls, 2);
   });
 
   testWidgets('disabled Arr integration cannot run', (tester) async {
@@ -677,8 +677,7 @@ void main() {
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
-    _selectEndpointMenu(tester, _readarr, 'run');
-    await tester.pumpAndSettle();
+    await _tapEndpointMenuItem(tester, _readarr, 'Run action');
 
     expect(find.byKey(const Key('acquisition-command-sheet')), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
@@ -764,6 +763,27 @@ PopupMenuItem<String> _endpointMenuItem(WidgetTester tester, AcquisitionEndpoint
       .itemBuilder(tester.element(menuFinder))
       .whereType<PopupMenuItem<String>>()
       .singleWhere((item) => item.value == value);
+}
+
+Future<void> _tapEndpointMenuItem(WidgetTester tester, AcquisitionEndpoint endpoint, String label) async {
+  final menuFinder = find.descendant(
+    of: find.byKey(Key('acquisition-endpoint-${endpoint.id}')),
+    matching: find.byType(PopupMenuButton<String>),
+  );
+
+  expect(menuFinder, findsOneWidget);
+
+  await tester.ensureVisible(menuFinder);
+  await tester.pumpAndSettle();
+  await tester.tap(menuFinder);
+  await tester.pumpAndSettle();
+
+  final itemLabel = find.text(label);
+
+  expect(itemLabel, findsOneWidget);
+
+  await tester.tap(itemLabel);
+  await tester.pumpAndSettle();
 }
 
 void _selectEndpointMenu(WidgetTester tester, AcquisitionEndpoint endpoint, String value) {
