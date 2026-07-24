@@ -39,32 +39,21 @@ Future<bool?> showAcquisitionEndpointEditor({
     onSave: onSave,
   );
 
-  if (MediaQuery.sizeOf(context).width < Breakpoints.tablet) {
-    return showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      useSafeArea: true,
-      showDragHandle: false,
-      builder: (context) => KeyedSubtree(
-        key: const Key('acquisition-endpoint-sheet'),
-        child: AnimatedPadding(
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-          child: FractionallySizedBox(heightFactor: .92, child: editor),
-        ),
-      ),
-    );
-  }
-
-  return showDialog<bool>(
+  return showModalBottomSheet<bool>(
     context: context,
-    barrierDismissible: false,
-    builder: (context) => Dialog(
-      key: const Key('acquisition-endpoint-dialog'),
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560, maxHeight: 760), child: editor),
+    isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
+    useSafeArea: true,
+    showDragHandle: false,
+    builder: (context) => KeyedSubtree(
+      key: const Key('acquisition-endpoint-sheet'),
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: FractionallySizedBox(heightFactor: .92, child: editor),
+      ),
     ),
   );
 }

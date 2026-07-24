@@ -32,26 +32,24 @@ void main() {
     expect(find.ancestor(of: sheet, matching: find.byType(SafeArea)), findsOneWidget);
   });
 
-  testWidgets('uses a constrained dialog on wide windows', (tester) async {
+  testWidgets('uses the integration editor sheet on wide windows', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(_EditorLauncher());
 
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    final dialog = find.byKey(const Key('acquisition-endpoint-dialog'));
-    expect(dialog, findsOneWidget);
-    expect(find.byKey(const Key('acquisition-endpoint-sheet')), findsNothing);
+    final sheet = find.byKey(const Key('acquisition-endpoint-sheet'));
+    expect(sheet, findsOneWidget);
+    expect(find.byKey(const Key('acquisition-endpoint-dialog')), findsNothing);
     expect(
       find.descendant(
-        of: dialog,
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is ConstrainedBox && widget.constraints.maxWidth == 560 && widget.constraints.maxHeight == 760,
-        ),
+        of: sheet,
+        matching: find.byWidgetPredicate((widget) => widget is FractionallySizedBox && widget.heightFactor == .92),
       ),
       findsOneWidget,
     );
+    expect(find.ancestor(of: sheet, matching: find.byType(SafeArea)), findsOneWidget);
   });
 
   testWidgets('groups fields and shows credentials required by integration type', (tester) async {
