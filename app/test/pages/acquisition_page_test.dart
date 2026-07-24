@@ -316,6 +316,62 @@ void main() {
     expect(tester.widget<TextField>(_searchField).enabled, isFalse);
   });
 
+  testWidgets('results stay hidden before an explicit search', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
+    expect(find.text('No releases found.'), findsNothing);
+  });
+
+  testWidgets('typing a query and rebuilding search controls does not show results', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+    await tester.enterText(_searchField, 'book');
+    await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
+    await tester.pump();
+
+    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
+    expect(find.text('No releases found.'), findsNothing);
+  });
+
+  testWidgets('an explicit empty search shows the quiet results state', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+    await tester.enterText(_searchField, 'missing book');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+
+    final resultsSection = find.byKey(const Key('acquisition-results-section'));
+    expect(resultsSection, findsOneWidget);
+    expect(find.descendant(of: resultsSection, matching: find.text('No releases found.')), findsOneWidget);
+  });
+
+  testWidgets('release results use quiet rows without nested cards', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()
+      ..endpointsResult = [_indexerOne, _clientOne]
+      ..releasesResult = [_releaseOne];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+    await tester.enterText(_searchField, 'book');
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+
+    final resultsSection = find.byKey(const Key('acquisition-results-section'));
+    expect(find.descendant(of: resultsSection, matching: find.byType(Card)), findsNothing);
+    expect(find.descendant(of: resultsSection, matching: find.byType(ListTile)), findsOneWidget);
+    expect(find.descendant(of: resultsSection, matching: find.text('Release One')), findsOneWidget);
+  });
+
   testWidgets('search and submission scopes progress and shows job failure', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()
       ..endpointsResult = [_indexerOne, _clientOne, _clientTwo]

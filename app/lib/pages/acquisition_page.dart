@@ -34,8 +34,10 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   Set<String> _selectedIndexerIds = {};
   final Set<String> _submittingKeys = {};
   bool _hasExplicitIndexerSelection = false;
+  bool _hasSearched = false;
   bool _loading = true;
   bool _searching = false;
+  int _searchGeneration = 0;
   String? _error;
 
   @override
@@ -70,8 +72,13 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       return;
     }
 
+    _searchGeneration += 1;
+
     setState(() {
       _loading = true;
+      _searching = false;
+      _hasSearched = false;
+      _releases = [];
       _error = null;
     });
 
@@ -114,8 +121,11 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     final hasClient = _endpoints.any((endpoint) => endpoint.enabled && endpoint.kind.isDownloadClient);
     if (query.isEmpty || _capabilities == null || indexerIds.isEmpty || !hasClient) return;
 
+    final searchGeneration = ++_searchGeneration;
+
     setState(() {
       _searching = true;
+      _hasSearched = false;
       _error = null;
       _releases = [];
     });
@@ -124,15 +134,24 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       final releases = await _authenticated((token) {
         return _apiClient.search(accessToken: token, query: query, endpointIds: indexerIds);
       });
-      if (mounted) setState(() => _releases = releases);
+      if (mounted && searchGeneration == _searchGeneration) {
+        setState(() {
+          _releases = releases;
+          _hasSearched = true;
+        });
+      }
     } on AuthApiException catch (error) {
-      if (mounted) setState(() => _error = _messageFor(error));
+      if (mounted && searchGeneration == _searchGeneration) {
+        setState(() => _error = _messageFor(error));
+      }
     } catch (_) {
-      if (mounted) {
+      if (mounted && searchGeneration == _searchGeneration) {
         setState(() => _error = 'Search failed. Check your torrent indexers.');
       }
     } finally {
-      if (mounted) setState(() => _searching = false);
+      if (mounted && searchGeneration == _searchGeneration) {
+        setState(() => _searching = false);
+      }
     }
   }
 
@@ -372,7 +391,6 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   }) {
     final downloadClients = _endpoints.where((endpoint) => endpoint.kind.isDownloadClient).toList();
     final arrApps = _endpoints.where((endpoint) => endpoint.kind.isArr).toList();
-    final showResults = _releases.isNotEmpty || (!_searching && _queryController.text.trim().isNotEmpty);
 
     return [
       AcquisitionSettingsSection(
@@ -416,7 +434,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
         addKinds: capabilities.arrKinds,
         allowRun: true,
       ),
-      if (showResults) ...[
+      if (_hasSearched) ...[
         const SizedBox(height: Spacing.md),
         AcquisitionSettingsSection(
           key: const Key('acquisition-results-section'),
@@ -615,32 +633,32 @@ class _ReleaseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text(release.title),
-        subtitle: Text(
-          [
-            release.indexer,
-            if (release.seeders != null) '${release.seeders} seeders',
-            if (release.sizeBytes != null) _formatBytes(release.sizeBytes!),
-            if (release.isMagnet) 'magnet',
-          ].join(' • '),
-        ),
-        trailing: PopupMenuButton<AcquisitionEndpoint>(
-          enabled: clients.any((client) => !submittingKeys.contains(_submissionKey(release, client))),
-          icon: const Icon(Icons.send_outlined),
-          tooltip: 'Send to client',
-          itemBuilder: (context) => clients.map((client) {
-            final key = _submissionKey(release, client);
-            return PopupMenuItem(
-              key: Key('submission:$key'),
-              value: client,
-              enabled: !submittingKeys.contains(key),
-              child: Text(client.name),
-            );
-          }).toList(),
-          onSelected: (client) => onSubmit(release, client),
-        ),
+    return ListTile(
+      key: Key('acquisition-release-${release.downloadUrl}'),
+      contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+      title: Text(release.title),
+      subtitle: Text(
+        [
+          release.indexer,
+          if (release.seeders != null) '${release.seeders} seeders',
+          if (release.sizeBytes != null) _formatBytes(release.sizeBytes!),
+          if (release.isMagnet) 'magnet',
+        ].join(' • '),
+      ),
+      trailing: PopupMenuButton<AcquisitionEndpoint>(
+        enabled: clients.any((client) => !submittingKeys.contains(_submissionKey(release, client))),
+        icon: const Icon(Icons.send_outlined),
+        tooltip: 'Send to client',
+        itemBuilder: (context) => clients.map((client) {
+          final key = _submissionKey(release, client);
+          return PopupMenuItem(
+            key: Key('submission:$key'),
+            value: client,
+            enabled: !submittingKeys.contains(key),
+            child: Text(client.name),
+          );
+        }).toList(),
+        onSelected: (client) => onSubmit(release, client),
       ),
     );
   }
