@@ -14,6 +14,8 @@ import 'package:papyrus/pages/acquisition_page.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
+import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/settings/settings_section.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,17 +49,20 @@ class _FakeAuthRepository extends AuthRepository {
 class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   _FakeAcquisitionApiClient() : super(config: _config, httpClient: MockClient((_) async => throw UnimplementedError()));
 
-  final capabilitiesResult = const AcquisitionCapabilities(
+  AcquisitionCapabilities capabilitiesResult = const AcquisitionCapabilities(
     enabled: true,
     endpointKinds: [
       AcquisitionEndpointKind.prowlarr,
       AcquisitionEndpointKind.qbittorrent,
       AcquisitionEndpointKind.deluge,
+      AcquisitionEndpointKind.readarr,
     ],
     indexerKinds: [AcquisitionEndpointKind.prowlarr],
     downloadClientKinds: [AcquisitionEndpointKind.qbittorrent, AcquisitionEndpointKind.deluge],
-    arrKinds: [],
-    arrCommands: {},
+    arrKinds: [AcquisitionEndpointKind.readarr],
+    arrCommands: {
+      AcquisitionEndpointKind.readarr: ['BookSearch'],
+    },
   );
   Completer<void>? connectionTestCompleter;
   int connectionTestCalls = 0;
@@ -65,6 +70,10 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   List<TorrentRelease> releasesResult = [];
   final searchEndpointIds = <List<String>?>[];
   final submissionCompleters = <String, Completer<AcquisitionJob>>{};
+  Completer<AcquisitionJob>? arrCommandCompleter;
+  final arrEndpointIds = <String>[];
+  final arrCommands = <String>[];
+  final arrIds = <List<int>>[];
 
   @override
   Future<AcquisitionCapabilities> capabilities(String accessToken) async {
@@ -111,6 +120,19 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
     final key = '${release.downloadUrl}:$endpointId';
     return submissionCompleters.putIfAbsent(key, Completer<AcquisitionJob>.new).future;
   }
+
+  @override
+  Future<AcquisitionJob> runArrCommand({
+    required String accessToken,
+    required String endpointId,
+    required String command,
+    required List<int> ids,
+  }) {
+    arrEndpointIds.add(endpointId);
+    arrCommands.add(command);
+    arrIds.add(ids);
+    return arrCommandCompleter?.future ?? Future.value(_job(status: 'submitted'));
+  }
 }
 
 final _config = PapyrusApiConfig(serverBaseUri: Uri.parse('https://api.test'));
@@ -125,8 +147,7 @@ void main() {
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Integration'));
-    await tester.pumpAndSettle();
+    await _tapSectionAdd(tester, 'acquisition-sources-section');
 
     expect(find.widgetWithText(TextField, 'API key'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Username'), findsNothing);
@@ -158,8 +179,7 @@ void main() {
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Integration'));
-    await tester.pumpAndSettle();
+    await _tapSectionAdd(tester, 'acquisition-sources-section');
     await tester.enterText(find.widgetWithText(TextField, 'Server URL'), 'http://prowlarr.local:9696');
     await tester.tap(find.byKey(const Key('acquisition-test-connection')));
     await tester.pump();
@@ -220,6 +240,11 @@ void main() {
     await tester.enterText(_searchField, 'book');
     await tester.tap(find.byIcon(Icons.search));
     await tester.pumpAndSettle();
+
+    final resultsSection = find.byKey(const Key('acquisition-results-section'));
+    expect(resultsSection, findsOneWidget);
+    expect(find.descendant(of: resultsSection, matching: find.text('Release One')), findsOneWidget);
+
     await tester.scrollUntilVisible(find.text('Release One'), 400, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
 
@@ -228,15 +253,9 @@ void main() {
     await tester.tap(find.text('Client One').last);
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.send_outlined).first);
-    await tester.pumpAndSettle();
     expect(_submissionItem(tester, _releaseOne, _clientOne).enabled, isFalse);
     expect(_submissionItem(tester, _releaseOne, _clientTwo).enabled, isTrue);
 
-    await tester.tapAt(Offset.zero);
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Release Two'), 300, scrollable: find.byType(Scrollable).first);
-    await tester.pumpAndSettle();
     final releaseTwoTile = find.ancestor(of: find.text('Release Two'), matching: find.byType(ListTile));
     final releaseTwoMenu = find.descendant(
       of: releaseTwoTile,
@@ -252,18 +271,267 @@ void main() {
     expect(find.text('Transmission rejected the release'), findsOneWidget);
     expect(find.text('Sent to Client One.'), findsNothing);
   });
+
+  testWidgets('acquisition page uses the constrained settings-section layout', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient();
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Acquisition'), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byKey(const Key('acquisition-search-section')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-sources-section')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-clients-section')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-apps-section')), findsOneWidget);
+    expect(find.text('Search releases'), findsOneWidget);
+    expect(find.text('No sources configured'), findsOneWidget);
+    expect(find.text('No download clients configured'), findsOneWidget);
+    expect(find.text('No connected apps configured'), findsOneWidget);
+    expect(find.text('Torrent indexers'), findsNothing);
+    expect(find.byType(SettingsCard), findsNWidgets(4));
+    expect(find.byType(Card), findsNothing);
+
+    final listView = tester.widget<ListView>(find.byType(ListView));
+    expect(listView.padding, const EdgeInsets.all(Spacing.md));
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('acquisition-search-section')),
+        matching: find.byWidgetPredicate((widget) => widget is ConstrainedBox && widget.constraints.maxWidth == 760),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('acquisition-search-section')),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Column && widget.crossAxisAlignment == CrossAxisAlignment.stretch,
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(of: find.byKey(const Key('acquisition-search-section')), matching: find.byType(Center)),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('integration rows expose role status and contextual action variants', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _pausedClient, _readarr];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prowlarr • indexer-one.local • Enabled'), findsOneWidget);
+    expect(find.text('Transmission • paused-client.local • Paused'), findsOneWidget);
+    expect(find.text('Readarr • readarr.local • Enabled'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('acquisition-endpoint-indexer-1')),
+        matching: find.byIcon(Icons.travel_explore),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('acquisition-endpoint-paused-client')),
+        matching: find.byIcon(Icons.downloading_outlined),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('acquisition-endpoint-arr-1')),
+        matching: find.byIcon(Icons.auto_awesome_motion_outlined),
+      ),
+      findsOneWidget,
+    );
+
+    expect(_endpointMenuValues(tester, _indexerOne), ['edit', 'delete']);
+    expect(_endpointMenuValues(tester, _pausedClient), ['edit', 'delete']);
+    expect(_endpointMenuValues(tester, _readarr), ['edit', 'run', 'delete']);
+    expect(find.byTooltip('Actions for Indexer One'), findsOneWidget);
+    expect(find.byTooltip('Actions for Paused Client'), findsOneWidget);
+    expect(find.byTooltip('Actions for Readarr'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('acquisition-endpoint-indexer-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit integration'), findsOneWidget);
+  });
+
+  testWidgets('section Add opens the first matching integration type', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient();
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    await _tapSectionAdd(tester, 'acquisition-sources-section');
+    expect(
+      tester
+          .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
+            find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
+          )
+          .initialValue,
+      AcquisitionEndpointKind.prowlarr,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    await _tapSectionAdd(tester, 'acquisition-clients-section');
+    expect(
+      tester
+          .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
+            find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
+          )
+          .initialValue,
+      AcquisitionEndpointKind.qbittorrent,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    await _tapSectionAdd(tester, 'acquisition-apps-section');
+    expect(
+      tester
+          .widget<DropdownButtonFormField<AcquisitionEndpointKind>>(
+            find.byType(DropdownButtonFormField<AcquisitionEndpointKind>),
+          )
+          .initialValue,
+      AcquisitionEndpointKind.readarr,
+    );
+  });
+
+  testWidgets('section Add is absent when the matching capability group is empty', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()
+      ..capabilitiesResult = const AcquisitionCapabilities(
+        enabled: true,
+        endpointKinds: [AcquisitionEndpointKind.qbittorrent],
+        indexerKinds: [],
+        downloadClientKinds: [AcquisitionEndpointKind.qbittorrent],
+        arrKinds: [],
+        arrCommands: {},
+      );
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(_sectionAdd('acquisition-sources-section'), findsNothing);
+    expect(_sectionAdd('acquisition-clients-section'), findsOneWidget);
+    expect(_sectionAdd('acquisition-apps-section'), findsNothing);
+  });
+
+  testWidgets('disabled Arr integration cannot run', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_disabledReadarr];
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    expect(_endpointMenuItem(tester, _disabledReadarr, 'run').enabled, isFalse);
+
+    _selectEndpointMenu(tester, _disabledReadarr, 'run');
+    await tester.pump();
+
+    expect(apiClient.arrEndpointIds, isEmpty);
+  });
+
+  testWidgets('active Arr run parses manual IDs and disables Run while pending', (tester) async {
+    final completer = Completer<AcquisitionJob>();
+    final apiClient = _FakeAcquisitionApiClient()
+      ..endpointsResult = [_readarr]
+      ..arrCommandCompleter = completer;
+
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    _selectEndpointMenu(tester, _readarr, 'run');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search books'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'IDs'), '42, invalid, 84');
+    await tester.tap(find.widgetWithText(FilledButton, 'Run'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(apiClient.arrEndpointIds, ['arr-1']);
+    expect(apiClient.arrCommands, ['BookSearch']);
+    expect(apiClient.arrIds, [
+      [42, 84],
+    ]);
+    expect(_endpointMenuItem(tester, _readarr, 'run').enabled, isFalse);
+
+    completer.complete(_job(status: 'submitted'));
+    await tester.pumpAndSettle();
+
+    expect(_endpointMenuItem(tester, _readarr, 'run').enabled, isTrue);
+  });
 }
 
 final _searchField = find.widgetWithText(TextField, 'Title, author, movie, album, or series');
+
+Finder _sectionAdd(String sectionKey) {
+  return find.descendant(of: find.byKey(Key(sectionKey)), matching: find.widgetWithText(TextButton, 'Add'));
+}
+
+Future<void> _tapSectionAdd(WidgetTester tester, String sectionKey) async {
+  final addButton = _sectionAdd(sectionKey);
+
+  expect(addButton, findsOneWidget);
+
+  await tester.ensureVisible(addButton);
+  await tester.tap(addButton);
+  await tester.pumpAndSettle();
+}
+
+List<String?> _endpointMenuValues(WidgetTester tester, AcquisitionEndpoint endpoint) {
+  final menuFinder = find.descendant(
+    of: find.byKey(Key('acquisition-endpoint-${endpoint.id}')),
+    matching: find.byType(PopupMenuButton<String>),
+  );
+  final menu = tester.widget<PopupMenuButton<String>>(menuFinder);
+
+  return menu
+      .itemBuilder(tester.element(menuFinder))
+      .whereType<PopupMenuItem<String>>()
+      .map((item) => item.value)
+      .toList();
+}
+
+PopupMenuItem<String> _endpointMenuItem(WidgetTester tester, AcquisitionEndpoint endpoint, String value) {
+  final menuFinder = find.descendant(
+    of: find.byKey(Key('acquisition-endpoint-${endpoint.id}')),
+    matching: find.byType(PopupMenuButton<String>),
+  );
+  final menu = tester.widget<PopupMenuButton<String>>(menuFinder);
+
+  return menu
+      .itemBuilder(tester.element(menuFinder))
+      .whereType<PopupMenuItem<String>>()
+      .singleWhere((item) => item.value == value);
+}
+
+void _selectEndpointMenu(WidgetTester tester, AcquisitionEndpoint endpoint, String value) {
+  final menuFinder = find.descendant(
+    of: find.byKey(Key('acquisition-endpoint-${endpoint.id}')),
+    matching: find.byType(PopupMenuButton<String>),
+  );
+  final menu = tester.widget<PopupMenuButton<String>>(menuFinder);
+
+  menu.onSelected?.call(value);
+}
 
 PopupMenuItem<AcquisitionEndpoint> _submissionItem(
   WidgetTester tester,
   TorrentRelease release,
   AcquisitionEndpoint client,
 ) {
-  return tester.widget<PopupMenuItem<AcquisitionEndpoint>>(
-    find.byKey(Key('submission:${release.downloadUrl}:${client.id}')),
-  );
+  final releaseTile = find.ancestor(of: find.text(release.title), matching: find.byType(ListTile));
+  final menuFinder = find.descendant(of: releaseTile, matching: find.byType(PopupMenuButton<AcquisitionEndpoint>));
+  final menu = tester.widget<PopupMenuButton<AcquisitionEndpoint>>(menuFinder);
+
+  return menu
+      .itemBuilder(tester.element(menuFinder))
+      .whereType<PopupMenuItem<AcquisitionEndpoint>>()
+      .singleWhere((item) => item.key == Key('submission:${release.downloadUrl}:${client.id}'));
 }
 
 final _indexerOne = AcquisitionEndpoint(
@@ -293,6 +561,27 @@ final _clientTwo = AcquisitionEndpoint(
   kind: AcquisitionEndpointKind.qbittorrent,
   baseUrl: Uri.parse('http://client-two.local'),
   enabled: true,
+);
+final _pausedClient = AcquisitionEndpoint(
+  id: 'paused-client',
+  name: 'Paused Client',
+  kind: AcquisitionEndpointKind.transmission,
+  baseUrl: Uri.parse('http://paused-client.local'),
+  enabled: false,
+);
+final _readarr = AcquisitionEndpoint(
+  id: 'arr-1',
+  name: 'Readarr',
+  kind: AcquisitionEndpointKind.readarr,
+  baseUrl: Uri.parse('http://readarr.local'),
+  enabled: true,
+);
+final _disabledReadarr = AcquisitionEndpoint(
+  id: 'arr-disabled',
+  name: 'Disabled Readarr',
+  kind: AcquisitionEndpointKind.readarr,
+  baseUrl: Uri.parse('http://readarr-disabled.local'),
+  enabled: false,
 );
 const _releaseOne = TorrentRelease(
   title: 'Release One',

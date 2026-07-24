@@ -8,6 +8,8 @@ import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/acquisition/acquisition_settings_section.dart';
+import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:provider/provider.dart';
 
 typedef AcquisitionApiClientFactory = AcquisitionApiClient Function(PapyrusApiConfig config);
@@ -208,43 +210,36 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   }
 
   Future<List<int>?> _askForIds(String command) async {
-    final controller = TextEditingController();
-    try {
-      return showDialog<List<int>>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(_arrCommandLabel(command)),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'IDs',
-              helperText: 'Comma-separated IDs from the Arr application',
-            ),
-            keyboardType: TextInputType.text,
-            autofocus: true,
+    var enteredIds = '';
+
+    return showDialog<List<int>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_arrCommandLabel(command)),
+        content: TextField(
+          onChanged: (value) => enteredIds = value,
+          decoration: const InputDecoration(
+            labelText: 'IDs',
+            helperText: 'Comma-separated IDs from the Arr application',
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () {
-                final ids = controller.text
-                    .split(',')
-                    .map((value) => int.tryParse(value.trim()))
-                    .whereType<int>()
-                    .toList();
-                Navigator.pop(context, ids);
-              },
-              child: const Text('Run'),
-            ),
-          ],
+          keyboardType: TextInputType.text,
+          autofocus: true,
         ),
-      );
-    } finally {
-      controller.dispose();
-    }
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final ids = enteredIds.split(',').map((value) => int.tryParse(value.trim())).whereType<int>().toList();
+              Navigator.pop(context, ids);
+            },
+            child: const Text('Run'),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _showEndpointDialog({AcquisitionEndpoint? endpoint}) async {
+  Future<void> _showEndpointDialog({AcquisitionEndpoint? endpoint, AcquisitionEndpointKind? initialKind}) async {
     final capabilities = _capabilities;
     if (capabilities == null || capabilities.endpointKinds.isEmpty) return;
 
@@ -253,6 +248,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       builder: (context) => _EndpointDialog(
         endpoint: endpoint,
         endpointKinds: capabilities.endpointKinds,
+        initialKind: initialKind,
         onTest: ({required kind, required baseUrl, apiKey, username, password}) {
           return _authenticated((token) {
             return _apiClient.testEndpoint(
@@ -331,81 +327,160 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     final clients = _endpoints.where((endpoint) => endpoint.enabled && endpoint.kind.isDownloadClient).toList();
     final indexers = _endpoints.where((endpoint) => endpoint.kind.isIndexer).toList();
     final enabledIndexers = indexers.where((endpoint) => endpoint.enabled).toList();
-    final arrApps = _endpoints.where((endpoint) => endpoint.kind.isArr).toList();
     final canSearch =
         clients.isNotEmpty && enabledIndexers.any((endpoint) => _selectedIndexerIds.contains(endpoint.id));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Torrent acquisition')),
-      floatingActionButton: capabilities == null
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _showEndpointDialog(),
-              icon: const Icon(Icons.add),
-              label: const Text('Integration'),
-            ),
+      appBar: AppBar(title: const Text('Acquisition')),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.all(Spacing.md),
           children: [
-            if (_loading) const LinearProgressIndicator(),
-            if (_submittingKeys.isNotEmpty) const LinearProgressIndicator(),
-            if (_error != null) _ErrorBanner(message: _error!, onRetry: _load),
-            if (!_loading && _error == null) ...[
-              _SearchCard(
-                queryController: _queryController,
-                searching: _searching,
-                canSearch: canSearch,
-                indexers: enabledIndexers,
-                selectedIndexerIds: _selectedIndexerIds,
-                hasEnabledClient: clients.isNotEmpty,
-                onIndexerSelected: _setIndexerSelected,
-                onSearch: _search,
-              ),
-              const SizedBox(height: Spacing.md),
-              _EndpointSection(
-                title: 'Torrent indexers',
-                emptyLabel: 'No torrent indexers configured',
-                endpoints: indexers,
-                onEdit: (endpoint) => _showEndpointDialog(endpoint: endpoint),
-                onDelete: _deleteEndpoint,
-              ),
-              _EndpointSection(
-                title: 'Download clients',
-                emptyLabel: 'No download clients configured',
-                endpoints: _endpoints.where((endpoint) => endpoint.kind.isDownloadClient).toList(),
-                onEdit: (endpoint) => _showEndpointDialog(endpoint: endpoint),
-                onDelete: _deleteEndpoint,
-              ),
-              _ArrSection(
-                endpoints: arrApps,
-                submittingKeys: _submittingKeys,
-                onRun: _runArrCommand,
-                onEdit: (endpoint) => _showEndpointDialog(endpoint: endpoint),
-                onDelete: _deleteEndpoint,
-              ),
-              if (_releases.isNotEmpty) ...[
-                const SizedBox(height: Spacing.md),
-                Text('Results', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: Spacing.sm),
-                ..._releases.map(
-                  (release) => _ReleaseTile(
-                    release: release,
-                    clients: clients,
-                    submittingKeys: _submittingKeys,
-                    onSubmit: _submitRelease,
-                  ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_loading) const LinearProgressIndicator(),
+                    if (_submittingKeys.isNotEmpty) const LinearProgressIndicator(),
+                    if (_error != null) _ErrorBanner(message: _error!, onRetry: _load),
+                    if (!_loading && _error == null && capabilities != null)
+                      ..._buildSettingsSections(
+                        capabilities: capabilities,
+                        clients: clients,
+                        indexers: indexers,
+                        enabledIndexers: enabledIndexers,
+                        canSearch: canSearch,
+                      ),
+                  ],
                 ),
-              ] else if (!_searching && _queryController.text.trim().isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: Spacing.md),
-                  child: Text('No releases found.'),
-                ),
-            ],
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildSettingsSections({
+    required AcquisitionCapabilities capabilities,
+    required List<AcquisitionEndpoint> clients,
+    required List<AcquisitionEndpoint> indexers,
+    required List<AcquisitionEndpoint> enabledIndexers,
+    required bool canSearch,
+  }) {
+    final downloadClients = _endpoints.where((endpoint) => endpoint.kind.isDownloadClient).toList();
+    final arrApps = _endpoints.where((endpoint) => endpoint.kind.isArr).toList();
+    final showResults = _releases.isNotEmpty || (!_searching && _queryController.text.trim().isNotEmpty);
+
+    return [
+      AcquisitionSettingsSection(
+        key: const Key('acquisition-search-section'),
+        title: 'Search releases',
+        children: [
+          _SearchCard(
+            queryController: _queryController,
+            searching: _searching,
+            canSearch: canSearch,
+            indexers: enabledIndexers,
+            selectedIndexerIds: _selectedIndexerIds,
+            hasEnabledClient: clients.isNotEmpty,
+            onIndexerSelected: _setIndexerSelected,
+            onSearch: _search,
+          ),
+        ],
+      ),
+      const SizedBox(height: Spacing.md),
+      _buildIntegrationSettingsSection(
+        key: const Key('acquisition-sources-section'),
+        title: 'Sources',
+        emptyMessage: 'No sources configured',
+        endpoints: indexers,
+        addKinds: capabilities.indexerKinds,
+      ),
+      const SizedBox(height: Spacing.md),
+      _buildIntegrationSettingsSection(
+        key: const Key('acquisition-clients-section'),
+        title: 'Download clients',
+        emptyMessage: 'No download clients configured',
+        endpoints: downloadClients,
+        addKinds: capabilities.downloadClientKinds,
+      ),
+      const SizedBox(height: Spacing.md),
+      _buildIntegrationSettingsSection(
+        key: const Key('acquisition-apps-section'),
+        title: 'Connected apps',
+        emptyMessage: 'No connected apps configured',
+        endpoints: arrApps,
+        addKinds: capabilities.arrKinds,
+        allowRun: true,
+      ),
+      if (showResults) ...[
+        const SizedBox(height: Spacing.md),
+        AcquisitionSettingsSection(
+          key: const Key('acquisition-results-section'),
+          title: 'Results',
+          emptyMessage: 'No releases found.',
+          children: _releases
+              .map(
+                (release) => _ReleaseTile(
+                  release: release,
+                  clients: clients,
+                  submittingKeys: _submittingKeys,
+                  onSubmit: _submitRelease,
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    ];
+  }
+
+  Widget _buildIntegrationSettingsSection({
+    required Key key,
+    required String title,
+    required String emptyMessage,
+    required List<AcquisitionEndpoint> endpoints,
+    required List<AcquisitionEndpointKind> addKinds,
+    bool allowRun = false,
+  }) {
+    return AcquisitionSettingsSection(
+      key: key,
+      title: title,
+      emptyMessage: emptyMessage,
+      onAdd: addKinds.isEmpty ? null : () => _showEndpointDialog(initialKind: addKinds.first),
+      children: endpoints
+          .map(
+            (endpoint) => SettingsRow(
+              key: Key('acquisition-endpoint-${endpoint.id}'),
+              label: endpoint.name,
+              value: '${endpoint.kind.label} • ${endpoint.baseUrl.host} • ${endpoint.enabled ? 'Enabled' : 'Paused'}',
+              leading: Icon(_iconFor(endpoint.kind)),
+              onTap: () => _showEndpointDialog(endpoint: endpoint),
+              trailing: _buildEndpointMenu(endpoint, allowRun: allowRun),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildEndpointMenu(AcquisitionEndpoint endpoint, {required bool allowRun}) {
+    final runEnabled = endpoint.enabled && !_submittingKeys.contains('arr:${endpoint.id}');
+
+    return PopupMenuButton<String>(
+      tooltip: 'Actions for ${endpoint.name}',
+      onSelected: (value) {
+        if (value == 'edit') _showEndpointDialog(endpoint: endpoint);
+        if (value == 'run' && runEnabled) _runArrCommand(endpoint);
+        if (value == 'delete') _deleteEndpoint(endpoint);
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+        if (allowRun) PopupMenuItem(value: 'run', enabled: runEnabled, child: const Text('Run action')),
+        const PopupMenuItem(value: 'delete', child: Text('Remove')),
+      ],
     );
   }
 
@@ -444,6 +519,14 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     'MissingAlbumSearch' => 'Search missing albums',
     _ => command,
   };
+
+  IconData _iconFor(AcquisitionEndpointKind kind) => switch (kind) {
+    AcquisitionEndpointKind.qbittorrent ||
+    AcquisitionEndpointKind.transmission ||
+    AcquisitionEndpointKind.deluge => Icons.downloading_outlined,
+    AcquisitionEndpointKind.prowlarr || AcquisitionEndpointKind.torznab => Icons.travel_explore,
+    _ => Icons.auto_awesome_motion_outlined,
+  };
 }
 
 typedef _EndpointTestCallback =
@@ -470,12 +553,14 @@ class _EndpointDialog extends StatefulWidget {
   const _EndpointDialog({
     required this.endpoint,
     required this.endpointKinds,
+    required this.initialKind,
     required this.onTest,
     required this.onSave,
   });
 
   final AcquisitionEndpoint? endpoint;
   final List<AcquisitionEndpointKind> endpointKinds;
+  final AcquisitionEndpointKind? initialKind;
   final _EndpointTestCallback onTest;
   final _EndpointSaveCallback onSave;
 
@@ -510,7 +595,7 @@ class _EndpointDialogState extends State<_EndpointDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.endpoint?.name ?? '');
     _urlController = TextEditingController(text: widget.endpoint?.baseUrl.toString() ?? '');
-    _kind = widget.endpoint?.kind ?? widget.endpointKinds.first;
+    _kind = widget.endpoint?.kind ?? widget.initialKind ?? widget.endpointKinds.first;
     _enabled = widget.endpoint?.enabled ?? true;
   }
 
@@ -714,193 +799,53 @@ class _SearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Search torrents', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: Spacing.sm),
-            if (indexers.isNotEmpty) ...[
-              Wrap(
-                spacing: Spacing.sm,
-                runSpacing: Spacing.xs,
-                children: indexers
-                    .map(
-                      (endpoint) => FilterChip(
-                        label: Text(endpoint.name),
-                        selected: selectedIndexerIds.contains(endpoint.id),
-                        onSelected: searching ? null : (selected) => onIndexerSelected(endpoint, selected),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: Spacing.sm),
-            ],
-            TextField(
-              controller: queryController,
-              enabled: canSearch && !searching,
-              onSubmitted: (_) => onSearch(),
-              decoration: InputDecoration(
-                labelText: 'Title, author, movie, album, or series',
-                suffixIcon: searching
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                      )
-                    : IconButton(icon: const Icon(Icons.search), onPressed: canSearch ? onSearch : null),
-              ),
-            ),
-            if (!canSearch)
-              Padding(
-                padding: const EdgeInsets.only(top: Spacing.sm),
-                child: Text(
-                  indexers.isEmpty
-                      ? 'Add an enabled Prowlarr or Torznab indexer first.'
-                      : !hasEnabledClient
-                      ? 'Add an enabled download client before searching.'
-                      : 'Select at least one torrent indexer.',
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EndpointSection extends StatelessWidget {
-  const _EndpointSection({
-    required this.title,
-    required this.emptyLabel,
-    required this.endpoints,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final String title;
-  final String emptyLabel;
-  final List<AcquisitionEndpoint> endpoints;
-  final ValueChanged<AcquisitionEndpoint> onEdit;
-  final ValueChanged<AcquisitionEndpoint> onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Spacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (indexers.isNotEmpty) ...[
+          Wrap(
+            spacing: Spacing.sm,
+            runSpacing: Spacing.xs,
+            children: indexers
+                .map(
+                  (endpoint) => FilterChip(
+                    label: Text(endpoint.name),
+                    selected: selectedIndexerIds.contains(endpoint.id),
+                    onSelected: searching ? null : (selected) => onIndexerSelected(endpoint, selected),
+                  ),
+                )
+                .toList(),
+          ),
           const SizedBox(height: Spacing.sm),
-          if (endpoints.isEmpty)
-            Card(
-              child: ListTile(leading: const Icon(Icons.info_outline), title: Text(emptyLabel)),
-            )
-          else
-            ...endpoints.map((endpoint) => _EndpointTile(endpoint: endpoint, onEdit: onEdit, onDelete: onDelete)),
         ],
-      ),
-    );
-  }
-}
-
-class _ArrSection extends StatelessWidget {
-  const _ArrSection({
-    required this.endpoints,
-    required this.submittingKeys,
-    required this.onRun,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final List<AcquisitionEndpoint> endpoints;
-  final Set<String> submittingKeys;
-  final ValueChanged<AcquisitionEndpoint> onRun;
-  final ValueChanged<AcquisitionEndpoint> onEdit;
-  final ValueChanged<AcquisitionEndpoint> onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Spacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Arr applications', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: Spacing.sm),
-          if (endpoints.isEmpty)
-            const Card(
-              child: ListTile(leading: Icon(Icons.info_outline), title: Text('No Arr applications configured')),
-            )
-          else
-            ...endpoints.map(
-              (endpoint) => _EndpointTile(
-                endpoint: endpoint,
-                onEdit: onEdit,
-                onDelete: onDelete,
-                trailingAction: IconButton(
-                  tooltip: 'Run action',
-                  icon: const Icon(Icons.play_arrow_outlined),
-                  onPressed: endpoint.enabled && !submittingKeys.contains('arr:${endpoint.id}')
-                      ? () => onRun(endpoint)
-                      : null,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EndpointTile extends StatelessWidget {
-  const _EndpointTile({required this.endpoint, required this.onEdit, required this.onDelete, this.trailingAction});
-
-  final AcquisitionEndpoint endpoint;
-  final ValueChanged<AcquisitionEndpoint> onEdit;
-  final ValueChanged<AcquisitionEndpoint> onDelete;
-  final Widget? trailingAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(_iconFor(endpoint.kind)),
-        title: Text(endpoint.name),
-        subtitle: Text('${endpoint.kind.label} • ${endpoint.baseUrl.host}'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ?trailingAction,
-            Icon(
-              endpoint.enabled ? Icons.check_circle_outline : Icons.pause_circle_outline,
-              color: endpoint.enabled ? Theme.of(context).colorScheme.primary : null,
-            ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'edit') onEdit(endpoint);
-                if (value == 'delete') onDelete(endpoint);
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                PopupMenuItem(value: 'delete', child: Text('Remove')),
-              ],
-            ),
-          ],
+        TextField(
+          controller: queryController,
+          enabled: canSearch && !searching,
+          onSubmitted: (_) => onSearch(),
+          decoration: InputDecoration(
+            labelText: 'Title, author, movie, album, or series',
+            suffixIcon: searching
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : IconButton(icon: const Icon(Icons.search), onPressed: canSearch ? onSearch : null),
+          ),
         ),
-      ),
+        if (!canSearch)
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.sm),
+            child: Text(
+              indexers.isEmpty
+                  ? 'Add an enabled Prowlarr or Torznab indexer first.'
+                  : !hasEnabledClient
+                  ? 'Add an enabled download client before searching.'
+                  : 'Select at least one torrent indexer.',
+            ),
+          ),
+      ],
     );
   }
-
-  IconData _iconFor(AcquisitionEndpointKind kind) => switch (kind) {
-    AcquisitionEndpointKind.qbittorrent ||
-    AcquisitionEndpointKind.transmission ||
-    AcquisitionEndpointKind.deluge => Icons.downloading_outlined,
-    AcquisitionEndpointKind.prowlarr || AcquisitionEndpointKind.torznab => Icons.travel_explore,
-    _ => Icons.auto_awesome_motion_outlined,
-  };
 }
 
 class _ReleaseTile extends StatelessWidget {

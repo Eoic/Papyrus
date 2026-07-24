@@ -73,6 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _buildMobileLibrarySection(context),
             _buildMobileNotificationsSection(context),
             _buildMobileStorageSyncSection(context),
+            _buildMobileAcquisitionSection(context),
             _buildMobilePrivacyDataSection(context),
             _buildMobileAccessibilitySection(context),
             if (kDebugMode) _buildMobileDeveloperSection(context),
@@ -206,8 +207,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildMobileStorageSyncSection(BuildContext context) {
     final controller = _storageSyncController(context);
-    final prefs = context.watch<PreferencesProvider>();
-    final acquisitionAvailable = _acquisitionAvailable(context);
 
     if (controller.isGuest) {
       return Column(
@@ -252,18 +251,25 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _retryFailedMediaUploads(context),
           ),
         SettingsRow(label: 'Manage servers', onTap: () => _showManageSyncServersSheet(context)),
-        SettingsToggleRow(
-          label: 'Torrent acquisition',
-          value: prefs.acquisitionEnabled,
-          onChanged: (value) => prefs.acquisitionEnabled = value,
-        ),
-        if (prefs.acquisitionEnabled && acquisitionAvailable)
-          SettingsRow(label: 'Torrent & automation', onTap: () => context.push('/acquisition')),
         if (controller.canReconnect) SettingsRow(label: 'Reconnect', onTap: () => _handleReconnectSync(context)),
         if (controller.canClearGuestLibrary)
           SettingsRow(label: 'Clear local library', onTap: () => _confirmClearLocalLibrary(context)),
         if (controller.canClearAuthenticatedCache)
           SettingsRow(label: 'Clear local copy', onTap: () => _confirmClearAuthenticatedCache(context)),
+      ],
+    );
+  }
+
+  Widget _buildMobileAcquisitionSection(BuildContext context) {
+    if (_storageSyncController(context).isGuest) return const SizedBox.shrink();
+
+    return Column(
+      key: const Key('profile-acquisition-section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SettingsSectionHeader(title: 'Acquisition'),
+        _buildAcquisitionDescription(context),
+        ..._buildAcquisitionSettings(context),
       ],
     );
   }
@@ -940,69 +946,122 @@ class _ProfilePageState extends State<ProfilePage> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final controller = _storageSyncController(context);
-    final prefs = context.watch<PreferencesProvider>();
-    final acquisitionAvailable = _acquisitionAvailable(context);
 
     if (controller.isGuest) return _buildOfflineStorageSyncContent(context);
 
-    return SettingsCard(
-      title: 'Data sync',
+    return Column(
       children: [
-        _buildInfoRow(context, label: 'Active server', value: controller.dataSyncLabel),
-        _buildInfoRow(context, label: 'Status', value: controller.statusLabel),
-        _buildInfoRow(context, label: 'File storage', value: controller.fileStorageLabel),
-        if (controller.hasFailedMediaUploads)
-          _buildInfoRow(context, label: 'Media uploads', value: controller.failedMediaUploadLabel),
-        const SizedBox(height: Spacing.sm),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xs),
-          child: Text(controller.syncDetail, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-        ),
-        const SizedBox(height: Spacing.sm),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Torrent acquisition'),
-          value: prefs.acquisitionEnabled,
-          onChanged: (value) => prefs.acquisitionEnabled = value,
-        ),
-        Wrap(
-          spacing: Spacing.sm,
-          runSpacing: Spacing.sm,
-          alignment: WrapAlignment.start,
+        SettingsCard(
+          key: const Key('profile-data-sync-card'),
+          title: 'Data sync',
           children: [
-            if (controller.canReconnect)
-              OutlinedButton.icon(
-                onPressed: () => _handleReconnectSync(context),
-                icon: const Icon(Icons.sync, size: IconSizes.small),
-                label: const Text('Reconnect'),
-              ),
-            OutlinedButton.icon(
-              onPressed: () => _showManageSyncServersSheet(context),
-              icon: const Icon(Icons.dns_outlined, size: IconSizes.small),
-              label: const Text('Manage servers'),
-            ),
-            if (prefs.acquisitionEnabled && acquisitionAvailable)
-              OutlinedButton.icon(
-                onPressed: () => context.push('/acquisition'),
-                icon: const Icon(Icons.downloading_outlined, size: IconSizes.small),
-                label: const Text('Torrent & automation'),
-              ),
+            _buildInfoRow(context, label: 'Active server', value: controller.dataSyncLabel),
+            _buildInfoRow(context, label: 'Status', value: controller.statusLabel),
+            _buildInfoRow(context, label: 'File storage', value: controller.fileStorageLabel),
             if (controller.hasFailedMediaUploads)
-              OutlinedButton.icon(
-                onPressed: () => _retryFailedMediaUploads(context),
-                icon: const Icon(Icons.refresh, size: IconSizes.small),
-                label: const Text('Retry uploads'),
+              _buildInfoRow(context, label: 'Media uploads', value: controller.failedMediaUploadLabel),
+            const SizedBox(height: Spacing.sm),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xs),
+              child: Text(
+                controller.syncDetail,
+                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
-            if (controller.canClearAuthenticatedCache)
-              OutlinedButton.icon(
-                onPressed: () => _confirmClearAuthenticatedCache(context),
-                icon: const Icon(Icons.cleaning_services_outlined, size: IconSizes.small),
-                label: const Text('Clear local copy'),
-              ),
+            ),
+            const SizedBox(height: Spacing.sm),
+            Wrap(
+              spacing: Spacing.sm,
+              runSpacing: Spacing.sm,
+              alignment: WrapAlignment.start,
+              children: [
+                if (controller.canReconnect)
+                  OutlinedButton.icon(
+                    onPressed: () => _handleReconnectSync(context),
+                    icon: const Icon(Icons.sync, size: IconSizes.small),
+                    label: const Text('Reconnect'),
+                  ),
+                OutlinedButton.icon(
+                  onPressed: () => _showManageSyncServersSheet(context),
+                  icon: const Icon(Icons.dns_outlined, size: IconSizes.small),
+                  label: const Text('Manage servers'),
+                ),
+                if (controller.hasFailedMediaUploads)
+                  OutlinedButton.icon(
+                    onPressed: () => _retryFailedMediaUploads(context),
+                    icon: const Icon(Icons.refresh, size: IconSizes.small),
+                    label: const Text('Retry uploads'),
+                  ),
+                if (controller.canClearAuthenticatedCache)
+                  OutlinedButton.icon(
+                    onPressed: () => _confirmClearAuthenticatedCache(context),
+                    icon: const Icon(Icons.cleaning_services_outlined, size: IconSizes.small),
+                    label: const Text('Clear local copy'),
+                  ),
+              ],
+            ),
           ],
+        ),
+        const SizedBox(height: Spacing.lg),
+        SettingsCard(
+          key: const Key('profile-acquisition-card'),
+          title: 'Acquisition',
+          children: [_buildAcquisitionDescription(context), ..._buildAcquisitionSettings(context)],
         ),
       ],
     );
+  }
+
+  Widget _buildAcquisitionDescription(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xs),
+      child: Text(
+        'Search external sources and send releases to your connected clients.',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
+  List<Widget> _buildAcquisitionSettings(BuildContext context) {
+    final prefs = context.watch<PreferencesProvider>();
+    final availability = context.watch<AcquisitionAvailabilityProvider>();
+    final acquisitionAvailable = availability.state == AcquisitionAvailabilityState.available;
+
+    return [
+      MergeSemantics(
+        child: Semantics(
+          label: 'Enable acquisition',
+          enabled: true,
+          toggled: prefs.acquisitionEnabled,
+          onTap: () => prefs.acquisitionEnabled = !prefs.acquisitionEnabled,
+          child: ExcludeSemantics(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => prefs.acquisitionEnabled = !prefs.acquisitionEnabled,
+              child: SettingsToggleRow(
+                label: 'Enable acquisition',
+                value: prefs.acquisitionEnabled,
+                onChanged: (value) => prefs.acquisitionEnabled = value,
+              ),
+            ),
+          ),
+        ),
+      ),
+      SettingsRow(
+        label: 'Server support',
+        value: _acquisitionAvailabilityLabel(availability.state),
+        showChevron: false,
+      ),
+      if (prefs.acquisitionEnabled && acquisitionAvailable)
+        SettingsRow(label: 'Manage integrations', onTap: () => context.push('/acquisition')),
+    ];
+  }
+
+  String _acquisitionAvailabilityLabel(AcquisitionAvailabilityState state) {
+    return switch (state) {
+      AcquisitionAvailabilityState.available => 'Available on this server',
+      AcquisitionAvailabilityState.unavailable => 'Unavailable on this server',
+      AcquisitionAvailabilityState.unknown || AcquisitionAvailabilityState.loading => 'Checking server support…',
+    };
   }
 
   Widget _buildOfflineStorageSyncContent(BuildContext context) {
@@ -1062,11 +1121,6 @@ class _ProfilePageState extends State<ProfilePage> {
       mediaStorageUsage: context.watch<MediaUploadQueue>().storageUsage,
       failedMediaUploadCount: _failedMediaUploadCount(context.watch<MediaUploadQueue>()),
     );
-  }
-
-  bool _acquisitionAvailable(BuildContext context) {
-    final serverBaseUri = context.watch<SyncSettingsProvider>().activeApiConfig.serverBaseUri;
-    return context.watch<AcquisitionAvailabilityProvider>().isAvailableFor(serverBaseUri);
   }
 
   int _fileStorageUsedBytes(DataStore dataStore) {
