@@ -40,7 +40,7 @@ class _GuardedModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
          isScrollControlled: true,
          isDismissible: true,
          enableDrag: true,
-         showDragHandle: true,
+         showDragHandle: false,
          useSafeArea: true,
          clipBehavior: Clip.antiAlias,
        );
@@ -52,9 +52,6 @@ class _GuardedModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
 
   @override
   bool get enableDrag => !_busy.value;
-
-  @override
-  bool get showDragHandle => !_busy.value;
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {

@@ -5,6 +5,8 @@ import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/acquisition/guarded_bottom_sheet_route.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 
 typedef AcquisitionEndpointTestCallback =
     Future<void> Function({
@@ -56,7 +58,7 @@ Future<bool?> showAcquisitionEndpointEditor({
       builder: (sheetContext) {
         final viewInsets = MediaQuery.viewInsetsOf(sheetContext);
         final availableHeight = MediaQuery.sizeOf(sheetContext).height - viewInsets.bottom;
-        final maxEditorHeight = math.max(0.0, availableHeight * .92 - kMinInteractiveDimension);
+        final maxEditorHeight = math.max(0.0, availableHeight * .92);
 
         return AnimatedPadding(
           duration: const Duration(milliseconds: 150),
@@ -150,20 +152,30 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.lg, Spacing.lg, Spacing.md),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                widget.endpoint == null ? 'Add integration' : 'Edit integration',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
+            key: const Key('acquisition-editor-header'),
+            padding: const EdgeInsets.fromLTRB(Spacing.md, Spacing.md, Spacing.md, 0),
+            child: Column(
+              children: [
+                const BottomSheetHandle(),
+                const SizedBox(height: Spacing.md),
+                BottomSheetHeader(
+                  title: widget.endpoint == null ? 'Add integration' : 'Edit integration',
+                  onCancel: () => Navigator.pop(context, false),
+                  onSave: _save,
+                  saveButtonKey: const Key('acquisition-save'),
+                  canCancel: !_busy,
+                  canSave: !_busy,
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: Spacing.md),
           const Divider(height: 1),
           Flexible(
             fit: FlexFit.loose,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(Spacing.lg),
+              key: const Key('acquisition-editor-body'),
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -288,25 +300,6 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
                   ],
                 ),
               ),
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            key: const Key('acquisition-editor-footer'),
-            padding: const EdgeInsets.all(Spacing.md),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(onPressed: _busy ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
-                const SizedBox(width: Spacing.sm),
-                FilledButton(
-                  key: const Key('acquisition-save'),
-                  onPressed: _busy ? null : _save,
-                  child: _saving
-                      ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Save'),
-                ),
-              ],
             ),
           ),
         ],

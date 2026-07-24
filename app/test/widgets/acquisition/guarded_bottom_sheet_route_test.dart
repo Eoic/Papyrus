@@ -14,7 +14,7 @@ void main() {
 
     var sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
     expect(sheet.enableDrag, isTrue);
-    expect(sheet.showDragHandle, isTrue);
+    expect(sheet.showDragHandle, isFalse);
 
     busy.value = true;
     await tester.pump();
@@ -32,7 +32,7 @@ void main() {
 
     sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
     expect(sheet.enableDrag, isTrue);
-    expect(sheet.showDragHandle, isTrue);
+    expect(sheet.showDragHandle, isFalse);
 
     await tester.tapAt(const Offset(4, 4));
     await tester.pumpAndSettle();

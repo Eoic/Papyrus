@@ -6,6 +6,8 @@ import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/acquisition/acquisition_endpoint_editor.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 
 void main() {
   testWidgets('uses a content-driven draggable bottom sheet on narrow windows', (tester) async {
@@ -28,7 +30,13 @@ void main() {
     expect(find.ancestor(of: sheet, matching: find.byType(AnimatedPadding)), findsOneWidget);
     final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
     expect(bottomSheet.enableDrag, isTrue);
-    expect(bottomSheet.showDragHandle, isTrue);
+    expect(bottomSheet.showDragHandle, isFalse);
+    expect(find.byType(BottomSheetHandle), findsOneWidget);
+    expect(find.byType(BottomSheetHeader), findsOneWidget);
+    final headerPadding = tester.widget<Padding>(find.byKey(const Key('acquisition-editor-header')));
+    expect(headerPadding.padding, const EdgeInsets.fromLTRB(Spacing.md, Spacing.md, Spacing.md, 0));
+    final bodyScroll = tester.widget<SingleChildScrollView>(find.byKey(const Key('acquisition-editor-body')));
+    expect(bodyScroll.padding, const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md));
     expect(find.ancestor(of: sheet, matching: find.byType(SafeArea)), findsOneWidget);
   });
 
@@ -79,7 +87,7 @@ void main() {
     final bottomSheet = find.byType(BottomSheet);
     expect(tester.getSize(bottomSheet).height, lessThanOrEqualTo(keyboardInset + availableHeight * .92));
     expect(
-      tester.getBottomLeft(find.byKey(const Key('acquisition-editor-footer'))).dy,
+      tester.getBottomLeft(find.byKey(const Key('acquisition-editor-header'))).dy,
       lessThanOrEqualTo(availableHeight),
     );
     expect(find.byType(SingleChildScrollView), findsOneWidget);
@@ -90,7 +98,7 @@ void main() {
     await tester.scrollUntilVisible(find.byKey(const Key('acquisition-password')), 200, scrollable: verticalScrollable);
 
     expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
-    expect(find.byKey(const Key('acquisition-editor-footer')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-editor-header')), findsOneWidget);
   });
 
   testWidgets('groups fields and shows credentials required by integration type', (tester) async {
@@ -209,8 +217,8 @@ void main() {
     await _enterRequiredFields(tester);
 
     final testButton = find.byKey(const Key('acquisition-test-connection'));
-    final footer = find.byKey(const Key('acquisition-editor-footer'));
-    expect(find.descendant(of: footer, matching: testButton), findsNothing);
+    final header = find.byKey(const Key('acquisition-editor-header'));
+    expect(find.descendant(of: header, matching: testButton), findsNothing);
 
     await tester.tap(testButton);
     await tester.pump();
@@ -333,7 +341,8 @@ void main() {
 
     bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
     expect(bottomSheet.enableDrag, isTrue);
-    expect(bottomSheet.showDragHandle, isTrue);
+    expect(bottomSheet.showDragHandle, isFalse);
+    expect(find.byType(BottomSheetHandle), findsOneWidget);
 
     await tester.drag(find.byType(BottomSheet), const Offset(0, 700));
     await tester.pumpAndSettle();
@@ -361,18 +370,20 @@ void main() {
     expect(find.byType(AcquisitionEndpointEditor), findsNothing);
   });
 
-  testWidgets('footer contains only Cancel and Save actions', (tester) async {
+  testWidgets('uses the shared bottom sheet header for Cancel and Save actions', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(_EditorLauncher());
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    final footer = find.byKey(const Key('acquisition-editor-footer'));
-    expect(find.descendant(of: footer, matching: find.byType(TextButton)), findsOneWidget);
-    expect(find.descendant(of: footer, matching: find.byType(FilledButton)), findsOneWidget);
-    expect(find.descendant(of: footer, matching: find.byType(OutlinedButton)), findsNothing);
-    expect(find.descendant(of: footer, matching: find.text('Cancel')), findsOneWidget);
-    expect(find.descendant(of: footer, matching: find.text('Save')), findsOneWidget);
+    final header = find.byKey(const Key('acquisition-editor-header'));
+    expect(find.descendant(of: header, matching: find.byType(BottomSheetHandle)), findsOneWidget);
+    expect(find.descendant(of: header, matching: find.byType(BottomSheetHeader)), findsOneWidget);
+    expect(find.descendant(of: header, matching: find.byType(TextButton)), findsOneWidget);
+    expect(find.descendant(of: header, matching: find.byType(FilledButton)), findsOneWidget);
+    expect(find.descendant(of: header, matching: find.byType(OutlinedButton)), findsNothing);
+    expect(find.descendant(of: header, matching: find.text('Cancel')), findsOneWidget);
+    expect(find.descendant(of: header, matching: find.text('Save')), findsOneWidget);
   });
 
   testWidgets('blank credentials remain null when editing', (tester) async {
