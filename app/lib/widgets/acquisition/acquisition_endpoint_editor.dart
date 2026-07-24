@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
@@ -54,13 +56,14 @@ Future<bool?> showAcquisitionEndpointEditor({
       builder: (sheetContext) {
         final viewInsets = MediaQuery.viewInsetsOf(sheetContext);
         final availableHeight = MediaQuery.sizeOf(sheetContext).height - viewInsets.bottom;
+        final maxEditorHeight = math.max(0.0, availableHeight * .92 - kMinInteractiveDimension);
 
         return AnimatedPadding(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
           padding: EdgeInsets.only(bottom: viewInsets.bottom),
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: availableHeight * .92),
+            constraints: BoxConstraints(maxHeight: maxEditorHeight),
             child: KeyedSubtree(key: const Key('acquisition-endpoint-sheet'), child: editor),
           ),
         );
@@ -353,6 +356,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    var saved = false;
     setState(() {
       _saving = true;
       _message = null;
@@ -371,11 +375,8 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
       );
       if (!mounted) return;
 
-      setState(() => _saving = false);
-      widget.onBusyChanged(_busy);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.pop(context, true);
-      });
+      Navigator.pop(context, true);
+      saved = true;
     } catch (error) {
       if (!mounted) return;
 
@@ -384,7 +385,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         _messageIsError = true;
       });
     } finally {
-      if (mounted && _saving) {
+      if (mounted && _saving && !saved) {
         setState(() => _saving = false);
         widget.onBusyChanged(_busy);
       }

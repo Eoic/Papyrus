@@ -74,9 +74,14 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    final sheet = find.byKey(const Key('acquisition-endpoint-sheet'));
-    final availableHeight = 844 - tester.view.viewInsets.bottom;
-    expect(tester.getSize(sheet).height, lessThanOrEqualTo(availableHeight * .92));
+    final keyboardInset = tester.view.viewInsets.bottom;
+    final availableHeight = 844 - keyboardInset;
+    final bottomSheet = find.byType(BottomSheet);
+    expect(tester.getSize(bottomSheet).height, lessThanOrEqualTo(keyboardInset + availableHeight * .92));
+    expect(
+      tester.getBottomLeft(find.byKey(const Key('acquisition-editor-footer'))).dy,
+      lessThanOrEqualTo(availableHeight),
+    );
     expect(find.byType(SingleChildScrollView), findsOneWidget);
 
     final verticalScrollable = find
@@ -336,6 +341,26 @@ void main() {
     expect(find.byKey(const Key('acquisition-endpoint-sheet')), findsNothing);
   });
 
+  testWidgets('successful save result cannot be stolen by an immediate idle dismissal', (tester) async {
+    final saveCompleter = Completer<void>();
+    bool? result;
+    await _setWindowSize(tester, const Size(390, 844));
+    await tester.pumpWidget(_SaveRaceLauncher(saveCompleter: saveCompleter, onResult: (value) => result = value));
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await _enterRequiredFields(tester);
+
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pump();
+    expect(result, isNull);
+
+    saveCompleter.complete();
+    await tester.pumpAndSettle();
+
+    expect(result, isTrue);
+    expect(find.byType(AcquisitionEndpointEditor), findsNothing);
+  });
+
   testWidgets('footer contains only Cancel and Save actions', (tester) async {
     await _setWindowSize(tester, const Size(900, 900));
     await tester.pumpWidget(_EditorLauncher());
@@ -448,6 +473,66 @@ class _EditorLauncher extends StatelessWidget {
                         password,
                       }) async {},
                 );
+              },
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SaveRaceLauncher extends StatelessWidget {
+  const _SaveRaceLauncher({required this.saveCompleter, required this.onResult});
+
+  final Completer<void> saveCompleter;
+  final ValueChanged<bool?> onResult;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: FilledButton(
+              onPressed: () async {
+                late BuildContext editorContext;
+                var wasBusy = false;
+                final result = await showModalBottomSheet<bool>(
+                  context: context,
+                  isScrollControlled: true,
+                  isDismissible: false,
+                  enableDrag: false,
+                  builder: (context) {
+                    editorContext = context;
+
+                    return AcquisitionEndpointEditor(
+                      endpointKinds: AcquisitionEndpointKind.values,
+                      initialKind: AcquisitionEndpointKind.prowlarr,
+                      onTest: ({required kind, required baseUrl, apiKey, username, password}) async {},
+                      onSave:
+                          ({
+                            required name,
+                            required kind,
+                            required baseUrl,
+                            required enabled,
+                            apiKey,
+                            username,
+                            password,
+                          }) => saveCompleter.future,
+                      onBusyChanged: (busy) {
+                        if (busy) {
+                          wasBusy = true;
+                        } else if (wasBusy && Navigator.canPop(editorContext)) {
+                          Navigator.pop(editorContext, false);
+                        }
+                      },
+                    );
+                  },
+                );
+
+                onResult(result);
               },
               child: const Text('Open'),
             ),
