@@ -222,7 +222,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     return showAcquisitionIdsSheet(context: context, title: _arrCommandLabel(command));
   }
 
-  Future<void> _showEndpointDialog({AcquisitionEndpoint? endpoint, List<AcquisitionEndpointKind>? allowedKinds}) async {
+  Future<void> _showEndpointSheet({AcquisitionEndpoint? endpoint, List<AcquisitionEndpointKind>? allowedKinds}) async {
     final capabilities = _capabilities;
     if (capabilities == null || capabilities.endpointKinds.isEmpty) return;
     final endpointKinds = allowedKinds ?? capabilities.endpointKinds;
@@ -422,7 +422,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       key: key,
       title: title,
       emptyMessage: emptyMessage,
-      onAdd: addKinds.isEmpty ? null : () => _showEndpointDialog(allowedKinds: addKinds),
+      onAdd: addKinds.isEmpty ? null : () => _showEndpointSheet(allowedKinds: addKinds),
       children: endpoints
           .map(
             (endpoint) => SettingsRow(
@@ -430,7 +430,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
               label: endpoint.name,
               value: '${endpoint.kind.label} • ${endpoint.baseUrl.host} • ${endpoint.enabled ? 'Enabled' : 'Paused'}',
               leading: Icon(_iconFor(endpoint.kind)),
-              onTap: () => _showEndpointDialog(endpoint: endpoint),
+              onTap: () => _showEndpointSheet(endpoint: endpoint),
               trailing: _buildEndpointMenu(endpoint, allowRun: allowRun),
             ),
           )
@@ -444,7 +444,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     return PopupMenuButton<String>(
       tooltip: 'Actions for ${endpoint.name}',
       onSelected: (value) {
-        if (value == 'edit') _showEndpointDialog(endpoint: endpoint);
+        if (value == 'edit') _showEndpointSheet(endpoint: endpoint);
         if (value == 'run' && runEnabled) _runArrCommand(endpoint);
         if (value == 'delete') _deleteEndpoint(endpoint);
       },
