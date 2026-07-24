@@ -30,7 +30,15 @@ class BottomSheetHeader extends StatelessWidget {
             child: TextButton(onPressed: onCancel, child: const Text('Cancel')),
           ),
         ),
-        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
