@@ -11,6 +11,7 @@ import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
+import 'package:papyrus/widgets/library/acquisition_placeholder_list_item.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
@@ -198,6 +199,34 @@ void main() {
         downloadsProvider.dispose();
       });
 
+      testWidgets('online loading and successful empty states replace local books in-place', (tester) async {
+        final searchCompleter = Completer<List<TorrentRelease>>();
+        final gateway = _LibraryAcquisitionGateway(searchCompleter: searchCompleter);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Missing title');
+
+        await tester.pumpWidget(buildPage(downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Missing title”'));
+        await tester.pump();
+
+        expect(find.byType(OnlineResultsView), findsOneWidget);
+        expect(find.text('Searching connected sources for “Missing title”…'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.byType(BookCard), findsNothing);
+
+        searchCompleter.complete(const []);
+        await tester.pumpAndSettle();
+
+        expect(find.text('No releases found'), findsOneWidget);
+        expect(find.textContaining('Missing title'), findsWidgets);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.byType(BookCard), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
       testWidgets('Add book enters online mode without searching', (tester) async {
         tester.view.devicePixelRatio = 1;
         tester.view.physicalSize = const Size(1400, 1000);
@@ -262,6 +291,37 @@ void main() {
         downloadsProvider.dispose();
       });
 
+      testWidgets('Deselect all clears every selected online release', (tester) async {
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(releaseCount: 2),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Missing title');
+
+        await tester.pumpWidget(buildPage(downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Missing title”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox).first);
+        await tester.pump();
+        await tester.tap(find.text('Select all'));
+        await tester.pump();
+
+        expect(downloadsProvider.selectedReleaseTokens, {'release-token', 'release-token-2'});
+        expect(find.text('Deselect all'), findsOneWidget);
+
+        await tester.tap(find.text('Deselect all'));
+        await tester.pump();
+
+        expect(downloadsProvider.selectedReleaseTokens, isEmpty);
+        expect(find.byType(SelectionHeader), findsNothing);
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(find.byType(Checkbox), findsNWidgets(2));
+
+        downloadsProvider.dispose();
+      });
+
       testWidgets('failed release submission stays online with its row selected', (tester) async {
         final gateway = _LibraryAcquisitionGateway(submissionError: 'Release token expired');
         final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
@@ -282,6 +342,47 @@ void main() {
         expect(find.text('Remote result'), findsOneWidget);
         expect(find.text('This release could not be sent to the download client.'), findsOneWidget);
         expect(downloadsProvider.selectedReleaseTokens, {'release-token'});
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('partial submission keeps the failed row selected and the successful job', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(releaseCount: 2, failedSubmissionIndexes: const {1});
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Remote');
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Remote”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox).first);
+        await tester.pump();
+        await tester.tap(find.text('Select all'));
+        await tester.pump();
+        await tester.tap(find.text('Download'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SelectionHeader), findsOneWidget);
+        expect(downloadsProvider.selectedReleaseTokens, {'release-token-2'});
+        expect(downloadsProvider.jobs.map((job) => job.id), contains('submitted-job-0'));
+        expect(find.text('Remote result 2'), findsOneWidget);
+        expect(find.text('This release could not be sent to the download client.'), findsOneWidget);
+        expect(find.textContaining('client.invalid'), findsNothing);
+
+        downloadsProvider.clearReleaseSelection();
+        await tester.pump();
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AcquisitionPlaceholderCard), findsOneWidget);
+        expect(find.text('Remote result'), findsWidgets);
 
         downloadsProvider.dispose();
       });
@@ -364,6 +465,152 @@ void main() {
 
         expect(find.byType(AcquisitionPlaceholderCard), findsOneWidget);
         expect(find.byType(BookCard), findsNothing);
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('renders a linked job once without an orphan duplicate', (tester) async {
+        final store = createTestDataStore(
+          books: [
+            Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026)),
+            Book(id: 'ordinary-book', title: 'Ordinary book', author: 'Author', addedAt: DateTime(2026)),
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [
+              _libraryJob(
+                AcquisitionJobStatus.downloading,
+                id: 'linked-job',
+                bookId: 'linked-book',
+                title: 'Linked book',
+              ),
+            ],
+          ),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(800, 1000), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        final linkedCards = tester
+            .widgetList<BookCard>(find.byType(BookCard))
+            .where((card) => card.acquisitionJob?.id == 'linked-job')
+            .toList();
+        expect(linkedCards, hasLength(1));
+        expect(find.byType(BookCard), findsNWidgets(2));
+        expect(find.byType(AcquisitionPlaceholderCard), findsNothing);
+        expect(find.text('Downloading 0%'), findsOneWidget);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('Downloading isolates a linked book and orphan from ordinary books', (tester) async {
+        final store = createTestDataStore(
+          books: [
+            Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026)),
+            Book(id: 'ordinary-book', title: 'Ordinary book', author: 'Author', addedAt: DateTime(2026)),
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [
+              _libraryJob(
+                AcquisitionJobStatus.downloading,
+                id: 'linked-job',
+                bookId: 'linked-book',
+                title: 'Linked book',
+              ),
+              _libraryJob(AcquisitionJobStatus.queued, id: 'orphan-job', bookId: null, title: 'Orphan book'),
+            ],
+          ),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(800, 1000), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+        final filterChips = tester.widget<LibraryFilterChips>(find.byType(LibraryFilterChips));
+        expect(filterChips.showDownloading, isTrue);
+
+        filterChips.onDownloadingTapped!();
+        await tester.pumpAndSettle();
+
+        final visibleCards = tester.widgetList<BookCard>(find.byType(BookCard)).toList();
+        final placeholders = tester
+            .widgetList<AcquisitionPlaceholderCard>(find.byType(AcquisitionPlaceholderCard))
+            .toList();
+        expect(visibleCards, hasLength(1));
+        expect(visibleCards.single.book.id, 'linked-book');
+        expect(placeholders, hasLength(1));
+        expect(placeholders.single.job.id, 'orphan-job');
+        expect(find.text('Ordinary book'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('list view integrates linked and orphan jobs without duplication', (tester) async {
+        libraryProvider.setViewMode(LibraryViewMode.list);
+        final store = createTestDataStore(
+          books: [
+            Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026)),
+            Book(id: 'ordinary-book', title: 'Ordinary book', author: 'Author', addedAt: DateTime(2026)),
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [
+              _libraryJob(
+                AcquisitionJobStatus.downloading,
+                id: 'linked-job',
+                bookId: 'linked-book',
+                title: 'Linked book',
+              ),
+              _libraryJob(AcquisitionJobStatus.queued, id: 'orphan-job', bookId: null, title: 'Orphan book'),
+            ],
+          ),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(800, 1000), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        final bookItems = tester.widgetList<BookListItem>(find.byType(BookListItem)).toList();
+        final linkedItems = bookItems.where((item) => item.acquisitionJob?.id == 'linked-job').toList();
+        final placeholders = tester
+            .widgetList<AcquisitionPlaceholderListItem>(find.byType(AcquisitionPlaceholderListItem))
+            .toList();
+        expect(bookItems, hasLength(2));
+        expect(linkedItems, hasLength(1));
+        expect(linkedItems.single.onAcquisitionTap, isNotNull);
+        expect(linkedItems.single.onAcquisitionSelectionToggle, isNotNull);
+        expect(placeholders, hasLength(1));
+        expect(placeholders.single.job.id, 'orphan-job');
+        expect(placeholders.single.onTap, isNotNull);
+        expect(placeholders.single.onEnterSelectionMode, isNotNull);
+        expect(find.byType(AcquisitionPlaceholderCard), findsNothing);
+
+        linkedItems.single.onAcquisitionTap!();
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('acquisition-job-details-content')), findsOneWidget);
+
+        await tester.tapAt(const Offset(8, 8));
+        await tester.pumpAndSettle();
+        final orphanItem = tester.widget<AcquisitionPlaceholderListItem>(find.byType(AcquisitionPlaceholderListItem));
+        orphanItem.onTap!();
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('acquisition-job-details-content')), findsOneWidget);
+
         downloadsProvider.dispose();
       });
 
@@ -1031,6 +1278,8 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
   final String? submissionError;
   final int releaseCount;
   final int clientCount;
+  final Completer<List<TorrentRelease>>? searchCompleter;
+  final Set<int> failedSubmissionIndexes;
   bool failSearch;
   List<String> submittedTokens = [];
   String? submittedEndpointId;
@@ -1044,6 +1293,8 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
     this.submissionError,
     this.releaseCount = 1,
     this.clientCount = 1,
+    this.searchCompleter,
+    this.failedSubmissionIndexes = const {},
     this.failSearch = false,
   });
 
@@ -1080,6 +1331,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
       throw StateError('raw source failure');
     }
 
+    if (searchCompleter case final completer?) {
+      return completer.future;
+    }
+
     return [
       for (var index = 1; index <= releaseCount; index += 1)
         TorrentRelease(
@@ -1107,10 +1362,17 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
         for (var index = 0; index < releases.length; index += 1)
           BatchSubmissionItem(
             index: index,
-            job: submissionError == null
-                ? _libraryJob(AcquisitionJobStatus.submitted, id: 'submitted-job-$index', bookId: null)
+            job: submissionError == null && !failedSubmissionIndexes.contains(index)
+                ? _libraryJob(
+                    AcquisitionJobStatus.submitted,
+                    id: 'submitted-job-$index',
+                    bookId: null,
+                    title: releases[index].title,
+                  )
                 : null,
-            error: submissionError,
+            error:
+                submissionError ??
+                (failedSubmissionIndexes.contains(index) ? 'raw token failure at https://client.invalid' : null),
           ),
       ],
     );
@@ -1151,6 +1413,7 @@ AcquisitionJob _libraryJob(
   AcquisitionJobStatus status, {
   String id = 'job-1',
   String? bookId = 'book-1',
+  String title = 'Remote result',
   bool retryable = false,
 }) {
   return AcquisitionJob(
@@ -1158,7 +1421,7 @@ AcquisitionJob _libraryJob(
     endpointId: 'client-1',
     ruleId: null,
     bookId: bookId,
-    title: 'Remote result',
+    title: title,
     status: status,
     clientReference: null,
     clientHash: null,
