@@ -7,8 +7,19 @@ import 'package:provider/provider.dart';
 /// Thin wrapper around [QuickFilterChips] that reads [LibraryProvider].
 class LibraryFilterChips extends StatelessWidget {
   final double? horizontalPadding;
+  final bool showDownloading;
+  final bool isDownloadingSelected;
+  final VoidCallback? onDownloadingTapped;
+  final VoidCallback? onLibraryFilterTapped;
 
-  const LibraryFilterChips({super.key, this.horizontalPadding});
+  const LibraryFilterChips({
+    super.key,
+    this.horizontalPadding,
+    this.showDownloading = false,
+    this.isDownloadingSelected = false,
+    this.onDownloadingTapped,
+    this.onLibraryFilterTapped,
+  });
 
   static const _filters = [
     (type: LibraryFilterType.all, label: 'All', icon: Icons.apps),
@@ -21,22 +32,41 @@ class LibraryFilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final libraryProvider = context.watch<LibraryProvider>();
+    final filters = _filters
+        .map(
+          (filter) => QuickFilterChipData(
+            label: filter.label,
+            icon: filter.icon,
+            isSelected: libraryProvider.isFilterActive(filter.type),
+          ),
+        )
+        .toList();
+
+    if (showDownloading) {
+      filters.add(
+        QuickFilterChipData(label: 'Downloading', icon: Icons.downloading_outlined, isSelected: isDownloadingSelected),
+      );
+    }
 
     return QuickFilterChips(
       horizontalPadding: horizontalPadding,
-      filters: _filters
-          .map(
-            (f) =>
-                QuickFilterChipData(label: f.label, icon: f.icon, isSelected: libraryProvider.isFilterActive(f.type)),
-          )
-          .toList(),
+      filters: filters,
       onFilterTapped: (index) {
+        if (index == _filters.length) {
+          onDownloadingTapped?.call();
+
+          return;
+        }
+
         final filter = _filters[index];
+
         if (filter.type == LibraryFilterType.all) {
           libraryProvider.resetFilters();
         } else {
           libraryProvider.toggleFilter(filter.type);
         }
+
+        onLibraryFilterTapped?.call();
       },
     );
   }
