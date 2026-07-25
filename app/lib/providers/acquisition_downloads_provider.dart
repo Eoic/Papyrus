@@ -573,7 +573,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     try {
       final response = await gateway.submitReleaseBatch(endpointId: endpointId, releases: selected);
 
-      if (!_isCurrent(gateway, generation)) {
+      if (!_isCurrentRemoteState(gateway, generation, remoteStateGeneration)) {
         return AcquisitionSubmissionOutcome(successfulCount: 0, failuresByReleaseToken: const {});
       }
 
@@ -892,7 +892,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   void _schedulePolling() {
     _pollTimer?.cancel();
 
-    if (!_isForeground || _disposed || !_jobs.values.any((job) => job.isActive)) {
+    if (!_isForeground || _disposed) {
       return;
     }
 

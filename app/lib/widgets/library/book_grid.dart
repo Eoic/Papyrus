@@ -117,14 +117,17 @@ class BookGrid extends StatelessWidget {
         itemBuilder: (context, index) {
           if (index >= books.length) {
             final job = orphanJobs[index - books.length];
+            final canSelect = job.status != AcquisitionJobStatus.completed;
 
             return AcquisitionPlaceholderCard(
               job: job,
               onTap: onAcquisitionTap == null ? null : () => onAcquisitionTap!(job),
-              isSelectionMode: selectedAcquisitionJobIds.isNotEmpty,
+              isSelectionMode: canSelect && selectedAcquisitionJobIds.isNotEmpty,
               isSelected: selectedAcquisitionJobIds.contains(job.id),
-              onSelectToggle: onAcquisitionSelectionToggle == null ? null : () => onAcquisitionSelectionToggle!(job),
-              onEnterSelectionMode: onAcquisitionSelectionToggle == null
+              onSelectToggle: !canSelect || onAcquisitionSelectionToggle == null
+                  ? null
+                  : () => onAcquisitionSelectionToggle!(job),
+              onEnterSelectionMode: !canSelect || onAcquisitionSelectionToggle == null
                   ? null
                   : () => onAcquisitionSelectionToggle!(job),
             );

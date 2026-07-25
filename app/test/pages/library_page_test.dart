@@ -408,7 +408,7 @@ void main() {
         expect(find.byType(OnlineBooksHeader), findsOneWidget);
         expect(downloadsProvider.remoteQuery, 'New query');
         expect(find.text('New result'), findsOneWidget);
-        expect(downloadsProvider.jobs.map((job) => job.id), contains('old-submission'));
+        expect(downloadsProvider.jobs.map((job) => job.id), isNot(contains('old-submission')));
 
         downloadsProvider.dispose();
       });
@@ -1174,6 +1174,12 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(AcquisitionPlaceholderCard), findsOneWidget);
+
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+        expect(find.byType(SelectionHeader), findsNothing);
 
         store.loadData(
           books: [Book(id: 'imported-book', title: 'Imported book', author: 'Author', addedAt: DateTime(2026))],

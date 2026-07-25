@@ -461,7 +461,7 @@ void main() {
     provider.dispose();
   });
 
-  test('keeps newer search release state after an older submission completes', () async {
+  test('ignores an older submission after a newer search starts', () async {
     final submission = Completer<BatchSubmissionResponse>();
     final search = Completer<List<TorrentRelease>>();
     final gateway = _FakeGateway(batchCompleter: submission, searchCompleter: search);
@@ -496,7 +496,7 @@ void main() {
     expect(provider.remoteResults.single.releaseToken, 'new-1');
     expect(provider.selectedReleaseTokens, {'new-1'});
     expect(provider.submissionErrorsByReleaseToken, isEmpty);
-    expect(provider.jobs.single.status, AcquisitionJobStatus.submitted);
+    expect(provider.jobs, isEmpty);
 
     provider.dispose();
   });
@@ -610,14 +610,17 @@ void main() {
     provider.dispose();
   });
 
-  testWidgets('discovers an externally created job when the empty library becomes visible', (tester) async {
+  testWidgets('keeps discovering external jobs after the visible library initially refreshes empty', (tester) async {
     final gateway = _FakeGateway(
-      repeatedJobPage: AcquisitionJobPage(
-        items: [_job(id: 'external-job', status: AcquisitionJobStatus.downloading)],
-        total: 1,
-        limit: 100,
-        offset: 0,
-      ),
+      jobPages: [
+        const AcquisitionJobPage(items: [], total: 0, limit: 100, offset: 0),
+        AcquisitionJobPage(
+          items: [_job(id: 'external-job', status: AcquisitionJobStatus.downloading)],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        ),
+      ],
     );
     final provider = AcquisitionDownloadsProvider(
       gateway: gateway,
@@ -631,12 +634,13 @@ void main() {
     await tester.pump();
 
     expect(gateway.listJobCalls, 1);
-    expect(provider.jobs.single.id, 'external-job');
+    expect(provider.jobs, isEmpty);
 
     await tester.pump(const Duration(seconds: 2));
     await tester.pump();
 
     expect(gateway.listJobCalls, 2);
+    expect(provider.jobs.single.id, 'external-job');
 
     provider.dispose();
   });

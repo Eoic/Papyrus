@@ -956,7 +956,7 @@ class _LibraryPageState extends State<LibraryPage> {
     }
 
     for (final job in visiblePlaceholderJobs) {
-      if (seenJobIds.add(job.id)) {
+      if (job.status != AcquisitionJobStatus.completed && seenJobIds.add(job.id)) {
         selectableJobs.add(job);
       }
     }
@@ -1033,14 +1033,15 @@ class _LibraryPageState extends State<LibraryPage> {
       itemBuilder: (context, index) {
         if (index >= books.length) {
           final job = placeholderJobs[index - books.length];
+          final canSelect = job.status != AcquisitionJobStatus.completed;
 
           return AcquisitionPlaceholderListItem(
             job: job,
             onTap: () => onAcquisitionTap(job),
-            isSelectionMode: downloadsProvider?.selectedJobIds.isNotEmpty == true,
+            isSelectionMode: canSelect && downloadsProvider?.selectedJobIds.isNotEmpty == true,
             isSelected: downloadsProvider?.selectedJobIds.contains(job.id) == true,
-            onSelectToggle: () => onAcquisitionSelectionToggle(job),
-            onEnterSelectionMode: () => onAcquisitionSelectionToggle(job),
+            onSelectToggle: canSelect ? () => onAcquisitionSelectionToggle(job) : null,
+            onEnterSelectionMode: canSelect ? () => onAcquisitionSelectionToggle(job) : null,
           );
         }
 
