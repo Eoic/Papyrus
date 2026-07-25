@@ -62,22 +62,29 @@ class BookGrid extends StatelessWidget {
 
     final libraryProvider = context.watch<LibraryProvider>();
     final bookIds = books.map((book) => book.id).toSet();
-    final linkedJobsByBookId = <String, AcquisitionJob>{
-      for (final entry in acquisitionJobsByBookId.entries)
-        if (bookIds.contains(entry.key)) entry.key: entry.value,
-    };
+    final placeholderJobsByBookId = <String, AcquisitionJob>{};
 
     for (final job in placeholderJobs) {
       final bookId = job.bookId;
 
-      if (bookId != null && bookIds.contains(bookId)) {
-        linkedJobsByBookId.putIfAbsent(bookId, () => job);
+      if (bookId != null) {
+        placeholderJobsByBookId.putIfAbsent(bookId, () => job);
       }
     }
 
-    final linkedJobIds = linkedJobsByBookId.values.map((job) => job.id).toSet();
+    final linkedJobsByBookId = <String, AcquisitionJob>{};
+    final claimedJobIds = <String>{};
+
+    for (final book in books) {
+      final job = acquisitionJobsByBookId[book.id] ?? placeholderJobsByBookId[book.id];
+
+      if (job != null && claimedJobIds.add(job.id)) {
+        linkedJobsByBookId[book.id] = job;
+      }
+    }
+
     final orphanJobs = <AcquisitionJob>[];
-    final seenJobIds = <String>{...linkedJobIds};
+    final seenJobIds = <String>{...claimedJobIds};
     final seenPendingBookIds = <String>{};
 
     for (final job in placeholderJobs) {

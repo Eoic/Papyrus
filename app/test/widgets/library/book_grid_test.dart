@@ -65,6 +65,60 @@ void main() {
       expect(find.byType(AcquisitionPlaceholderCard), findsNothing);
     });
 
+    testWidgets('claims a duplicate linked job id for the first book only', (tester) async {
+      final firstBook = _book(id: 'book-1', title: 'First Book');
+      final secondBook = _book(id: 'book-2', title: 'Second Book');
+      final firstJob = _job(id: 'shared-job', bookId: firstBook.id, title: firstBook.title);
+      final secondJob = _job(id: 'shared-job', bookId: secondBook.id, title: secondBook.title);
+      final acquisitionSelections = <String>[];
+      final ordinaryTaps = <String>[];
+
+      await tester.pumpWidget(
+        _buildGrid(
+          books: [firstBook, secondBook],
+          acquisitionJobsByBookId: {secondBook.id: secondJob, firstBook.id: firstJob},
+          selectedAcquisitionJobIds: const {'shared-job'},
+          onAcquisitionSelectionToggle: (job) => acquisitionSelections.add(job.id),
+          onBookTap: (book) => ordinaryTaps.add(book.id),
+        ),
+      );
+
+      final firstCard = tester.widget<BookCard>(_bookCard(firstBook.id));
+      final secondCard = tester.widget<BookCard>(_bookCard(secondBook.id));
+
+      expect(firstCard.acquisitionJob, same(firstJob));
+      expect(firstCard.isSelectionMode, isTrue);
+      expect(firstCard.isSelected, isTrue);
+      expect(secondCard.acquisitionJob, isNull);
+      expect(secondCard.isSelectionMode, isFalse);
+      expect(secondCard.isSelected, isFalse);
+
+      await tester.tap(_bookCard(firstBook.id));
+      await tester.tap(_bookCard(secondBook.id));
+
+      expect(acquisitionSelections, ['shared-job']);
+      expect(ordinaryTaps, [secondBook.id]);
+    });
+
+    testWidgets('claims a map and placeholder duplicate id in books order', (tester) async {
+      final placeholderBook = _book(id: 'book-placeholder', title: 'Placeholder Winner');
+      final mappedBook = _book(id: 'book-mapped', title: 'Mapped Loser');
+      final placeholderJob = _job(id: 'shared-job', bookId: placeholderBook.id, title: placeholderBook.title);
+      final mappedJob = _job(id: 'shared-job', bookId: mappedBook.id, title: mappedBook.title);
+
+      await tester.pumpWidget(
+        _buildGrid(
+          books: [placeholderBook, mappedBook],
+          acquisitionJobsByBookId: {mappedBook.id: mappedJob},
+          placeholderJobs: [placeholderJob],
+        ),
+      );
+
+      expect(tester.widget<BookCard>(_bookCard(placeholderBook.id)).acquisitionJob, same(placeholderJob));
+      expect(tester.widget<BookCard>(_bookCard(mappedBook.id)).acquisitionJob, isNull);
+      expect(find.byType(AcquisitionPlaceholderCard), findsNothing);
+    });
+
     testWidgets('deduplicates repeated orphan ids and book ids', (tester) async {
       final first = _job(id: 'job-1', bookId: 'pending-book', title: 'First');
       final duplicateId = _job(id: 'job-1', bookId: null, title: 'Duplicate ID');

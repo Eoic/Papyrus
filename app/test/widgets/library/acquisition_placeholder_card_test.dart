@@ -172,6 +172,22 @@ void main() {
       expect(toggles, 1);
     });
 
+    testWidgets('without callbacks has no button role or actions', (tester) async {
+      final semantics = tester.ensureSemantics();
+
+      try {
+        await tester.pumpWidget(_buildCard(job: _job()));
+
+        final node = tester.getSemantics(find.byKey(const ValueKey('acquisition-placeholder-card-job-1')));
+
+        expect(node.flagsCollection.isButton, isFalse);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.longPress), isFalse);
+      } finally {
+        semantics.dispose();
+      }
+    });
+
     testWidgets('matches selected BookCard Card treatment in the light theme', (tester) async {
       await tester.pumpWidget(_buildCardPair(theme: AppTheme.light));
 
@@ -252,6 +268,8 @@ void _expectCardParity(WidgetTester tester, ThemeData theme) {
   expect(placeholderCard.shape, bookCard.shape);
   expect(placeholderMaterial.shape, bookMaterial.shape);
   expect(placeholderMaterial.elevation, bookMaterial.elevation);
+  expect(bookMaterial.elevation, theme.cardTheme.elevation);
+  expect(placeholderMaterial.elevation, theme.cardTheme.elevation);
   expect(placeholderMaterial.clipBehavior, bookMaterial.clipBehavior);
   expect(bookMargin.padding, theme.cardTheme.margin);
   expect(placeholderMargin.padding, theme.cardTheme.margin);

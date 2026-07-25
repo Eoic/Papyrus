@@ -1,7 +1,10 @@
+import 'dart:ui' show SemanticsAction, Tristate;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 
@@ -29,20 +32,43 @@ void main() {
       bool isFavorite = false,
       void Function(bool)? onToggleFavorite,
       VoidCallback? onTap,
+      VoidCallback? onSelectToggle,
+      VoidCallback? onEnterSelectionMode,
       bool showProgress = true,
+      bool isSelectionMode = false,
+      bool isSelected = false,
       AcquisitionJob? acquisitionJob,
+      Size cardSize = const Size(200, 300),
+      Size screenSize = const Size(400, 800),
+      ThemeData? theme,
     }) {
-      return createTestApp(
-        child: SizedBox(
-          width: 200,
-          height: 300,
-          child: BookCard(
-            book: book ?? testBook,
-            isFavorite: isFavorite,
-            onToggleFavorite: onToggleFavorite,
-            onTap: onTap,
-            showProgress: showProgress,
-            acquisitionJob: acquisitionJob,
+      final card = SizedBox(
+        width: cardSize.width,
+        height: cardSize.height,
+        child: BookCard(
+          book: book ?? testBook,
+          isFavorite: isFavorite,
+          onToggleFavorite: onToggleFavorite,
+          onTap: onTap,
+          onSelectToggle: onSelectToggle,
+          onEnterSelectionMode: onEnterSelectionMode,
+          showProgress: showProgress,
+          isSelectionMode: isSelectionMode,
+          isSelected: isSelected,
+          acquisitionJob: acquisitionJob,
+        ),
+      );
+
+      if (theme == null) {
+        return createTestApp(child: card, screenSize: screenSize);
+      }
+
+      return MaterialApp(
+        theme: theme,
+        home: MediaQuery(
+          data: MediaQueryData(size: screenSize),
+          child: Scaffold(
+            body: Align(alignment: Alignment.topLeft, child: card),
           ),
         ),
       );
@@ -116,6 +142,96 @@ void main() {
 
       expect(find.text('Downloading'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+
+    testWidgets('hides ordinary desktop menu for linked jobs only', (tester) async {
+      await tester.pumpWidget(buildCard(acquisitionJob: _acquisitionJob(), screenSize: const Size(900, 800)));
+
+      expect(find.byIcon(Icons.more_vert), findsNothing);
+
+      await tester.pumpWidget(buildCard(screenSize: const Size(900, 800)));
+
+      expect(find.byIcon(Icons.more_vert), findsOneWidget);
+    });
+
+    testWidgets('fits a narrow linked card without the format badge', (tester) async {
+      await tester.pumpWidget(
+        buildCard(acquisitionJob: _acquisitionJob(progressBasisPoints: 4200), cardSize: const Size(150, 300)),
+      );
+
+      final status = tester.widget<Text>(find.text('Downloading 42%'));
+
+      expect(find.text('EPUB'), findsNothing);
+      expect(status.maxLines, 1);
+      expect(status.overflow, TextOverflow.ellipsis);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('fits a narrow e-ink linked card with a long status', (tester) async {
+      await tester.pumpWidget(
+        buildCard(
+          acquisitionJob: _acquisitionJob(status: AcquisitionJobStatus.importing, progressBasisPoints: null),
+          cardSize: const Size(150, 300),
+          theme: AppTheme.eink,
+        ),
+      );
+
+      final status = tester.widget<Text>(find.text('Adding to library'));
+
+      expect(find.text('EPUB'), findsNothing);
+      expect(status.maxLines, 1);
+      expect(status.overflow, TextOverflow.ellipsis);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('exposes one selected linked acquisition action', (tester) async {
+      final semantics = tester.ensureSemantics();
+      var selections = 0;
+
+      try {
+        await tester.pumpWidget(
+          buildCard(
+            acquisitionJob: _acquisitionJob(),
+            isSelectionMode: true,
+            isSelected: true,
+            onSelectToggle: () => selections += 1,
+          ),
+        );
+
+        final finder = find.byKey(const ValueKey('linked-acquisition-book-card-job-1'));
+        final node = tester.getSemantics(finder);
+        final interactiveNodes = find.semantics
+            .byPredicate((candidate) => candidate.getSemanticsData().hasAction(SemanticsAction.tap))
+            .evaluate();
+
+        expect(node.flagsCollection.isButton, isTrue);
+        expect(node.flagsCollection.isSelected, Tristate.isTrue);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+        expect(interactiveNodes, hasLength(1));
+
+        tester.semantics.tap(find.semantics.byLabel(node.label));
+
+        expect(selections, 1);
+      } finally {
+        semantics.dispose();
+      }
+    });
+
+    testWidgets('linked acquisition without callbacks has state but no button action', (tester) async {
+      final semantics = tester.ensureSemantics();
+
+      try {
+        await tester.pumpWidget(buildCard(acquisitionJob: _acquisitionJob(), isSelected: true));
+
+        final node = tester.getSemantics(find.byKey(const ValueKey('linked-acquisition-book-card-job-1')));
+
+        expect(node.flagsCollection.isButton, isFalse);
+        expect(node.flagsCollection.isSelected, Tristate.isTrue);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.longPress), isFalse);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('shows unfilled heart when not favorite', (tester) async {

@@ -29,12 +29,13 @@ class AcquisitionPlaceholderListItem extends StatelessWidget {
     final effectiveTap = isSelectionMode ? onSelectToggle : onTap;
     final effectiveLongPress = isSelectionMode ? null : onEnterSelectionMode;
     final semanticLabel = <String>[job.title, status, ?details].join('. ');
+    final hasInteraction = effectiveTap != null || effectiveLongPress != null;
 
     return Semantics(
       key: ValueKey('acquisition-placeholder-list-item-${job.id}'),
       container: true,
       label: semanticLabel,
-      button: true,
+      button: hasInteraction,
       selected: isSelected,
       onTap: effectiveTap,
       onLongPress: effectiveLongPress,
@@ -48,12 +49,7 @@ class AcquisitionPlaceholderListItem extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
-                      width: isSelected ? BorderWidths.medium : BorderWidths.thin,
-                    ),
-                  ),
+                  border: Border(bottom: BorderSide(color: colorScheme.outlineVariant)),
                 ),
                 child: Row(
                   children: [

@@ -49,8 +49,10 @@ class _BookCardState extends State<BookCard> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final inSelection = widget.isSelectionMode;
+    final effectiveTap = inSelection ? widget.onSelectToggle : widget.onTap;
+    final effectiveLongPress = inSelection ? null : widget.onEnterSelectionMode;
 
-    return MouseRegion(
+    final card = MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
@@ -58,7 +60,7 @@ class _BookCardState extends State<BookCard> {
             ? null
             : (details) {
                 if (widget.acquisitionJob != null) {
-                  widget.onEnterSelectionMode?.call();
+                  effectiveLongPress?.call();
                   return;
                 }
 
@@ -66,9 +68,8 @@ class _BookCardState extends State<BookCard> {
               },
         child: Card(
           clipBehavior: Clip.antiAlias,
-          elevation: AppElevation.level1,
           child: InkWell(
-            onTap: inSelection ? widget.onSelectToggle : widget.onTap,
+            onTap: effectiveTap,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -117,49 +118,58 @@ class _BookCardState extends State<BookCard> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 _CardIconButton(icon: Icons.radio_button_unchecked, onTap: widget.onEnterSelectionMode),
-                                const SizedBox(width: Spacing.xs),
-                                _CardIconButton(
-                                  icon: Icons.more_vert,
-                                  onTap: () => showBookContextMenu(context: context, book: widget.book),
-                                ),
+                                if (widget.acquisitionJob == null) ...[
+                                  const SizedBox(width: Spacing.xs),
+                                  _CardIconButton(
+                                    icon: Icons.more_vert,
+                                    onTap: () => showBookContextMenu(context: context, book: widget.book),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                         ),
                       // Format badge
-                      Positioned(
-                        bottom: Spacing.xs,
-                        left: Spacing.xs,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                          ),
-                          child: Text(
-                            widget.book.formatLabel,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (widget.acquisitionJob case final job?)
+                      if (widget.acquisitionJob == null)
                         Positioned(
                           bottom: Spacing.xs,
-                          right: Spacing.xs,
+                          left: Spacing.xs,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: colorScheme.surface.withValues(alpha: 0.92),
+                              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Text(
-                              acquisitionStatusLabel(job),
+                              widget.book.formatLabel,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                                color: colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (widget.acquisitionJob case final job?)
+                        Positioned(
+                          bottom: Spacing.xs,
+                          left: Spacing.xs,
+                          right: Spacing.xs,
+                          child: Align(
+                            alignment: Alignment.bottomRight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface.withValues(alpha: 0.92),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                              ),
+                              child: Text(
+                                acquisitionStatusLabel(job),
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
@@ -222,6 +232,27 @@ class _BookCardState extends State<BookCard> {
           ),
         ),
       ),
+    );
+
+    final job = widget.acquisitionJob;
+
+    if (job == null) {
+      return card;
+    }
+
+    final details = acquisitionTransferDetails(job);
+    final semanticLabel = <String>[widget.book.title, acquisitionStatusLabel(job), ?details].join('. ');
+    final hasInteraction = effectiveTap != null || effectiveLongPress != null;
+
+    return Semantics(
+      key: ValueKey('linked-acquisition-book-card-${job.id}'),
+      container: true,
+      label: semanticLabel,
+      button: hasInteraction,
+      selected: widget.isSelected,
+      onTap: effectiveTap,
+      onLongPress: effectiveLongPress,
+      child: ExcludeSemantics(child: card),
     );
   }
 

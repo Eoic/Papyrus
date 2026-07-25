@@ -38,12 +38,13 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
     final effectiveTap = widget.isSelectionMode ? widget.onSelectToggle : widget.onTap;
     final effectiveLongPress = widget.isSelectionMode ? null : widget.onEnterSelectionMode;
     final semanticLabel = <String>[widget.job.title, status, ?details].join('. ');
+    final hasInteraction = effectiveTap != null || effectiveLongPress != null;
 
     return Semantics(
       key: ValueKey('acquisition-placeholder-card-${widget.job.id}'),
       container: true,
       label: semanticLabel,
-      button: true,
+      button: hasInteraction,
       selected: widget.isSelected,
       onTap: effectiveTap,
       onLongPress: effectiveLongPress,
@@ -55,7 +56,6 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
             onLongPress: effectiveLongPress,
             child: Card(
               clipBehavior: Clip.antiAlias,
-              elevation: AppElevation.level1,
               child: InkWell(
                 onTap: effectiveTap,
                 child: Column(

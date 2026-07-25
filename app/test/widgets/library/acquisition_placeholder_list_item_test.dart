@@ -3,9 +3,11 @@ import 'dart:ui' show SemanticsAction, Tristate;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_list_item.dart';
+import 'package:papyrus/widgets/library/book_list_item.dart';
 
 void main() {
   group('AcquisitionPlaceholderListItem', () {
@@ -123,6 +125,67 @@ void main() {
 
       expect(taps, 0);
       expect(toggles, 1);
+    });
+
+    testWidgets('without callbacks has no button role or actions', (tester) async {
+      final semantics = tester.ensureSemantics();
+
+      try {
+        await tester.pumpWidget(_buildListItem(job: _job()));
+
+        final node = tester.getSemantics(find.byKey(const ValueKey('acquisition-placeholder-list-item-job-1')));
+
+        expect(node.flagsCollection.isButton, isFalse);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.longPress), isFalse);
+      } finally {
+        semantics.dispose();
+      }
+    });
+
+    testWidgets('selected treatment matches an ordinary list item', (tester) async {
+      final book = Book(
+        id: 'book-1',
+        title: 'A Book',
+        author: 'An Author',
+        readingStatus: ReadingStatus.notStarted,
+        currentPosition: 0,
+        isFavorite: false,
+        fileFormat: BookFormat.epub,
+        addedAt: DateTime(2026),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(
+            body: Column(
+              children: [
+                BookListItem(book: book, isFavorite: false, isSelectionMode: true, isSelected: true),
+                AcquisitionPlaceholderListItem(job: _job(), isSelectionMode: true, isSelected: true),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final bookRoot = find.byType(BookListItem);
+      final placeholderRoot = find.byType(AcquisitionPlaceholderListItem);
+      final bookMaterial = tester.widget<Material>(
+        find.descendant(of: bookRoot, matching: find.byType(Material)).first,
+      );
+      final placeholderMaterial = tester.widget<Material>(
+        find.descendant(of: placeholderRoot, matching: find.byType(Material)).first,
+      );
+      final bookContainer = tester.widget<Container>(
+        find.descendant(of: bookRoot, matching: find.byType(Container)).first,
+      );
+      final placeholderContainer = tester.widget<Container>(
+        find.descendant(of: placeholderRoot, matching: find.byType(Container)).first,
+      );
+
+      expect(placeholderMaterial.color, bookMaterial.color);
+      expect(placeholderContainer.decoration, bookContainer.decoration);
     });
 
     testWidgets('fits a narrow row with large text', (tester) async {
