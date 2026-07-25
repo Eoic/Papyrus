@@ -36,49 +36,56 @@ class RemoteReleaseList extends StatelessWidget {
         ];
 
         return Semantics(
+          key: ValueKey('remote-release-${release.releaseToken}'),
           container: true,
           label: release.title,
+          button: true,
           selected: selected,
-          child: Material(
-            color: selected ? colorScheme.primaryContainer.withValues(alpha: 0.35) : Colors.transparent,
-            child: InkWell(
-              onTap: () => onToggleSelection(release.releaseToken),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-                child: Row(
-                  children: [
-                    Checkbox(value: selected, onChanged: (_) => onToggleSelection(release.releaseToken)),
-                    const SizedBox(width: Spacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            release.title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: Spacing.xs),
-                          Text(
-                            details.join(' · '),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (error != null) ...[
-                            const SizedBox(height: Spacing.xs),
+          onTap: () => onToggleSelection(release.releaseToken),
+          child: ExcludeSemantics(
+            child: Material(
+              color: selected ? colorScheme.primaryContainer.withValues(alpha: 0.35) : Colors.transparent,
+              child: InkWell(
+                onTap: () => onToggleSelection(release.releaseToken),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                  child: Row(
+                    children: [
+                      Checkbox(value: selected, onChanged: (_) => onToggleSelection(release.releaseToken)),
+                      const SizedBox(width: Spacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              error,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                              release.title,
+                              style: Theme.of(context).textTheme.titleMedium,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            const SizedBox(height: Spacing.xs),
+                            Text(
+                              details.join(' · '),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (error != null) ...[
+                              const SizedBox(height: Spacing.xs),
+                              Text(
+                                error,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

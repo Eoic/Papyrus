@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsFlag;
+import 'dart:ui' show SemanticsAction, SemanticsFlag, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,18 +100,49 @@ void main() {
     expect(toggled, ['token-1']);
   });
 
-  testWidgets('exposes title and selected state to semantics', (tester) async {
+  testWidgets('exposes one selected release row as an actionable semantic toggle', (tester) async {
     final semantics = tester.ensureSemantics();
 
     try {
       await tester.pumpWidget(buildList(selectedReleaseTokens: const {'token-1'}));
 
-      final releaseSemantics = find.byWidgetPredicate(
-        (widget) => widget is Semantics && widget.properties.label == release.title,
-      );
-      final semanticsNode = tester.getSemantics(releaseSemantics);
+      final releaseNodes = find.semantics.byLabel(release.title).evaluate().toList();
+      final releaseSemantics = tester.getSemantics(find.byKey(const ValueKey('remote-release-token-1')));
 
-      expect(semanticsNode.hasFlag(SemanticsFlag.isSelected), isTrue);
+      expect(releaseNodes, hasLength(1));
+      expect(releaseSemantics.label, release.title);
+      expect(releaseSemantics.flagsCollection.isButton, isTrue);
+      expect(releaseSemantics.flagsCollection.isSelected, Tristate.isTrue);
+      expect(releaseSemantics.hasFlag(SemanticsFlag.isSelected), isTrue);
+      expect(releaseSemantics.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      final unlabeledInteractiveNodes = find.semantics
+          .byPredicate(
+            (node) =>
+                node.label.isEmpty &&
+                (node.getSemanticsData().hasAction(SemanticsAction.tap) ||
+                    node.flagsCollection.isFocused != Tristate.none),
+          )
+          .evaluate();
+
+      expect(unlabeledInteractiveNodes, isEmpty);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('semantic tap toggles the unselected release exactly once', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final toggled = <String>[];
+
+    try {
+      await tester.pumpWidget(buildList(onToggleSelection: toggled.add));
+
+      final releaseSemantics = tester.getSemantics(find.byKey(const ValueKey('remote-release-token-1')));
+
+      expect(releaseSemantics.flagsCollection.isSelected, Tristate.isFalse);
+      tester.semantics.tap(find.semantics.byLabel(release.title));
+
+      expect(toggled, ['token-1']);
     } finally {
       semantics.dispose();
     }
