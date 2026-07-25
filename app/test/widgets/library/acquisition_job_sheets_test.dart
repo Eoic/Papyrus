@@ -117,6 +117,33 @@ void main() {
     expect(gateway.cancelledJobIds, ['job-1']);
   });
 
+  testWidgets('failed cancellation shows a safe message and reopens the actionable details', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.downloading);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+      cancelError: StateError('raw cancel failure at https://client.invalid?token=secret'),
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancel download'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not cancel the download. Try again.'), findsOneWidget);
+    expect(find.textContaining('client.invalid'), findsNothing);
+    expect(find.textContaining('secret'), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Cancel'), findsOneWidget);
+  });
+
   testWidgets('offers supported files only when file selection is needed', (tester) async {
     final job = _job(status: AcquisitionJobStatus.needsFileSelection);
     final gateway = _RecordingGateway(
@@ -162,6 +189,41 @@ void main() {
     expect(gateway.selectedFile, ('job-1', 2));
   });
 
+  testWidgets('failed file selection shows a safe message and keeps the choice retryable', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.needsFileSelection);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+      files: const [
+        AcquisitionFileCandidate(
+          index: 2,
+          name: 'Example Book.epub',
+          sizeBytes: 2 * 1024 * 1024,
+          progressBasisPoints: 10000,
+          priority: 1,
+          supported: true,
+        ),
+      ],
+      selectFileError: StateError('raw file failure at https://client.invalid?token=secret'),
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Example Book.epub'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not select the download file. Try again.'), findsOneWidget);
+    expect(find.textContaining('client.invalid'), findsNothing);
+    expect(find.textContaining('secret'), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('Example Book.epub'), findsOneWidget);
+  });
+
   testWidgets('offers Retry import only for retryable failed imports', (tester) async {
     final job = _job(status: AcquisitionJobStatus.failed, submittedAt: DateTime(2026));
     final gateway = _RecordingGateway(
@@ -186,6 +248,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(gateway.retriedJobIds, ['job-1']);
+  });
+
+  testWidgets('failed import retry shows a safe message and reopens the actionable details', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.failed, submittedAt: DateTime(2026));
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+      retryError: StateError('raw retry failure at https://client.invalid?token=secret'),
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Retry import'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not retry the download import. Try again.'), findsOneWidget);
+    expect(find.textContaining('client.invalid'), findsNothing);
+    expect(find.textContaining('secret'), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Retry import'), findsOneWidget);
   });
 
   testWidgets('terminal jobs expose no contextual actions', (tester) async {
@@ -482,12 +569,18 @@ class _RecordingGateway implements AcquisitionDownloadsGateway {
     this.files = const [],
     List<List<AcquisitionJob>> jobResponses = const [],
     List<Object>? fileResponses,
+    this.cancelError,
+    this.retryError,
+    this.selectFileError,
   }) : _jobResponses = [...jobResponses],
        _fileResponses = [...?fileResponses];
 
   final List<AcquisitionFileCandidate> files;
   final List<List<AcquisitionJob>> _jobResponses;
   final List<Object> _fileResponses;
+  final Object? cancelError;
+  final Object? retryError;
+  final Object? selectFileError;
   final List<String> cancelledJobIds = [];
   final List<String> retriedJobIds = [];
   List<AcquisitionJob> _lastJobs = const [];
@@ -496,6 +589,10 @@ class _RecordingGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<AcquisitionJob> cancelJob(String jobId) async {
+    if (cancelError case final error?) {
+      throw error;
+    }
+
     cancelledJobIds.add(jobId);
 
     return _job(status: AcquisitionJobStatus.cancelled);
@@ -541,6 +638,10 @@ class _RecordingGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<AcquisitionJob> retryJobImport(String jobId) async {
+    if (retryError case final error?) {
+      throw error;
+    }
+
     retriedJobIds.add(jobId);
 
     return _job(status: AcquisitionJobStatus.importing);
@@ -551,6 +652,10 @@ class _RecordingGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<AcquisitionJob> selectJobFile(String jobId, int fileIndex) async {
+    if (selectFileError case final error?) {
+      throw error;
+    }
+
     selectedFile = (jobId, fileIndex);
 
     return _job(status: AcquisitionJobStatus.importing);

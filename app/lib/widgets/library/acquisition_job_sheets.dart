@@ -53,20 +53,61 @@ Future<void> showAcquisitionJobDetailsSheet({
       currentJob = provider.jobById(job.id);
 
       if (confirmed && currentJob?.canCancel == true) {
-        await provider.cancelJob(job.id);
+        final outcome = await provider.cancelJob(job.id);
+
+        if (!context.mounted) {
+          return;
+        }
+
+        await _handleActionOutcome(context: context, provider: provider, job: job, outcome: outcome);
       }
     case _RetryImport():
       final currentJob = provider.jobById(job.id);
 
       if (currentJob?.canRetryImport == true) {
-        await provider.retryJobImport(job.id);
+        final outcome = await provider.retryJobImport(job.id);
+
+        if (!context.mounted) {
+          return;
+        }
+
+        await _handleActionOutcome(context: context, provider: provider, job: job, outcome: outcome);
       }
     case _SelectFile(:final index):
       final currentJob = provider.jobById(job.id);
 
       if (currentJob?.status == AcquisitionJobStatus.needsFileSelection) {
-        await provider.selectJobFile(job.id, index);
+        final outcome = await provider.selectJobFile(job.id, index);
+
+        if (!context.mounted) {
+          return;
+        }
+
+        await _handleActionOutcome(context: context, provider: provider, job: job, outcome: outcome);
       }
+  }
+}
+
+Future<void> _handleActionOutcome({
+  required BuildContext context,
+  required AcquisitionDownloadsProvider provider,
+  required AcquisitionJob job,
+  required AcquisitionJobActionOutcome outcome,
+}) async {
+  final message = outcome.error;
+
+  if (!context.mounted || message == null) {
+    return;
+  }
+
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
+
+  final currentJob = provider.jobById(job.id);
+
+  if (currentJob != null && context.mounted) {
+    await showAcquisitionJobDetailsSheet(context: context, provider: provider, job: currentJob);
   }
 }
 

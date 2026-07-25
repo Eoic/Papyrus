@@ -44,11 +44,20 @@ class LibraryPage extends StatefulWidget {
 
 enum _BooksPresentationMode { local, online }
 
+class _AcquisitionLibraryView {
+  const _AcquisitionLibraryView({required this.books, required this.placeholderJobs, required this.selectableJobs});
+
+  final List<Book> books;
+  final List<AcquisitionJob> placeholderJobs;
+  final List<AcquisitionJob> selectableJobs;
+}
+
 class _LibraryPageState extends State<LibraryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   AcquisitionDownloadsProvider? _visibleDownloadsProvider;
   _BooksPresentationMode _presentationMode = _BooksPresentationMode.local;
   bool _showDownloadingOnly = false;
+  int _presentationGeneration = 0;
   late final TextEditingController _onlineSearchController;
 
   @override
@@ -63,6 +72,7 @@ class _LibraryPageState extends State<LibraryPage> {
     final provider = context.read<AcquisitionDownloadsProvider?>();
 
     if (!identical(provider, _visibleDownloadsProvider)) {
+      _presentationGeneration += 1;
       _visibleDownloadsProvider?.setLibraryVisible(false);
       _visibleDownloadsProvider = provider;
       provider?.setLibraryVisible(true);
@@ -148,11 +158,19 @@ class _LibraryPageState extends State<LibraryPage> {
     bool isLoading,
   ) {
     final isOnline = _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
-    final hasJobSelection = downloadsProvider?.selectedJobIds.isNotEmpty == true;
     final isBookSelection = libraryProvider.isSelectionMode;
-    final hideLocalControls = isOnline || hasJobSelection || isBookSelection;
     final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
     final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
+    final acquisitionView = _buildAcquisitionLibraryView(
+      books: books,
+      items: localItems,
+      libraryProvider: libraryProvider,
+      showDownloadingOnly: showDownloadingOnly,
+    );
+    final selectedJobs = _visibleSelectedJobs(downloadsProvider, acquisitionView.selectableJobs);
+    final hasJobSelection = selectedJobs.isNotEmpty;
+    final hideLocalControls = isOnline || hasJobSelection || isBookSelection;
+    _pruneHiddenJobSelection(downloadsProvider, acquisitionView.selectableJobs);
     _clearUnavailableDownloadingFilter(localItems);
 
     return Scaffold(
@@ -167,7 +185,11 @@ class _LibraryPageState extends State<LibraryPage> {
               child: isOnline
                   ? _buildOnlineHeader(downloadsProvider)
                   : hasJobSelection
-                  ? _buildJobSelectionHeader(downloadsProvider!, includeActions: false)
+                  ? _buildJobSelectionHeader(
+                      downloadsProvider!,
+                      selectableJobs: acquisitionView.selectableJobs,
+                      includeActions: false,
+                    )
                   : isBookSelection
                   ? SelectionHeader(
                       selectedCount: libraryProvider.selectedCount,
@@ -227,9 +249,7 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
 
             // Book grid or list
-            Expanded(
-              child: _buildBookContent(context, books, dataStore, libraryProvider, downloadsProvider, isLoading),
-            ),
+            Expanded(child: _buildBookContent(context, libraryProvider, downloadsProvider, isLoading, acquisitionView)),
           ],
         ),
       ),
@@ -239,7 +259,7 @@ class _LibraryPageState extends State<LibraryPage> {
       bottomNavigationBar: isOnline && downloadsProvider.selectedReleaseTokens.isNotEmpty
           ? _buildMobileOnlineAction(downloadsProvider)
           : hasJobSelection
-          ? _buildMobileJobActions(downloadsProvider!)
+          ? _buildMobileJobActions(downloadsProvider!, selectedJobs)
           : isBookSelection
           ? buildMobileBottomActionBar(context, libraryProvider)
           : null,
@@ -421,6 +441,7 @@ class _LibraryPageState extends State<LibraryPage> {
     String initialQuery = '',
     bool submitImmediately = false,
   }) {
+    _presentationGeneration += 1;
     _onlineSearchController.text = initialQuery;
     setState(() => _presentationMode = _BooksPresentationMode.online);
 
@@ -430,6 +451,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   void _leaveOnlineMode(AcquisitionDownloadsProvider provider) {
+    _presentationGeneration += 1;
     provider.clearRemoteResults();
     setState(() => _presentationMode = _BooksPresentationMode.local);
   }
@@ -485,22 +507,30 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _submitSelected(AcquisitionDownloadsProvider provider) async {
+    final presentationGeneration = _presentationGeneration;
     final clients = provider.downloadClients;
     final client = clients.length == 1 ? clients.single : await _chooseDownloadClient(clients);
 
-    if (client == null || !mounted) {
+    if (client == null || !_isCurrentOnlinePresentation(provider, presentationGeneration)) {
       return;
     }
 
     final outcome = await provider.submitSelectedReleases(client.id);
 
-    if (!mounted) {
+    if (!_isCurrentOnlinePresentation(provider, presentationGeneration)) {
       return;
     }
 
     if (outcome.allSucceeded) {
       _leaveOnlineMode(provider);
     }
+  }
+
+  bool _isCurrentOnlinePresentation(AcquisitionDownloadsProvider provider, int presentationGeneration) {
+    return mounted &&
+        presentationGeneration == _presentationGeneration &&
+        _presentationMode == _BooksPresentationMode.online &&
+        identical(provider, _visibleDownloadsProvider);
   }
 
   Future<AcquisitionEndpoint?> _chooseDownloadClient(List<AcquisitionEndpoint> clients) {
@@ -537,25 +567,24 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildJobSelectionHeader(AcquisitionDownloadsProvider provider, {required bool includeActions}) {
+  Widget _buildJobSelectionHeader(
+    AcquisitionDownloadsProvider provider, {
+    required List<AcquisitionJob> selectableJobs,
+    required bool includeActions,
+  }) {
+    final selectedJobs = _visibleSelectedJobs(provider, selectableJobs);
+
     return SelectionHeader(
-      selectedCount: provider.selectedJobIds.length,
-      totalCount: provider.jobs.length,
+      selectedCount: selectedJobs.length,
+      totalCount: selectableJobs.length,
       onClose: provider.clearJobSelection,
-      onSelectAll: () {
-        for (final job in provider.jobs) {
-          if (!provider.selectedJobIds.contains(job.id)) {
-            provider.toggleJobSelection(job.id);
-          }
-        }
-      },
+      onSelectAll: () => provider.selectJobs(selectableJobs.map((job) => job.id)),
       onDeselectAll: provider.clearJobSelection,
-      actions: includeActions ? _buildJobActions(provider) : null,
+      actions: includeActions ? _buildJobActions(provider, selectedJobs) : null,
     );
   }
 
-  Widget _buildJobActions(AcquisitionDownloadsProvider provider) {
-    final selectedJobs = _selectedJobs(provider);
+  Widget _buildJobActions(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) {
     final canCancel = selectedJobs.isNotEmpty && selectedJobs.every((job) => job.canCancel);
     final canRetry = selectedJobs.isNotEmpty && selectedJobs.every((job) => job.canRetryImport);
     final canRemove =
@@ -569,19 +598,19 @@ class _LibraryPageState extends State<LibraryPage> {
       children: [
         if (canCancel)
           FilledButton.icon(
-            onPressed: () => _cancelSelectedJobs(provider),
+            onPressed: () => _cancelSelectedJobs(provider, selectedJobs),
             icon: const Icon(Icons.stop_circle_outlined),
             label: const Text('Cancel'),
           ),
         if (canRetry)
           FilledButton.icon(
-            onPressed: () => _retrySelectedJobs(provider),
+            onPressed: () => _retrySelectedJobs(provider, selectedJobs),
             icon: const Icon(Icons.refresh),
             label: const Text('Try again'),
           ),
         if (canRemove)
           FilledButton.icon(
-            onPressed: () => _removeSelectedJobs(provider),
+            onPressed: () => _removeSelectedJobs(provider, selectedJobs),
             icon: const Icon(Icons.delete_outline),
             label: const Text('Remove'),
           ),
@@ -589,19 +618,14 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildMobileJobActions(AcquisitionDownloadsProvider provider) {
+  Widget _buildMobileJobActions(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) {
     return SafeArea(
       top: false,
-      child: Padding(padding: const EdgeInsets.all(Spacing.md), child: _buildJobActions(provider)),
+      child: Padding(padding: const EdgeInsets.all(Spacing.md), child: _buildJobActions(provider, selectedJobs)),
     );
   }
 
-  List<AcquisitionJob> _selectedJobs(AcquisitionDownloadsProvider provider) {
-    return provider.jobs.where((job) => provider.selectedJobIds.contains(job.id)).toList();
-  }
-
-  Future<void> _cancelSelectedJobs(AcquisitionDownloadsProvider provider) async {
-    final selectedJobs = _selectedJobs(provider);
+  Future<void> _cancelSelectedJobs(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) async {
     final confirmed = await showAcquisitionConfirmationDialog(
       context: context,
       title: 'Cancel downloads',
@@ -610,22 +634,18 @@ class _LibraryPageState extends State<LibraryPage> {
     );
 
     if (confirmed) {
-      await provider.cancelSelectedJobs();
+      final outcome = await provider.cancelSelectedJobs();
+      _showJobActionFailure(outcome);
     }
   }
 
-  Future<void> _retrySelectedJobs(AcquisitionDownloadsProvider provider) async {
-    final jobIds = _selectedJobs(provider).map((job) => job.id).toList();
-
-    for (final jobId in jobIds) {
-      await provider.retryJobImport(jobId);
-    }
-
-    provider.clearJobSelection();
+  Future<void> _retrySelectedJobs(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) async {
+    provider.retainJobSelection(selectedJobs.map((job) => job.id).toSet());
+    final outcome = await provider.retrySelectedJobs();
+    _showJobActionFailure(outcome);
   }
 
-  Future<void> _removeSelectedJobs(AcquisitionDownloadsProvider provider) async {
-    final selectedJobs = _selectedJobs(provider);
+  Future<void> _removeSelectedJobs(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) async {
     final confirmed = await showAcquisitionConfirmationDialog(
       context: context,
       title: 'Remove downloads',
@@ -634,8 +654,21 @@ class _LibraryPageState extends State<LibraryPage> {
     );
 
     if (confirmed) {
-      await provider.removeSelectedJobs();
+      final outcome = await provider.removeSelectedJobs();
+      _showJobActionFailure(outcome);
     }
+  }
+
+  void _showJobActionFailure(AcquisitionJobActionOutcome outcome) {
+    final message = outcome.error;
+
+    if (!mounted || message == null) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   // ============================================================================
@@ -710,10 +743,18 @@ class _LibraryPageState extends State<LibraryPage> {
   ) {
     const double controlHeight = 40.0;
     final isOnline = _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
-    final hasJobSelection = downloadsProvider?.selectedJobIds.isNotEmpty == true;
     final isBookSelection = libraryProvider.isSelectionMode;
     final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
     final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
+    final acquisitionView = _buildAcquisitionLibraryView(
+      books: books,
+      items: localItems,
+      libraryProvider: libraryProvider,
+      showDownloadingOnly: showDownloadingOnly,
+    );
+    final selectedJobs = _visibleSelectedJobs(downloadsProvider, acquisitionView.selectableJobs);
+    final hasJobSelection = selectedJobs.isNotEmpty;
+    _pruneHiddenJobSelection(downloadsProvider, acquisitionView.selectableJobs);
     _clearUnavailableDownloadingFilter(localItems);
 
     return CallbackShortcuts(
@@ -744,7 +785,11 @@ class _LibraryPageState extends State<LibraryPage> {
                 child: isOnline
                     ? _buildOnlineHeader(downloadsProvider)
                     : hasJobSelection
-                    ? _buildJobSelectionHeader(downloadsProvider!, includeActions: true)
+                    ? _buildJobSelectionHeader(
+                        downloadsProvider!,
+                        selectableJobs: acquisitionView.selectableJobs,
+                        includeActions: true,
+                      )
                     : isBookSelection
                     ? SelectionHeader(
                         selectedCount: libraryProvider.selectedCount,
@@ -811,7 +856,7 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
               // Book grid or list
               Expanded(
-                child: _buildBookContent(context, books, dataStore, libraryProvider, downloadsProvider, isLoading),
+                child: _buildBookContent(context, libraryProvider, downloadsProvider, isLoading, acquisitionView),
               ),
             ],
           ),
@@ -822,11 +867,10 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildBookContent(
     BuildContext context,
-    List<Book> books,
-    DataStore dataStore,
     LibraryProvider libraryProvider,
     AcquisitionDownloadsProvider? downloadsProvider,
     bool isLoading,
+    _AcquisitionLibraryView acquisitionView,
   ) {
     if (_presentationMode == _BooksPresentationMode.online && downloadsProvider != null) {
       return OnlineResultsView(
@@ -837,7 +881,7 @@ class _LibraryPageState extends State<LibraryPage> {
         releases: downloadsProvider.remoteResults,
         selectedReleaseTokens: downloadsProvider.selectedReleaseTokens,
         errorsByReleaseToken: downloadsProvider.submissionErrorsByReleaseToken,
-        onRetry: () => downloadsProvider.searchRemote(_onlineSearchController.text),
+        onRetry: () => downloadsProvider.searchRemote(downloadsProvider.remoteQuery ?? _onlineSearchController.text),
         onToggleSelection: downloadsProvider.toggleReleaseSelection,
       );
     }
@@ -846,16 +890,8 @@ class _LibraryPageState extends State<LibraryPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final items = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
-    final showDownloadingOnly = _showDownloadingOnly && items.hasDownloadingItems;
-    final visibleBooks = showDownloadingOnly
-        ? books.where((book) => items.downloadingBookIds.contains(book.id)).toList()
-        : books;
-    final candidatePlaceholders = showDownloadingOnly ? items.downloadingOrphanJobs : items.orphanJobs;
-    final normalizedQuery = libraryProvider.searchQuery.trim().toLowerCase();
-    final visiblePlaceholderJobs = normalizedQuery.isEmpty
-        ? candidatePlaceholders
-        : candidatePlaceholders.where((job) => job.title.toLowerCase().contains(normalizedQuery)).toList();
+    final visibleBooks = acquisitionView.books;
+    final visiblePlaceholderJobs = acquisitionView.placeholderJobs;
 
     if (visibleBooks.isEmpty && visiblePlaceholderJobs.isEmpty) {
       return _buildEmptyState(libraryProvider, downloadsProvider);
@@ -875,7 +911,7 @@ class _LibraryPageState extends State<LibraryPage> {
       return _buildBookList(
         context,
         visibleBooks,
-        linkedJobsByBookId: items.linkedJobsByBookId,
+        linkedJobsByBookId: _linkedJobsByBookId(acquisitionView.selectableJobs),
         placeholderJobs: visiblePlaceholderJobs,
         downloadsProvider: downloadsProvider,
         onAcquisitionTap: showJob,
@@ -885,13 +921,86 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return BookGrid(
       books: visibleBooks,
-      acquisitionJobsByBookId: items.linkedJobsByBookId,
+      acquisitionJobsByBookId: _linkedJobsByBookId(acquisitionView.selectableJobs),
       placeholderJobs: visiblePlaceholderJobs,
       selectedAcquisitionJobIds: downloadsProvider?.selectedJobIds ?? const {},
       onAcquisitionTap: showJob,
       onAcquisitionSelectionToggle: toggleJob,
       onBookTap: (book) => _navigateToBookDetails(context, book),
     );
+  }
+
+  _AcquisitionLibraryView _buildAcquisitionLibraryView({
+    required List<Book> books,
+    required AcquisitionLibraryItems items,
+    required LibraryProvider libraryProvider,
+    required bool showDownloadingOnly,
+  }) {
+    final visibleBooks = showDownloadingOnly
+        ? books.where((book) => items.downloadingBookIds.contains(book.id)).toList()
+        : books;
+    final candidatePlaceholders = showDownloadingOnly ? items.downloadingOrphanJobs : items.orphanJobs;
+    final normalizedQuery = libraryProvider.searchQuery.trim().toLowerCase();
+    final visiblePlaceholderJobs = normalizedQuery.isEmpty
+        ? candidatePlaceholders
+        : candidatePlaceholders.where((job) => job.title.toLowerCase().contains(normalizedQuery)).toList();
+    final selectableJobs = <AcquisitionJob>[];
+    final seenJobIds = <String>{};
+
+    for (final book in visibleBooks) {
+      final job = items.linkedJobsByBookId[book.id];
+
+      if (job != null && seenJobIds.add(job.id)) {
+        selectableJobs.add(job);
+      }
+    }
+
+    for (final job in visiblePlaceholderJobs) {
+      if (seenJobIds.add(job.id)) {
+        selectableJobs.add(job);
+      }
+    }
+
+    return _AcquisitionLibraryView(
+      books: List.unmodifiable(visibleBooks),
+      placeholderJobs: List.unmodifiable(visiblePlaceholderJobs),
+      selectableJobs: List.unmodifiable(selectableJobs),
+    );
+  }
+
+  List<AcquisitionJob> _visibleSelectedJobs(
+    AcquisitionDownloadsProvider? provider,
+    List<AcquisitionJob> selectableJobs,
+  ) {
+    if (provider == null) {
+      return const [];
+    }
+
+    return selectableJobs.where((job) => provider.selectedJobIds.contains(job.id)).toList();
+  }
+
+  Map<String, AcquisitionJob> _linkedJobsByBookId(List<AcquisitionJob> selectableJobs) {
+    return {for (final job in selectableJobs) ?job.bookId: job};
+  }
+
+  void _pruneHiddenJobSelection(AcquisitionDownloadsProvider? provider, List<AcquisitionJob> selectableJobs) {
+    if (provider == null || provider.selectedJobIds.isEmpty) {
+      return;
+    }
+
+    final selectableJobIds = selectableJobs.map((job) => job.id).toSet();
+
+    if (provider.selectedJobIds.every(selectableJobIds.contains)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !identical(context.read<AcquisitionDownloadsProvider?>(), provider)) {
+        return;
+      }
+
+      provider.retainJobSelection(selectableJobIds);
+    });
   }
 
   void _clearUnavailableDownloadingFilter(AcquisitionLibraryItems items) {

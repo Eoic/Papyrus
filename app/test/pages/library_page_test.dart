@@ -40,9 +40,15 @@ void main() {
       DataStore? store,
       AcquisitionDownloadsProvider? downloadsProvider,
       ThemeData? theme,
+      TextScaler textScaler = TextScaler.noScaling,
     }) {
+      final page = theme == null ? const LibraryPage() : Theme(data: theme, child: const LibraryPage());
+
       return createTestPage(
-        page: theme == null ? const LibraryPage() : Theme(data: theme, child: const LibraryPage()),
+        page: MediaQuery(
+          data: MediaQueryData(size: screenSize, textScaler: textScaler),
+          child: page,
+        ),
         libraryProvider: provider ?? libraryProvider,
         dataStore: store ?? dataStore,
         screenSize: screenSize,
@@ -227,6 +233,55 @@ void main() {
         downloadsProvider.dispose();
       });
 
+      testWidgets('Back invalidates a hung search so a new online session can search immediately', (tester) async {
+        final oldSearch = Completer<List<TorrentRelease>>();
+        final gateway = _LibraryAcquisitionGateway(
+          searchResponses: [
+            oldSearch.future,
+            const [
+              TorrentRelease(title: 'New result', releaseToken: 'new-token', protocol: 'torrent', indexer: 'Prowlarr'),
+            ],
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Old query');
+
+        await tester.pumpWidget(
+          buildPage(
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Old query”'));
+        await tester.pump();
+        expect(downloadsProvider.isSearching, isTrue);
+
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        expect(downloadsProvider.isSearching, isFalse);
+
+        libraryProvider.setSearchQuery('New query');
+        await tester.pump();
+        await tester.tap(find.text('Search online for “New query”'));
+        await tester.pumpAndSettle();
+
+        expect(downloadsProvider.remoteQuery, 'New query');
+        expect(find.text('New result'), findsOneWidget);
+
+        oldSearch.complete(const [
+          TorrentRelease(title: 'Old result', releaseToken: 'old-token', protocol: 'torrent', indexer: 'Prowlarr'),
+        ]);
+        await tester.pumpAndSettle();
+
+        expect(downloadsProvider.remoteQuery, 'New query');
+        expect(find.text('New result'), findsOneWidget);
+        expect(find.text('Old result'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
       testWidgets('Add book enters online mode without searching', (tester) async {
         tester.view.devicePixelRatio = 1;
         tester.view.physicalSize = const Size(1400, 1000);
@@ -289,6 +344,140 @@ void main() {
         expect(libraryProvider.searchQuery, 'Dune Messiah');
 
         downloadsProvider.dispose();
+      });
+
+      testWidgets('an old successful submission cannot close a newer online session', (tester) async {
+        final submission = Completer<BatchSubmissionResponse>();
+        final gateway = _LibraryAcquisitionGateway(
+          submissionCompleter: submission,
+          searchResponses: const [
+            [TorrentRelease(title: 'Old result', releaseToken: 'old-token', protocol: 'torrent', indexer: 'Prowlarr')],
+            [TorrentRelease(title: 'New result', releaseToken: 'new-token', protocol: 'torrent', indexer: 'Prowlarr')],
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Old query');
+
+        await tester.pumpWidget(
+          buildPage(
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Old query”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox));
+        await tester.pump();
+        await tester.tap(find.text('Download'));
+        await tester.pump();
+
+        expect(downloadsProvider.isSubmitting, isTrue);
+
+        await tester.tap(find.byTooltip('Exit selection'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        libraryProvider.setSearchQuery('New query');
+        await tester.pump();
+        await tester.tap(find.text('Search online for “New query”'));
+        await tester.pumpAndSettle();
+
+        expect(downloadsProvider.remoteQuery, 'New query');
+        expect(find.text('New result'), findsOneWidget);
+
+        submission.complete(
+          BatchSubmissionResponse(
+            items: [
+              BatchSubmissionItem(
+                index: 0,
+                job: _libraryJob(
+                  AcquisitionJobStatus.submitted,
+                  id: 'old-submission',
+                  bookId: null,
+                  title: 'Old result',
+                ),
+                error: null,
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(downloadsProvider.remoteQuery, 'New query');
+        expect(find.text('New result'), findsOneWidget);
+        expect(downloadsProvider.jobs.map((job) => job.id), contains('old-submission'));
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('a submission from a replaced provider cannot clear the current online state', (tester) async {
+        final submission = Completer<BatchSubmissionResponse>();
+        final oldProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(submissionCompleter: submission),
+          pollingInterval: Duration.zero,
+        );
+        final currentProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(),
+          pollingInterval: Duration.zero,
+        );
+        await oldProvider.refreshConfiguration();
+        currentProvider.setRemoteResults('Current query', const [
+          TorrentRelease(
+            title: 'Current result',
+            releaseToken: 'current-token',
+            protocol: 'torrent',
+            indexer: 'Prowlarr',
+          ),
+        ]);
+        libraryProvider.setSearchQuery('Old query');
+
+        await tester.pumpWidget(
+          buildPage(
+            store: createTestDataStore(books: []),
+            downloadsProvider: oldProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Old query”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox));
+        await tester.pump();
+        await tester.tap(find.text('Download'));
+        await tester.pump();
+
+        await tester.pumpWidget(
+          buildPage(
+            store: createTestDataStore(books: []),
+            downloadsProvider: currentProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(find.text('Current result'), findsOneWidget);
+
+        submission.complete(
+          BatchSubmissionResponse(
+            items: [
+              BatchSubmissionItem(
+                index: 0,
+                job: _libraryJob(AcquisitionJobStatus.submitted, id: 'old-job', bookId: null),
+                error: null,
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(currentProvider.remoteQuery, 'Current query');
+        expect(find.text('Current result'), findsOneWidget);
+
+        oldProvider.dispose();
+        currentProvider.dispose();
       });
 
       testWidgets('Deselect all clears every selected online release', (tester) async {
@@ -432,6 +621,7 @@ void main() {
         expect(gateway.searchQueries, ['Dune Messiah']);
 
         gateway.failSearch = false;
+        await tester.enterText(find.byType(TextField).first, 'Edited query');
         await tester.tap(find.text('Try again'));
         await tester.pumpAndSettle();
 
@@ -654,6 +844,142 @@ void main() {
         downloadsProvider.dispose();
       });
 
+      testWidgets('failed bulk cancellation shows a safe message and retains selection', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [_libraryJob(AcquisitionJobStatus.downloading, bookId: null)],
+          cancelError: StateError('raw cancel failure at https://client.invalid?token=secret'),
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel downloads').last);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Could not cancel the download. Try again.'), findsOneWidget);
+        expect(find.textContaining('client.invalid'), findsNothing);
+        expect(find.textContaining('secret'), findsNothing);
+        expect(downloadsProvider.selectedJobIds, {'job-1'});
+        expect(find.byType(SelectionHeader), findsOneWidget);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('download Select all includes only rendered jobs and keeps valid actions enabled', (tester) async {
+        final store = createTestDataStore(
+          books: [
+            Book(id: 'visible-1', title: 'Visible one', author: 'Author', addedAt: DateTime(2026)),
+            Book(id: 'visible-2', title: 'Visible two', author: 'Author', addedAt: DateTime(2026)),
+            Book(id: 'hidden', title: 'Hidden', author: 'Author', addedAt: DateTime(2026)),
+          ],
+        );
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [
+            _libraryJob(AcquisitionJobStatus.downloading, id: 'visible-job-1', bookId: 'visible-1'),
+            _libraryJob(AcquisitionJobStatus.downloading, id: 'visible-job-2', bookId: 'visible-2'),
+            _libraryJob(AcquisitionJobStatus.failed, id: 'hidden-job', bookId: 'hidden', retryable: true),
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshJobs();
+        libraryProvider.setSearchQuery('Visible');
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(1200, 900), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        final firstVisibleCard = tester
+            .widgetList<BookCard>(find.byType(BookCard))
+            .firstWhere((card) => card.acquisitionJob?.id == 'visible-job-1');
+        firstVisibleCard.onEnterSelectionMode!();
+        await tester.pump();
+        await tester.tap(find.text('Select all'));
+        await tester.pump();
+
+        expect(downloadsProvider.selectedJobIds, {'visible-job-1', 'visible-job-2'});
+        expect(find.text('2 selected'), findsOneWidget);
+        expect(find.widgetWithText(FilledButton, 'Cancel'), findsOneWidget);
+        expect(find.text('Try again'), findsNothing);
+        expect(find.text('Remove'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('filtering a selected download out of the grid prunes its selection', (tester) async {
+        final store = createTestDataStore(
+          books: [Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026))],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [_libraryJob(AcquisitionJobStatus.downloading, id: 'linked-job', bookId: 'linked-book')],
+          ),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(1200, 900), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        tester.widget<BookCard>(find.byType(BookCard)).onEnterSelectionMode!();
+        await tester.pump();
+        expect(downloadsProvider.selectedJobIds, {'linked-job'});
+
+        libraryProvider.addFilter(LibraryFilterType.finished);
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.byType(BookCard), findsNothing);
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+        expect(find.byType(SelectionHeader), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('completed linked download is pruned from selection when it stops rendering', (tester) async {
+        final jobs = [_libraryJob(AcquisitionJobStatus.downloading, id: 'linked-job', bookId: 'linked-book')];
+        final store = createTestDataStore(
+          books: [Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026))],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(jobs: jobs),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(1200, 900), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        tester.widget<BookCard>(find.byType(BookCard)).onEnterSelectionMode!();
+        await tester.pump();
+        expect(downloadsProvider.selectedJobIds, {'linked-job'});
+
+        jobs[0] = _libraryJob(AcquisitionJobStatus.completed, id: 'linked-job', bookId: 'linked-book');
+        await downloadsProvider.refreshJobs();
+        await tester.pump();
+        await tester.pump();
+
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+        expect(find.byType(SelectionHeader), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
       testWidgets('cancelled download selection offers only Remove after confirmation', (tester) async {
         final gateway = _LibraryAcquisitionGateway(jobs: [_libraryJob(AcquisitionJobStatus.cancelled, bookId: null)]);
         final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
@@ -682,6 +1008,38 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(gateway.removedJobIds, ['job-1']);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('failed bulk removal shows a safe message and retains selection', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [_libraryJob(AcquisitionJobStatus.cancelled, bookId: null)],
+          removeError: StateError('raw remove failure at https://client.invalid?token=secret'),
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+        await tester.tap(find.text('Remove'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Remove').last);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Could not remove the download. Try again.'), findsOneWidget);
+        expect(find.textContaining('client.invalid'), findsNothing);
+        expect(find.textContaining('secret'), findsNothing);
+        expect(downloadsProvider.selectedJobIds, {'job-1'});
+        expect(find.byType(SelectionHeader), findsOneWidget);
 
         downloadsProvider.dispose();
       });
@@ -765,6 +1123,36 @@ void main() {
 
         expect(gateway.retriedJobIds, ['job-1']);
         expect(downloadsProvider.selectedJobIds, isEmpty);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('failed bulk retry shows a safe message and retains selection', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [_libraryJob(AcquisitionJobStatus.failed, bookId: null, retryable: true)],
+          retryError: StateError('raw retry failure at https://client.invalid?token=secret'),
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Could not retry the download import. Try again.'), findsOneWidget);
+        expect(find.textContaining('client.invalid'), findsNothing);
+        expect(find.textContaining('secret'), findsNothing);
+        expect(downloadsProvider.selectedJobIds, {'job-1'});
+        expect(find.byType(SelectionHeader), findsOneWidget);
 
         downloadsProvider.dispose();
       });
@@ -968,6 +1356,39 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(EmptyState), findsOneWidget);
+      });
+
+      testWidgets('desktop online mode supports the e-ink theme and enlarged text', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(1200, 1000);
+        addTearDown(tester.view.reset);
+
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('A deliberately long online book query');
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(1200, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+            theme: AppTheme.eink,
+            textScaler: const TextScaler.linear(2),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “A deliberately long online book query”'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(find.byType(OnlineResultsView), findsOneWidget);
+        expect(find.text('Remote result'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        downloadsProvider.dispose();
       });
     });
 
@@ -1279,7 +1700,12 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
   final int releaseCount;
   final int clientCount;
   final Completer<List<TorrentRelease>>? searchCompleter;
+  final Completer<BatchSubmissionResponse>? submissionCompleter;
+  final List<Object> _searchResponses;
   final Set<int> failedSubmissionIndexes;
+  final Object? cancelError;
+  final Object? retryError;
+  final Object? removeError;
   bool failSearch;
   List<String> submittedTokens = [];
   String? submittedEndpointId;
@@ -1294,9 +1720,14 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
     this.releaseCount = 1,
     this.clientCount = 1,
     this.searchCompleter,
+    this.submissionCompleter,
+    List<Object> searchResponses = const [],
     this.failedSubmissionIndexes = const {},
+    this.cancelError,
+    this.retryError,
+    this.removeError,
     this.failSearch = false,
-  });
+  }) : _searchResponses = [...searchResponses];
 
   @override
   Future<List<AcquisitionEndpoint>> listEndpoints() async => [
@@ -1331,6 +1762,19 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
       throw StateError('raw source failure');
     }
 
+    if (_searchResponses.isNotEmpty) {
+      final response = _searchResponses.removeAt(0);
+
+      if (response is Future<List<TorrentRelease>>) {
+        return response;
+      }
+      if (response is List<TorrentRelease>) {
+        return response;
+      }
+
+      throw response;
+    }
+
     if (searchCompleter case final completer?) {
       return completer.future;
     }
@@ -1356,6 +1800,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
   }) async {
     submittedTokens = releases.map((release) => release.releaseToken).toList();
     submittedEndpointId = endpointId;
+
+    if (submissionCompleter case final completer?) {
+      return completer.future;
+    }
 
     return BatchSubmissionResponse(
       items: [
@@ -1388,6 +1836,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<AcquisitionJob> cancelJob(String jobId) async {
+    if (cancelError case final error?) {
+      throw error;
+    }
+
     cancelledJobIds.add(jobId);
 
     return _libraryJob(AcquisitionJobStatus.cancelled);
@@ -1395,6 +1847,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<AcquisitionJob> retryJobImport(String jobId) async {
+    if (retryError case final error?) {
+      throw error;
+    }
+
     retriedJobIds.add(jobId);
 
     return _libraryJob(AcquisitionJobStatus.downloading);
@@ -1402,6 +1858,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<void> removeJob(String jobId) async {
+    if (removeError case final error?) {
+      throw error;
+    }
+
     removedJobIds.add(jobId);
   }
 
