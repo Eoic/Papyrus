@@ -6,7 +6,7 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Choice sheet for selecting how to add a book: digital import or physical.
 class AddBookChoiceSheet extends StatelessWidget {
-  const AddBookChoiceSheet({required this.callerContext, super.key});
+  const AddBookChoiceSheet({required this.callerContext, this.onFindOnline, super.key});
 
   /// The context of the page that opened this sheet.
   ///
@@ -14,8 +14,11 @@ class AddBookChoiceSheet extends StatelessWidget {
   /// dialog/bottom-sheet's own context becomes invalid after popping.
   final BuildContext callerContext;
 
+  /// Called after the sheet closes when the user chooses online search.
+  final VoidCallback? onFindOnline;
+
   /// Show the choice sheet as a modal bottom sheet.
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {VoidCallback? onFindOnline}) {
     return showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -23,7 +26,7 @@ class AddBookChoiceSheet extends StatelessWidget {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (_) => Padding(
         padding: const EdgeInsets.only(left: Spacing.lg, right: Spacing.lg, top: Spacing.md, bottom: Spacing.lg),
-        child: AddBookChoiceSheet(callerContext: context),
+        child: AddBookChoiceSheet(callerContext: context, onFindOnline: onFindOnline),
       ),
     );
   }
@@ -59,6 +62,18 @@ class AddBookChoiceSheet extends StatelessWidget {
             AddPhysicalBookSheet.show(callerContext);
           },
         ),
+        if (onFindOnline != null) ...[
+          const SizedBox(height: Spacing.sm),
+          _ChoiceOption(
+            icon: Icons.travel_explore_outlined,
+            title: 'Find books online',
+            subtitle: 'Search connected book sources',
+            onTap: () {
+              Navigator.of(context).pop();
+              onFindOnline!();
+            },
+          ),
+        ],
       ],
     );
   }

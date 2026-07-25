@@ -37,6 +37,40 @@ void main() {
     expect(find.text('EPUB, PDF, AZW3, MOBI, CBZ/CBR'), findsOneWidget);
   });
 
+  testWidgets('does not show the online search option without a callback', (tester) async {
+    await pumpLauncher(
+      tester,
+      (context) =>
+          () => AddBookChoiceSheet.show(context),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Find books online'), findsNothing);
+  });
+
+  testWidgets('shows the online search option and invokes its callback after closing', (tester) async {
+    var findOnlineCalls = 0;
+
+    await pumpLauncher(
+      tester,
+      (context) =>
+          () => AddBookChoiceSheet.show(context, onFindOnline: () => findOnlineCalls++),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.travel_explore_outlined), findsOneWidget);
+    expect(find.text('Find books online'), findsOneWidget);
+    expect(find.text('Search connected book sources'), findsOneWidget);
+
+    await tester.tap(find.text('Find books online'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(findOnlineCalls, 1);
+  });
+
   testWidgets('import book opens as a format-neutral bottom sheet on desktop', (tester) async {
     await pumpLauncher(
       tester,
