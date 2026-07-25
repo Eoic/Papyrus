@@ -147,6 +147,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   bool _isForeground = true;
   bool _disposed = false;
   int _generation = 0;
+  int _remoteStateGeneration = 0;
 
   AcquisitionDownloadsProvider({
     AcquisitionDownloadsGateway? gateway,
@@ -257,6 +258,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     _generation += 1;
+    _remoteStateGeneration += 1;
     _pollTimer?.cancel();
     _gateway?.close();
     _gateway = gateway;
@@ -371,6 +373,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
+    _remoteStateGeneration += 1;
     _isSearching = true;
     _remoteQuery = normalized;
     _remoteResults = const [];
@@ -405,6 +408,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       return;
     }
 
+    _remoteStateGeneration += 1;
     _remoteQuery = query;
     _remoteResults = List.unmodifiable(results);
     _selectedReleaseTokens.clear();
@@ -418,6 +422,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       return;
     }
 
+    _remoteStateGeneration += 1;
     _remoteQuery = null;
     _remoteResults = const [];
     _selectedReleaseTokens.clear();
@@ -487,6 +492,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
+    final remoteStateGeneration = _remoteStateGeneration;
     final selected = _remoteResults.where((release) => _selectedReleaseTokens.contains(release.releaseToken)).toList();
 
     if (selected.isEmpty) {
@@ -505,6 +511,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       }
 
       final resultIndexes = <int>{};
+      final successfulReleaseTokens = <String>{};
       final failuresByReleaseToken = <String, String>{};
       var successfulCount = 0;
 
@@ -522,7 +529,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
         if (item.job case final job?) {
           _jobs[job.id] = job;
-          _selectedReleaseTokens.remove(releaseToken);
+          successfulReleaseTokens.add(releaseToken);
           successfulCount += 1;
         } else {
           failuresByReleaseToken[releaseToken] = submissionErrorMessage(item.error);
@@ -536,7 +543,12 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
         }
       }
 
-      _submissionErrorsByReleaseToken = Map.unmodifiable(failuresByReleaseToken);
+      if (_remoteStateGeneration == remoteStateGeneration) {
+        _selectedReleaseTokens.removeAll(successfulReleaseTokens);
+        _selectedReleaseTokens.addAll(failuresByReleaseToken.keys);
+        _submissionErrorsByReleaseToken = Map.unmodifiable(failuresByReleaseToken);
+      }
+
       _schedulePolling();
 
       return AcquisitionSubmissionOutcome(
@@ -548,7 +560,10 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
         final failuresByReleaseToken = {
           for (final release in selected) release.releaseToken: submissionErrorMessage(error.toString()),
         };
-        _submissionErrorsByReleaseToken = Map.unmodifiable(failuresByReleaseToken);
+        if (_remoteStateGeneration == remoteStateGeneration) {
+          _selectedReleaseTokens.addAll(failuresByReleaseToken.keys);
+          _submissionErrorsByReleaseToken = Map.unmodifiable(failuresByReleaseToken);
+        }
 
         return AcquisitionSubmissionOutcome(successfulCount: 0, failuresByReleaseToken: failuresByReleaseToken);
       }

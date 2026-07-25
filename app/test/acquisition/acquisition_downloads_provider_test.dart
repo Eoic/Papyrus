@@ -228,6 +228,68 @@ void main() {
     provider.dispose();
   });
 
+  test('reselects a failed release that was toggled off while submitting', () async {
+    final submission = Completer<BatchSubmissionResponse>();
+    final gateway = _FakeGateway(batchCompleter: submission);
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    const release = TorrentRelease(title: 'One', releaseToken: 'token-1', protocol: 'torrent', indexer: 'Prowlarr');
+
+    provider.setRemoteResults('query', const [release]);
+    provider.toggleReleaseSelection('token-1');
+    final operation = provider.submitSelectedReleases('endpoint-1');
+    provider.toggleReleaseSelection('token-1');
+
+    submission.complete(
+      const BatchSubmissionResponse(items: [BatchSubmissionItem(index: 0, job: null, error: 'rejected')]),
+    );
+    await operation;
+
+    expect(provider.selectedReleaseTokens, {'token-1'});
+    expect(provider.submissionErrorsByReleaseToken, {'token-1': 'The download client rejected this release.'});
+
+    provider.dispose();
+  });
+
+  test('keeps newer search release state after an older submission completes', () async {
+    final submission = Completer<BatchSubmissionResponse>();
+    final search = Completer<List<TorrentRelease>>();
+    final gateway = _FakeGateway(batchCompleter: submission, searchCompleter: search);
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    const oldReleases = [
+      TorrentRelease(title: 'Old one', releaseToken: 'old-1', protocol: 'torrent', indexer: 'Prowlarr'),
+      TorrentRelease(title: 'Old two', releaseToken: 'old-2', protocol: 'torrent', indexer: 'Prowlarr'),
+    ];
+
+    provider.setRemoteResults('old', oldReleases);
+    provider.selectAllRemoteReleases();
+    final submissionOperation = provider.submitSelectedReleases('endpoint-1');
+    final searchOperation = provider.searchRemote('new');
+
+    search.complete(const [
+      TorrentRelease(title: 'New', releaseToken: 'new-1', protocol: 'torrent', indexer: 'Prowlarr'),
+    ]);
+    await searchOperation;
+    provider.toggleReleaseSelection('new-1');
+
+    submission.complete(
+      BatchSubmissionResponse(
+        items: [
+          BatchSubmissionItem(index: 0, job: _job(status: AcquisitionJobStatus.submitted), error: null),
+          const BatchSubmissionItem(index: 1, job: null, error: 'rejected'),
+        ],
+      ),
+    );
+    await submissionOperation;
+
+    expect(provider.remoteQuery, 'new');
+    expect(provider.remoteResults.single.releaseToken, 'new-1');
+    expect(provider.selectedReleaseTokens, {'new-1'});
+    expect(provider.submissionErrorsByReleaseToken, isEmpty);
+    expect(provider.jobs.single.status, AcquisitionJobStatus.submitted);
+
+    provider.dispose();
+  });
+
   test('treats malformed, out-of-range, and omitted batch items as failed', () async {
     final gateway = _FakeGateway(
       batchResult: BatchSubmissionResponse(
