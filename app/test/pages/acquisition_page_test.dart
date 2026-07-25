@@ -102,6 +102,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
     required String name,
     required AcquisitionEndpointKind kind,
     required Uri baseUrl,
+    String? downloadRoot,
     String? apiKey,
     String? username,
     String? password,
@@ -118,6 +119,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
     required String endpointId,
     String? name,
     Uri? baseUrl,
+    String? downloadRoot,
     String? apiKey,
     String? username,
     String? password,
@@ -899,19 +901,19 @@ final _disabledReadarr = AcquisitionEndpoint(
 );
 const _releaseOne = TorrentRelease(
   title: 'Release One',
-  downloadUrl: 'magnet:?xt=urn:btih:release-one',
+  releaseToken: 'release-one-token',
   protocol: 'torrent',
   indexer: 'Indexer One',
 );
 const _releaseTwo = TorrentRelease(
   title: 'Release Two',
-  downloadUrl: 'magnet:?xt=urn:btih:release-two',
+  releaseToken: 'release-two-token',
   protocol: 'torrent',
   indexer: 'Indexer One',
 );
 const _releaseMirror = TorrentRelease(
   title: 'Release Mirror',
-  downloadUrl: 'magnet:?xt=urn:btih:release-one',
+  releaseToken: 'release-one-token',
   protocol: 'torrent',
   indexer: 'Indexer Two',
 );
@@ -921,12 +923,27 @@ AcquisitionJob _job({required String status, String? error}) {
     id: 'job-1',
     endpointId: 'client-1',
     ruleId: null,
+    bookId: 'book-1',
     title: 'Release One',
-    downloadUrl: _releaseOne.downloadUrl,
-    status: status,
+    status: AcquisitionJobStatus.fromApiValue(status),
     clientReference: null,
+    clientHash: null,
+    clientState: null,
+    progressBasisPoints: null,
+    downloadedBytes: null,
+    totalBytes: null,
+    downloadSpeedBytesPerSecond: null,
+    etaSeconds: null,
+    selectedFilePath: null,
+    retryCount: 0,
     error: error,
+    nextPollAt: null,
     createdAt: null,
+    updatedAt: null,
+    submittedAt: null,
+    startedAt: null,
+    completedAt: null,
+    cancelledAt: null,
   );
 }
 
