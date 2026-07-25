@@ -140,7 +140,7 @@ void main() {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(620, 640);
+    tester.view.physicalSize = const Size(640, 640);
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
@@ -151,7 +151,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(TextField), findsOneWidget);
+    final headerRow = find.ancestor(of: find.text('Online results'), matching: find.byType(Row));
+
+    expect(headerRow, findsOneWidget);
+    expect(find.descendant(of: headerRow, matching: find.byType(TextField)), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
