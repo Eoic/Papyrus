@@ -31,6 +31,21 @@ class AcquisitionJobFilesResult {
   bool get isSuccess => error == null;
 }
 
+class AcquisitionJobActionOutcome {
+  const AcquisitionJobActionOutcome.success() : error = null, ignored = false;
+
+  const AcquisitionJobActionOutcome.failure(this.error) : ignored = false;
+
+  const AcquisitionJobActionOutcome.ignored() : error = null, ignored = true;
+
+  final String? error;
+  final bool ignored;
+
+  bool get succeeded => !ignored && error == null;
+
+  bool get failed => error != null;
+}
+
 abstract interface class AcquisitionDownloadsGateway {
   Future<List<AcquisitionEndpoint>> listEndpoints();
 
@@ -159,6 +174,8 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   bool _isLibraryVisible = false;
   bool _isForeground = true;
   bool _disposed = false;
+  bool _discoveryRefreshScheduled = false;
+  bool _discoveryRefreshRequiresLibraryVisibility = true;
   int _generation = 0;
   int _remoteStateGeneration = 0;
 
@@ -252,7 +269,12 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     _isLibraryVisible = visible;
-    _schedulePolling();
+
+    if (visible && _isForeground) {
+      _scheduleDiscoveryRefresh(requireLibraryVisibility: true);
+    } else {
+      _schedulePolling();
+    }
   }
 
   @override
@@ -264,7 +286,12 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     _isForeground = isForeground;
-    _schedulePolling();
+
+    if (isForeground) {
+      _scheduleDiscoveryRefresh(requireLibraryVisibility: false);
+    } else {
+      _schedulePolling();
+    }
   }
 
   void setGateway(AcquisitionDownloadsGateway? gateway) {
@@ -389,6 +416,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
     final generation = _generation;
     _remoteStateGeneration += 1;
+    final remoteStateGeneration = _remoteStateGeneration;
     _isSearching = true;
     _remoteQuery = normalized;
     _remoteResults = const [];
@@ -400,18 +428,18 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     try {
       final results = await gateway.search(normalized, endpointIds: endpointIds);
 
-      if (!_isCurrent(gateway, generation)) {
+      if (!_isCurrentRemoteState(gateway, generation, remoteStateGeneration)) {
         return;
       }
 
       _remoteResults = List.unmodifiable(results);
     } catch (error) {
-      if (_isCurrent(gateway, generation)) {
+      if (_isCurrentRemoteState(gateway, generation, remoteStateGeneration)) {
         _remoteResults = const [];
         _searchError = searchErrorMessage(error);
       }
     } finally {
-      if (_isCurrent(gateway, generation)) {
+      if (_isCurrentRemoteState(gateway, generation, remoteStateGeneration)) {
         _isSearching = false;
         _notifyListeners();
       }
@@ -429,6 +457,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     _selectedReleaseTokens.clear();
     _submissionErrorsByReleaseToken = const {};
     _searchError = null;
+    _isSearching = false;
     _notifyListeners();
   }
 
@@ -443,6 +472,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     _selectedReleaseTokens.clear();
     _submissionErrorsByReleaseToken = const {};
     _searchError = null;
+    _isSearching = false;
     _notifyListeners();
   }
 
@@ -497,6 +527,28 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
     _selectedJobIds.clear();
     _notifyListeners();
+  }
+
+  void selectJobs(Iterable<String> jobIds) {
+    if (_disposed) {
+      return;
+    }
+
+    _selectedJobIds.addAll(jobIds);
+    _notifyListeners();
+  }
+
+  void retainJobSelection(Set<String> selectableJobIds) {
+    if (_disposed) {
+      return;
+    }
+
+    final previousCount = _selectedJobIds.length;
+    _selectedJobIds.removeWhere((jobId) => !selectableJobIds.contains(jobId));
+
+    if (_selectedJobIds.length != previousCount) {
+      _notifyListeners();
+    }
   }
 
   Future<AcquisitionSubmissionOutcome> submitSelectedReleases(String endpointId) async {
@@ -627,11 +679,11 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     return const AcquisitionJobFilesResult.failure('Could not load download files. Try again.');
   }
 
-  Future<void> selectJobFile(String jobId, int fileIndex) async {
+  Future<AcquisitionJobActionOutcome> selectJobFile(String jobId, int fileIndex) async {
     final gateway = _gateway;
 
     if (gateway == null || _disposed) {
-      return;
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
@@ -641,20 +693,27 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
       if (_isCurrent(gateway, generation)) {
         _replaceJob(job);
+
+        return const AcquisitionJobActionOutcome.success();
       }
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
-        _error = selectDownloadFileErrorMessage(error);
+        final message = selectDownloadFileErrorMessage(error);
+        _error = message;
         _notifyListeners();
+
+        return AcquisitionJobActionOutcome.failure(message);
       }
     }
+
+    return const AcquisitionJobActionOutcome.ignored();
   }
 
-  Future<void> retryJobImport(String jobId) async {
+  Future<AcquisitionJobActionOutcome> retryJobImport(String jobId) async {
     final gateway = _gateway;
 
     if (gateway == null || _disposed) {
-      return;
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
@@ -664,90 +723,135 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
       if (_isCurrent(gateway, generation)) {
         _replaceJob(job);
+
+        return const AcquisitionJobActionOutcome.success();
       }
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
-        _error = retryDownloadImportErrorMessage(error);
+        final message = retryDownloadImportErrorMessage(error);
+        _error = message;
         _notifyListeners();
+
+        return AcquisitionJobActionOutcome.failure(message);
       }
     }
+
+    return const AcquisitionJobActionOutcome.ignored();
   }
 
-  Future<void> cancelJob(String jobId) async {
+  Future<AcquisitionJobActionOutcome> cancelJob(String jobId) async {
     final gateway = _gateway;
 
     if (gateway == null || _disposed) {
-      return;
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
-    final cancelled = await _cancelJob(gateway, generation, jobId);
+    final outcome = await _cancelJob(gateway, generation, jobId);
 
     if (!_isCurrent(gateway, generation)) {
-      return;
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
-    if (cancelled != null) {
-      _replaceJob(cancelled);
-    } else {
-      _notifyListeners();
-    }
+    _schedulePolling();
+    _notifyListeners();
+
+    return outcome;
   }
 
-  Future<void> cancelSelectedJobs() async {
+  Future<AcquisitionJobActionOutcome> cancelSelectedJobs() async {
     final gateway = _gateway;
 
     if (gateway == null || _disposed) {
-      return;
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
+    String? failure;
 
     for (final jobId in _selectedJobIds.toList()) {
       final job = _jobs[jobId];
 
       if (job != null && job.canCancel) {
-        final cancelled = await _cancelJob(gateway, generation, jobId);
+        final outcome = await _cancelJob(gateway, generation, jobId);
 
         if (!_isCurrent(gateway, generation)) {
-          return;
+          return const AcquisitionJobActionOutcome.ignored();
         }
 
-        if (cancelled != null) {
-          _jobs[cancelled.id] = cancelled;
+        if (outcome.succeeded) {
+          _selectedJobIds.remove(jobId);
+        } else if (outcome.error case final message?) {
+          failure ??= message;
         }
       }
     }
 
-    _selectedJobIds.clear();
+    _error = failure;
     _schedulePolling();
     _notifyListeners();
+
+    return failure == null ? const AcquisitionJobActionOutcome.success() : AcquisitionJobActionOutcome.failure(failure);
   }
 
-  Future<AcquisitionJob?> _cancelJob(AcquisitionDownloadsGateway gateway, int generation, String jobId) async {
+  Future<AcquisitionJobActionOutcome> _cancelJob(
+    AcquisitionDownloadsGateway gateway,
+    int generation,
+    String jobId,
+  ) async {
     try {
       final cancelled = await gateway.cancelJob(jobId);
 
       if (_isCurrent(gateway, generation)) {
-        return cancelled;
+        _jobs[cancelled.id] = cancelled;
+        _error = null;
+
+        return const AcquisitionJobActionOutcome.success();
       }
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
-        _error = cancelDownloadErrorMessage(error);
+        final message = cancelDownloadErrorMessage(error);
+        _error = message;
+
+        return AcquisitionJobActionOutcome.failure(message);
       }
     }
 
-    return null;
+    return const AcquisitionJobActionOutcome.ignored();
   }
 
-  Future<void> removeSelectedJobs() async {
+  Future<AcquisitionJobActionOutcome> retrySelectedJobs() async {
+    String? failure;
+
+    for (final jobId in _selectedJobIds.toList()) {
+      final job = _jobs[jobId];
+
+      if (job?.canRetryImport == true) {
+        final outcome = await retryJobImport(jobId);
+
+        if (outcome.succeeded) {
+          _selectedJobIds.remove(jobId);
+        } else if (outcome.error case final message?) {
+          failure ??= message;
+        }
+      }
+    }
+
+    _error = failure;
+    _notifyListeners();
+
+    return failure == null ? const AcquisitionJobActionOutcome.success() : AcquisitionJobActionOutcome.failure(failure);
+  }
+
+  Future<AcquisitionJobActionOutcome> removeSelectedJobs() async {
     final gateway = _gateway;
 
     if (gateway == null || _disposed) {
-      return;
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
+    String? failure;
 
     for (final jobId in _selectedJobIds.toList()) {
       final job = _jobs[jobId];
@@ -757,22 +861,25 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
           await gateway.removeJob(jobId);
 
           if (!_isCurrent(gateway, generation)) {
-            return;
+            return const AcquisitionJobActionOutcome.ignored();
           }
 
           _jobs.remove(jobId);
+          _selectedJobIds.remove(jobId);
         } catch (error) {
           if (!_isCurrent(gateway, generation)) {
-            return;
+            return const AcquisitionJobActionOutcome.ignored();
           }
 
-          _error = removeDownloadErrorMessage(error);
+          failure ??= removeDownloadErrorMessage(error);
         }
       }
     }
 
-    _selectedJobIds.clear();
+    _error = failure;
     _notifyListeners();
+
+    return failure == null ? const AcquisitionJobActionOutcome.success() : AcquisitionJobActionOutcome.failure(failure);
   }
 
   void _replaceJob(AcquisitionJob job) {
@@ -800,8 +907,38 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     });
   }
 
+  void _scheduleDiscoveryRefresh({required bool requireLibraryVisibility}) {
+    if (_disposed) {
+      return;
+    }
+
+    if (_discoveryRefreshScheduled) {
+      _discoveryRefreshRequiresLibraryVisibility =
+          _discoveryRefreshRequiresLibraryVisibility && requireLibraryVisibility;
+      return;
+    }
+
+    _discoveryRefreshScheduled = true;
+    _discoveryRefreshRequiresLibraryVisibility = requireLibraryVisibility;
+
+    scheduleMicrotask(() {
+      final shouldRefresh =
+          !_disposed && _isForeground && (!_discoveryRefreshRequiresLibraryVisibility || _isLibraryVisible);
+      _discoveryRefreshScheduled = false;
+      _discoveryRefreshRequiresLibraryVisibility = true;
+
+      if (shouldRefresh) {
+        unawaited(refreshJobs());
+      }
+    });
+  }
+
   bool _isCurrent(AcquisitionDownloadsGateway gateway, int generation) {
     return !_disposed && generation == _generation && identical(_gateway, gateway);
+  }
+
+  bool _isCurrentRemoteState(AcquisitionDownloadsGateway gateway, int generation, int remoteStateGeneration) {
+    return _isCurrent(gateway, generation) && remoteStateGeneration == _remoteStateGeneration;
   }
 
   void _notifyListeners() {

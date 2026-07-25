@@ -100,6 +100,42 @@ void main() {
     provider.dispose();
   });
 
+  test('clearing remote state invalidates a hung search without blocking the next search', () async {
+    final oldSearch = Completer<List<TorrentRelease>>();
+    final gateway = _FakeGateway(
+      searchResponses: [
+        oldSearch.future,
+        const [TorrentRelease(title: 'New', releaseToken: 'new-token', protocol: 'torrent', indexer: 'Prowlarr')],
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    final oldOperation = provider.searchRemote('old');
+    expect(provider.isSearching, isTrue);
+
+    provider.clearRemoteResults();
+
+    expect(provider.isSearching, isFalse);
+    expect(provider.remoteQuery, isNull);
+
+    await provider.searchRemote('new');
+
+    expect(provider.remoteQuery, 'new');
+    expect(provider.remoteResults.single.releaseToken, 'new-token');
+    expect(provider.isSearching, isFalse);
+
+    oldSearch.complete(const [
+      TorrentRelease(title: 'Old', releaseToken: 'old-token', protocol: 'torrent', indexer: 'Prowlarr'),
+    ]);
+    await oldOperation;
+
+    expect(provider.remoteQuery, 'new');
+    expect(provider.remoteResults.single.releaseToken, 'new-token');
+    expect(provider.isSearching, isFalse);
+
+    provider.dispose();
+  });
+
   test('maps job refresh gateway failures to a safe general error', () async {
     final provider = AcquisitionDownloadsProvider(
       gateway: _FakeGateway(jobListError: StateError('https://download-client.local/jobs?token=secret')),
@@ -129,11 +165,15 @@ void main() {
     expect(filesResult.error, 'Could not load download files. Try again.');
     expect(provider.error, 'Could not load download files. Try again.');
 
-    await provider.selectJobFile('job-1', 0);
-    expect(provider.error, 'Could not select the download file. Try again.');
+    final selectFileOutcome = await provider.selectJobFile('job-1', 0);
+    expect(selectFileOutcome.failed, isTrue);
+    expect(selectFileOutcome.error, 'Could not select the download file. Try again.');
+    expect(provider.error, selectFileOutcome.error);
 
-    await provider.retryJobImport('job-1');
-    expect(provider.error, 'Could not retry the download import. Try again.');
+    final retryOutcome = await provider.retryJobImport('job-1');
+    expect(retryOutcome.failed, isTrue);
+    expect(retryOutcome.error, 'Could not retry the download import. Try again.');
+    expect(provider.error, retryOutcome.error);
 
     provider.dispose();
   });
@@ -150,9 +190,12 @@ void main() {
     );
     await cancelProvider.refreshJobs();
     cancelProvider.toggleJobSelection('job-1');
-    await cancelProvider.cancelSelectedJobs();
+    final cancelOutcome = await cancelProvider.cancelSelectedJobs();
 
-    expect(cancelProvider.error, 'Could not cancel the download. Try again.');
+    expect(cancelOutcome.failed, isTrue);
+    expect(cancelOutcome.error, 'Could not cancel the download. Try again.');
+    expect(cancelProvider.error, cancelOutcome.error);
+    expect(cancelProvider.selectedJobIds, {'job-1'});
     cancelProvider.dispose();
 
     final removeProvider = AcquisitionDownloadsProvider(
@@ -166,10 +209,43 @@ void main() {
     );
     await removeProvider.refreshJobs();
     removeProvider.toggleJobSelection('job-1');
-    await removeProvider.removeSelectedJobs();
+    final removeOutcome = await removeProvider.removeSelectedJobs();
 
-    expect(removeProvider.error, 'Could not remove the download. Try again.');
+    expect(removeOutcome.failed, isTrue);
+    expect(removeOutcome.error, 'Could not remove the download. Try again.');
+    expect(removeProvider.error, removeOutcome.error);
+    expect(removeProvider.selectedJobIds, {'job-1'});
     removeProvider.dispose();
+  });
+
+  test('retrying selected jobs retains only failed selections', () async {
+    final gateway = _FakeGateway(
+      jobPages: [
+        AcquisitionJobPage(
+          items: [
+            _job(id: 'job-1', status: AcquisitionJobStatus.failed, retryable: true),
+            _job(id: 'job-2', status: AcquisitionJobStatus.failed, retryable: true),
+          ],
+          total: 2,
+          limit: 100,
+          offset: 0,
+        ),
+      ],
+      retryImportErrorsByJobId: {'job-2': StateError('raw retry failure with token=secret')},
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    await provider.refreshJobs();
+    provider.toggleJobSelection('job-1');
+    provider.toggleJobSelection('job-2');
+
+    final outcome = await provider.retrySelectedJobs();
+
+    expect(outcome.failed, isTrue);
+    expect(outcome.error, 'Could not retry the download import. Try again.');
+    expect(provider.selectedJobIds, {'job-2'});
+    expect(gateway.retriedJobIds, ['job-1']);
+
+    provider.dispose();
   });
 
   test('cancels one job without changing independent job selection', () async {
@@ -524,9 +600,71 @@ void main() {
     expect(gateway.listJobCalls, 2);
 
     provider.didChangeAppLifecycleState(AppLifecycleState.resumed);
-    await tester.pump(const Duration(seconds: 2));
     await tester.pump();
     expect(gateway.listJobCalls, 3);
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    expect(gateway.listJobCalls, 4);
+
+    provider.dispose();
+  });
+
+  testWidgets('discovers an externally created job when the empty library becomes visible', (tester) async {
+    final gateway = _FakeGateway(
+      repeatedJobPage: AcquisitionJobPage(
+        items: [_job(id: 'external-job', status: AcquisitionJobStatus.downloading)],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      ),
+    );
+    final provider = AcquisitionDownloadsProvider(
+      gateway: gateway,
+      visiblePollingInterval: const Duration(seconds: 2),
+      foregroundPollingInterval: const Duration(seconds: 10),
+    );
+
+    expect(provider.jobs, isEmpty);
+
+    provider.setLibraryVisible(true);
+    await tester.pump();
+
+    expect(gateway.listJobCalls, 1);
+    expect(provider.jobs.single.id, 'external-job');
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+
+    expect(gateway.listJobCalls, 2);
+
+    provider.dispose();
+  });
+
+  testWidgets('discovers an externally created job on resume with no known jobs', (tester) async {
+    final gateway = _FakeGateway(
+      jobPages: [
+        const AcquisitionJobPage(items: [], total: 0, limit: 100, offset: 0),
+        AcquisitionJobPage(
+          items: [_job(id: 'resumed-job', status: AcquisitionJobStatus.queued)],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        ),
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    provider.setLibraryVisible(true);
+    await tester.pump();
+    expect(provider.jobs, isEmpty);
+
+    provider.didChangeAppLifecycleState(AppLifecycleState.paused);
+    provider.didChangeAppLifecycleState(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(gateway.listJobCalls, 2);
+    expect(provider.jobs.single.id, 'resumed-job');
 
     provider.dispose();
   });
@@ -542,15 +680,18 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   final Object? jobListError;
   final Object? searchError;
   final Completer<List<TorrentRelease>>? searchCompleter;
+  final List<Object> _searchResponses;
   final Object? filesError;
   final Object? selectFileError;
   final Object? retryImportError;
+  final Map<String, Object> retryImportErrorsByJobId;
   final Object? cancelError;
   final Object? removeError;
   List<String> submittedTokens = [];
   final List<int> jobOffsets = [];
   int listJobCalls = 0;
   final List<String> cancelledJobIds = [];
+  final List<String> retriedJobIds = [];
   bool closed = false;
 
   _FakeGateway({
@@ -563,12 +704,14 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     this.jobListError,
     this.searchError,
     this.searchCompleter,
+    List<Object> searchResponses = const [],
     this.filesError,
     this.selectFileError,
     this.retryImportError,
+    this.retryImportErrorsByJobId = const {},
     this.cancelError,
     this.removeError,
-  });
+  }) : _searchResponses = [...searchResponses];
 
   @override
   Future<List<AcquisitionEndpoint>> listEndpoints() async {
@@ -608,6 +751,19 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   Future<List<TorrentRelease>> search(String query, {List<String>? endpointIds}) async {
     if (searchError case final error?) {
       throw error;
+    }
+
+    if (_searchResponses.isNotEmpty) {
+      final response = _searchResponses.removeAt(0);
+
+      if (response is Future<List<TorrentRelease>>) {
+        return response;
+      }
+      if (response is List<TorrentRelease>) {
+        return response;
+      }
+
+      throw response;
     }
 
     if (searchCompleter case final completer?) {
@@ -655,11 +811,17 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
 
   @override
   Future<AcquisitionJob> retryJobImport(String jobId) async {
+    if (retryImportErrorsByJobId[jobId] case final error?) {
+      throw error;
+    }
+
     if (retryImportError case final error?) {
       throw error;
     }
 
-    return _job(status: AcquisitionJobStatus.downloading);
+    retriedJobIds.add(jobId);
+
+    return _job(id: jobId, status: AcquisitionJobStatus.downloading);
   }
 
   @override
@@ -668,7 +830,7 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   }
 }
 
-AcquisitionJob _job({String id = 'job-1', required AcquisitionJobStatus status}) {
+AcquisitionJob _job({String id = 'job-1', required AcquisitionJobStatus status, bool retryable = false}) {
   return AcquisitionJob(
     id: id,
     endpointId: 'endpoint-1',
@@ -690,7 +852,7 @@ AcquisitionJob _job({String id = 'job-1', required AcquisitionJobStatus status})
     nextPollAt: null,
     createdAt: null,
     updatedAt: null,
-    submittedAt: null,
+    submittedAt: retryable ? DateTime(2026) : null,
     startedAt: null,
     completedAt: null,
     cancelledAt: null,
