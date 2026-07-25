@@ -1,23 +1,34 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/active_filter.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/bulk_book_actions.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
 import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
 import 'package:papyrus/widgets/filter/filter_dialog.dart';
+import 'package:papyrus/widgets/library/acquisition_confirmation_dialog.dart';
 import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
+import 'package:papyrus/widgets/library/acquisition_job_sheets.dart';
+import 'package:papyrus/widgets/library/acquisition_job_visibility.dart';
+import 'package:papyrus/widgets/library/acquisition_placeholder_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
+import 'package:papyrus/widgets/library/online_books_header.dart';
+import 'package:papyrus/widgets/library/online_results_view.dart';
 import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
+import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:provider/provider.dart';
 
@@ -31,12 +42,44 @@ class LibraryPage extends StatefulWidget {
   State<LibraryPage> createState() => _LibraryPageState();
 }
 
+enum _BooksPresentationMode { local, online }
+
 class _LibraryPageState extends State<LibraryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  AcquisitionDownloadsProvider? _visibleDownloadsProvider;
+  _BooksPresentationMode _presentationMode = _BooksPresentationMode.local;
+  bool _showDownloadingOnly = false;
+  late final TextEditingController _onlineSearchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _onlineSearchController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.read<AcquisitionDownloadsProvider?>();
+
+    if (!identical(provider, _visibleDownloadsProvider)) {
+      _visibleDownloadsProvider?.setLibraryVisible(false);
+      _visibleDownloadsProvider = provider;
+      provider?.setLibraryVisible(true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _visibleDownloadsProvider?.setLibraryVisible(false);
+    _onlineSearchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final libraryProvider = context.watch<LibraryProvider>();
+    final downloadsProvider = context.watch<AcquisitionDownloadsProvider?>();
     final dataStore = context.watch<DataStore>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
@@ -46,10 +89,10 @@ class _LibraryPageState extends State<LibraryPage> {
     final isLoading = !dataStore.isLoaded;
 
     if (isDesktop) {
-      return _buildDesktopLayout(context, books, libraryProvider, isLoading);
+      return _buildDesktopLayout(context, books, dataStore, libraryProvider, downloadsProvider, isLoading);
     }
 
-    return _buildMobileLayout(context, books, libraryProvider, isLoading);
+    return _buildMobileLayout(context, books, dataStore, libraryProvider, downloadsProvider, isLoading);
   }
 
   List<Book> _getFilteredBooks(LibraryProvider provider, DataStore dataStore) {
@@ -96,8 +139,21 @@ class _LibraryPageState extends State<LibraryPage> {
   // MOBILE LAYOUT
   // ============================================================================
 
-  Widget _buildMobileLayout(BuildContext context, List<Book> books, LibraryProvider libraryProvider, bool isLoading) {
-    final isSelectionMode = libraryProvider.isSelectionMode;
+  Widget _buildMobileLayout(
+    BuildContext context,
+    List<Book> books,
+    DataStore dataStore,
+    LibraryProvider libraryProvider,
+    AcquisitionDownloadsProvider? downloadsProvider,
+    bool isLoading,
+  ) {
+    final isOnline = _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
+    final hasJobSelection = downloadsProvider?.selectedJobIds.isNotEmpty == true;
+    final isBookSelection = libraryProvider.isSelectionMode;
+    final hideLocalControls = isOnline || hasJobSelection || isBookSelection;
+    final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
+    final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
+    _clearUnavailableDownloadingFilter(localItems);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -108,7 +164,11 @@ class _LibraryPageState extends State<LibraryPage> {
             // Header: selection header or normal header
             Padding(
               padding: const EdgeInsets.only(top: Spacing.md, left: Spacing.md, right: Spacing.md),
-              child: isSelectionMode
+              child: isOnline
+                  ? _buildOnlineHeader(downloadsProvider)
+                  : hasJobSelection
+                  ? _buildJobSelectionHeader(downloadsProvider!, includeActions: false)
+                  : isBookSelection
                   ? SelectionHeader(
                       selectedCount: libraryProvider.selectedCount,
                       totalCount: books.length,
@@ -136,10 +196,20 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
 
             // Quick filter chips
-            const LibraryFilterChips(),
+            if (!isOnline)
+              LibraryFilterChips(
+                showDownloading: localItems.hasDownloadingItems,
+                isDownloadingSelected: showDownloadingOnly,
+                onDownloadingTapped: () => setState(() => _showDownloadingOnly = true),
+                onLibraryFilterTapped: () {
+                  if (_showDownloadingOnly) {
+                    setState(() => _showDownloadingOnly = false);
+                  }
+                },
+              ),
 
             // View toggle row
-            if (!isSelectionMode)
+            if (!hideLocalControls)
               Padding(
                 padding: const EdgeInsets.only(left: Spacing.md, right: Spacing.md, bottom: Spacing.md),
                 child: Row(
@@ -157,14 +227,22 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
 
             // Book grid or list
-            Expanded(child: _buildBookContent(context, books, libraryProvider, isLoading)),
+            Expanded(
+              child: _buildBookContent(context, books, dataStore, libraryProvider, downloadsProvider, isLoading),
+            ),
           ],
         ),
       ),
-      floatingActionButton: isSelectionMode
+      floatingActionButton: hideLocalControls
           ? null
-          : FloatingActionButton(onPressed: () => AddBookChoiceSheet.show(context), child: const Icon(Icons.add)),
-      bottomNavigationBar: isSelectionMode ? buildMobileBottomActionBar(context, libraryProvider) : null,
+          : FloatingActionButton(onPressed: () => _showAddBook(downloadsProvider), child: const Icon(Icons.add)),
+      bottomNavigationBar: isOnline && downloadsProvider.selectedReleaseTokens.isNotEmpty
+          ? _buildMobileOnlineAction(downloadsProvider)
+          : hasJobSelection
+          ? _buildMobileJobActions(downloadsProvider!)
+          : isBookSelection
+          ? buildMobileBottomActionBar(context, libraryProvider)
+          : null,
     );
   }
 
@@ -338,6 +416,228 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
+  void _enterOnlineMode(
+    AcquisitionDownloadsProvider provider, {
+    String initialQuery = '',
+    bool submitImmediately = false,
+  }) {
+    _onlineSearchController.text = initialQuery;
+    setState(() => _presentationMode = _BooksPresentationMode.online);
+
+    if (submitImmediately && initialQuery.trim().isNotEmpty) {
+      unawaited(provider.searchRemote(initialQuery));
+    }
+  }
+
+  void _leaveOnlineMode(AcquisitionDownloadsProvider provider) {
+    provider.clearRemoteResults();
+    setState(() => _presentationMode = _BooksPresentationMode.local);
+  }
+
+  void _showAddBook(AcquisitionDownloadsProvider? provider) {
+    AddBookChoiceSheet.show(
+      context,
+      onFindOnline: provider?.isManagedAcquisitionReady == true ? () => _enterOnlineMode(provider!) : null,
+    );
+  }
+
+  Widget _buildOnlineHeader(AcquisitionDownloadsProvider provider) {
+    if (provider.selectedReleaseTokens.isNotEmpty) {
+      final isDesktop = MediaQuery.of(context).size.width >= Breakpoints.desktopSmall;
+
+      return SelectionHeader(
+        selectedCount: provider.selectedReleaseTokens.length,
+        totalCount: provider.remoteResults.length,
+        onClose: provider.clearReleaseSelection,
+        onSelectAll: provider.selectAllRemoteReleases,
+        onDeselectAll: provider.clearReleaseSelection,
+        actions: isDesktop
+            ? FilledButton.icon(
+                onPressed: provider.isSubmitting ? null : () => _submitSelected(provider),
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('Download'),
+              )
+            : null,
+      );
+    }
+
+    return OnlineBooksHeader(
+      controller: _onlineSearchController,
+      autofocus: provider.remoteQuery == null && _onlineSearchController.text.isEmpty,
+      isSearching: provider.isSearching,
+      onBack: () => _leaveOnlineMode(provider),
+      onSearch: provider.searchRemote,
+    );
+  }
+
+  Widget _buildMobileOnlineAction(AcquisitionDownloadsProvider provider) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.md),
+        child: FilledButton.icon(
+          onPressed: provider.isSubmitting ? null : () => _submitSelected(provider),
+          icon: const Icon(Icons.download_outlined),
+          label: const Text('Download'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitSelected(AcquisitionDownloadsProvider provider) async {
+    final clients = provider.downloadClients;
+    final client = clients.length == 1 ? clients.single : await _chooseDownloadClient(clients);
+
+    if (client == null || !mounted) {
+      return;
+    }
+
+    final outcome = await provider.submitSelectedReleases(client.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    if (outcome.allSucceeded) {
+      _leaveOnlineMode(provider);
+    }
+  }
+
+  Future<AcquisitionEndpoint?> _chooseDownloadClient(List<AcquisitionEndpoint> clients) {
+    if (clients.isEmpty) {
+      return Future.value();
+    }
+
+    return showModalBottomSheet<AcquisitionEndpoint>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: false,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.md, Spacing.lg, Spacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const BottomSheetHandle(),
+            const SizedBox(height: Spacing.md),
+            Text('Download with', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: Spacing.sm),
+            for (final client in clients)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.download_outlined),
+                title: Text(client.name),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(sheetContext).pop(client),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJobSelectionHeader(AcquisitionDownloadsProvider provider, {required bool includeActions}) {
+    return SelectionHeader(
+      selectedCount: provider.selectedJobIds.length,
+      totalCount: provider.jobs.length,
+      onClose: provider.clearJobSelection,
+      onSelectAll: () {
+        for (final job in provider.jobs) {
+          if (!provider.selectedJobIds.contains(job.id)) {
+            provider.toggleJobSelection(job.id);
+          }
+        }
+      },
+      onDeselectAll: provider.clearJobSelection,
+      actions: includeActions ? _buildJobActions(provider) : null,
+    );
+  }
+
+  Widget _buildJobActions(AcquisitionDownloadsProvider provider) {
+    final selectedJobs = _selectedJobs(provider);
+    final canCancel = selectedJobs.isNotEmpty && selectedJobs.every((job) => job.canCancel);
+    final canRetry = selectedJobs.isNotEmpty && selectedJobs.every((job) => job.canRetryImport);
+    final canRemove =
+        selectedJobs.isNotEmpty &&
+        selectedJobs.every(
+          (job) => job.status == AcquisitionJobStatus.cancelled || job.status == AcquisitionJobStatus.failed,
+        );
+
+    return Wrap(
+      spacing: Spacing.sm,
+      children: [
+        if (canCancel)
+          FilledButton.icon(
+            onPressed: () => _cancelSelectedJobs(provider),
+            icon: const Icon(Icons.stop_circle_outlined),
+            label: const Text('Cancel'),
+          ),
+        if (canRetry)
+          FilledButton.icon(
+            onPressed: () => _retrySelectedJobs(provider),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Try again'),
+          ),
+        if (canRemove)
+          FilledButton.icon(
+            onPressed: () => _removeSelectedJobs(provider),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Remove'),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMobileJobActions(AcquisitionDownloadsProvider provider) {
+    return SafeArea(
+      top: false,
+      child: Padding(padding: const EdgeInsets.all(Spacing.md), child: _buildJobActions(provider)),
+    );
+  }
+
+  List<AcquisitionJob> _selectedJobs(AcquisitionDownloadsProvider provider) {
+    return provider.jobs.where((job) => provider.selectedJobIds.contains(job.id)).toList();
+  }
+
+  Future<void> _cancelSelectedJobs(AcquisitionDownloadsProvider provider) async {
+    final selectedJobs = _selectedJobs(provider);
+    final confirmed = await showAcquisitionConfirmationDialog(
+      context: context,
+      title: 'Cancel downloads',
+      message: 'Cancel ${selectedJobs.length} selected ${selectedJobs.length == 1 ? 'download' : 'downloads'}?',
+      actionLabel: 'Cancel downloads',
+    );
+
+    if (confirmed) {
+      await provider.cancelSelectedJobs();
+    }
+  }
+
+  Future<void> _retrySelectedJobs(AcquisitionDownloadsProvider provider) async {
+    final jobIds = _selectedJobs(provider).map((job) => job.id).toList();
+
+    for (final jobId in jobIds) {
+      await provider.retryJobImport(jobId);
+    }
+
+    provider.clearJobSelection();
+  }
+
+  Future<void> _removeSelectedJobs(AcquisitionDownloadsProvider provider) async {
+    final selectedJobs = _selectedJobs(provider);
+    final confirmed = await showAcquisitionConfirmationDialog(
+      context: context,
+      title: 'Remove downloads',
+      message: 'Remove ${selectedJobs.length} selected ${selectedJobs.length == 1 ? 'download' : 'downloads'}?',
+      actionLabel: 'Remove',
+    );
+
+    if (confirmed) {
+      await provider.removeSelectedJobs();
+    }
+  }
+
   // ============================================================================
   // DESKTOP LAYOUT
   // ============================================================================
@@ -349,9 +649,9 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildAddBookButton(double height) {
+  Widget _buildAddBookButton(double height, AcquisitionDownloadsProvider? downloadsProvider) {
     return FilledButton.icon(
-      onPressed: () => AddBookChoiceSheet.show(context),
+      onPressed: () => _showAddBook(downloadsProvider),
       icon: const Icon(Icons.add),
       label: const Text('Add book'),
       style: FilledButton.styleFrom(minimumSize: Size(0, height)),
@@ -400,14 +700,34 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, List<Book> books, LibraryProvider libraryProvider, bool isLoading) {
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    List<Book> books,
+    DataStore dataStore,
+    LibraryProvider libraryProvider,
+    AcquisitionDownloadsProvider? downloadsProvider,
+    bool isLoading,
+  ) {
     const double controlHeight = 40.0;
-    final isSelectionMode = libraryProvider.isSelectionMode;
+    final isOnline = _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
+    final hasJobSelection = downloadsProvider?.selectedJobIds.isNotEmpty == true;
+    final isBookSelection = libraryProvider.isSelectionMode;
+    final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
+    final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
+    _clearUnavailableDownloadingFilter(localItems);
 
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () {
-          if (libraryProvider.isSelectionMode) {
+          if (isOnline) {
+            if (downloadsProvider.selectedReleaseTokens.isNotEmpty) {
+              downloadsProvider.clearReleaseSelection();
+            } else {
+              _leaveOnlineMode(downloadsProvider);
+            }
+          } else if (hasJobSelection) {
+            downloadsProvider?.clearJobSelection();
+          } else if (libraryProvider.isSelectionMode) {
             libraryProvider.exitSelectionMode();
           }
         },
@@ -421,7 +741,11 @@ class _LibraryPageState extends State<LibraryPage> {
               // Header row
               Container(
                 padding: const EdgeInsets.only(top: Spacing.lg, left: Spacing.lg, right: Spacing.lg),
-                child: isSelectionMode
+                child: isOnline
+                    ? _buildOnlineHeader(downloadsProvider)
+                    : hasJobSelection
+                    ? _buildJobSelectionHeader(downloadsProvider!, includeActions: true)
+                    : isBookSelection
                     ? SelectionHeader(
                         selectedCount: libraryProvider.selectedCount,
                         totalCount: books.length,
@@ -451,7 +775,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                     const Spacer(),
                                     _buildViewToggle(libraryProvider),
                                     const SizedBox(width: Spacing.sm),
-                                    _buildAddBookButton(controlHeight),
+                                    _buildAddBookButton(controlHeight, downloadsProvider),
                                   ],
                                 ),
                               ],
@@ -466,16 +790,29 @@ class _LibraryPageState extends State<LibraryPage> {
                               const SizedBox(width: Spacing.md),
                               _buildViewToggle(libraryProvider),
                               const SizedBox(width: Spacing.md),
-                              _buildAddBookButton(controlHeight),
+                              _buildAddBookButton(controlHeight, downloadsProvider),
                             ],
                           );
                         },
                       ),
               ),
               // Filter chips
-              const LibraryFilterChips(horizontalPadding: Spacing.lg),
+              if (!isOnline)
+                LibraryFilterChips(
+                  horizontalPadding: Spacing.lg,
+                  showDownloading: localItems.hasDownloadingItems,
+                  isDownloadingSelected: showDownloadingOnly,
+                  onDownloadingTapped: () => setState(() => _showDownloadingOnly = true),
+                  onLibraryFilterTapped: () {
+                    if (_showDownloadingOnly) {
+                      setState(() => _showDownloadingOnly = false);
+                    }
+                  },
+                ),
               // Book grid or list
-              Expanded(child: _buildBookContent(context, books, libraryProvider, isLoading)),
+              Expanded(
+                child: _buildBookContent(context, books, dataStore, libraryProvider, downloadsProvider, isLoading),
+              ),
             ],
           ),
         ),
@@ -483,23 +820,125 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildBookContent(BuildContext context, List<Book> books, LibraryProvider libraryProvider, bool isLoading) {
-    if (isLoading) return const Center(child: CircularProgressIndicator());
-    if (books.isEmpty) return _buildEmptyState();
-    if (libraryProvider.isListView) return _buildBookList(context, books);
-    return BookGrid(books: books, onBookTap: (book) => _navigateToBookDetails(context, book));
+  Widget _buildBookContent(
+    BuildContext context,
+    List<Book> books,
+    DataStore dataStore,
+    LibraryProvider libraryProvider,
+    AcquisitionDownloadsProvider? downloadsProvider,
+    bool isLoading,
+  ) {
+    if (_presentationMode == _BooksPresentationMode.online && downloadsProvider != null) {
+      return OnlineResultsView(
+        hasSearched: downloadsProvider.remoteQuery != null,
+        isSearching: downloadsProvider.isSearching,
+        query: downloadsProvider.remoteQuery ?? _onlineSearchController.text,
+        error: downloadsProvider.searchError,
+        releases: downloadsProvider.remoteResults,
+        selectedReleaseTokens: downloadsProvider.selectedReleaseTokens,
+        errorsByReleaseToken: downloadsProvider.submissionErrorsByReleaseToken,
+        onRetry: () => downloadsProvider.searchRemote(_onlineSearchController.text),
+        onToggleSelection: downloadsProvider.toggleReleaseSelection,
+      );
+    }
+
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final items = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
+    final showDownloadingOnly = _showDownloadingOnly && items.hasDownloadingItems;
+    final visibleBooks = showDownloadingOnly
+        ? books.where((book) => items.downloadingBookIds.contains(book.id)).toList()
+        : books;
+    final candidatePlaceholders = showDownloadingOnly ? items.downloadingOrphanJobs : items.orphanJobs;
+    final normalizedQuery = libraryProvider.searchQuery.trim().toLowerCase();
+    final visiblePlaceholderJobs = normalizedQuery.isEmpty
+        ? candidatePlaceholders
+        : candidatePlaceholders.where((job) => job.title.toLowerCase().contains(normalizedQuery)).toList();
+
+    if (visibleBooks.isEmpty && visiblePlaceholderJobs.isEmpty) {
+      return _buildEmptyState(libraryProvider, downloadsProvider);
+    }
+
+    void showJob(AcquisitionJob job) {
+      if (downloadsProvider != null) {
+        showAcquisitionJobDetailsSheet(context: context, provider: downloadsProvider, job: job);
+      }
+    }
+
+    void toggleJob(AcquisitionJob job) {
+      downloadsProvider?.toggleJobSelection(job.id);
+    }
+
+    if (libraryProvider.isListView) {
+      return _buildBookList(
+        context,
+        visibleBooks,
+        linkedJobsByBookId: items.linkedJobsByBookId,
+        placeholderJobs: visiblePlaceholderJobs,
+        downloadsProvider: downloadsProvider,
+        onAcquisitionTap: showJob,
+        onAcquisitionSelectionToggle: toggleJob,
+      );
+    }
+
+    return BookGrid(
+      books: visibleBooks,
+      acquisitionJobsByBookId: items.linkedJobsByBookId,
+      placeholderJobs: visiblePlaceholderJobs,
+      selectedAcquisitionJobIds: downloadsProvider?.selectedJobIds ?? const {},
+      onAcquisitionTap: showJob,
+      onAcquisitionSelectionToggle: toggleJob,
+      onBookTap: (book) => _navigateToBookDetails(context, book),
+    );
   }
 
-  Widget _buildBookList(BuildContext context, List<Book> books) {
+  void _clearUnavailableDownloadingFilter(AcquisitionLibraryItems items) {
+    if (!_showDownloadingOnly || items.hasDownloadingItems) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _showDownloadingOnly) {
+        setState(() => _showDownloadingOnly = false);
+      }
+    });
+  }
+
+  Widget _buildBookList(
+    BuildContext context,
+    List<Book> books, {
+    required Map<String, AcquisitionJob> linkedJobsByBookId,
+    required List<AcquisitionJob> placeholderJobs,
+    required AcquisitionDownloadsProvider? downloadsProvider,
+    required ValueChanged<AcquisitionJob> onAcquisitionTap,
+    required ValueChanged<AcquisitionJob> onAcquisitionSelectionToggle,
+  }) {
     final libraryProvider = context.watch<LibraryProvider>();
     final isSelectionMode = libraryProvider.isSelectionMode;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-      itemCount: books.length,
+      itemCount: books.length + placeholderJobs.length,
       itemBuilder: (context, index) {
+        if (index >= books.length) {
+          final job = placeholderJobs[index - books.length];
+
+          return AcquisitionPlaceholderListItem(
+            job: job,
+            onTap: () => onAcquisitionTap(job),
+            isSelectionMode: downloadsProvider?.selectedJobIds.isNotEmpty == true,
+            isSelected: downloadsProvider?.selectedJobIds.contains(job.id) == true,
+            onSelectToggle: () => onAcquisitionSelectionToggle(job),
+            onEnterSelectionMode: () => onAcquisitionSelectionToggle(job),
+          );
+        }
+
         final book = books[index];
+        final acquisitionJob = linkedJobsByBookId[book.id];
         final isFavorite = libraryProvider.isBookFavorite(book.id, book.isFavorite);
+
         return BookListItem(
           book: book,
           isFavorite: isFavorite,
@@ -507,6 +946,14 @@ class _LibraryPageState extends State<LibraryPage> {
           isSelectionMode: isSelectionMode,
           isSelected: libraryProvider.isBookSelected(book.id),
           onSelectToggle: () => libraryProvider.toggleBookSelection(book.id),
+          acquisitionJob: acquisitionJob,
+          onAcquisitionTap: acquisitionJob == null ? null : () => onAcquisitionTap(acquisitionJob),
+          isAcquisitionSelectionMode: downloadsProvider?.selectedJobIds.isNotEmpty == true,
+          isAcquisitionSelected:
+              acquisitionJob != null && downloadsProvider?.selectedJobIds.contains(acquisitionJob.id) == true,
+          onAcquisitionSelectionToggle: acquisitionJob == null
+              ? null
+              : () => onAcquisitionSelectionToggle(acquisitionJob),
         );
       },
     );
@@ -516,11 +963,28 @@ class _LibraryPageState extends State<LibraryPage> {
     context.go('/library/details/${book.id}');
   }
 
-  Widget _buildEmptyState() {
-    return const EmptyState(
+  Widget _buildEmptyState(LibraryProvider libraryProvider, AcquisitionDownloadsProvider? downloadsProvider) {
+    final query = libraryProvider.searchQuery.trim();
+
+    if (query.isNotEmpty) {
+      return EmptyState(
+        icon: Icons.search_off,
+        title: 'No books found',
+        subtitle: 'No books in your library match “$query”.',
+        action: downloadsProvider?.isManagedAcquisitionReady == true
+            ? FilledButton(
+                onPressed: () => _enterOnlineMode(downloadsProvider!, initialQuery: query, submitImmediately: true),
+                child: Text('Search online for “$query”'),
+              )
+            : null,
+      );
+    }
+
+    return EmptyState(
       icon: Icons.library_books_outlined,
       title: 'No books found',
       subtitle: 'Try adjusting your filters or add some books',
+      action: FilledButton(onPressed: () => _showAddBook(downloadsProvider), child: const Text('Add book')),
     );
   }
 }

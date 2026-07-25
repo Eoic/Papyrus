@@ -2,17 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/pages/library_page.dart';
+import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
+import 'package:papyrus/themes/app_theme.dart';
+import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
+import 'package:papyrus/widgets/library/online_books_header.dart';
+import 'package:papyrus/widgets/library/online_results_view.dart';
+import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
+import 'package:provider/provider.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {
@@ -25,12 +33,22 @@ void main() {
       dataStore = createTestDataStore();
     });
 
-    Widget buildPage({Size screenSize = const Size(400, 800), LibraryProvider? provider, DataStore? store}) {
+    Widget buildPage({
+      Size screenSize = const Size(400, 800),
+      LibraryProvider? provider,
+      DataStore? store,
+      AcquisitionDownloadsProvider? downloadsProvider,
+      ThemeData? theme,
+    }) {
       return createTestPage(
-        page: const LibraryPage(),
+        page: theme == null ? const LibraryPage() : Theme(data: theme, child: const LibraryPage()),
         libraryProvider: provider ?? libraryProvider,
         dataStore: store ?? dataStore,
         screenSize: screenSize,
+        additionalProviders: [
+          if (downloadsProvider != null)
+            ChangeNotifierProvider<AcquisitionDownloadsProvider>.value(value: downloadsProvider),
+        ],
       );
     }
 
@@ -62,6 +80,475 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(LibrarySearchBar), findsOneWidget);
+      });
+
+      testWidgets('local search stays local and offers an explicit online search when ready', (tester) async {
+        final gateway = _LibraryAcquisitionGateway();
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Dune Messiah');
+
+        await tester.pumpWidget(buildPage(screenSize: const Size(400, 1000), downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+
+        expect(gateway.searchQueries, isEmpty);
+        expect(find.text('Search online for “Dune Messiah”'), findsOneWidget);
+        expect(find.textContaining('Downloads'), findsNothing);
+        expect(find.byType(OnlineBooksHeader), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('starts visible polling on mount and stops it on provider swap and dispose', (tester) async {
+        final firstProvider = _TrackingDownloadsProvider(gateway: _LibraryAcquisitionGateway());
+        final secondProvider = _TrackingDownloadsProvider(gateway: _LibraryAcquisitionGateway());
+
+        await tester.pumpWidget(buildPage(downloadsProvider: firstProvider));
+        await tester.pump();
+        expect(firstProvider.libraryVisibility, [true]);
+
+        await tester.pumpWidget(buildPage(downloadsProvider: secondProvider));
+        await tester.pump();
+        expect(firstProvider.libraryVisibility, [true, false]);
+        expect(secondProvider.libraryVisibility, [true]);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+        expect(secondProvider.libraryVisibility, [true, false]);
+
+        firstProvider.dispose();
+        secondProvider.dispose();
+      });
+
+      testWidgets('does not offer online search when acquisition is unavailable', (tester) async {
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        downloadsProvider.setServerManagedDownloadsReady(false);
+        libraryProvider.setSearchQuery('Dune Messiah');
+
+        await tester.pumpWidget(buildPage(screenSize: const Size(400, 1000), downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Search online for “Dune Messiah”'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('Add book exposes online search only when acquisition is ready', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(1400, 1000);
+        addTearDown(tester.view.reset);
+
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+
+        await tester.pumpWidget(buildPage(screenSize: const Size(400, 1000), downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(FloatingActionButton));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Find books online'), findsOneWidget);
+
+        await tester.tapAt(const Offset(8, 8));
+        await tester.pumpAndSettle();
+        downloadsProvider.setServerManagedDownloadsReady(false);
+        await tester.tap(find.byType(FloatingActionButton));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Find books online'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('explicit online search replaces the grid and Back restores local state', (tester) async {
+        final gateway = _LibraryAcquisitionGateway();
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider
+          ..setSearchQuery('Dune Messiah')
+          ..addFilter(LibraryFilterType.favorites)
+          ..setViewMode(LibraryViewMode.list);
+
+        await tester.pumpWidget(buildPage(screenSize: const Size(400, 1000), downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Dune Messiah”'));
+        await tester.pumpAndSettle();
+
+        expect(gateway.searchQueries, ['Dune Messiah']);
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(find.byType(OnlineResultsView), findsOneWidget);
+        expect(find.text('Remote result'), findsOneWidget);
+        expect(find.byType(BookListItem), findsNothing);
+
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsNothing);
+        expect(libraryProvider.searchQuery, 'Dune Messiah');
+        expect(libraryProvider.isFilterActive(LibraryFilterType.favorites), isTrue);
+        expect(libraryProvider.viewMode, LibraryViewMode.list);
+        expect(gateway.searchQueries, hasLength(1));
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('Add book enters online mode without searching', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(1400, 1000);
+        addTearDown(tester.view.reset);
+
+        final gateway = _LibraryAcquisitionGateway();
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(400, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(FloatingActionButton));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Find books online'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(find.text('Search connected sources'), findsOneWidget);
+        expect(gateway.searchQueries, isEmpty);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('successful release submission returns to local books', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(releaseCount: 2);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Dune Messiah');
+
+        await tester.pumpWidget(
+          buildPage(
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Dune Messiah”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox).first);
+        await tester.pump();
+
+        expect(find.byType(SelectionHeader), findsOneWidget);
+        expect(find.text('Select all'), findsOneWidget);
+
+        await tester.tap(find.text('Select all'));
+        await tester.pump();
+        expect(downloadsProvider.selectedReleaseTokens, {'release-token', 'release-token-2'});
+
+        await tester.tap(find.text('Download'));
+        await tester.pumpAndSettle();
+
+        expect(gateway.submittedTokens, ['release-token', 'release-token-2']);
+        expect(find.byType(OnlineBooksHeader), findsNothing);
+        expect(libraryProvider.searchQuery, 'Dune Messiah');
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('failed release submission stays online with its row selected', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(submissionError: 'Release token expired');
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Dune Messiah');
+
+        await tester.pumpWidget(buildPage(downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Dune Messiah”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox).first);
+        await tester.pump();
+        await tester.tap(find.text('Download'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnlineBooksHeader), findsNothing);
+        expect(find.byType(SelectionHeader), findsOneWidget);
+        expect(find.text('Remote result'), findsOneWidget);
+        expect(find.text('This release could not be sent to the download client.'), findsOneWidget);
+        expect(downloadsProvider.selectedReleaseTokens, {'release-token'});
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('multiple clients use a content-height choice sheet with user names only', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(clientCount: 2);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Dune Messiah');
+
+        await tester.pumpWidget(buildPage(screenSize: const Size(400, 1000), downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Dune Messiah”'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox).first);
+        await tester.pump();
+        await tester.tap(find.text('Download'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Download with'), findsOneWidget);
+        expect(find.text('Download client 1'), findsOneWidget);
+        expect(find.text('Download client 2'), findsOneWidget);
+        expect(find.textContaining('/downloads'), findsNothing);
+
+        await tester.tap(find.text('Download client 2'));
+        await tester.pumpAndSettle();
+
+        expect(gateway.submittedEndpointId, 'client-2');
+        expect(find.byType(OnlineBooksHeader), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('online search error retries explicitly in the content area', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(failSearch: true);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        libraryProvider.setSearchQuery('Dune Messiah');
+
+        await tester.pumpWidget(buildPage(downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Search online for “Dune Messiah”'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Unable to search connected sources'), findsOneWidget);
+        expect(find.text('Try again'), findsOneWidget);
+        expect(gateway.searchQueries, ['Dune Messiah']);
+
+        gateway.failSearch = false;
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+
+        expect(gateway.searchQueries, ['Dune Messiah', 'Dune Messiah']);
+        expect(find.text('Remote result'), findsOneWidget);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('renders an orphan placeholder in-place with a Downloading filter', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(jobs: [_libraryJob(AcquisitionJobStatus.downloading, bookId: null)]);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final filterChips = tester.widget<LibraryFilterChips>(find.byType(LibraryFilterChips));
+        expect(filterChips.showDownloading, isTrue);
+        expect(find.textContaining('Downloads'), findsNothing);
+
+        filterChips.onDownloadingTapped!();
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AcquisitionPlaceholderCard), findsOneWidget);
+        expect(find.byType(BookCard), findsNothing);
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('download selection stays separate and shows only valid cancel action', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(jobs: [_libraryJob(AcquisitionJobStatus.downloading, bookId: null)]);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final filterChips = tester.widget<LibraryFilterChips>(find.byType(LibraryFilterChips));
+        expect(filterChips.showDownloading, isTrue);
+        filterChips.onDownloadingTapped!();
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+
+        expect(find.byType(SelectionHeader), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Try again'), findsNothing);
+        expect(find.text('Remove'), findsNothing);
+        expect(libraryProvider.isSelectionMode, isFalse);
+
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+
+        await tester.tap(find.text('Cancel downloads').last);
+        await tester.pumpAndSettle();
+
+        expect(gateway.cancelledJobIds, ['job-1']);
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('cancelled download selection offers only Remove after confirmation', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(jobs: [_libraryJob(AcquisitionJobStatus.cancelled, bookId: null)]);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+
+        expect(find.text('Remove'), findsOneWidget);
+        expect(find.text('Cancel'), findsNothing);
+        expect(find.text('Try again'), findsNothing);
+
+        await tester.tap(find.text('Remove'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+        await tester.tap(find.widgetWithText(FilledButton, 'Remove').last);
+        await tester.pumpAndSettle();
+
+        expect(gateway.removedJobIds, ['job-1']);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('returns to ordinary books when the last Downloading item disappears', (tester) async {
+        final jobs = [_libraryJob(AcquisitionJobStatus.downloading, bookId: null)];
+        final gateway = _LibraryAcquisitionGateway(jobs: jobs);
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(buildPage(screenSize: const Size(800, 1000), downloadsProvider: downloadsProvider));
+        await tester.pumpAndSettle();
+        final filterChips = tester.widget<LibraryFilterChips>(find.byType(LibraryFilterChips));
+        filterChips.onDownloadingTapped!();
+        await tester.pumpAndSettle();
+
+        expect(find.byType(BookCard), findsNothing);
+
+        jobs.clear();
+        await downloadsProvider.refreshJobs();
+        await tester.pumpAndSettle();
+
+        expect(tester.widget<LibraryFilterChips>(find.byType(LibraryFilterChips)).showDownloading, isFalse);
+        expect(find.byType(BookCard), findsWidgets);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('tapping a placeholder opens the standard live details sheet', (tester) async {
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(jobs: [_libraryJob(AcquisitionJobStatus.downloading, bookId: null)]),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(AcquisitionPlaceholderCard));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('acquisition-job-details-content')), findsOneWidget);
+        expect(find.text('Remote result'), findsWidgets);
+        expect(find.textContaining('client-1'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('retryable failed selection offers Try again and clears selection', (tester) async {
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [_libraryJob(AcquisitionJobStatus.failed, bookId: null, retryable: true)],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+
+        expect(find.text('Try again'), findsOneWidget);
+        expect(find.text('Remove'), findsOneWidget);
+        expect(find.text('Cancel'), findsNothing);
+
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+
+        expect(gateway.retriedJobIds, ['job-1']);
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('completed orphan is replaced when its synchronized book arrives', (tester) async {
+        final store = createTestDataStore(books: []);
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [_libraryJob(AcquisitionJobStatus.completed, bookId: 'imported-book')],
+          ),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(800, 1000), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AcquisitionPlaceholderCard), findsOneWidget);
+
+        store.loadData(
+          books: [Book(id: 'imported-book', title: 'Imported book', author: 'Author', addedAt: DateTime(2026))],
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AcquisitionPlaceholderCard), findsNothing);
+        expect(find.text('Imported book'), findsWidgets);
+
+        downloadsProvider.dispose();
       });
 
       testWidgets('renders filter chips', (tester) async {
@@ -149,6 +636,31 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(LibrarySearchBar), findsOneWidget);
+      });
+
+      testWidgets('typing a search with acquisition ready keeps the desktop layout valid', (tester) async {
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(1590, 1321), downloadsProvider: downloadsProvider, theme: AppTheme.dark),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).first, 't');
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+
+        await tester.enterText(find.byType(TextField).first, 'Missing title');
+        await tester.pump();
+
+        expect(find.text('Search online for “Missing title”'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        downloadsProvider.dispose();
       });
 
       testWidgets('renders filter chips', (tester) async {
@@ -499,4 +1011,172 @@ class _ControlledBookRepository implements BookRepository {
 
   @override
   Future<void> delete(String id) async {}
+}
+
+class _TrackingDownloadsProvider extends AcquisitionDownloadsProvider {
+  _TrackingDownloadsProvider({required AcquisitionDownloadsGateway gateway})
+    : super(gateway: gateway, pollingInterval: Duration.zero);
+
+  final List<bool> libraryVisibility = [];
+
+  @override
+  void setLibraryVisible(bool visible) {
+    libraryVisibility.add(visible);
+    super.setLibraryVisible(visible);
+  }
+}
+
+class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
+  final List<AcquisitionJob> jobs;
+  final String? submissionError;
+  final int releaseCount;
+  final int clientCount;
+  bool failSearch;
+  List<String> submittedTokens = [];
+  String? submittedEndpointId;
+  final List<String> searchQueries = [];
+  final List<String> cancelledJobIds = [];
+  final List<String> retriedJobIds = [];
+  final List<String> removedJobIds = [];
+
+  _LibraryAcquisitionGateway({
+    this.jobs = const [],
+    this.submissionError,
+    this.releaseCount = 1,
+    this.clientCount = 1,
+    this.failSearch = false,
+  });
+
+  @override
+  Future<List<AcquisitionEndpoint>> listEndpoints() async => [
+    AcquisitionEndpoint(
+      id: 'indexer-1',
+      name: 'Prowlarr',
+      kind: AcquisitionEndpointKind.prowlarr,
+      baseUrl: Uri.parse('http://prowlarr.local'),
+      enabled: true,
+    ),
+    for (var index = 1; index <= clientCount; index += 1)
+      AcquisitionEndpoint(
+        id: 'client-$index',
+        name: 'Download client $index',
+        kind: AcquisitionEndpointKind.qbittorrent,
+        baseUrl: Uri.parse('http://client-$index.local'),
+        downloadRoot: '/downloads/$index',
+        enabled: true,
+      ),
+  ];
+
+  @override
+  Future<AcquisitionJobPage> listJobs({int limit = 50, int offset = 0}) async {
+    return AcquisitionJobPage(items: jobs, total: jobs.length, limit: 50, offset: 0);
+  }
+
+  @override
+  Future<List<TorrentRelease>> search(String query, {List<String>? endpointIds}) async {
+    searchQueries.add(query);
+
+    if (failSearch) {
+      throw StateError('raw source failure');
+    }
+
+    return [
+      for (var index = 1; index <= releaseCount; index += 1)
+        TorrentRelease(
+          title: index == 1 ? 'Remote result' : 'Remote result $index',
+          releaseToken: index == 1 ? 'release-token' : 'release-token-$index',
+          protocol: 'torrent',
+          indexer: 'Prowlarr',
+          seeders: 12,
+          sizeBytes: 2048,
+          formatHints: const ['epub'],
+        ),
+    ];
+  }
+
+  @override
+  Future<BatchSubmissionResponse> submitReleaseBatch({
+    required String endpointId,
+    required List<TorrentRelease> releases,
+  }) async {
+    submittedTokens = releases.map((release) => release.releaseToken).toList();
+    submittedEndpointId = endpointId;
+
+    return BatchSubmissionResponse(
+      items: [
+        for (var index = 0; index < releases.length; index += 1)
+          BatchSubmissionItem(
+            index: index,
+            job: submissionError == null
+                ? _libraryJob(AcquisitionJobStatus.submitted, id: 'submitted-job-$index', bookId: null)
+                : null,
+            error: submissionError,
+          ),
+      ],
+    );
+  }
+
+  @override
+  Future<List<AcquisitionFileCandidate>> listJobFiles(String jobId) async => const [];
+
+  @override
+  Future<AcquisitionJob> selectJobFile(String jobId, int fileIndex) async {
+    return _libraryJob(AcquisitionJobStatus.downloading);
+  }
+
+  @override
+  Future<AcquisitionJob> cancelJob(String jobId) async {
+    cancelledJobIds.add(jobId);
+
+    return _libraryJob(AcquisitionJobStatus.cancelled);
+  }
+
+  @override
+  Future<AcquisitionJob> retryJobImport(String jobId) async {
+    retriedJobIds.add(jobId);
+
+    return _libraryJob(AcquisitionJobStatus.downloading);
+  }
+
+  @override
+  Future<void> removeJob(String jobId) async {
+    removedJobIds.add(jobId);
+  }
+
+  @override
+  void close() {}
+}
+
+AcquisitionJob _libraryJob(
+  AcquisitionJobStatus status, {
+  String id = 'job-1',
+  String? bookId = 'book-1',
+  bool retryable = false,
+}) {
+  return AcquisitionJob(
+    id: id,
+    endpointId: 'client-1',
+    ruleId: null,
+    bookId: bookId,
+    title: 'Remote result',
+    status: status,
+    clientReference: null,
+    clientHash: null,
+    clientState: null,
+    progressBasisPoints: 0,
+    downloadedBytes: 0,
+    totalBytes: null,
+    downloadSpeedBytesPerSecond: null,
+    etaSeconds: null,
+    selectedFilePath: null,
+    retryCount: 0,
+    error: null,
+    nextPollAt: null,
+    createdAt: null,
+    updatedAt: null,
+    submittedAt: retryable ? DateTime(2026) : null,
+    startedAt: null,
+    completedAt: null,
+    cancelledAt: null,
+  );
 }
