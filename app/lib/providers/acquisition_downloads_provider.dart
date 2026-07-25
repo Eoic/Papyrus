@@ -303,7 +303,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
         _endpoints = const [];
-        _error = error.toString();
+        _error = configurationErrorMessage(error);
       }
     }
 
@@ -353,7 +353,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       _error = null;
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
-        _error = error.toString();
+        _error = jobRefreshErrorMessage(error);
       }
     } finally {
       if (_isCurrent(gateway, generation)) {
@@ -585,9 +585,19 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
-    final files = await gateway.listJobFiles(jobId);
 
-    return _isCurrent(gateway, generation) ? files : const [];
+    try {
+      final files = await gateway.listJobFiles(jobId);
+
+      return _isCurrent(gateway, generation) ? files : const [];
+    } catch (error) {
+      if (_isCurrent(gateway, generation)) {
+        _error = listDownloadFilesErrorMessage(error);
+        _notifyListeners();
+      }
+
+      return const [];
+    }
   }
 
   Future<void> selectJobFile(String jobId, int fileIndex) async {
@@ -598,10 +608,18 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
-    final job = await gateway.selectJobFile(jobId, fileIndex);
 
-    if (_isCurrent(gateway, generation)) {
-      _replaceJob(job);
+    try {
+      final job = await gateway.selectJobFile(jobId, fileIndex);
+
+      if (_isCurrent(gateway, generation)) {
+        _replaceJob(job);
+      }
+    } catch (error) {
+      if (_isCurrent(gateway, generation)) {
+        _error = selectDownloadFileErrorMessage(error);
+        _notifyListeners();
+      }
     }
   }
 
@@ -613,10 +631,18 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
-    final job = await gateway.retryJobImport(jobId);
 
-    if (_isCurrent(gateway, generation)) {
-      _replaceJob(job);
+    try {
+      final job = await gateway.retryJobImport(jobId);
+
+      if (_isCurrent(gateway, generation)) {
+        _replaceJob(job);
+      }
+    } catch (error) {
+      if (_isCurrent(gateway, generation)) {
+        _error = retryDownloadImportErrorMessage(error);
+        _notifyListeners();
+      }
     }
   }
 
@@ -646,7 +672,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
             return;
           }
 
-          _error = error.toString();
+          _error = cancelDownloadErrorMessage(error);
         }
       }
     }
@@ -682,7 +708,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
             return;
           }
 
-          _error = error.toString();
+          _error = removeDownloadErrorMessage(error);
         }
       }
     }

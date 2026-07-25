@@ -31,3 +31,17 @@ String submissionErrorMessage(String? detail) {
 
   return 'This release could not be sent to the download client.';
 }
+
+String configurationErrorMessage(Object _) => 'Could not load download settings. Try again.';
+
+String jobRefreshErrorMessage(Object _) => 'Could not refresh downloads. Try again.';
+
+String cancelDownloadErrorMessage(Object _) => 'Could not cancel the download. Try again.';
+
+String removeDownloadErrorMessage(Object _) => 'Could not remove the download. Try again.';
+
+String listDownloadFilesErrorMessage(Object _) => 'Could not load download files. Try again.';
+
+String selectDownloadFileErrorMessage(Object _) => 'Could not select the download file. Try again.';
+
+String retryDownloadImportErrorMessage(Object _) => 'Could not retry the download import. Try again.';

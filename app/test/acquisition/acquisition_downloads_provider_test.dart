@@ -65,18 +65,90 @@ void main() {
   });
 
   test('search keeps task state separate from job refresh errors', () async {
-    final gateway = _FakeGateway(searchError: const AuthApiException(statusCode: 503, message: 'indexer down'));
+    final gateway = _FakeGateway(
+      endpointsError: StateError('https://download-client.local/settings?token=secret'),
+      searchError: const AuthApiException(statusCode: 503, message: 'indexer down'),
+    );
     final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
 
-    await provider.refreshJobs();
+    await provider.refreshConfiguration();
     await provider.searchRemote('  remote book  ');
 
     expect(provider.remoteQuery, 'remote book');
     expect(provider.remoteResults, isEmpty);
     expect(provider.searchError, 'Could not search connected sources. Check the enabled indexers and try again.');
-    expect(provider.error, isNull);
+    expect(provider.error, 'Could not load download settings. Try again.');
 
     provider.dispose();
+  });
+
+  test('maps job refresh gateway failures to a safe general error', () async {
+    final provider = AcquisitionDownloadsProvider(
+      gateway: _FakeGateway(jobListError: StateError('https://download-client.local/jobs?token=secret')),
+      pollingInterval: Duration.zero,
+    );
+
+    await provider.refreshJobs();
+
+    expect(provider.error, 'Could not refresh downloads. Try again.');
+
+    provider.dispose();
+  });
+
+  test('maps download file operation failures to safe general errors', () async {
+    final provider = AcquisitionDownloadsProvider(
+      gateway: _FakeGateway(
+        filesError: StateError('https://download-client.local/files?token=secret'),
+        selectFileError: StateError('https://download-client.local/file-selection?token=secret'),
+        retryImportError: StateError('https://download-client.local/retry-import?token=secret'),
+      ),
+      pollingInterval: Duration.zero,
+    );
+
+    expect(await provider.listJobFiles('job-1'), isEmpty);
+    expect(provider.error, 'Could not load download files. Try again.');
+
+    await provider.selectJobFile('job-1', 0);
+    expect(provider.error, 'Could not select the download file. Try again.');
+
+    await provider.retryJobImport('job-1');
+    expect(provider.error, 'Could not retry the download import. Try again.');
+
+    provider.dispose();
+  });
+
+  test('maps cancel and removal gateway failures to safe general errors', () async {
+    final cancelProvider = AcquisitionDownloadsProvider(
+      gateway: _FakeGateway(
+        jobPages: [
+          AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.downloading)], total: 1, limit: 100, offset: 0),
+        ],
+        cancelError: StateError('https://download-client.local/cancel?token=secret'),
+      ),
+      pollingInterval: Duration.zero,
+    );
+    await cancelProvider.refreshJobs();
+    cancelProvider.toggleJobSelection('job-1');
+    await cancelProvider.cancelSelectedJobs();
+
+    expect(cancelProvider.error, 'Could not cancel the download. Try again.');
+    cancelProvider.dispose();
+
+    final removeProvider = AcquisitionDownloadsProvider(
+      gateway: _FakeGateway(
+        jobPages: [
+          AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.failed)], total: 1, limit: 100, offset: 0),
+        ],
+        removeError: StateError('https://download-client.local/jobs/job-1?token=secret'),
+      ),
+      pollingInterval: Duration.zero,
+    );
+    await removeProvider.refreshJobs();
+    removeProvider.toggleJobSelection('job-1');
+    await removeProvider.removeSelectedJobs();
+
+    expect(removeProvider.error, 'Could not remove the download. Try again.');
+    removeProvider.dispose();
   });
 
   test('submits selected remote releases and preserves only failed selections', () async {
@@ -403,9 +475,15 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   final BatchSubmissionResponse batchResult;
   final Completer<BatchSubmissionResponse>? batchCompleter;
   final AcquisitionJobPage? repeatedJobPage;
-  final List<TorrentRelease> searchResults;
+  final Object? endpointsError;
+  final Object? jobListError;
   final Object? searchError;
   final Completer<List<TorrentRelease>>? searchCompleter;
+  final Object? filesError;
+  final Object? selectFileError;
+  final Object? retryImportError;
+  final Object? cancelError;
+  final Object? removeError;
   List<String> submittedTokens = [];
   final List<int> jobOffsets = [];
   int listJobCalls = 0;
@@ -417,18 +495,33 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     this.batchResult = const BatchSubmissionResponse(items: []),
     this.batchCompleter,
     this.repeatedJobPage,
-    this.searchResults = const [],
+    this.endpointsError,
+    this.jobListError,
     this.searchError,
     this.searchCompleter,
+    this.filesError,
+    this.selectFileError,
+    this.retryImportError,
+    this.cancelError,
+    this.removeError,
   });
 
   @override
-  Future<List<AcquisitionEndpoint>> listEndpoints() async => endpoints;
+  Future<List<AcquisitionEndpoint>> listEndpoints() async {
+    if (endpointsError case final error?) {
+      throw error;
+    }
+
+    return endpoints;
+  }
 
   @override
   Future<AcquisitionJobPage> listJobs({int limit = 50, int offset = 0}) async {
     listJobCalls += 1;
     jobOffsets.add(offset);
+    if (jobListError case final error?) {
+      throw error;
+    }
     if (jobPages.isNotEmpty) {
       return jobPages.removeAt(0);
     }
@@ -457,25 +550,49 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
       return completer.future;
     }
 
-    return searchResults;
+    return const [];
   }
 
   @override
-  Future<AcquisitionJob> cancelJob(String jobId) async => _job(status: AcquisitionJobStatus.cancelled);
+  Future<AcquisitionJob> cancelJob(String jobId) async {
+    if (cancelError case final error?) {
+      throw error;
+    }
+
+    return _job(status: AcquisitionJobStatus.cancelled);
+  }
 
   @override
-  Future<void> removeJob(String jobId) async {}
+  Future<void> removeJob(String jobId) async {
+    if (removeError case final error?) {
+      throw error;
+    }
+  }
 
   @override
-  Future<List<AcquisitionFileCandidate>> listJobFiles(String jobId) async => const [];
+  Future<List<AcquisitionFileCandidate>> listJobFiles(String jobId) async {
+    if (filesError case final error?) {
+      throw error;
+    }
+
+    return const [];
+  }
 
   @override
   Future<AcquisitionJob> selectJobFile(String jobId, int fileIndex) async {
+    if (selectFileError case final error?) {
+      throw error;
+    }
+
     return _job(status: AcquisitionJobStatus.downloading);
   }
 
   @override
   Future<AcquisitionJob> retryJobImport(String jobId) async {
+    if (retryImportError case final error?) {
+      throw error;
+    }
+
     return _job(status: AcquisitionJobStatus.downloading);
   }
 
