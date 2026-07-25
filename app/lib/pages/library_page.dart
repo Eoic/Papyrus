@@ -598,19 +598,19 @@ class _LibraryPageState extends State<LibraryPage> {
       children: [
         if (canCancel)
           FilledButton.icon(
-            onPressed: () => _cancelSelectedJobs(provider, selectedJobs),
+            onPressed: provider.isMutatingJobs ? null : () => _cancelSelectedJobs(provider, selectedJobs),
             icon: const Icon(Icons.stop_circle_outlined),
             label: const Text('Cancel'),
           ),
         if (canRetry)
           FilledButton.icon(
-            onPressed: () => _retrySelectedJobs(provider, selectedJobs),
+            onPressed: provider.isMutatingJobs ? null : () => _retrySelectedJobs(provider, selectedJobs),
             icon: const Icon(Icons.refresh),
             label: const Text('Try again'),
           ),
         if (canRemove)
           FilledButton.icon(
-            onPressed: () => _removeSelectedJobs(provider, selectedJobs),
+            onPressed: provider.isMutatingJobs ? null : () => _removeSelectedJobs(provider, selectedJobs),
             icon: const Icon(Icons.delete_outline),
             label: const Text('Remove'),
           ),
@@ -626,6 +626,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _cancelSelectedJobs(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) async {
+    final presentationGeneration = _presentationGeneration;
     final confirmed = await showAcquisitionConfirmationDialog(
       context: context,
       title: 'Cancel downloads',
@@ -633,19 +634,21 @@ class _LibraryPageState extends State<LibraryPage> {
       actionLabel: 'Cancel downloads',
     );
 
-    if (confirmed) {
+    if (confirmed && _isCurrentLocalPresentation(provider, presentationGeneration)) {
       final outcome = await provider.cancelSelectedJobs();
-      _showJobActionFailure(outcome);
+      _showJobActionFailure(provider, presentationGeneration, outcome);
     }
   }
 
   Future<void> _retrySelectedJobs(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) async {
+    final presentationGeneration = _presentationGeneration;
     provider.retainJobSelection(selectedJobs.map((job) => job.id).toSet());
     final outcome = await provider.retrySelectedJobs();
-    _showJobActionFailure(outcome);
+    _showJobActionFailure(provider, presentationGeneration, outcome);
   }
 
   Future<void> _removeSelectedJobs(AcquisitionDownloadsProvider provider, List<AcquisitionJob> selectedJobs) async {
+    final presentationGeneration = _presentationGeneration;
     final confirmed = await showAcquisitionConfirmationDialog(
       context: context,
       title: 'Remove downloads',
@@ -653,16 +656,27 @@ class _LibraryPageState extends State<LibraryPage> {
       actionLabel: 'Remove',
     );
 
-    if (confirmed) {
+    if (confirmed && _isCurrentLocalPresentation(provider, presentationGeneration)) {
       final outcome = await provider.removeSelectedJobs();
-      _showJobActionFailure(outcome);
+      _showJobActionFailure(provider, presentationGeneration, outcome);
     }
   }
 
-  void _showJobActionFailure(AcquisitionJobActionOutcome outcome) {
+  bool _isCurrentLocalPresentation(AcquisitionDownloadsProvider provider, int presentationGeneration) {
+    return mounted &&
+        presentationGeneration == _presentationGeneration &&
+        _presentationMode == _BooksPresentationMode.local &&
+        identical(provider, _visibleDownloadsProvider);
+  }
+
+  void _showJobActionFailure(
+    AcquisitionDownloadsProvider provider,
+    int presentationGeneration,
+    AcquisitionJobActionOutcome outcome,
+  ) {
     final message = outcome.error;
 
-    if (!mounted || message == null) {
+    if (message == null || !_isCurrentLocalPresentation(provider, presentationGeneration)) {
       return;
     }
 

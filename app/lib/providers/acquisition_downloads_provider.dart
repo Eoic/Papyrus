@@ -170,6 +170,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   bool _isLoadingJobs = false;
   bool _isSearching = false;
   bool _isSubmitting = false;
+  bool _isMutatingJobs = false;
   bool _serverManagedDownloadsReady = true;
   bool _isLibraryVisible = false;
   bool _isForeground = true;
@@ -178,6 +179,8 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   bool _discoveryRefreshRequiresLibraryVisibility = true;
   int _generation = 0;
   int _remoteStateGeneration = 0;
+  int _submissionGeneration = 0;
+  int _jobMutationGeneration = 0;
 
   AcquisitionDownloadsProvider({
     AcquisitionDownloadsGateway? gateway,
@@ -242,6 +245,8 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
   bool get isSubmitting => _isSubmitting;
 
+  bool get isMutatingJobs => _isMutatingJobs;
+
   bool get isConfigured => _gateway != null;
 
   bool get isManagedAcquisitionReady {
@@ -301,6 +306,8 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
     _generation += 1;
     _remoteStateGeneration += 1;
+    _submissionGeneration += 1;
+    _jobMutationGeneration += 1;
     _pollTimer?.cancel();
     _gateway?.close();
     _gateway = gateway;
@@ -316,6 +323,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     _isLoadingJobs = false;
     _isSearching = false;
     _isSubmitting = false;
+    _isMutatingJobs = false;
     _notifyListeners();
 
     if (gateway != null) {
@@ -416,7 +424,9 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
     final generation = _generation;
     _remoteStateGeneration += 1;
+    _submissionGeneration += 1;
     final remoteStateGeneration = _remoteStateGeneration;
+    _isSubmitting = false;
     _isSearching = true;
     _remoteQuery = normalized;
     _remoteResults = const [];
@@ -452,12 +462,14 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     _remoteStateGeneration += 1;
+    _submissionGeneration += 1;
     _remoteQuery = query;
     _remoteResults = List.unmodifiable(results);
     _selectedReleaseTokens.clear();
     _submissionErrorsByReleaseToken = const {};
     _searchError = null;
     _isSearching = false;
+    _isSubmitting = false;
     _notifyListeners();
   }
 
@@ -467,12 +479,14 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     _remoteStateGeneration += 1;
+    _submissionGeneration += 1;
     _remoteQuery = null;
     _remoteResults = const [];
     _selectedReleaseTokens.clear();
     _submissionErrorsByReleaseToken = const {};
     _searchError = null;
     _isSearching = false;
+    _isSubmitting = false;
     _notifyListeners();
   }
 
@@ -560,6 +574,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
     final generation = _generation;
     final remoteStateGeneration = _remoteStateGeneration;
+    final submissionGeneration = ++_submissionGeneration;
     final selected = _remoteResults.where((release) => _selectedReleaseTokens.contains(release.releaseToken)).toList();
 
     if (selected.isEmpty) {
@@ -623,19 +638,18 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
         failuresByReleaseToken: failuresByReleaseToken,
       );
     } catch (error) {
-      if (_isCurrent(gateway, generation)) {
+      if (_isCurrentRemoteState(gateway, generation, remoteStateGeneration)) {
         final failuresByReleaseToken = {
           for (final release in selected) release.releaseToken: submissionErrorMessage(error.toString()),
         };
-        if (_remoteStateGeneration == remoteStateGeneration) {
-          _selectedReleaseTokens.addAll(failuresByReleaseToken.keys);
-          _submissionErrorsByReleaseToken = Map.unmodifiable(failuresByReleaseToken);
-        }
+        _selectedReleaseTokens.addAll(failuresByReleaseToken.keys);
+        _submissionErrorsByReleaseToken = Map.unmodifiable(failuresByReleaseToken);
 
         return AcquisitionSubmissionOutcome(successfulCount: 0, failuresByReleaseToken: failuresByReleaseToken);
       }
     } finally {
-      if (_isCurrent(gateway, generation)) {
+      if (_isCurrentRemoteState(gateway, generation, remoteStateGeneration) &&
+          submissionGeneration == _submissionGeneration) {
         _isSubmitting = false;
         _notifyListeners();
       }
@@ -762,36 +776,46 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   Future<AcquisitionJobActionOutcome> cancelSelectedJobs() async {
     final gateway = _gateway;
 
-    if (gateway == null || _disposed) {
+    if (gateway == null || _isMutatingJobs || _disposed) {
       return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
-    String? failure;
-
-    for (final jobId in _selectedJobIds.toList()) {
-      final job = _jobs[jobId];
-
-      if (job != null && job.canCancel) {
-        final outcome = await _cancelJob(gateway, generation, jobId);
-
-        if (!_isCurrent(gateway, generation)) {
-          return const AcquisitionJobActionOutcome.ignored();
-        }
-
-        if (outcome.succeeded) {
-          _selectedJobIds.remove(jobId);
-        } else if (outcome.error case final message?) {
-          failure ??= message;
-        }
-      }
-    }
-
-    _error = failure;
-    _schedulePolling();
+    final mutationGeneration = ++_jobMutationGeneration;
+    _isMutatingJobs = true;
     _notifyListeners();
 
-    return failure == null ? const AcquisitionJobActionOutcome.success() : AcquisitionJobActionOutcome.failure(failure);
+    try {
+      String? failure;
+
+      for (final jobId in _selectedJobIds.toList()) {
+        final job = _jobs[jobId];
+
+        if (job != null && job.canCancel) {
+          final outcome = await _cancelJob(gateway, generation, jobId);
+
+          if (!_isCurrentJobMutation(gateway, generation, mutationGeneration)) {
+            return const AcquisitionJobActionOutcome.ignored();
+          }
+
+          if (outcome.succeeded) {
+            _selectedJobIds.remove(jobId);
+          } else if (outcome.error case final message?) {
+            failure ??= message;
+          }
+        }
+      }
+
+      _error = failure;
+      _schedulePolling();
+      _notifyListeners();
+
+      return failure == null
+          ? const AcquisitionJobActionOutcome.success()
+          : AcquisitionJobActionOutcome.failure(failure);
+    } finally {
+      _finishJobMutation(gateway, generation, mutationGeneration);
+    }
   }
 
   Future<AcquisitionJobActionOutcome> _cancelJob(
@@ -821,65 +845,96 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   }
 
   Future<AcquisitionJobActionOutcome> retrySelectedJobs() async {
-    String? failure;
+    final gateway = _gateway;
 
-    for (final jobId in _selectedJobIds.toList()) {
-      final job = _jobs[jobId];
-
-      if (job?.canRetryImport == true) {
-        final outcome = await retryJobImport(jobId);
-
-        if (outcome.succeeded) {
-          _selectedJobIds.remove(jobId);
-        } else if (outcome.error case final message?) {
-          failure ??= message;
-        }
-      }
+    if (gateway == null || _isMutatingJobs || _disposed) {
+      return const AcquisitionJobActionOutcome.ignored();
     }
 
-    _error = failure;
+    final generation = _generation;
+    final mutationGeneration = ++_jobMutationGeneration;
+    _isMutatingJobs = true;
     _notifyListeners();
 
-    return failure == null ? const AcquisitionJobActionOutcome.success() : AcquisitionJobActionOutcome.failure(failure);
+    try {
+      String? failure;
+
+      for (final jobId in _selectedJobIds.toList()) {
+        final job = _jobs[jobId];
+
+        if (job?.canRetryImport == true) {
+          final outcome = await retryJobImport(jobId);
+
+          if (!_isCurrentJobMutation(gateway, generation, mutationGeneration)) {
+            return const AcquisitionJobActionOutcome.ignored();
+          }
+
+          if (outcome.succeeded) {
+            _selectedJobIds.remove(jobId);
+          } else if (outcome.error case final message?) {
+            failure ??= message;
+          }
+        }
+      }
+
+      _error = failure;
+      _notifyListeners();
+
+      return failure == null
+          ? const AcquisitionJobActionOutcome.success()
+          : AcquisitionJobActionOutcome.failure(failure);
+    } finally {
+      _finishJobMutation(gateway, generation, mutationGeneration);
+    }
   }
 
   Future<AcquisitionJobActionOutcome> removeSelectedJobs() async {
     final gateway = _gateway;
 
-    if (gateway == null || _disposed) {
+    if (gateway == null || _isMutatingJobs || _disposed) {
       return const AcquisitionJobActionOutcome.ignored();
     }
 
     final generation = _generation;
-    String? failure;
-
-    for (final jobId in _selectedJobIds.toList()) {
-      final job = _jobs[jobId];
-
-      if (job?.status == AcquisitionJobStatus.failed || job?.status == AcquisitionJobStatus.cancelled) {
-        try {
-          await gateway.removeJob(jobId);
-
-          if (!_isCurrent(gateway, generation)) {
-            return const AcquisitionJobActionOutcome.ignored();
-          }
-
-          _jobs.remove(jobId);
-          _selectedJobIds.remove(jobId);
-        } catch (error) {
-          if (!_isCurrent(gateway, generation)) {
-            return const AcquisitionJobActionOutcome.ignored();
-          }
-
-          failure ??= removeDownloadErrorMessage(error);
-        }
-      }
-    }
-
-    _error = failure;
+    final mutationGeneration = ++_jobMutationGeneration;
+    _isMutatingJobs = true;
     _notifyListeners();
 
-    return failure == null ? const AcquisitionJobActionOutcome.success() : AcquisitionJobActionOutcome.failure(failure);
+    try {
+      String? failure;
+
+      for (final jobId in _selectedJobIds.toList()) {
+        final job = _jobs[jobId];
+
+        if (job?.status == AcquisitionJobStatus.failed || job?.status == AcquisitionJobStatus.cancelled) {
+          try {
+            await gateway.removeJob(jobId);
+
+            if (!_isCurrentJobMutation(gateway, generation, mutationGeneration)) {
+              return const AcquisitionJobActionOutcome.ignored();
+            }
+
+            _jobs.remove(jobId);
+            _selectedJobIds.remove(jobId);
+          } catch (error) {
+            if (!_isCurrentJobMutation(gateway, generation, mutationGeneration)) {
+              return const AcquisitionJobActionOutcome.ignored();
+            }
+
+            failure ??= removeDownloadErrorMessage(error);
+          }
+        }
+      }
+
+      _error = failure;
+      _notifyListeners();
+
+      return failure == null
+          ? const AcquisitionJobActionOutcome.success()
+          : AcquisitionJobActionOutcome.failure(failure);
+    } finally {
+      _finishJobMutation(gateway, generation, mutationGeneration);
+    }
   }
 
   void _replaceJob(AcquisitionJob job) {
@@ -892,7 +947,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   void _schedulePolling() {
     _pollTimer?.cancel();
 
-    if (!_isForeground || _disposed) {
+    if (!_isForeground || _disposed || (!_isLibraryVisible && !_jobs.values.any((job) => job.isActive))) {
       return;
     }
 
@@ -939,6 +994,19 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
 
   bool _isCurrentRemoteState(AcquisitionDownloadsGateway gateway, int generation, int remoteStateGeneration) {
     return _isCurrent(gateway, generation) && remoteStateGeneration == _remoteStateGeneration;
+  }
+
+  bool _isCurrentJobMutation(AcquisitionDownloadsGateway gateway, int generation, int mutationGeneration) {
+    return _isCurrent(gateway, generation) && mutationGeneration == _jobMutationGeneration;
+  }
+
+  void _finishJobMutation(AcquisitionDownloadsGateway gateway, int generation, int mutationGeneration) {
+    if (!_isCurrentJobMutation(gateway, generation, mutationGeneration)) {
+      return;
+    }
+
+    _isMutatingJobs = false;
+    _notifyListeners();
   }
 
   void _notifyListeners() {

@@ -346,10 +346,11 @@ void main() {
         downloadsProvider.dispose();
       });
 
-      testWidgets('an old successful submission cannot close a newer online session', (tester) async {
-        final submission = Completer<BatchSubmissionResponse>();
+      testWidgets('a reset releases a hung submission and its completion cannot reset the new request', (tester) async {
+        final oldSubmission = Completer<BatchSubmissionResponse>();
+        final newSubmission = Completer<BatchSubmissionResponse>();
         final gateway = _LibraryAcquisitionGateway(
-          submissionCompleter: submission,
+          submissionResponses: [oldSubmission.future, newSubmission.future],
           searchResponses: const [
             [TorrentRelease(title: 'Old result', releaseToken: 'old-token', protocol: 'torrent', indexer: 'Prowlarr')],
             [TorrentRelease(title: 'New result', releaseToken: 'new-token', protocol: 'torrent', indexer: 'Prowlarr')],
@@ -379,6 +380,9 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Back'));
         await tester.pumpAndSettle();
+
+        expect(downloadsProvider.isSubmitting, isFalse);
+
         libraryProvider.setSearchQuery('New query');
         await tester.pump();
         await tester.tap(find.text('Search online for “New query”'));
@@ -387,7 +391,18 @@ void main() {
         expect(downloadsProvider.remoteQuery, 'New query');
         expect(find.text('New result'), findsOneWidget);
 
-        submission.complete(
+        await tester.tap(find.byType(Checkbox));
+        await tester.pump();
+        await tester.tap(find.text('Download'));
+        await tester.pump();
+
+        expect(downloadsProvider.isSubmitting, isTrue);
+        expect(gateway.submittedTokenBatches, [
+          ['old-token'],
+          ['new-token'],
+        ]);
+
+        oldSubmission.complete(
           BatchSubmissionResponse(
             items: [
               BatchSubmissionItem(
@@ -403,12 +418,35 @@ void main() {
             ],
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump();
 
-        expect(find.byType(OnlineBooksHeader), findsOneWidget);
+        expect(find.byType(SelectionHeader), findsOneWidget);
         expect(downloadsProvider.remoteQuery, 'New query');
         expect(find.text('New result'), findsOneWidget);
         expect(downloadsProvider.jobs.map((job) => job.id), isNot(contains('old-submission')));
+        expect(downloadsProvider.isSubmitting, isTrue);
+
+        newSubmission.complete(
+          BatchSubmissionResponse(
+            items: [
+              BatchSubmissionItem(
+                index: 0,
+                job: _libraryJob(
+                  AcquisitionJobStatus.submitted,
+                  id: 'new-submission',
+                  bookId: null,
+                  title: 'New result',
+                ),
+                error: null,
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(downloadsProvider.isSubmitting, isFalse);
+        expect(find.byType(OnlineBooksHeader), findsNothing);
+        expect(downloadsProvider.jobs.map((job) => job.id), ['new-submission']);
 
         downloadsProvider.dispose();
       });
@@ -1127,6 +1165,137 @@ void main() {
         downloadsProvider.dispose();
       });
 
+      testWidgets('delayed bulk retry rejects a double tap and disables every bulk action', (tester) async {
+        final retry = Completer<AcquisitionJob>();
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [_libraryJob(AcquisitionJobStatus.failed, bookId: null, retryable: true)],
+          retryCompleter: retry,
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+
+        final retryButton = find.widgetWithText(FilledButton, 'Try again');
+        await tester.tap(retryButton);
+        await tester.tap(retryButton);
+        await tester.pump();
+
+        expect(gateway.retriedJobIds, ['job-1']);
+        expect(downloadsProvider.isMutatingJobs, isTrue);
+        expect(tester.widget<FilledButton>(retryButton).onPressed, isNull);
+        expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Remove')).onPressed, isNull);
+
+        retry.complete(_libraryJob(AcquisitionJobStatus.downloading));
+        await tester.pumpAndSettle();
+
+        expect(downloadsProvider.isMutatingJobs, isFalse);
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('delayed bulk removal disables its repeated destructive action', (tester) async {
+        final removal = Completer<void>();
+        final gateway = _LibraryAcquisitionGateway(
+          jobs: [_libraryJob(AcquisitionJobStatus.failed, bookId: null)],
+          removeCompleter: removal,
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: downloadsProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Remove').last);
+        await tester.pump();
+
+        final removeButton = find.widgetWithText(FilledButton, 'Remove').first;
+        expect(gateway.removedJobIds, ['job-1']);
+        expect(downloadsProvider.isMutatingJobs, isTrue);
+        expect(tester.widget<FilledButton>(removeButton).onPressed, isNull);
+
+        await tester.tap(removeButton);
+        await tester.pump();
+        expect(gateway.removedJobIds, ['job-1']);
+
+        removal.complete();
+        await tester.pumpAndSettle();
+
+        expect(downloadsProvider.isMutatingJobs, isFalse);
+        expect(downloadsProvider.selectedJobIds, isEmpty);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('a delayed bulk failure cannot show feedback after the downloads provider is replaced', (
+        tester,
+      ) async {
+        final retry = Completer<AcquisitionJob>();
+        final oldProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [_libraryJob(AcquisitionJobStatus.failed, bookId: null, retryable: true)],
+            retryCompleter: retry,
+          ),
+          pollingInterval: Duration.zero,
+        );
+        final currentProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(),
+          pollingInterval: Duration.zero,
+        );
+        await oldProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: oldProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(FilledButton, 'Try again'));
+        await tester.pump();
+
+        await tester.pumpWidget(
+          buildPage(
+            screenSize: const Size(800, 1000),
+            store: createTestDataStore(books: []),
+            downloadsProvider: currentProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        retry.completeError(StateError('raw retry failure at https://client.invalid?token=secret'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Could not retry the download import. Try again.'), findsNothing);
+        expect(find.textContaining('client.invalid'), findsNothing);
+        expect(currentProvider.selectedJobIds, isEmpty);
+
+        oldProvider.dispose();
+        currentProvider.dispose();
+      });
+
       testWidgets('failed bulk retry shows a safe message and retains selection', (tester) async {
         final gateway = _LibraryAcquisitionGateway(
           jobs: [_libraryJob(AcquisitionJobStatus.failed, bookId: null, retryable: true)],
@@ -1708,12 +1877,16 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
   final Completer<List<TorrentRelease>>? searchCompleter;
   final Completer<BatchSubmissionResponse>? submissionCompleter;
   final List<Object> _searchResponses;
+  final List<Object> _submissionResponses;
   final Set<int> failedSubmissionIndexes;
   final Object? cancelError;
   final Object? retryError;
   final Object? removeError;
+  final Completer<AcquisitionJob>? retryCompleter;
+  final Completer<void>? removeCompleter;
   bool failSearch;
   List<String> submittedTokens = [];
+  final List<List<String>> submittedTokenBatches = [];
   String? submittedEndpointId;
   final List<String> searchQueries = [];
   final List<String> cancelledJobIds = [];
@@ -1728,12 +1901,16 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
     this.searchCompleter,
     this.submissionCompleter,
     List<Object> searchResponses = const [],
+    List<Object> submissionResponses = const [],
     this.failedSubmissionIndexes = const {},
     this.cancelError,
     this.retryError,
     this.removeError,
+    this.retryCompleter,
+    this.removeCompleter,
     this.failSearch = false,
-  }) : _searchResponses = [...searchResponses];
+  }) : _searchResponses = [...searchResponses],
+       _submissionResponses = [...submissionResponses];
 
   @override
   Future<List<AcquisitionEndpoint>> listEndpoints() async => [
@@ -1805,7 +1982,21 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
     required List<TorrentRelease> releases,
   }) async {
     submittedTokens = releases.map((release) => release.releaseToken).toList();
+    submittedTokenBatches.add([...submittedTokens]);
     submittedEndpointId = endpointId;
+
+    if (_submissionResponses.isNotEmpty) {
+      final response = _submissionResponses.removeAt(0);
+
+      if (response is Future<BatchSubmissionResponse>) {
+        return response;
+      }
+      if (response is BatchSubmissionResponse) {
+        return response;
+      }
+
+      throw response;
+    }
 
     if (submissionCompleter case final completer?) {
       return completer.future;
@@ -1859,6 +2050,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
 
     retriedJobIds.add(jobId);
 
+    if (retryCompleter case final completer?) {
+      return completer.future;
+    }
+
     return _libraryJob(AcquisitionJobStatus.downloading);
   }
 
@@ -1869,6 +2064,10 @@ class _LibraryAcquisitionGateway implements AcquisitionDownloadsGateway {
     }
 
     removedJobIds.add(jobId);
+
+    if (removeCompleter case final completer?) {
+      return completer.future;
+    }
   }
 
   @override

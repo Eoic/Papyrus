@@ -248,6 +248,104 @@ void main() {
     provider.dispose();
   });
 
+  test('bulk retry blocks concurrent remove and keeps ownership until its delayed result completes', () async {
+    final retry = Completer<AcquisitionJob>();
+    final gateway = _FakeGateway(
+      jobPages: [
+        AcquisitionJobPage(
+          items: [_job(status: AcquisitionJobStatus.failed, retryable: true)],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        ),
+      ],
+      retryImportCompleter: retry,
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    await provider.refreshJobs();
+    provider.toggleJobSelection('job-1');
+
+    final retryOperation = provider.retrySelectedJobs();
+
+    expect(provider.isMutatingJobs, isTrue);
+    expect(gateway.retriedJobIds, ['job-1']);
+
+    final removeOutcome = await provider.removeSelectedJobs();
+
+    expect(removeOutcome.ignored, isTrue);
+    expect(gateway.removedJobIds, isEmpty);
+    expect(provider.isMutatingJobs, isTrue);
+    expect(provider.selectedJobIds, {'job-1'});
+
+    retry.complete(_job(status: AcquisitionJobStatus.downloading));
+    final retryOutcome = await retryOperation;
+
+    expect(retryOutcome.succeeded, isTrue);
+    expect(provider.isMutatingJobs, isFalse);
+    expect(provider.selectedJobIds, isEmpty);
+
+    provider.dispose();
+  });
+
+  test('bulk removal ignores a duplicate invocation while the first request is delayed', () async {
+    final removal = Completer<void>();
+    final gateway = _FakeGateway(
+      jobPages: [
+        AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.failed)], total: 1, limit: 100, offset: 0),
+      ],
+      removeCompleter: removal,
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    await provider.refreshJobs();
+    provider.toggleJobSelection('job-1');
+
+    final firstOperation = provider.removeSelectedJobs();
+    final duplicateOutcome = await provider.removeSelectedJobs();
+
+    expect(duplicateOutcome.ignored, isTrue);
+    expect(gateway.removedJobIds, ['job-1']);
+    expect(provider.isMutatingJobs, isTrue);
+    expect(provider.selectedJobIds, {'job-1'});
+
+    removal.complete();
+    final firstOutcome = await firstOperation;
+
+    expect(firstOutcome.succeeded, isTrue);
+    expect(provider.isMutatingJobs, isFalse);
+    expect(provider.selectedJobIds, isEmpty);
+
+    provider.dispose();
+  });
+
+  test('bulk cancellation ignores a duplicate invocation while the first request is delayed', () async {
+    final cancellation = Completer<AcquisitionJob>();
+    final gateway = _FakeGateway(
+      jobPages: [
+        AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.downloading)], total: 1, limit: 100, offset: 0),
+      ],
+      cancelCompleter: cancellation,
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    await provider.refreshJobs();
+    provider.toggleJobSelection('job-1');
+
+    final firstOperation = provider.cancelSelectedJobs();
+    final duplicateOutcome = await provider.cancelSelectedJobs();
+
+    expect(duplicateOutcome.ignored, isTrue);
+    expect(gateway.cancelledJobIds, ['job-1']);
+    expect(provider.isMutatingJobs, isTrue);
+
+    cancellation.complete(_job(status: AcquisitionJobStatus.cancelled));
+    final firstOutcome = await firstOperation;
+
+    expect(firstOutcome.succeeded, isTrue);
+    expect(provider.isMutatingJobs, isFalse);
+    expect(provider.selectedJobIds, isEmpty);
+
+    provider.dispose();
+  });
+
   test('cancels one job without changing independent job selection', () async {
     final gateway = _FakeGateway(
       jobPages: [
@@ -501,6 +599,73 @@ void main() {
     provider.dispose();
   });
 
+  test('remote reset releases a hung submission without letting its completion reset the new request', () async {
+    final oldSubmission = Completer<BatchSubmissionResponse>();
+    final newSubmission = Completer<BatchSubmissionResponse>();
+    final gateway = _FakeGateway(batchResponses: [oldSubmission.future, newSubmission.future]);
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    provider.setRemoteResults('old', const [
+      TorrentRelease(title: 'Old', releaseToken: 'old-token', protocol: 'torrent', indexer: 'Prowlarr'),
+    ]);
+    provider.toggleReleaseSelection('old-token');
+    final oldOperation = provider.submitSelectedReleases('endpoint-1');
+
+    expect(provider.isSubmitting, isTrue);
+
+    provider.clearRemoteResults();
+    expect(provider.isSubmitting, isFalse);
+
+    provider.setRemoteResults('new', const [
+      TorrentRelease(title: 'New', releaseToken: 'new-token', protocol: 'torrent', indexer: 'Prowlarr'),
+    ]);
+    provider.toggleReleaseSelection('new-token');
+    final newOperation = provider.submitSelectedReleases('endpoint-1');
+
+    expect(provider.isSubmitting, isTrue);
+    expect(gateway.submittedTokenBatches, [
+      ['old-token'],
+      ['new-token'],
+    ]);
+
+    oldSubmission.complete(
+      BatchSubmissionResponse(
+        items: [
+          BatchSubmissionItem(
+            index: 0,
+            job: _job(id: 'old-job', status: AcquisitionJobStatus.submitted),
+            error: null,
+          ),
+        ],
+      ),
+    );
+    await oldOperation;
+
+    expect(provider.isSubmitting, isTrue);
+    expect(provider.remoteQuery, 'new');
+    expect(provider.selectedReleaseTokens, {'new-token'});
+    expect(provider.jobs, isEmpty);
+
+    newSubmission.complete(
+      BatchSubmissionResponse(
+        items: [
+          BatchSubmissionItem(
+            index: 0,
+            job: _job(id: 'new-job', status: AcquisitionJobStatus.submitted),
+            error: null,
+          ),
+        ],
+      ),
+    );
+    await newOperation;
+
+    expect(provider.isSubmitting, isFalse);
+    expect(provider.selectedReleaseTokens, isEmpty);
+    expect(provider.jobs.map((job) => job.id), ['new-job']);
+
+    provider.dispose();
+  });
+
   test('treats malformed, out-of-range, and omitted batch items as failed', () async {
     final gateway = _FakeGateway(
       batchResult: BatchSubmissionResponse(
@@ -645,6 +810,125 @@ void main() {
     provider.dispose();
   });
 
+  testWidgets('uses foreground polling for a hidden active job', (tester) async {
+    final gateway = _FakeGateway(
+      repeatedJobPage: AcquisitionJobPage(
+        items: [_job(status: AcquisitionJobStatus.downloading)],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      ),
+    );
+    final provider = AcquisitionDownloadsProvider(
+      gateway: gateway,
+      visiblePollingInterval: const Duration(seconds: 2),
+      foregroundPollingInterval: const Duration(seconds: 10),
+    );
+
+    await provider.refreshJobs();
+    expect(gateway.listJobCalls, 1);
+
+    await tester.pump(const Duration(seconds: 9));
+    expect(gateway.listJobCalls, 1);
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(gateway.listJobCalls, 2);
+
+    provider.dispose();
+  });
+
+  testWidgets('stops foreground polling when the hidden provider has no active jobs', (tester) async {
+    final gateway = _FakeGateway();
+    final provider = AcquisitionDownloadsProvider(
+      gateway: gateway,
+      visiblePollingInterval: const Duration(seconds: 2),
+      foregroundPollingInterval: const Duration(seconds: 10),
+    );
+
+    await provider.refreshJobs();
+    expect(gateway.listJobCalls, 1);
+
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pump();
+    expect(gateway.listJobCalls, 1);
+
+    provider.dispose();
+  });
+
+  testWidgets('resume performs one hidden empty discovery refresh without leaving a timer', (tester) async {
+    final gateway = _FakeGateway();
+    final provider = AcquisitionDownloadsProvider(
+      gateway: gateway,
+      visiblePollingInterval: const Duration(seconds: 2),
+      foregroundPollingInterval: const Duration(seconds: 10),
+    );
+
+    provider.didChangeAppLifecycleState(AppLifecycleState.paused);
+    provider.didChangeAppLifecycleState(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(gateway.listJobCalls, 1);
+
+    await tester.pump(const Duration(seconds: 10));
+    await tester.pump();
+    expect(gateway.listJobCalls, 1);
+
+    provider.dispose();
+  });
+
+  testWidgets('gateway replacement and disposal cancel their pending polling timers', (tester) async {
+    final oldGateway = _FakeGateway(
+      repeatedJobPage: AcquisitionJobPage(
+        items: [_job(status: AcquisitionJobStatus.downloading)],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      ),
+    );
+    final replacementGateway = _FakeGateway();
+    final provider = AcquisitionDownloadsProvider(
+      gateway: oldGateway,
+      visiblePollingInterval: const Duration(seconds: 2),
+      foregroundPollingInterval: const Duration(seconds: 10),
+    );
+
+    await provider.refreshJobs();
+    provider.setGateway(replacementGateway);
+    await tester.pump();
+
+    expect(oldGateway.listJobCalls, 1);
+    expect(replacementGateway.listJobCalls, 1);
+
+    await tester.pump(const Duration(seconds: 10));
+    await tester.pump();
+
+    expect(oldGateway.listJobCalls, 1);
+    expect(replacementGateway.listJobCalls, 1);
+
+    final disposalGateway = _FakeGateway(
+      repeatedJobPage: AcquisitionJobPage(
+        items: [_job(status: AcquisitionJobStatus.downloading)],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      ),
+    );
+    final disposableProvider = AcquisitionDownloadsProvider(
+      gateway: disposalGateway,
+      foregroundPollingInterval: const Duration(seconds: 10),
+    );
+    await disposableProvider.refreshJobs();
+    disposableProvider.dispose();
+
+    await tester.pump(const Duration(seconds: 10));
+    await tester.pump();
+
+    expect(disposalGateway.listJobCalls, 1);
+
+    provider.dispose();
+  });
+
   testWidgets('discovers an externally created job on resume with no known jobs', (tester) async {
     final gateway = _FakeGateway(
       jobPages: [
@@ -679,6 +963,7 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   final List<AcquisitionJobPage> jobPages;
   final BatchSubmissionResponse batchResult;
   final Completer<BatchSubmissionResponse>? batchCompleter;
+  final List<Object> _batchResponses;
   final AcquisitionJobPage? repeatedJobPage;
   final Object? endpointsError;
   final Object? jobListError;
@@ -691,11 +976,16 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   final Map<String, Object> retryImportErrorsByJobId;
   final Object? cancelError;
   final Object? removeError;
+  final Completer<AcquisitionJob>? retryImportCompleter;
+  final Completer<AcquisitionJob>? cancelCompleter;
+  final Completer<void>? removeCompleter;
   List<String> submittedTokens = [];
+  final List<List<String>> submittedTokenBatches = [];
   final List<int> jobOffsets = [];
   int listJobCalls = 0;
   final List<String> cancelledJobIds = [];
   final List<String> retriedJobIds = [];
+  final List<String> removedJobIds = [];
   bool closed = false;
 
   _FakeGateway({
@@ -703,6 +993,7 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     this.jobPages = const [],
     this.batchResult = const BatchSubmissionResponse(items: []),
     this.batchCompleter,
+    List<Object> batchResponses = const [],
     this.repeatedJobPage,
     this.endpointsError,
     this.jobListError,
@@ -715,7 +1006,11 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     this.retryImportErrorsByJobId = const {},
     this.cancelError,
     this.removeError,
-  }) : _searchResponses = [...searchResponses];
+    this.retryImportCompleter,
+    this.cancelCompleter,
+    this.removeCompleter,
+  }) : _batchResponses = [...batchResponses],
+       _searchResponses = [...searchResponses];
 
   @override
   Future<List<AcquisitionEndpoint>> listEndpoints() async {
@@ -745,6 +1040,19 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     required List<TorrentRelease> releases,
   }) async {
     submittedTokens = releases.map((release) => release.releaseToken).toList();
+    submittedTokenBatches.add([...submittedTokens]);
+    if (_batchResponses.isNotEmpty) {
+      final response = _batchResponses.removeAt(0);
+
+      if (response is Future<BatchSubmissionResponse>) {
+        return response;
+      }
+      if (response is BatchSubmissionResponse) {
+        return response;
+      }
+
+      throw response;
+    }
     if (batchCompleter case final completer?) {
       return completer.future;
     }
@@ -785,6 +1093,10 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
 
     cancelledJobIds.add(jobId);
 
+    if (cancelCompleter case final completer?) {
+      return completer.future;
+    }
+
     return _job(id: jobId, status: AcquisitionJobStatus.cancelled);
   }
 
@@ -792,6 +1104,12 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   Future<void> removeJob(String jobId) async {
     if (removeError case final error?) {
       throw error;
+    }
+
+    removedJobIds.add(jobId);
+
+    if (removeCompleter case final completer?) {
+      return completer.future;
     }
   }
 
@@ -824,6 +1142,10 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     }
 
     retriedJobIds.add(jobId);
+
+    if (retryImportCompleter case final completer?) {
+      return completer.future;
+    }
 
     return _job(id: jobId, status: AcquisitionJobStatus.downloading);
   }
