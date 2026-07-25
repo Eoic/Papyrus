@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
@@ -9,6 +11,7 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 void main() {
   testWidgets('shows download details in a content-height Papyrus bottom sheet', (tester) async {
+    final semantics = tester.ensureSemantics();
     final gateway = _RecordingGateway();
     final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
     addTearDown(provider.dispose);
@@ -38,6 +41,10 @@ void main() {
     expect(find.text('hash-secret'), findsNothing);
     expect(find.text('technical-client-state'), findsNothing);
     expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.42);
+    expect(
+      tester.getSemantics(find.byKey(const Key('acquisition-job-details-title'))).flagsCollection.isHeader,
+      isTrue,
+    );
 
     final title = tester.widget<Text>(find.text('Example Book'));
     final titleContext = tester.element(find.text('Example Book'));
@@ -53,17 +60,22 @@ void main() {
     final padding = tester.widget<Padding>(content);
     expect(padding.padding, const EdgeInsets.fromLTRB(Spacing.lg, Spacing.md, Spacing.lg, Spacing.lg));
     expect(tester.getSize(find.byType(BottomSheet)).height, lessThan(900));
+
+    semantics.dispose();
   });
 
   testWidgets('shows only Cancel for an active download', (tester) async {
-    final provider = AcquisitionDownloadsProvider(gateway: _RecordingGateway(), pollingInterval: Duration.zero);
-    addTearDown(provider.dispose);
-
-    await _pumpLauncher(
-      tester,
-      provider: provider,
-      job: _job(status: AcquisitionJobStatus.downloading),
+    final job = _job(status: AcquisitionJobStatus.downloading);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
     );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
     await tester.tap(find.text('Open details'));
     await tester.pumpAndSettle();
 
@@ -73,15 +85,17 @@ void main() {
   });
 
   testWidgets('confirms and cancels one job without using another bottom sheet', (tester) async {
-    final gateway = _RecordingGateway();
+    final job = _job(status: AcquisitionJobStatus.downloading);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+    );
     final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
     addTearDown(provider.dispose);
+    await provider.refreshJobs();
 
-    await _pumpLauncher(
-      tester,
-      provider: provider,
-      job: _job(status: AcquisitionJobStatus.downloading),
-    );
+    await _pumpLauncher(tester, provider: provider, job: job);
     await tester.tap(find.text('Open details'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Cancel'));
@@ -104,7 +118,11 @@ void main() {
   });
 
   testWidgets('offers supported files only when file selection is needed', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.needsFileSelection);
     final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
       files: const [
         AcquisitionFileCandidate(
           index: 2,
@@ -126,12 +144,9 @@ void main() {
     );
     final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
     addTearDown(provider.dispose);
+    await provider.refreshJobs();
 
-    await _pumpLauncher(
-      tester,
-      provider: provider,
-      job: _job(status: AcquisitionJobStatus.needsFileSelection),
-    );
+    await _pumpLauncher(tester, provider: provider, job: job);
     await tester.tap(find.text('Open details'));
     await tester.pumpAndSettle();
 
@@ -148,15 +163,17 @@ void main() {
   });
 
   testWidgets('offers Retry import only for retryable failed imports', (tester) async {
-    final gateway = _RecordingGateway();
+    final job = _job(status: AcquisitionJobStatus.failed, submittedAt: DateTime(2026));
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+    );
     final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
     addTearDown(provider.dispose);
+    await provider.refreshJobs();
 
-    await _pumpLauncher(
-      tester,
-      provider: provider,
-      job: _job(status: AcquisitionJobStatus.failed, submittedAt: DateTime(2026)),
-    );
+    await _pumpLauncher(tester, provider: provider, job: job);
     await tester.tap(find.text('Open details'));
     await tester.pumpAndSettle();
 
@@ -172,14 +189,17 @@ void main() {
   });
 
   testWidgets('terminal jobs expose no contextual actions', (tester) async {
-    final provider = AcquisitionDownloadsProvider(gateway: _RecordingGateway(), pollingInterval: Duration.zero);
-    addTearDown(provider.dispose);
-
-    await _pumpLauncher(
-      tester,
-      provider: provider,
-      job: _job(status: AcquisitionJobStatus.completed),
+    final job = _job(status: AcquisitionJobStatus.completed);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
     );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
     await tester.tap(find.text('Open details'));
     await tester.pumpAndSettle();
 
@@ -205,6 +225,224 @@ void main() {
     expect(find.text('Example Book'), findsOneWidget);
     expect(find.text('Needs attention'), findsOneWidget);
     expect(find.textContaining('mystery_state'), findsNothing);
+  });
+
+  testWidgets('rebuilds details from live provider job updates', (tester) async {
+    final downloading = _job(status: AcquisitionJobStatus.downloading);
+    final importing = _job(status: AcquisitionJobStatus.importing);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [downloading],
+        [importing],
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: downloading);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Downloading 42%'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Cancel'), findsOneWidget);
+
+    await provider.refreshJobs();
+    await tester.pump();
+
+    expect(find.text('Adding to library'), findsOneWidget);
+    expect(find.text('Downloading 42%'), findsNothing);
+    expect(find.text('Cancel'), findsNothing);
+  });
+
+  testWidgets('suppresses stale cancellation after the live job completes', (tester) async {
+    final downloading = _job(status: AcquisitionJobStatus.downloading);
+    final completed = _job(status: AcquisitionJobStatus.completed);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [downloading],
+        [completed],
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: downloading);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    await provider.refreshJobs();
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancel download'));
+    await tester.pumpAndSettle();
+
+    expect(gateway.cancelledJobIds, isEmpty);
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.completed);
+  });
+
+  testWidgets('suppresses a stale import retry after the live job completes', (tester) async {
+    final failed = _job(status: AcquisitionJobStatus.failed, submittedAt: DateTime(2026));
+    final completed = _job(status: AcquisitionJobStatus.completed);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [failed],
+        [completed],
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: failed);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    final staleRetry = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Retry import')).onPressed!;
+
+    await provider.refreshJobs();
+    staleRetry();
+    await tester.pumpAndSettle();
+
+    expect(gateway.retriedJobIds, isEmpty);
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.completed);
+  });
+
+  testWidgets('suppresses a stale file selection after the live job completes', (tester) async {
+    final needsFile = _job(status: AcquisitionJobStatus.needsFileSelection);
+    final completed = _job(status: AcquisitionJobStatus.completed);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [needsFile],
+        [completed],
+      ],
+      files: const [
+        AcquisitionFileCandidate(
+          index: 2,
+          name: 'Example Book.epub',
+          sizeBytes: 2 * 1024 * 1024,
+          progressBasisPoints: 10000,
+          priority: 1,
+          supported: true,
+        ),
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: needsFile);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    final staleFileSelection = tester
+        .widget<ListTile>(find.ancestor(of: find.text('Example Book.epub'), matching: find.byType(ListTile)))
+        .onTap!;
+
+    await provider.refreshJobs();
+    staleFileSelection();
+    await tester.pumpAndSettle();
+
+    expect(gateway.selectedFile, isNull);
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.completed);
+  });
+
+  testWidgets('opens immediately and shows loading while file choices are pending', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.needsFileSelection);
+    final filesCompleter = Completer<List<AcquisitionFileCandidate>>();
+    addTearDown(() {
+      if (!filesCompleter.isCompleted) {
+        filesCompleter.complete(const []);
+      }
+    });
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+      fileResponses: [filesCompleter.future],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
+    await tester.tap(find.text('Open details'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('Loading files…'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('No supported book files found.'), findsNothing);
+
+    filesCompleter.complete(const []);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Loading files…'), findsNothing);
+    expect(find.text('No supported book files found.'), findsOneWidget);
+  });
+
+  testWidgets('shows a safe file error and retries in the sheet', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.needsFileSelection);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+      fileResponses: [
+        StateError('https://client.local/files?password=secret'),
+        const <AcquisitionFileCandidate>[
+          AcquisitionFileCandidate(
+            index: 4,
+            name: 'Retry Book.epub',
+            sizeBytes: 1024,
+            progressBasisPoints: 10000,
+            priority: 1,
+            supported: true,
+          ),
+        ],
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Could not load download files. Try again.'), findsOneWidget);
+    expect(find.textContaining('client.local'), findsNothing);
+    expect(find.textContaining('secret'), findsNothing);
+    expect(find.widgetWithText(OutlinedButton, 'Retry'), findsOneWidget);
+    expect(find.text('No supported book files found.'), findsNothing);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Retry'));
+    await tester.pumpAndSettle();
+
+    expect(gateway.fileLoadCalls, 2);
+    expect(find.text('Retry Book.epub'), findsOneWidget);
+    expect(find.text('Could not load download files. Try again.'), findsNothing);
+    expect(provider.error, isNull);
+  });
+
+  testWidgets('shows the genuine empty state only after a successful file response', (tester) async {
+    final job = _job(status: AcquisitionJobStatus.needsFileSelection);
+    final gateway = _RecordingGateway(
+      jobResponses: [
+        [job],
+      ],
+      fileResponses: const [<AcquisitionFileCandidate>[]],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    addTearDown(provider.dispose);
+    await provider.refreshJobs();
+
+    await _pumpLauncher(tester, provider: provider, job: job);
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No supported book files found.'), findsOneWidget);
+    expect(find.text('Could not load download files. Try again.'), findsNothing);
+    expect(find.text('Retry'), findsNothing);
   });
 }
 
@@ -240,11 +478,20 @@ Future<void> _pumpLauncher(
 }
 
 class _RecordingGateway implements AcquisitionDownloadsGateway {
-  _RecordingGateway({this.files = const []});
+  _RecordingGateway({
+    this.files = const [],
+    List<List<AcquisitionJob>> jobResponses = const [],
+    List<Object>? fileResponses,
+  }) : _jobResponses = [...jobResponses],
+       _fileResponses = [...?fileResponses];
 
   final List<AcquisitionFileCandidate> files;
+  final List<List<AcquisitionJob>> _jobResponses;
+  final List<Object> _fileResponses;
   final List<String> cancelledJobIds = [];
   final List<String> retriedJobIds = [];
+  List<AcquisitionJob> _lastJobs = const [];
+  int fileLoadCalls = 0;
   (String, int)? selectedFile;
 
   @override
@@ -261,11 +508,32 @@ class _RecordingGateway implements AcquisitionDownloadsGateway {
   Future<List<AcquisitionEndpoint>> listEndpoints() async => const [];
 
   @override
-  Future<List<AcquisitionFileCandidate>> listJobFiles(String jobId) async => files;
+  Future<List<AcquisitionFileCandidate>> listJobFiles(String jobId) async {
+    fileLoadCalls += 1;
+
+    if (_fileResponses.isEmpty) {
+      return files;
+    }
+
+    final response = _fileResponses.removeAt(0);
+
+    if (response is Future<List<AcquisitionFileCandidate>>) {
+      return response;
+    }
+    if (response is List<AcquisitionFileCandidate>) {
+      return response;
+    }
+
+    throw response;
+  }
 
   @override
   Future<AcquisitionJobPage> listJobs({int limit = 50, int offset = 0}) async {
-    return AcquisitionJobPage(items: const [], total: 0, limit: limit, offset: offset);
+    if (_jobResponses.isNotEmpty) {
+      _lastJobs = _jobResponses.removeAt(0);
+    }
+
+    return AcquisitionJobPage(items: _lastJobs, total: _lastJobs.length, limit: limit, offset: offset);
   }
 
   @override

@@ -11,14 +11,6 @@ Future<void> showAcquisitionJobDetailsSheet({
   required AcquisitionDownloadsProvider provider,
   required AcquisitionJob job,
 }) async {
-  final candidates = job.status == AcquisitionJobStatus.needsFileSelection
-      ? await provider.listJobFiles(job.id)
-      : const <AcquisitionFileCandidate>[];
-
-  if (!context.mounted) {
-    return;
-  }
-
   final action = await showModalBottomSheet<_AcquisitionJobAction>(
     context: context,
     useRootNavigator: true,
@@ -30,9 +22,9 @@ Future<void> showAcquisitionJobDetailsSheet({
       child: Padding(
         key: const Key('acquisition-job-details-content'),
         padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.md, Spacing.lg, Spacing.lg),
-        child: _AcquisitionJobDetailsContent(
-          job: job,
-          candidates: candidates,
+        child: _LiveAcquisitionJobDetailsContent(
+          provider: provider,
+          fallbackJob: job,
           onAction: (action) => Navigator.of(sheetContext).pop(action),
         ),
       ),
@@ -45,20 +37,36 @@ Future<void> showAcquisitionJobDetailsSheet({
 
   switch (action) {
     case _CancelJob():
+      var currentJob = provider.jobById(job.id);
+
+      if (currentJob?.canCancel != true) {
+        return;
+      }
+
       final confirmed = await showAcquisitionConfirmationDialog(
         context: context,
         title: 'Cancel download',
-        message: 'Cancel "${job.title}"?',
+        message: 'Cancel "${currentJob!.title}"?',
         actionLabel: 'Cancel download',
       );
 
-      if (confirmed) {
+      currentJob = provider.jobById(job.id);
+
+      if (confirmed && currentJob?.canCancel == true) {
         await provider.cancelJob(job.id);
       }
     case _RetryImport():
-      await provider.retryJobImport(job.id);
+      final currentJob = provider.jobById(job.id);
+
+      if (currentJob?.canRetryImport == true) {
+        await provider.retryJobImport(job.id);
+      }
     case _SelectFile(:final index):
-      await provider.selectJobFile(job.id, index);
+      final currentJob = provider.jobById(job.id);
+
+      if (currentJob?.status == AcquisitionJobStatus.needsFileSelection) {
+        await provider.selectJobFile(job.id, index);
+      }
   }
 }
 
@@ -70,17 +78,55 @@ Future<void> showAcquisitionJobAttentionSheet({
   return showAcquisitionJobDetailsSheet(context: context, provider: provider, job: job);
 }
 
+class _LiveAcquisitionJobDetailsContent extends StatelessWidget {
+  const _LiveAcquisitionJobDetailsContent({required this.provider, required this.fallbackJob, required this.onAction});
+
+  final AcquisitionDownloadsProvider provider;
+  final AcquisitionJob fallbackJob;
+  final ValueChanged<_AcquisitionJobAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: provider,
+      builder: (context, child) {
+        final currentJob = provider.jobById(fallbackJob.id);
+        final displayJob = currentJob ?? fallbackJob;
+
+        return _AcquisitionJobDetailsContent(
+          job: displayJob,
+          actionsEnabled: currentJob != null,
+          fileChoices: currentJob?.status == AcquisitionJobStatus.needsFileSelection
+              ? _AcquisitionFileChoices(
+                  key: ValueKey('acquisition-file-choices-${currentJob!.id}'),
+                  provider: provider,
+                  jobId: currentJob.id,
+                  onSelected: (index) => onAction(_SelectFile(index)),
+                )
+              : null,
+          onAction: onAction,
+        );
+      },
+    );
+  }
+}
+
 class _AcquisitionJobDetailsContent extends StatelessWidget {
-  const _AcquisitionJobDetailsContent({required this.job, required this.candidates, required this.onAction});
+  const _AcquisitionJobDetailsContent({
+    required this.job,
+    required this.actionsEnabled,
+    required this.fileChoices,
+    required this.onAction,
+  });
 
   final AcquisitionJob job;
-  final List<AcquisitionFileCandidate> candidates;
+  final bool actionsEnabled;
+  final Widget? fileChoices;
   final ValueChanged<_AcquisitionJobAction> onAction;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final supportedCandidates = candidates.where((candidate) => candidate.supported).toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -88,7 +134,11 @@ class _AcquisitionJobDetailsContent extends StatelessWidget {
       children: [
         const BottomSheetHandle(),
         const SizedBox(height: Spacing.md),
-        Text(job.title, style: textTheme.headlineSmall),
+        Semantics(
+          key: const Key('acquisition-job-details-title'),
+          header: true,
+          child: Text(job.title, style: textTheme.headlineSmall),
+        ),
         const SizedBox(height: Spacing.sm),
         Text(acquisitionStatusLabel(job), style: textTheme.bodyMedium),
         if (job.progress case final progress?) ...[
@@ -111,24 +161,13 @@ class _AcquisitionJobDetailsContent extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           Text(_fileName(path), style: textTheme.bodyMedium),
         ],
-        if (job.status == AcquisitionJobStatus.needsFileSelection) ...[
+        if (fileChoices case final choices?) ...[
           const SizedBox(height: Spacing.lg),
-          Text('Select file', style: textTheme.titleMedium),
+          Semantics(header: true, child: Text('Select file', style: textTheme.titleMedium)),
           const SizedBox(height: Spacing.sm),
-          if (supportedCandidates.isEmpty)
-            Text('No supported book files found.', style: textTheme.bodyMedium)
-          else
-            for (final candidate in supportedCandidates)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.menu_book_outlined),
-                title: Text(candidate.name),
-                subtitle: Text(formatBytes(candidate.sizeBytes)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => onAction(_SelectFile(candidate.index)),
-              ),
+          choices,
         ],
-        if (job.canCancel) ...[
+        if (actionsEnabled && job.canCancel) ...[
           const SizedBox(height: Spacing.lg),
           FilledButton.icon(
             onPressed: () => onAction(const _CancelJob()),
@@ -136,7 +175,7 @@ class _AcquisitionJobDetailsContent extends StatelessWidget {
             label: const Text('Cancel'),
           ),
         ],
-        if (job.canRetryImport) ...[
+        if (actionsEnabled && job.canRetryImport) ...[
           const SizedBox(height: Spacing.lg),
           FilledButton.icon(
             onPressed: () => onAction(const _RetryImport()),
@@ -145,6 +184,89 @@ class _AcquisitionJobDetailsContent extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _AcquisitionFileChoices extends StatefulWidget {
+  const _AcquisitionFileChoices({required this.provider, required this.jobId, required this.onSelected, super.key});
+
+  final AcquisitionDownloadsProvider provider;
+  final String jobId;
+  final ValueChanged<int> onSelected;
+
+  @override
+  State<_AcquisitionFileChoices> createState() => _AcquisitionFileChoicesState();
+}
+
+class _AcquisitionFileChoicesState extends State<_AcquisitionFileChoices> {
+  late Future<AcquisitionJobFilesResult> _files;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFiles();
+  }
+
+  void _loadFiles() {
+    _files = widget.provider.listJobFiles(widget.jobId);
+  }
+
+  void _retry() {
+    setState(_loadFiles);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return FutureBuilder<AcquisitionJobFilesResult>(
+      future: _files,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Row(
+            children: [
+              const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(width: Spacing.sm),
+              Text('Loading files…', style: textTheme.bodyMedium),
+            ],
+          );
+        }
+
+        final result = snapshot.data;
+
+        if (result == null || !result.isSuccess) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(result?.error ?? 'Could not load download files. Try again.', style: textTheme.bodyMedium),
+              const SizedBox(height: Spacing.sm),
+              OutlinedButton.icon(onPressed: _retry, icon: const Icon(Icons.refresh), label: const Text('Retry')),
+            ],
+          );
+        }
+
+        final supportedFiles = result.files.where((candidate) => candidate.supported).toList();
+
+        if (supportedFiles.isEmpty) {
+          return Text('No supported book files found.', style: textTheme.bodyMedium);
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final candidate in supportedFiles)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.menu_book_outlined),
+                title: Text(candidate.name),
+                subtitle: Text(formatBytes(candidate.sizeBytes)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => widget.onSelected(candidate.index),
+              ),
+          ],
+        );
+      },
     );
   }
 }

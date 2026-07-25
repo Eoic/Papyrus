@@ -18,6 +18,19 @@ class AcquisitionSubmissionOutcome {
   bool get allSucceeded => failedCount == 0 && successfulCount > 0;
 }
 
+class AcquisitionJobFilesResult {
+  AcquisitionJobFilesResult.success(List<AcquisitionFileCandidate> files)
+    : files = List.unmodifiable(files),
+      error = null;
+
+  const AcquisitionJobFilesResult.failure(String message) : files = const [], error = message;
+
+  final List<AcquisitionFileCandidate> files;
+  final String? error;
+
+  bool get isSuccess => error == null;
+}
+
 abstract interface class AcquisitionDownloadsGateway {
   Future<List<AcquisitionEndpoint>> listEndpoints();
 
@@ -173,6 +186,8 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     });
     return values;
   }
+
+  AcquisitionJob? jobById(String jobId) => _jobs[jobId];
 
   Map<String, AcquisitionJob> get jobsByBookId => {
     for (final job in _jobs.values)
@@ -577,11 +592,11 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     return AcquisitionSubmissionOutcome(successfulCount: 0, failuresByReleaseToken: const {});
   }
 
-  Future<List<AcquisitionFileCandidate>> listJobFiles(String jobId) async {
+  Future<AcquisitionJobFilesResult> listJobFiles(String jobId) async {
     final gateway = _gateway;
 
     if (gateway == null || _disposed) {
-      return const [];
+      return const AcquisitionJobFilesResult.failure('Could not load download files. Try again.');
     }
 
     final generation = _generation;
@@ -589,15 +604,27 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     try {
       final files = await gateway.listJobFiles(jobId);
 
-      return _isCurrent(gateway, generation) ? files : const [];
+      if (_isCurrent(gateway, generation)) {
+        final hadError = _error != null;
+        _error = null;
+
+        if (hadError) {
+          _notifyListeners();
+        }
+
+        return AcquisitionJobFilesResult.success(files);
+      }
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
-        _error = listDownloadFilesErrorMessage(error);
+        final message = listDownloadFilesErrorMessage(error);
+        _error = message;
         _notifyListeners();
-      }
 
-      return const [];
+        return AcquisitionJobFilesResult.failure(message);
+      }
     }
+
+    return const AcquisitionJobFilesResult.failure('Could not load download files. Try again.');
   }
 
   Future<void> selectJobFile(String jobId, int fileIndex) async {
@@ -654,10 +681,15 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
-    await _cancelJob(gateway, generation, jobId);
+    final cancelled = await _cancelJob(gateway, generation, jobId);
 
-    if (_isCurrent(gateway, generation)) {
-      _schedulePolling();
+    if (!_isCurrent(gateway, generation)) {
+      return;
+    }
+
+    if (cancelled != null) {
+      _replaceJob(cancelled);
+    } else {
       _notifyListeners();
     }
   }
@@ -675,10 +707,14 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       final job = _jobs[jobId];
 
       if (job != null && job.canCancel) {
-        await _cancelJob(gateway, generation, jobId);
+        final cancelled = await _cancelJob(gateway, generation, jobId);
 
         if (!_isCurrent(gateway, generation)) {
           return;
+        }
+
+        if (cancelled != null) {
+          _jobs[cancelled.id] = cancelled;
         }
       }
     }
@@ -688,18 +724,20 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     _notifyListeners();
   }
 
-  Future<void> _cancelJob(AcquisitionDownloadsGateway gateway, int generation, String jobId) async {
+  Future<AcquisitionJob?> _cancelJob(AcquisitionDownloadsGateway gateway, int generation, String jobId) async {
     try {
       final cancelled = await gateway.cancelJob(jobId);
 
       if (_isCurrent(gateway, generation)) {
-        _jobs[cancelled.id] = cancelled;
+        return cancelled;
       }
     } catch (error) {
       if (_isCurrent(gateway, generation)) {
         _error = cancelDownloadErrorMessage(error);
       }
     }
+
+    return null;
   }
 
   Future<void> removeSelectedJobs() async {

@@ -50,6 +50,8 @@ void main() {
     provider.toggleJobSelection('job-1');
 
     expect(provider.jobs.single.status, AcquisitionJobStatus.downloading);
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.downloading);
+    expect(provider.jobById('missing'), isNull);
     expect(provider.jobsByBookId['book-1']?.status, AcquisitionJobStatus.downloading);
     expect(provider.activeCount, 1);
     expect(provider.selectedJobIds, {'job-1'});
@@ -121,7 +123,10 @@ void main() {
       pollingInterval: Duration.zero,
     );
 
-    expect(await provider.listJobFiles('job-1'), isEmpty);
+    final filesResult = await provider.listJobFiles('job-1');
+    expect(filesResult.isSuccess, isFalse);
+    expect(filesResult.files, isEmpty);
+    expect(filesResult.error, 'Could not load download files. Try again.');
     expect(provider.error, 'Could not load download files. Try again.');
 
     await provider.selectJobFile('job-1', 0);
@@ -190,6 +195,21 @@ void main() {
     expect(gateway.cancelledJobIds, ['job-1']);
     expect(provider.jobs.where((job) => job.id == 'job-1').single.status, AcquisitionJobStatus.cancelled);
     expect(provider.selectedJobIds, {'job-2'});
+
+    provider.dispose();
+  });
+
+  test('successful single cancellation clears a pre-existing provider error', () async {
+    final gateway = _FakeGateway(filesError: StateError('https://download-client.local/files?token=secret'));
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    await provider.listJobFiles('job-1');
+    expect(provider.error, 'Could not load download files. Try again.');
+
+    await provider.cancelJob('job-1');
+
+    expect(provider.error, isNull);
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.cancelled);
 
     provider.dispose();
   });
