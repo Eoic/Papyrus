@@ -135,4 +135,23 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
+
+  testWidgets('keeps search visible near the desktop breakpoint with large text', (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(620, 640);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: buildHeader(controller: controller, onBack: () {}, onSearch: (_) {}),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(TextField), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

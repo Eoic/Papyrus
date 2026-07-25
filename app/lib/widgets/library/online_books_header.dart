@@ -68,9 +68,9 @@ class OnlineBooksHeader extends StatelessWidget {
           children: [
             backButton,
             const SizedBox(width: Spacing.sm),
-            title,
+            Expanded(flex: 2, child: title),
             const SizedBox(width: Spacing.lg),
-            Expanded(child: _buildSearchField()),
+            Expanded(flex: 3, child: _buildSearchField()),
           ],
         );
       },
