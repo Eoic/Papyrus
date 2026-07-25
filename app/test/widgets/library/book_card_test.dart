@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
@@ -29,6 +30,7 @@ void main() {
       void Function(bool)? onToggleFavorite,
       VoidCallback? onTap,
       bool showProgress = true,
+      AcquisitionJob? acquisitionJob,
     }) {
       return createTestApp(
         child: SizedBox(
@@ -40,6 +42,7 @@ void main() {
             onToggleFavorite: onToggleFavorite,
             onTap: onTap,
             showProgress: showProgress,
+            acquisitionJob: acquisitionJob,
           ),
         ),
       );
@@ -80,6 +83,38 @@ void main() {
     testWidgets('hides progress bar when progress is 0', (tester) async {
       final noProgressBook = testBook.copyWith(currentPosition: 0.0);
       await tester.pumpWidget(buildCard(book: noProgressBook));
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+
+    testWidgets('shows compact acquisition progress for a downloading placeholder', (tester) async {
+      await tester.pumpWidget(
+        buildCard(
+          book: testBook.copyWith(currentPosition: 0),
+          acquisitionJob: _acquisitionJob(downloadSpeedBytesPerSecond: 1536 * 1024, etaSeconds: 180),
+        ),
+      );
+
+      expect(find.text('Downloading 50%'), findsOneWidget);
+      expect(find.text('1.5 MB/s · 3 min remaining'), findsOneWidget);
+      expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.5);
+    });
+
+    testWidgets('uses shared acquisition status labels', (tester) async {
+      await tester.pumpWidget(
+        buildCard(
+          book: testBook.copyWith(currentPosition: 0),
+          acquisitionJob: _acquisitionJob(status: AcquisitionJobStatus.completed),
+        ),
+      );
+
+      expect(find.text('Finishing import'), findsOneWidget);
+      expect(find.text('Downloaded'), findsNothing);
+    });
+
+    testWidgets('does not invent acquisition progress', (tester) async {
+      await tester.pumpWidget(buildCard(book: testBook, acquisitionJob: _acquisitionJob(progressBasisPoints: null)));
+
+      expect(find.text('Downloading'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsNothing);
     });
 
@@ -132,4 +167,38 @@ void main() {
       expect(find.byType(Card), findsOneWidget);
     });
   });
+}
+
+AcquisitionJob _acquisitionJob({
+  AcquisitionJobStatus status = AcquisitionJobStatus.downloading,
+  int? progressBasisPoints = 5000,
+  int? downloadSpeedBytesPerSecond = 128,
+  int? etaSeconds = 4,
+}) {
+  return AcquisitionJob(
+    id: 'job-1',
+    endpointId: 'endpoint-1',
+    ruleId: null,
+    bookId: 'book-1',
+    title: 'The Hobbit',
+    status: status,
+    clientReference: null,
+    clientHash: 'hash-1',
+    clientState: 'downloading',
+    progressBasisPoints: progressBasisPoints,
+    downloadedBytes: 512,
+    totalBytes: 1024,
+    downloadSpeedBytesPerSecond: downloadSpeedBytesPerSecond,
+    etaSeconds: etaSeconds,
+    selectedFilePath: null,
+    retryCount: 0,
+    error: null,
+    nextPollAt: null,
+    createdAt: null,
+    updatedAt: null,
+    submittedAt: null,
+    startedAt: null,
+    completedAt: null,
+    cancelledAt: null,
+  );
 }

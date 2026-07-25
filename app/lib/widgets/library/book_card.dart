@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
+import 'package:papyrus/widgets/library/acquisition_status_text.dart';
 
 /// Responsive book card for grid display.
 /// - Mobile: 171×256 with 8px gap
@@ -18,6 +20,7 @@ class BookCard extends StatefulWidget {
   final bool isSelected;
   final VoidCallback? onSelectToggle;
   final VoidCallback? onEnterSelectionMode;
+  final AcquisitionJob? acquisitionJob;
 
   const BookCard({
     super.key,
@@ -30,6 +33,7 @@ class BookCard extends StatefulWidget {
     this.isSelected = false,
     this.onSelectToggle,
     this.onEnterSelectionMode,
+    this.acquisitionJob,
   });
 
   @override
@@ -53,6 +57,11 @@ class _BookCardState extends State<BookCard> {
         onLongPressStart: _isDesktop
             ? null
             : (details) {
+                if (widget.acquisitionJob != null) {
+                  widget.onEnterSelectionMode?.call();
+                  return;
+                }
+
                 showBookContextMenu(context: context, book: widget.book, position: details.globalPosition);
               },
         child: Card(
@@ -136,11 +145,38 @@ class _BookCardState extends State<BookCard> {
                           ),
                         ),
                       ),
+                      if (widget.acquisitionJob case final job?)
+                        Positioned(
+                          bottom: Spacing.xs,
+                          right: Spacing.xs,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                            child: Text(
+                              acquisitionStatusLabel(job),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 // Progress bar
-                if (widget.showProgress && widget.book.progress > 0)
+                if (widget.acquisitionJob case final job?) ...[
+                  if (job.progress case final progress?)
+                    LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                      minHeight: 3,
+                    ),
+                ] else if (widget.showProgress && widget.book.progress > 0)
                   LinearProgressIndicator(
                     value: widget.book.progress,
                     backgroundColor: colorScheme.surfaceContainerHighest,
@@ -166,6 +202,18 @@ class _BookCardState extends State<BookCard> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (widget.acquisitionJob case final job?)
+                        if (acquisitionTransferDetails(job) case final details?) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            details,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                     ],
                   ),
                 ),

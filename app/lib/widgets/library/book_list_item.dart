@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
+import 'package:papyrus/widgets/library/acquisition_status_text.dart';
 
 /// List row for displaying a book with cover thumbnail, title, author,
 /// progress, format badge, and favorite indicator.
@@ -15,6 +17,7 @@ class BookListItem extends StatefulWidget {
   final bool isSelectionMode;
   final bool isSelected;
   final VoidCallback? onSelectToggle;
+  final AcquisitionJob? acquisitionJob;
 
   const BookListItem({
     super.key,
@@ -25,6 +28,7 @@ class BookListItem extends StatefulWidget {
     this.isSelectionMode = false,
     this.isSelected = false,
     this.onSelectToggle,
+    this.acquisitionJob,
   });
 
   @override
@@ -93,7 +97,38 @@ class _BookListItemState extends State<BookListItem> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (widget.showProgress && widget.book.progress > 0) ...[
+                        if (widget.acquisitionJob case final job?) ...[
+                          const SizedBox(height: Spacing.xs),
+                          Text(
+                            acquisitionStatusLabel(job),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: job.requiresAttention ? colorScheme.error : colorScheme.onSurfaceVariant,
+                              fontWeight: job.requiresAttention ? FontWeight.w600 : null,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (acquisitionTransferDetails(job) case final details?) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              details,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          if (job.progress case final progress?) ...[
+                            const SizedBox(height: Spacing.xs),
+                            LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: colorScheme.surfaceContainerHighest,
+                              color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                              minHeight: 3,
+                            ),
+                          ],
+                        ] else if (widget.showProgress && widget.book.progress > 0) ...[
                           const SizedBox(height: Spacing.xs),
                           Row(
                             children: [
