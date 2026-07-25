@@ -52,13 +52,21 @@ void main() {
       expect(find.textContaining('0%'), findsNothing);
     });
 
-    testWidgets('shows failed job details with error treatment', (tester) async {
-      await tester.pumpWidget(_buildListItem(job: _job(status: AcquisitionJobStatus.failed)));
+    testWidgets('shows stable failed status without leaking the raw error', (tester) async {
+      final semantics = tester.ensureSemantics();
 
-      final status = tester.widget<Text>(find.text('Download failed'));
+      try {
+        await tester.pumpWidget(_buildListItem(job: _job(status: AcquisitionJobStatus.failed)));
 
-      expect(find.text('Disk full'), findsOneWidget);
-      expect(status.style?.color, AppTheme.light.colorScheme.error);
+        final status = tester.widget<Text>(find.text('Download failed'));
+        final node = tester.getSemantics(find.byKey(const ValueKey('acquisition-placeholder-list-item-job-1')));
+
+        expect(find.text('Disk full'), findsNothing);
+        expect(node.label, isNot(contains('Disk full')));
+        expect(status.style?.color, AppTheme.light.colorScheme.error);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('uses a neutral cover rather than release artwork', (tester) async {

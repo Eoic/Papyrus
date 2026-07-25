@@ -166,6 +166,27 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('does not use the ordinary tap callback for a linked job without an acquisition callback', (
+      tester,
+    ) async {
+      final linkedBook = _book(id: 'book-linked', title: 'Linked Book');
+      final linkedJob = _job(id: 'job-linked', bookId: linkedBook.id, title: linkedBook.title);
+      final ordinaryTaps = <String>[];
+
+      await tester.pumpWidget(
+        _buildGrid(
+          books: [linkedBook],
+          acquisitionJobsByBookId: {linkedBook.id: linkedJob},
+          onBookTap: (book) => ordinaryTaps.add(book.id),
+        ),
+      );
+
+      await tester.tap(_bookCard(linkedBook.id));
+
+      expect(ordinaryTaps, isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('ordinary books keep ordinary taps and provider selection', (tester) async {
       final provider = LibraryProvider();
       final ordinary = _book(id: 'book-ordinary', title: 'Ordinary Book');
@@ -243,6 +264,10 @@ void main() {
 
         expect(delegate.crossAxisCount, columns);
         expect(tester.getSize(_bookCard(book.id)).width, tester.getSize(find.byType(AcquisitionPlaceholderCard)).width);
+        expect(
+          tester.getSize(_bookCard(book.id)).height,
+          tester.getSize(find.byType(AcquisitionPlaceholderCard)).height,
+        );
       }
     });
   });

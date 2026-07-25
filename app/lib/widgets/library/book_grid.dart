@@ -131,11 +131,13 @@ class BookGrid extends StatelessWidget {
             book: book,
             isFavorite: isFavorite,
             onToggleFavorite: (current) => libraryProvider.toggleFavorite(book.id, current),
-            onTap: job != null && onAcquisitionTap != null
-                ? () => onAcquisitionTap!(job)
-                : onBookTap != null
-                ? () => onBookTap!(book)
-                : null,
+            onTap: job != null
+                ? onAcquisitionTap == null
+                      ? null
+                      : () => onAcquisitionTap!(job)
+                : onBookTap == null
+                ? null
+                : () => onBookTap!(book),
             isSelectionMode: job != null ? selectedAcquisitionJobIds.isNotEmpty : libraryProvider.isSelectionMode,
             isSelected: job != null
                 ? selectedAcquisitionJobIds.contains(job.id)

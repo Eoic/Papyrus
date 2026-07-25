@@ -34,7 +34,7 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final status = acquisitionStatusLabel(widget.job);
-    final details = acquisitionJobDetailsLabel(widget.job);
+    final details = acquisitionTransferDetails(widget.job);
     final effectiveTap = widget.isSelectionMode ? widget.onSelectToggle : widget.onTap;
     final effectiveLongPress = widget.isSelectionMode ? null : widget.onEnterSelectionMode;
     final semanticLabel = <String>[widget.job.title, status, ?details].join('. ');
@@ -56,12 +56,6 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
             child: Card(
               clipBehavior: Clip.antiAlias,
               elevation: AppElevation.level1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                side: widget.isSelected
-                    ? BorderSide(color: colorScheme.primary, width: BorderWidths.medium)
-                    : BorderSide.none,
-              ),
               child: InkWell(
                 onTap: effectiveTap,
                 child: Column(
@@ -80,7 +74,7 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
                             ),
                           ),
                           if (widget.isSelectionMode && widget.isSelected)
-                            ColoredBox(color: colorScheme.primary.withValues(alpha: 0.15)),
+                            Container(color: colorScheme.primary.withValues(alpha: 0.15)),
                           if (widget.isSelectionMode)
                             Positioned(
                               top: Spacing.xs,

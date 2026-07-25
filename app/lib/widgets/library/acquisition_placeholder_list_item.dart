@@ -25,7 +25,7 @@ class AcquisitionPlaceholderListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final status = acquisitionStatusLabel(job);
-    final details = acquisitionJobDetailsLabel(job);
+    final details = acquisitionTransferDetails(job);
     final effectiveTap = isSelectionMode ? onSelectToggle : onTap;
     final effectiveLongPress = isSelectionMode ? null : onEnterSelectionMode;
     final semanticLabel = <String>[job.title, status, ?details].join('. ');

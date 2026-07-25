@@ -3,10 +3,12 @@ import 'dart:ui' show SemanticsAction, Tristate;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
+import 'package:papyrus/widgets/library/book_card.dart';
 
 void main() {
   group('acquisition status formatting', () {
@@ -97,13 +99,21 @@ void main() {
       expect(find.textContaining('0%'), findsNothing);
     });
 
-    testWidgets('shows failed job details with error treatment', (tester) async {
-      await tester.pumpWidget(_buildCard(job: _job(status: AcquisitionJobStatus.failed)));
+    testWidgets('shows stable failed status without leaking the raw error', (tester) async {
+      final semantics = tester.ensureSemantics();
 
-      final status = tester.widget<Text>(find.text('Download failed'));
+      try {
+        await tester.pumpWidget(_buildCard(job: _job(status: AcquisitionJobStatus.failed)));
 
-      expect(find.text('Disk full'), findsOneWidget);
-      expect(status.style?.color, AppTheme.light.colorScheme.error);
+        final status = tester.widget<Text>(find.text('Download failed'));
+        final node = tester.getSemantics(find.byKey(const ValueKey('acquisition-placeholder-card-job-1')));
+
+        expect(find.text('Disk full'), findsNothing);
+        expect(node.label, isNot(contains('Disk full')));
+        expect(status.style?.color, AppTheme.light.colorScheme.error);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('uses a neutral cover rather than release artwork', (tester) async {
@@ -162,6 +172,18 @@ void main() {
       expect(toggles, 1);
     });
 
+    testWidgets('matches selected BookCard Card treatment in the light theme', (tester) async {
+      await tester.pumpWidget(_buildCardPair(theme: AppTheme.light));
+
+      _expectCardParity(tester, AppTheme.light);
+    });
+
+    testWidgets('matches selected BookCard Card treatment in the e-ink theme', (tester) async {
+      await tester.pumpWidget(_buildCardPair(theme: AppTheme.eink));
+
+      _expectCardParity(tester, AppTheme.eink);
+    });
+
     testWidgets('fits a narrow card with large text', (tester) async {
       await tester.pumpWidget(
         _buildCard(
@@ -178,6 +200,79 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+}
+
+Widget _buildCardPair({required ThemeData theme}) {
+  final book = Book(
+    id: 'book-1',
+    title: 'A Synchronized Book',
+    author: 'An Author',
+    readingStatus: ReadingStatus.notStarted,
+    currentPosition: 0,
+    isFavorite: false,
+    fileFormat: BookFormat.epub,
+    addedAt: DateTime(2026),
+  );
+
+  return MaterialApp(
+    theme: theme,
+    home: MediaQuery(
+      data: const MediaQueryData(size: Size(400, 800)),
+      child: Scaffold(
+        body: GridView.count(
+          crossAxisCount: 2,
+          childAspectRatio: 0.58,
+          children: [
+            BookCard(book: book, isFavorite: false, isSelectionMode: true, isSelected: true),
+            AcquisitionPlaceholderCard(job: _job(), isSelectionMode: true, isSelected: true),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _expectCardParity(WidgetTester tester, ThemeData theme) {
+  final bookRoot = find.byType(BookCard);
+  final placeholderRoot = find.byType(AcquisitionPlaceholderCard);
+  final bookCard = tester.widget<Card>(find.descendant(of: bookRoot, matching: find.byType(Card)));
+  final placeholderCard = tester.widget<Card>(find.descendant(of: placeholderRoot, matching: find.byType(Card)));
+  final bookMaterial = tester.widget<Material>(_cardMaterial(bookRoot));
+  final placeholderMaterial = tester.widget<Material>(_cardMaterial(placeholderRoot));
+  final bookMargin = tester.widget<Padding>(find.descendant(of: bookRoot, matching: find.byType(Padding)).first);
+  final placeholderMargin = tester.widget<Padding>(
+    find.descendant(of: placeholderRoot, matching: find.byType(Padding)).first,
+  );
+  final selectionColor = theme.colorScheme.primary.withValues(alpha: 0.15);
+
+  expect(tester.getSize(bookRoot), tester.getSize(placeholderRoot));
+  expect(placeholderCard.margin, bookCard.margin);
+  expect(placeholderCard.elevation, bookCard.elevation);
+  expect(placeholderCard.clipBehavior, bookCard.clipBehavior);
+  expect(placeholderCard.shape, bookCard.shape);
+  expect(placeholderMaterial.shape, bookMaterial.shape);
+  expect(placeholderMaterial.elevation, bookMaterial.elevation);
+  expect(placeholderMaterial.clipBehavior, bookMaterial.clipBehavior);
+  expect(bookMargin.padding, theme.cardTheme.margin);
+  expect(placeholderMargin.padding, theme.cardTheme.margin);
+  expect(_selectionTint(bookRoot, selectionColor), findsOneWidget);
+  expect(_selectionTint(placeholderRoot, selectionColor), findsOneWidget);
+}
+
+Finder _cardMaterial(Finder root) {
+  return find
+      .descendant(
+        of: root,
+        matching: find.byWidgetPredicate((widget) => widget is Material && widget.type == MaterialType.card),
+      )
+      .first;
+}
+
+Finder _selectionTint(Finder root, Color color) {
+  return find.descendant(
+    of: root,
+    matching: find.byWidgetPredicate((widget) => widget is Container && widget.color == color),
+  );
 }
 
 Widget _buildCard({

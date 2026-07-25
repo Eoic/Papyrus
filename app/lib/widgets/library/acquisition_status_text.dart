@@ -61,13 +61,3 @@ String? acquisitionTransferDetails(AcquisitionJob job) {
 
   return details.isEmpty ? null : details.join(' · ');
 }
-
-String? acquisitionJobDetailsLabel(AcquisitionJob job) {
-  final error = job.error?.trim();
-
-  if (job.status == AcquisitionJobStatus.failed && error != null && error.isNotEmpty) {
-    return error;
-  }
-
-  return acquisitionTransferDetails(job);
-}

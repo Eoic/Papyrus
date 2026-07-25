@@ -18,6 +18,10 @@ class BookListItem extends StatefulWidget {
   final bool isSelected;
   final VoidCallback? onSelectToggle;
   final AcquisitionJob? acquisitionJob;
+  final VoidCallback? onAcquisitionTap;
+  final bool isAcquisitionSelectionMode;
+  final bool isAcquisitionSelected;
+  final VoidCallback? onAcquisitionSelectionToggle;
 
   const BookListItem({
     super.key,
@@ -29,6 +33,10 @@ class BookListItem extends StatefulWidget {
     this.isSelected = false,
     this.onSelectToggle,
     this.acquisitionJob,
+    this.onAcquisitionTap,
+    this.isAcquisitionSelectionMode = false,
+    this.isAcquisitionSelected = false,
+    this.onAcquisitionSelectionToggle,
   });
 
   @override
@@ -43,21 +51,35 @@ class _BookListItemState extends State<BookListItem> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final inSelection = widget.isSelectionMode;
+    final isAcquisition = widget.acquisitionJob != null;
+    final inSelection = isAcquisition ? widget.isAcquisitionSelectionMode : widget.isSelectionMode;
+    final isSelected = isAcquisition ? widget.isAcquisitionSelected : widget.isSelected;
+    final onSelectionToggle = isAcquisition ? widget.onAcquisitionSelectionToggle : widget.onSelectToggle;
+    final onTap = isAcquisition
+        ? inSelection
+              ? widget.onAcquisitionSelectionToggle
+              : widget.onAcquisitionTap
+        : inSelection
+        ? widget.onSelectToggle
+        : widget.onTap;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onLongPressStart: _isDesktop
+        onLongPressStart: isAcquisition
+            ? widget.onAcquisitionSelectionToggle == null
+                  ? null
+                  : (_) => widget.onAcquisitionSelectionToggle!()
+            : _isDesktop
             ? null
             : (details) {
                 showBookContextMenu(context: context, book: widget.book, position: details.globalPosition);
               },
         child: Material(
-          color: inSelection && widget.isSelected ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
+          color: inSelection && isSelected ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
           child: InkWell(
-            onTap: inSelection ? widget.onSelectToggle : widget.onTap,
+            onTap: onTap,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
               decoration: BoxDecoration(
@@ -67,7 +89,7 @@ class _BookListItemState extends State<BookListItem> {
                 children: [
                   // Selection checkbox (leading)
                   if (inSelection) ...[
-                    Checkbox(value: widget.isSelected, onChanged: (_) => widget.onSelectToggle?.call()),
+                    Checkbox(value: isSelected, onChanged: (_) => onSelectionToggle?.call()),
                     const SizedBox(width: Spacing.sm),
                   ],
                   // Cover thumbnail
@@ -184,7 +206,7 @@ class _BookListItemState extends State<BookListItem> {
                               : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                         ),
                         // Overflow menu - show on hover (desktop only)
-                        if (_isDesktop)
+                        if (_isDesktop && !isAcquisition)
                           AnimatedOpacity(
                             opacity: _isHovered ? 1.0 : 0.0,
                             duration: const Duration(milliseconds: 150),
