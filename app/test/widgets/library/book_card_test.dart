@@ -234,6 +234,41 @@ void main() {
       }
     });
 
+    testWidgets('linked acquisition hides favorite and exposes only its acquisition action', (tester) async {
+      final semantics = tester.ensureSemantics();
+      var acquisitionTaps = 0;
+      var favoriteTaps = 0;
+
+      try {
+        await tester.pumpWidget(
+          buildCard(
+            acquisitionJob: _acquisitionJob(),
+            onTap: () => acquisitionTaps += 1,
+            onToggleFavorite: (_) => favoriteTaps += 1,
+          ),
+        );
+
+        final finder = find.byKey(const ValueKey('linked-acquisition-book-card-job-1'));
+        final node = tester.getSemantics(finder);
+        final interactiveNodes = find.semantics
+            .byPredicate((candidate) => candidate.getSemanticsData().hasAction(SemanticsAction.tap))
+            .evaluate();
+
+        expect(find.byIcon(Icons.favorite_border), findsNothing);
+        expect(find.byIcon(Icons.favorite), findsNothing);
+        expect(node.flagsCollection.isButton, isTrue);
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+        expect(interactiveNodes, hasLength(1));
+
+        tester.semantics.tap(find.semantics.byLabel(node.label));
+
+        expect(acquisitionTaps, 1);
+        expect(favoriteTaps, 0);
+      } finally {
+        semantics.dispose();
+      }
+    });
+
     testWidgets('shows unfilled heart when not favorite', (tester) async {
       await tester.pumpWidget(buildCard(isFavorite: false));
       expect(find.byIcon(Icons.favorite_border), findsOneWidget);

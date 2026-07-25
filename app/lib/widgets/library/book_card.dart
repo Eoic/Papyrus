@@ -82,8 +82,7 @@ class _BookCardState extends State<BookCard> {
                       // Selection tint overlay
                       if (inSelection && widget.isSelected)
                         Container(color: colorScheme.primary.withValues(alpha: 0.15)),
-                      // Favorite button - hidden in selection mode
-                      if (!inSelection)
+                      if (!inSelection && widget.acquisitionJob == null)
                         Positioned(
                           top: Spacing.xs,
                           left: Spacing.xs,

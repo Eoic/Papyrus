@@ -137,7 +137,7 @@ class BookGrid extends StatelessWidget {
           return BookCard(
             book: book,
             isFavorite: isFavorite,
-            onToggleFavorite: (current) => libraryProvider.toggleFavorite(book.id, current),
+            onToggleFavorite: job == null ? (current) => libraryProvider.toggleFavorite(book.id, current) : null,
             onTap: job != null
                 ? onAcquisitionTap == null
                       ? null

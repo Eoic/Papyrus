@@ -241,6 +241,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('does not expose provider favorite mutation for linked jobs', (tester) async {
+      final linkedBook = _book(id: 'book-linked', title: 'Linked Book');
+      final ordinaryBook = _book(id: 'book-ordinary', title: 'Ordinary Book');
+      final linkedJob = _job(id: 'job-linked', bookId: linkedBook.id, title: linkedBook.title);
+
+      await tester.pumpWidget(
+        _buildGrid(books: [linkedBook, ordinaryBook], acquisitionJobsByBookId: {linkedBook.id: linkedJob}),
+      );
+
+      final linkedCard = tester.widget<BookCard>(_bookCard(linkedBook.id));
+      final ordinaryCard = tester.widget<BookCard>(_bookCard(ordinaryBook.id));
+
+      expect(linkedCard.onToggleFavorite, isNull);
+      expect(ordinaryCard.onToggleFavorite, isNotNull);
+    });
+
     testWidgets('ordinary books keep ordinary taps and provider selection', (tester) async {
       final provider = LibraryProvider();
       final ordinary = _book(id: 'book-ordinary', title: 'Ordinary Book');
