@@ -167,6 +167,33 @@ void main() {
     removeProvider.dispose();
   });
 
+  test('cancels one job without changing independent job selection', () async {
+    final gateway = _FakeGateway(
+      jobPages: [
+        AcquisitionJobPage(
+          items: [
+            _job(id: 'job-1', status: AcquisitionJobStatus.downloading),
+            _job(id: 'job-2', status: AcquisitionJobStatus.downloading),
+          ],
+          total: 2,
+          limit: 100,
+          offset: 0,
+        ),
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    await provider.refreshJobs();
+    provider.toggleJobSelection('job-2');
+    await provider.cancelJob('job-1');
+
+    expect(gateway.cancelledJobIds, ['job-1']);
+    expect(provider.jobs.where((job) => job.id == 'job-1').single.status, AcquisitionJobStatus.cancelled);
+    expect(provider.selectedJobIds, {'job-2'});
+
+    provider.dispose();
+  });
+
   test('submits selected remote releases and preserves only failed selections', () async {
     final gateway = _FakeGateway(
       batchResult: BatchSubmissionResponse(
@@ -503,6 +530,7 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   List<String> submittedTokens = [];
   final List<int> jobOffsets = [];
   int listJobCalls = 0;
+  final List<String> cancelledJobIds = [];
   bool closed = false;
 
   _FakeGateway({
@@ -575,7 +603,9 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
       throw error;
     }
 
-    return _job(status: AcquisitionJobStatus.cancelled);
+    cancelledJobIds.add(jobId);
+
+    return _job(id: jobId, status: AcquisitionJobStatus.cancelled);
   }
 
   @override

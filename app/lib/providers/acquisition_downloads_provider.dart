@@ -646,6 +646,22 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
   }
 
+  Future<void> cancelJob(String jobId) async {
+    final gateway = _gateway;
+
+    if (gateway == null || _disposed) {
+      return;
+    }
+
+    final generation = _generation;
+    await _cancelJob(gateway, generation, jobId);
+
+    if (_isCurrent(gateway, generation)) {
+      _schedulePolling();
+      _notifyListeners();
+    }
+  }
+
   Future<void> cancelSelectedJobs() async {
     final gateway = _gateway;
 
@@ -659,20 +675,10 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       final job = _jobs[jobId];
 
       if (job != null && job.canCancel) {
-        try {
-          final cancelled = await gateway.cancelJob(jobId);
+        await _cancelJob(gateway, generation, jobId);
 
-          if (!_isCurrent(gateway, generation)) {
-            return;
-          }
-
-          _jobs[cancelled.id] = cancelled;
-        } catch (error) {
-          if (!_isCurrent(gateway, generation)) {
-            return;
-          }
-
-          _error = cancelDownloadErrorMessage(error);
+        if (!_isCurrent(gateway, generation)) {
+          return;
         }
       }
     }
@@ -680,6 +686,20 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     _selectedJobIds.clear();
     _schedulePolling();
     _notifyListeners();
+  }
+
+  Future<void> _cancelJob(AcquisitionDownloadsGateway gateway, int generation, String jobId) async {
+    try {
+      final cancelled = await gateway.cancelJob(jobId);
+
+      if (_isCurrent(gateway, generation)) {
+        _jobs[cancelled.id] = cancelled;
+      }
+    } catch (error) {
+      if (_isCurrent(gateway, generation)) {
+        _error = cancelDownloadErrorMessage(error);
+      }
+    }
   }
 
   Future<void> removeSelectedJobs() async {
