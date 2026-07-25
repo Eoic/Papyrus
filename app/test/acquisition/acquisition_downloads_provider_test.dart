@@ -82,6 +82,22 @@ void main() {
     provider.dispose();
   });
 
+  test('search failure does not populate the general error state', () async {
+    final provider = AcquisitionDownloadsProvider(
+      gateway: _FakeGateway(searchError: const AuthApiException(statusCode: 503, message: 'indexer down')),
+      pollingInterval: Duration.zero,
+    );
+
+    await provider.searchRemote('  remote book  ');
+
+    expect(provider.remoteQuery, 'remote book');
+    expect(provider.remoteResults, isEmpty);
+    expect(provider.searchError, 'Could not search connected sources. Check the enabled indexers and try again.');
+    expect(provider.error, isNull);
+
+    provider.dispose();
+  });
+
   test('maps job refresh gateway failures to a safe general error', () async {
     final provider = AcquisitionDownloadsProvider(
       gateway: _FakeGateway(jobListError: StateError('https://download-client.local/jobs?token=secret')),
