@@ -27,18 +27,24 @@ class RemoteReleaseList extends StatelessWidget {
       itemBuilder: (context, index) {
         final release = releases[index];
         final selected = selectedReleaseTokens.contains(release.releaseToken);
-        final error = errorsByReleaseToken[release.releaseToken];
-        final details = [
-          release.indexer,
-          if (release.formatHints.isNotEmpty) release.formatHints.map((format) => format.toUpperCase()).join(', '),
+        final trimmedError = errorsByReleaseToken[release.releaseToken]?.trim();
+        final error = trimmedError == null || trimmedError.isEmpty ? null : trimmedError;
+        final formatHints = release.formatHints
+            .map((format) => format.trim().toUpperCase())
+            .where((format) => format.isNotEmpty)
+            .join(', ');
+        final details = <String>[
+          release.indexer.trim(),
+          if (formatHints.isNotEmpty) formatHints,
           if (release.sizeBytes != null) _formatBytes(release.sizeBytes!),
           if (release.seeders != null) '${release.seeders} seeders',
-        ];
+        ].where((detail) => detail.isNotEmpty).toList();
+        final semanticLabel = _semanticLabel(release.title, details, error);
 
         return Semantics(
           key: ValueKey('remote-release-${release.releaseToken}'),
           container: true,
-          label: release.title,
+          label: semanticLabel,
           button: true,
           selected: selected,
           onTap: () => onToggleSelection(release.releaseToken),
@@ -108,4 +114,8 @@ String _formatBytes(int bytes) {
 
   final precision = value >= 10 || unit == 0 ? 0 : 1;
   return '${value.toStringAsFixed(precision)} ${units[unit]}';
+}
+
+String _semanticLabel(String title, List<String> details, String? error) {
+  return <String>[title, ...details, ?error].where((part) => part.isNotEmpty).join('. ');
 }

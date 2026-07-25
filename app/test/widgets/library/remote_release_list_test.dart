@@ -16,6 +16,10 @@ void main() {
     sizeBytes: 1572864,
     seeders: 12,
   );
+  const submissionError = 'The download client rejected this release.';
+  const semanticLabel =
+      'The Left Hand of Darkness EPUB. Nyaa. EPUB, RETAIL. 1.5 MB. 12 seeders. '
+      'The download client rejected this release.';
 
   Widget buildList({
     List<TorrentRelease> releases = const [release],
@@ -68,18 +72,16 @@ void main() {
       protocol: 'torrent',
       indexer: 'BookBay',
     );
-    const error = 'The download client rejected this release.';
-
     await tester.pumpWidget(
-      buildList(releases: const [release, otherRelease], errorsByReleaseToken: const {'token-1': error}),
+      buildList(releases: const [release, otherRelease], errorsByReleaseToken: const {'token-1': submissionError}),
     );
 
-    final errorText = tester.widget<Text>(find.text(error));
+    final errorText = tester.widget<Text>(find.text(submissionError));
 
     expect(errorText.style?.fontSize, AppTheme.dark.textTheme.bodySmall?.fontSize);
     expect(errorText.style?.color, AppTheme.dark.colorScheme.error);
     expect(find.text(otherRelease.title), findsOneWidget);
-    expect(find.text(error), findsOneWidget);
+    expect(find.text(submissionError), findsOneWidget);
   });
 
   testWidgets('row tap toggles its release exactly once', (tester) async {
@@ -104,13 +106,15 @@ void main() {
     final semantics = tester.ensureSemantics();
 
     try {
-      await tester.pumpWidget(buildList(selectedReleaseTokens: const {'token-1'}));
+      await tester.pumpWidget(
+        buildList(selectedReleaseTokens: const {'token-1'}, errorsByReleaseToken: const {'token-1': submissionError}),
+      );
 
-      final releaseNodes = find.semantics.byLabel(release.title).evaluate().toList();
+      final releaseNodes = find.semantics.byLabel(semanticLabel).evaluate().toList();
       final releaseSemantics = tester.getSemantics(find.byKey(const ValueKey('remote-release-token-1')));
 
       expect(releaseNodes, hasLength(1));
-      expect(releaseSemantics.label, release.title);
+      expect(releaseSemantics.label, semanticLabel);
       expect(releaseSemantics.flagsCollection.isButton, isTrue);
       expect(releaseSemantics.flagsCollection.isSelected, Tristate.isTrue);
       expect(releaseSemantics.hasFlag(SemanticsFlag.isSelected), isTrue);
@@ -140,7 +144,9 @@ void main() {
       final releaseSemantics = tester.getSemantics(find.byKey(const ValueKey('remote-release-token-1')));
 
       expect(releaseSemantics.flagsCollection.isSelected, Tristate.isFalse);
-      tester.semantics.tap(find.semantics.byLabel(release.title));
+      tester.semantics.tap(
+        find.semantics.byLabel('The Left Hand of Darkness EPUB. Nyaa. EPUB, RETAIL. 1.5 MB. 12 seeders'),
+      );
 
       expect(toggled, ['token-1']);
     } finally {
