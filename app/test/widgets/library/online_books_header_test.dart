@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/library/online_books_header.dart';
+import 'package:papyrus/widgets/library/selection_header.dart';
+import 'package:papyrus/widgets/search/library_search_bar.dart';
 
 void main() {
   Widget buildHeader({
@@ -51,6 +53,83 @@ void main() {
     await tester.tap(find.byTooltip('Back'));
 
     expect(backCalls, 1);
+  });
+
+  testWidgets('matches the library search field height on desktop', (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            child: Column(
+              children: [
+                OnlineBooksHeader(
+                  controller: controller,
+                  autofocus: false,
+                  isSearching: false,
+                  onBack: () {},
+                  onSearch: (_) {},
+                ),
+                const LibrarySearchBar(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final onlineField = find.descendant(of: find.byType(OnlineBooksHeader), matching: find.byType(TextField));
+    final libraryField = find.descendant(of: find.byType(LibrarySearchBar), matching: find.byType(TextField));
+
+    expect(tester.getSize(onlineField).height, tester.getSize(libraryField).height);
+  });
+
+  testWidgets('matches the selection header height on desktop', (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            child: Column(
+              children: [
+                OnlineBooksHeader(
+                  controller: controller,
+                  autofocus: false,
+                  isSearching: false,
+                  onBack: () {},
+                  onSearch: (_) {},
+                ),
+                SelectionHeader(
+                  selectedCount: 1,
+                  totalCount: 5,
+                  onClose: () {},
+                  onSelectAll: () {},
+                  onDeselectAll: () {},
+                  actions: FilledButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.download_outlined),
+                    label: const Text('Download'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(OnlineBooksHeader)).height,
+      tester.getSize(find.byType(SelectionHeader)).height,
+    );
   });
 
   testWidgets('honors autofocus for online search entered from add book', (tester) async {

@@ -90,6 +90,8 @@ class OnlineBooksHeader extends StatelessWidget {
           onSubmitted: (_) => _submit(),
           decoration: InputDecoration(
             hintText: 'Search online books',
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
             suffixIcon: Semantics(
               label: 'Search',
               button: true,
