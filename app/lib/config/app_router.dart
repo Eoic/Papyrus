@@ -16,6 +16,7 @@ import 'package:papyrus/pages/login_page.dart';
 import 'package:papyrus/pages/edit_profile_page.dart';
 import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/pages/register_page.dart';
+import 'package:papyrus/pages/reader_page.dart';
 import 'package:papyrus/pages/search_options_page.dart';
 import 'package:papyrus/pages/shelf_contents_page.dart';
 import 'package:papyrus/pages/shelves_page.dart';
@@ -166,6 +167,18 @@ class AppRouter {
                   return NoTransitionPage(
                     key: state.pageKey,
                     child: BookDetailsPage(id: bookId),
+                  );
+                },
+              ),
+              GoRoute(
+                name: 'BOOK_READER',
+                path: 'read/:bookId',
+                parentNavigatorKey: rootNavigatorKey,
+                pageBuilder: (context, state) {
+                  final bookId = state.pathParameters['bookId']!;
+                  return NoTransitionPage(
+                    key: state.pageKey,
+                    child: ReaderPage(bookId: bookId),
                   );
                 },
               ),

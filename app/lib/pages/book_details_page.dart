@@ -11,6 +11,7 @@ import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
+import 'package:papyrus/reader/reader_book_adapter.dart';
 import 'package:papyrus/services/book_delete_cleanup_service.dart';
 import 'package:papyrus/services/book_download_service.dart';
 import 'package:papyrus/services/book_import_service_stub.dart'
@@ -362,8 +363,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     final book = _provider.book;
     if (book == null) return;
 
+    final messenger = ScaffoldMessenger.of(context);
+    if (ReaderBookAdapter.formatFor(book.fileFormat) == null) {
+      messenger.showSnackBar(const SnackBar(content: Text('This book format is not supported yet.')));
+      return;
+    }
+
     if (book.fileMediaId != null) {
-      final messenger = ScaffoldMessenger.of(context);
       messenger.showSnackBar(const SnackBar(content: Text('Preparing book file...')));
 
       try {
@@ -382,8 +388,8 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     }
 
     if (!mounted) return;
-    // TODO: Navigate to reader
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening book reader...')));
+    messenger.hideCurrentSnackBar();
+    await context.pushNamed('BOOK_READER', pathParameters: {'bookId': book.id});
   }
 
   void _onEdit() {

@@ -96,6 +96,14 @@ void main() {
     expect(appRouter.router.namedLocation('BOOK_EDIT', pathParameters: {'bookId': 'book-1'}), '/library/edit/book-1');
   });
 
+  test('book reader has a stable reloadable URL', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final provider = AuthProvider(prefs, repository: FakeAuthRepository(), bootstrapOnCreate: false);
+    final appRouter = await _buildRouter(authProvider: provider, prefs: prefs);
+
+    expect(appRouter.router.namedLocation('BOOK_READER', pathParameters: {'bookId': 'book-1'}), '/library/read/book-1');
+  });
+
   test('acquisition route requires explicit opt-in', () async {
     final prefs = await SharedPreferences.getInstance();
     final repository = FakeAuthRepository()..bootstrapResult = _tokens();
