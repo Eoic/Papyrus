@@ -21,21 +21,38 @@ import 'package:papyrus/pages/shelf_contents_page.dart';
 import 'package:papyrus/pages/shelves_page.dart';
 import 'package:papyrus/pages/statistics_page.dart';
 import 'package:papyrus/pages/annotations_page.dart';
+import 'package:papyrus/pages/acquisition_page.dart';
 import 'package:papyrus/pages/notes_page.dart';
 import 'package:papyrus/pages/welcome_page.dart';
+import 'package:papyrus/providers/acquisition_availability_provider.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
+import 'package:papyrus/providers/preferences_provider.dart';
+import 'package:papyrus/providers/sync_settings_provider.dart';
 
 class AppRouter {
   final AuthProvider authProvider;
+  final PreferencesProvider preferencesProvider;
+  final SyncSettingsProvider syncSettingsProvider;
+  final AcquisitionAvailabilityProvider acquisitionAvailabilityProvider;
   final rootNavigatorKey = GlobalKey<NavigatorState>();
   final shellNavigatorKey = GlobalKey<NavigatorState>();
 
-  AppRouter({required this.authProvider});
+  AppRouter({
+    required this.authProvider,
+    required this.preferencesProvider,
+    required this.syncSettingsProvider,
+    required this.acquisitionAvailabilityProvider,
+  });
 
   late final GoRouter router = GoRouter(
     debugLogDiagnostics: true,
     navigatorKey: rootNavigatorKey,
-    refreshListenable: authProvider,
+    refreshListenable: Listenable.merge([
+      authProvider,
+      preferencesProvider,
+      syncSettingsProvider,
+      acquisitionAvailabilityProvider,
+    ]),
     routes: [
       GoRoute(
         path: '/',
@@ -177,6 +194,11 @@ class AppRouter {
             path: '/statistics',
             pageBuilder: (context, state) => NoTransitionPage(key: state.pageKey, child: const StatisticsPage()),
           ),
+          GoRoute(
+            name: 'ACQUISITION',
+            path: '/acquisition',
+            pageBuilder: (context, state) => NoTransitionPage(key: state.pageKey, child: const AcquisitionPage()),
+          ),
           // Profile
           GoRoute(
             name: 'PROFILE',
@@ -229,6 +251,13 @@ class AppRouter {
 
     if (location == '/' || location == '/login' || location == '/register' || location == '/reset-password') {
       return '/library/books';
+    }
+
+    final acquisitionAvailable = acquisitionAvailabilityProvider.isAvailableFor(
+      syncSettingsProvider.activeApiConfig.serverBaseUri,
+    );
+    if (location == '/acquisition' && (!preferencesProvider.acquisitionEnabled || !acquisitionAvailable)) {
+      return '/profile';
     }
 
     return null;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
 import 'package:papyrus/auth/auth_models.dart';
 import 'package:papyrus/auth/auth_repository.dart';
@@ -13,6 +14,7 @@ import 'package:papyrus/pages/profile_page.dart';
 import 'package:papyrus/powersync/powersync_service.dart';
 import 'package:papyrus/powersync/sync_state.dart';
 import 'package:papyrus/providers/auth_provider.dart';
+import 'package:papyrus/providers/acquisition_availability_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:powersync/powersync.dart';
@@ -123,6 +125,7 @@ void main() {
     SyncSettingsProvider? syncSettingsProvider,
     DataStore? dataStore,
     MediaUploadQueue? mediaUploadQueue,
+    AcquisitionAvailabilityProvider? acquisitionAvailabilityProvider,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final config = PapyrusApiConfig(
@@ -140,6 +143,20 @@ void main() {
         Provider<PapyrusPowerSyncService>.value(value: powerSyncService),
         StreamProvider<SyncState>.value(value: powerSyncService.syncStates, initialData: powerSyncService.syncState),
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+        ChangeNotifierProvider<AcquisitionAvailabilityProvider>.value(
+          value:
+              acquisitionAvailabilityProvider ??
+              AcquisitionAvailabilityProvider(
+                loadCapabilities: (_) async => const AcquisitionCapabilities(
+                  enabled: false,
+                  endpointKinds: [],
+                  indexerKinds: [],
+                  downloadClientKinds: [],
+                  arrKinds: [],
+                  arrCommands: {},
+                ),
+              ),
+        ),
         ChangeNotifierProvider<PreferencesProvider>(create: (_) => PreferencesProvider(prefs)),
       ],
       child: MaterialApp(
@@ -183,6 +200,39 @@ void main() {
     expect(find.text('No pending local writes'), findsNothing);
   });
 
+  testWidgets('authenticated profile hides acquisition management when server is unavailable', (tester) async {
+    final auth = await buildAuthProvider(signedIn: true);
+    final service = _FakePowerSyncService(
+      currentMode: LibraryDatabaseMode.authenticated,
+      currentSyncState: const SyncState(connected: true),
+    );
+    final availability = AcquisitionAvailabilityProvider(
+      loadCapabilities: (_) async => const AcquisitionCapabilities(
+        enabled: false,
+        endpointKinds: [],
+        indexerKinds: [],
+        downloadClientKinds: [],
+        arrKinds: [],
+        arrCommands: {},
+      ),
+    );
+    await availability.refresh(Uri.parse('https://api.test'));
+
+    await tester.pumpWidget(
+      await buildPage(authProvider: auth, powerSyncService: service, acquisitionAvailabilityProvider: availability),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Storage'), 400);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Torrent acquisition'), findsOneWidget);
+
+    await tester.tap(find.text('Torrent acquisition'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Torrent & automation'), findsNothing);
+  });
+
   testWidgets('offline desktop storage sync is local-first and hides sync internals', (tester) async {
     final auth = await buildAuthProvider(guest: true);
     final service = _FakePowerSyncService(currentMode: LibraryDatabaseMode.guest, currentSyncState: const SyncState());
@@ -222,6 +272,17 @@ void main() {
       currentMode: LibraryDatabaseMode.authenticated,
       currentSyncState: SyncState(connected: true, lastSyncedAt: DateTime.utc(2026, 6, 27, 10, 30)),
     );
+    final availability = AcquisitionAvailabilityProvider(
+      loadCapabilities: (_) async => const AcquisitionCapabilities(
+        enabled: true,
+        endpointKinds: [],
+        indexerKinds: [],
+        downloadClientKinds: [],
+        arrKinds: [],
+        arrCommands: {},
+      ),
+    );
+    await availability.refresh(Uri.parse('https://api.test'));
 
     await tester.pumpWidget(
       await buildPage(
@@ -229,6 +290,7 @@ void main() {
         powerSyncService: service,
         screenSize: const Size(1200, 900),
         dataStore: dataStore,
+        acquisitionAvailabilityProvider: availability,
       ),
     );
     await tester.pumpAndSettle();
@@ -241,6 +303,8 @@ void main() {
     expect(find.text('Connected'), findsWidgets);
     expect(find.text('Reconnect'), findsOneWidget);
     expect(find.text('Manage servers'), findsOneWidget);
+    expect(find.text('Torrent acquisition'), findsOneWidget);
+    expect(find.text('Torrent & automation'), findsNothing);
     expect(find.text('Clear local copy'), findsOneWidget);
     expect(find.text('Clear account local cache'), findsNothing);
     expect(find.text('Pending changes'), findsNothing);
@@ -258,6 +322,11 @@ void main() {
     await tester.pump();
 
     expect(service.reconnectCalls, 1);
+
+    await tester.tap(find.text('Torrent acquisition'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Torrent & automation'), findsOneWidget);
   });
 
   testWidgets('manage servers lists official and custom servers for switching', (tester) async {

@@ -185,6 +185,19 @@ class AuthProvider extends ChangeNotifier {
     return _repository.downloadMedia(assetId);
   }
 
+  Future<T> withFreshAccessToken<T>(Future<T> Function(String accessToken) action) async {
+    try {
+      return await _repository.withFreshAccessToken(action);
+    } catch (error) {
+      if (error is AuthApiException && error.statusCode == 401) {
+        _user = null;
+        _error = _messageFor(error);
+        _setStatus(AuthStatus.signedOut);
+      }
+      rethrow;
+    }
+  }
+
   void setOfflineMode(bool value) {
     _isOfflineMode = value;
     _prefs.setBool(_keyOfflineMode, value);

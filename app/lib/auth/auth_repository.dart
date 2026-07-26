@@ -19,8 +19,6 @@ class AuthRepository {
 
   AuthRepository({required this.apiClient, required this.tokenStore});
 
-  String? get accessToken => tokenStore.accessToken;
-
   bool get _usesDesktopLoopbackOAuth {
     if (kIsWeb) {
       return false;
@@ -221,6 +219,10 @@ class AuthRepository {
 
   Future<void> clearTokens() {
     return tokenStore.clear();
+  }
+
+  Future<T> withFreshAccessToken<T>(Future<T> Function(String accessToken) action) {
+    return _withFreshAccessToken(action);
   }
 
   Future<String> _requireAccessToken() async {

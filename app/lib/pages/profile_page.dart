@@ -8,6 +8,7 @@ import 'package:papyrus/media/media_upload_queue.dart';
 import 'package:papyrus/powersync/powersync_service.dart';
 import 'package:papyrus/powersync/storage_sync_controller.dart';
 import 'package:papyrus/providers/auth_provider.dart';
+import 'package:papyrus/providers/acquisition_availability_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:papyrus/powersync/sync_state.dart';
@@ -205,6 +206,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildMobileStorageSyncSection(BuildContext context) {
     final controller = _storageSyncController(context);
+    final prefs = context.watch<PreferencesProvider>();
+    final acquisitionAvailable = _acquisitionAvailable(context);
 
     if (controller.isGuest) {
       return Column(
@@ -249,6 +252,13 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _retryFailedMediaUploads(context),
           ),
         SettingsRow(label: 'Manage servers', onTap: () => _showManageSyncServersSheet(context)),
+        SettingsToggleRow(
+          label: 'Torrent acquisition',
+          value: prefs.acquisitionEnabled,
+          onChanged: (value) => prefs.acquisitionEnabled = value,
+        ),
+        if (prefs.acquisitionEnabled && acquisitionAvailable)
+          SettingsRow(label: 'Torrent & automation', onTap: () => context.push('/acquisition')),
         if (controller.canReconnect) SettingsRow(label: 'Reconnect', onTap: () => _handleReconnectSync(context)),
         if (controller.canClearGuestLibrary)
           SettingsRow(label: 'Clear local library', onTap: () => _confirmClearLocalLibrary(context)),
@@ -930,6 +940,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final controller = _storageSyncController(context);
+    final prefs = context.watch<PreferencesProvider>();
+    final acquisitionAvailable = _acquisitionAvailable(context);
 
     if (controller.isGuest) return _buildOfflineStorageSyncContent(context);
 
@@ -947,6 +959,12 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Text(controller.syncDetail, style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
         ),
         const SizedBox(height: Spacing.sm),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Torrent acquisition'),
+          value: prefs.acquisitionEnabled,
+          onChanged: (value) => prefs.acquisitionEnabled = value,
+        ),
         Wrap(
           spacing: Spacing.sm,
           runSpacing: Spacing.sm,
@@ -963,6 +981,12 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: const Icon(Icons.dns_outlined, size: IconSizes.small),
               label: const Text('Manage servers'),
             ),
+            if (prefs.acquisitionEnabled && acquisitionAvailable)
+              OutlinedButton.icon(
+                onPressed: () => context.push('/acquisition'),
+                icon: const Icon(Icons.downloading_outlined, size: IconSizes.small),
+                label: const Text('Torrent & automation'),
+              ),
             if (controller.hasFailedMediaUploads)
               OutlinedButton.icon(
                 onPressed: () => _retryFailedMediaUploads(context),
@@ -1038,6 +1062,11 @@ class _ProfilePageState extends State<ProfilePage> {
       mediaStorageUsage: context.watch<MediaUploadQueue>().storageUsage,
       failedMediaUploadCount: _failedMediaUploadCount(context.watch<MediaUploadQueue>()),
     );
+  }
+
+  bool _acquisitionAvailable(BuildContext context) {
+    final serverBaseUri = context.watch<SyncSettingsProvider>().activeApiConfig.serverBaseUri;
+    return context.watch<AcquisitionAvailabilityProvider>().isAvailableFor(serverBaseUri);
   }
 
   int _fileStorageUsedBytes(DataStore dataStore) {

@@ -44,6 +44,7 @@ class PreferencesProvider extends ChangeNotifier {
   static const _keyServerType = 'server_type';
   static const _keySyncInterval = 'sync_interval';
   static const _keyConflictResolution = 'conflict_resolution';
+  static const _keyAcquisitionEnabled = 'acquisition_enabled';
 
   // Privacy
   static const _keyAnalyticsOptIn = 'analytics_opt_in';
@@ -242,6 +243,13 @@ class PreferencesProvider extends ChangeNotifier {
 
   set conflictResolution(String value) {
     _prefs.setString(_keyConflictResolution, value);
+    notifyListeners();
+  }
+
+  bool get acquisitionEnabled => _prefs.getBool(_keyAcquisitionEnabled) ?? false;
+
+  set acquisitionEnabled(bool value) {
+    _prefs.setBool(_keyAcquisitionEnabled, value);
     notifyListeners();
   }
 

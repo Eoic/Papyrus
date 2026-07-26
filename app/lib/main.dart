@@ -18,6 +18,7 @@ import 'package:papyrus/powersync/papyrus_powersync_connector.dart';
 import 'package:papyrus/powersync/sync_profile_switch_queue.dart';
 import 'package:papyrus/powersync/sync_state.dart';
 import 'package:papyrus/providers/auth_provider.dart';
+import 'package:papyrus/providers/acquisition_availability_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
@@ -52,6 +53,8 @@ class Papyrus extends StatefulWidget {
 class _PapyrusState extends State<Papyrus> {
   late final DataStore _dataStore;
   late final AuthProvider _authProvider;
+  late final AcquisitionAvailabilityProvider _acquisitionAvailabilityProvider;
+  late final PreferencesProvider _preferencesProvider;
   late final SyncSettingsProvider _syncSettingsProvider;
   late final MediaUploadQueue _mediaUploadQueue;
   late final BookImportService _bookImportService;
@@ -83,9 +86,11 @@ class _PapyrusState extends State<Papyrus> {
     );
 
     _dataStore = DataStore();
+    _preferencesProvider = PreferencesProvider(widget.prefs);
     _mediaUploadQueue = MediaUploadQueue(widget.prefs, onWorkAvailable: _processMediaUploads);
     _bookImportService = BookImportService();
     _authProvider = AuthProvider(widget.prefs, repository: _authRepository);
+    _acquisitionAvailabilityProvider = AcquisitionAvailabilityProvider(authProvider: _authProvider);
     _powerSyncService = PapyrusPowerSyncService(
       connectorFactory: () => PapyrusPowerSyncConnector(
         authRepository: _authRepository,
@@ -95,20 +100,30 @@ class _PapyrusState extends State<Papyrus> {
     );
     registerHotRestartCleanup(_disposeDataServices);
     unawaited(_dataStore.attachBookRepository(_powerSyncService));
-    _appRouter = AppRouter(authProvider: _authProvider);
+    _appRouter = AppRouter(
+      authProvider: _authProvider,
+      preferencesProvider: _preferencesProvider,
+      syncSettingsProvider: _syncSettingsProvider,
+      acquisitionAvailabilityProvider: _acquisitionAvailabilityProvider,
+    );
     _authProvider.addListener(_syncPowerSyncAuthState);
+    _authProvider.addListener(_syncAcquisitionAvailability);
     _syncSettingsProvider.addListener(_handleSyncSettingsChanged);
     _syncPowerSyncAuthState();
+    _syncAcquisitionAvailability();
   }
 
   @override
   void dispose() {
     _authProvider.removeListener(_syncPowerSyncAuthState);
+    _authProvider.removeListener(_syncAcquisitionAvailability);
     _syncSettingsProvider.removeListener(_handleSyncSettingsChanged);
     unawaited(_disposeDataServices());
     _bookImportService.dispose();
+    _acquisitionAvailabilityProvider.dispose();
     _authProvider.dispose();
     _syncSettingsProvider.dispose();
+    _preferencesProvider.dispose();
     super.dispose();
   }
 
@@ -184,9 +199,19 @@ class _PapyrusState extends State<Papyrus> {
   }
 
   void _handleSyncSettingsChanged() {
+    _acquisitionAvailabilityProvider.clear();
     final nextProfileKey = _syncSettingsProvider.activeProfileKey;
     final nextConfig = _syncSettingsProvider.activeApiConfig;
     _profileSwitchQueue.request(nextProfileKey, () => _switchActiveSyncProfile(nextProfileKey, nextConfig));
+  }
+
+  void _syncAcquisitionAvailability() {
+    if (!_authProvider.isSignedIn || _authProvider.isOfflineMode) {
+      _acquisitionAvailabilityProvider.clear();
+      return;
+    }
+
+    unawaited(_acquisitionAvailabilityProvider.refresh(_syncSettingsProvider.activeApiConfig.serverBaseUri));
   }
 
   Future<void> _switchActiveSyncProfile(String nextProfileKey, PapyrusApiConfig nextConfig) async {
@@ -273,9 +298,10 @@ class _PapyrusState extends State<Papyrus> {
         StreamProvider<SyncState>.value(value: _powerSyncService.syncStates, initialData: _powerSyncService.syncState),
         // Auth and UI state providers
         ChangeNotifierProvider.value(value: _authProvider),
+        ChangeNotifierProvider.value(value: _acquisitionAvailabilityProvider),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
-        ChangeNotifierProvider(create: (_) => PreferencesProvider(widget.prefs)),
+        ChangeNotifierProvider.value(value: _preferencesProvider),
       ],
       child: Consumer<PreferencesProvider>(
         builder: (context, preferencesProvider, child) {
