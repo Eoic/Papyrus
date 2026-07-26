@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsAction, SemanticsFlag, Tristate;
+import 'dart:ui' show SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -117,7 +117,6 @@ void main() {
       expect(releaseSemantics.label, semanticLabel);
       expect(releaseSemantics.flagsCollection.isButton, isTrue);
       expect(releaseSemantics.flagsCollection.isSelected, Tristate.isTrue);
-      expect(releaseSemantics.hasFlag(SemanticsFlag.isSelected), isTrue);
       expect(releaseSemantics.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
       final unlabeledInteractiveNodes = find.semantics
           .byPredicate(
