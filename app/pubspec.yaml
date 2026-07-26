@@ -26,7 +26,9 @@ dependencies:
   cached_network_image: ^3.3.1
   google_fonts: ^6.2.1
   papyrus_reader:
-    path: ../../reader
+    git:
+      url: https://github.com/PapyrusReader/reader.git
+      ref: 08a5161b9d00eb73581f74ce087b9ad6c1568ca7
   epub_pro: ^5.6.0
   syncfusion_flutter_pdf: ^32.2.3
   dart_mobi: ^1.0.2
