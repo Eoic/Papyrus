@@ -77,6 +77,10 @@ AcquisitionLibraryItems buildAcquisitionLibraryItems({
       continue;
     }
 
+    if (job.status == AcquisitionJobStatus.completed) {
+      continue;
+    }
+
     final bookId = job.bookId;
 
     if (bookId != null && (synchronizedBookIds.contains(bookId) || !seenPendingBookIds.add(bookId))) {

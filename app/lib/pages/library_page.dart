@@ -508,6 +508,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Future<void> _submitSelected(AcquisitionDownloadsProvider provider) async {
     final presentationGeneration = _presentationGeneration;
+    final libraryProvider = context.read<LibraryProvider>();
     final clients = provider.downloadClients;
     final client = clients.length == 1 ? clients.single : await _chooseDownloadClient(clients);
 
@@ -522,6 +523,7 @@ class _LibraryPageState extends State<LibraryPage> {
     }
 
     if (outcome.allSucceeded) {
+      libraryProvider.clearSearch();
       _leaveOnlineMode(provider);
     }
   }

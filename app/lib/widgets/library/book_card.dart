@@ -251,7 +251,31 @@ class _BookCardState extends State<BookCard> {
       selected: widget.isSelected,
       onTap: effectiveTap,
       onLongPress: effectiveLongPress,
-      child: ExcludeSemantics(child: card),
+      child: Stack(
+        children: [
+          ExcludeSemantics(child: card),
+          if (!inSelection && _isDesktop && widget.onEnterSelectionMode != null)
+            Positioned(
+              top: Spacing.xs,
+              right: Spacing.xs,
+              child: Semantics(
+                key: ValueKey('acquisition-selector-${job.id}'),
+                container: true,
+                label: 'Select ${widget.book.title}',
+                button: true,
+                onTap: widget.onEnterSelectionMode,
+                child: ExcludeSemantics(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    excludeFromSemantics: true,
+                    onTap: widget.onEnterSelectionMode,
+                    child: const SizedBox(width: 32, height: 32),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 

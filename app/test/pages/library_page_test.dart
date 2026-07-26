@@ -316,13 +316,11 @@ void main() {
         final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
         await downloadsProvider.refreshConfiguration();
         libraryProvider.setSearchQuery('Dune Messiah');
-
-        await tester.pumpWidget(
-          buildPage(
-            store: createTestDataStore(books: []),
-            downloadsProvider: downloadsProvider,
-          ),
+        final store = createTestDataStore(
+          books: [Book(id: 'other-book', title: 'A different book', author: 'Author', addedAt: DateTime(2026))],
         );
+
+        await tester.pumpWidget(buildPage(store: store, downloadsProvider: downloadsProvider));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Search online for “Dune Messiah”'));
         await tester.pumpAndSettle();
@@ -341,7 +339,8 @@ void main() {
 
         expect(gateway.submittedTokens, ['release-token', 'release-token-2']);
         expect(find.byType(OnlineBooksHeader), findsNothing);
-        expect(libraryProvider.searchQuery, 'Dune Messiah');
+        expect(libraryProvider.searchQuery, isEmpty);
+        expect(find.text('A different book'), findsWidgets);
 
         downloadsProvider.dispose();
       });
@@ -1019,6 +1018,7 @@ void main() {
       });
 
       testWidgets('cancelled download selection offers only Remove after confirmation', (tester) async {
+        final semantics = tester.ensureSemantics();
         final gateway = _LibraryAcquisitionGateway(jobs: [_libraryJob(AcquisitionJobStatus.cancelled, bookId: null)]);
         final downloadsProvider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
         await downloadsProvider.refreshConfiguration();
@@ -1026,15 +1026,16 @@ void main() {
 
         await tester.pumpWidget(
           buildPage(
-            screenSize: const Size(800, 1000),
+            screenSize: const Size(1200, 1000),
             store: createTestDataStore(books: []),
             downloadsProvider: downloadsProvider,
           ),
         );
         await tester.pumpAndSettle();
-        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
+        tester.semantics.tap(find.semantics.byLabel('Select Remote result'));
         await tester.pump();
 
+        expect(find.byType(BottomSheet), findsNothing);
         expect(find.text('Remove'), findsOneWidget);
         expect(find.text('Cancel'), findsNothing);
         expect(find.text('Try again'), findsNothing);
@@ -1047,6 +1048,7 @@ void main() {
 
         expect(gateway.removedJobIds, ['job-1']);
 
+        semantics.dispose();
         downloadsProvider.dispose();
       });
 
@@ -1326,7 +1328,7 @@ void main() {
         downloadsProvider.dispose();
       });
 
-      testWidgets('completed orphan is replaced when its synchronized book arrives', (tester) async {
+      testWidgets('completed job stays hidden before and after its synchronized book arrives', (tester) async {
         final store = createTestDataStore(books: []);
         final downloadsProvider = AcquisitionDownloadsProvider(
           gateway: _LibraryAcquisitionGateway(
@@ -1342,13 +1344,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byType(AcquisitionPlaceholderCard), findsOneWidget);
-
-        await tester.longPress(find.byType(AcquisitionPlaceholderCard));
-        await tester.pump();
-
-        expect(downloadsProvider.selectedJobIds, isEmpty);
-        expect(find.byType(SelectionHeader), findsNothing);
+        expect(find.byType(AcquisitionPlaceholderCard), findsNothing);
 
         store.loadData(
           books: [Book(id: 'imported-book', title: 'Imported book', author: 'Author', addedAt: DateTime(2026))],

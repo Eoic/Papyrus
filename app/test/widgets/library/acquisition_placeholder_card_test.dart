@@ -172,6 +172,32 @@ void main() {
       expect(toggles, 1);
     });
 
+    testWidgets('desktop selector has its own action and does not open details', (tester) async {
+      final semantics = tester.ensureSemantics();
+      var details = 0;
+      var selections = 0;
+
+      try {
+        await tester.pumpWidget(
+          _buildCard(
+            job: _job(status: AcquisitionJobStatus.cancelled),
+            onTap: () => details += 1,
+            onEnterSelectionMode: () => selections += 1,
+            size: const Size(240, 360),
+            screenSize: const Size(1200, 800),
+          ),
+        );
+
+        tester.semantics.tap(find.semantics.byLabel('Select A Downloading Book'));
+        await tester.tap(find.byKey(const ValueKey('acquisition-selector-job-1')));
+
+        expect(selections, 2);
+        expect(details, 0);
+      } finally {
+        semantics.dispose();
+      }
+    });
+
     testWidgets('without callbacks has no button role or actions', (tester) async {
       final semantics = tester.ensureSemantics();
 
@@ -301,12 +327,13 @@ Widget _buildCard({
   bool isSelectionMode = false,
   bool isSelected = false,
   Size size = const Size(200, 300),
+  Size screenSize = const Size(400, 800),
   TextScaler textScaler = TextScaler.noScaling,
 }) {
   return MaterialApp(
     theme: AppTheme.light,
     home: MediaQuery(
-      data: MediaQueryData(size: const Size(400, 800), textScaler: textScaler),
+      data: MediaQueryData(size: screenSize, textScaler: textScaler),
       child: Scaffold(
         body: Align(
           alignment: Alignment.topLeft,

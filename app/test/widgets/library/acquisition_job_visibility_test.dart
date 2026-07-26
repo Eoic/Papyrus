@@ -51,13 +51,13 @@ void main() {
       expect(items.hasDownloadingItems, isTrue);
     });
 
-    test('keeps completed orphan in All until its book arrives', () {
+    test('does not resurrect a completed job as an orphan placeholder', () {
       final job = _job(id: 'job-1', bookId: 'book-1', status: AcquisitionJobStatus.completed);
 
       final pendingItems = buildAcquisitionLibraryItems(books: const [], jobs: [job]);
       final synchronizedItems = buildAcquisitionLibraryItems(books: [_book('book-1')], jobs: [job]);
 
-      expect(pendingItems.orphanJobs, [job]);
+      expect(pendingItems.orphanJobs, isEmpty);
       expect(pendingItems.hasDownloadingItems, isFalse);
       expect(synchronizedItems.linkedJobsByBookId, isEmpty);
       expect(synchronizedItems.orphanJobs, isEmpty);
@@ -118,7 +118,8 @@ void main() {
         ],
       );
 
-      expect(items.orphanJobs, hasLength(2));
+      expect(items.orphanJobs, hasLength(1));
+      expect(items.orphanJobs.single.status, AcquisitionJobStatus.cancelled);
       expect(items.downloadingBookIds, isEmpty);
       expect(items.downloadingOrphanJobs, isEmpty);
       expect(items.hasDownloadingItems, isFalse);

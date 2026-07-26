@@ -48,100 +48,129 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
       selected: widget.isSelected,
       onTap: effectiveTap,
       onLongPress: effectiveLongPress,
-      child: ExcludeSemantics(
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() => _isHovered = false),
-          child: GestureDetector(
-            onLongPress: effectiveLongPress,
-            child: Card(
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: effectiveTap,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ColoredBox(
-                            color: colorScheme.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.menu_book_outlined,
-                              size: IconSizes.display,
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
-                            ),
-                          ),
-                          if (widget.isSelectionMode && widget.isSelected)
-                            Container(color: colorScheme.primary.withValues(alpha: 0.15)),
-                          if (widget.isSelectionMode)
-                            Positioned(
-                              top: Spacing.xs,
-                              right: Spacing.xs,
-                              child: _SelectionIconButton(selected: widget.isSelected, onTap: widget.onSelectToggle),
-                            )
-                          else if (_isDesktop)
-                            Positioned(
-                              top: Spacing.xs,
-                              right: Spacing.xs,
-                              child: AnimatedOpacity(
-                                opacity: _isHovered ? 1 : 0,
-                                duration: const Duration(milliseconds: 150),
-                                child: _SelectionIconButton(selected: false, onTap: widget.onEnterSelectionMode),
+      child: Stack(
+        children: [
+          ExcludeSemantics(
+            child: MouseRegion(
+              onEnter: (_) => setState(() => _isHovered = true),
+              onExit: (_) => setState(() => _isHovered = false),
+              child: GestureDetector(
+                onLongPress: effectiveLongPress,
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: effectiveTap,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ColoredBox(
+                                color: colorScheme.surfaceContainerHighest,
+                                child: Icon(
+                                  Icons.menu_book_outlined,
+                                  size: IconSizes.display,
+                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+                                ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (widget.job.progress case final progress?)
-                      LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        color: widget.job.requiresAttention ? colorScheme.error : colorScheme.primary,
-                        minHeight: 3,
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.all(Spacing.sm),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.job.title,
-                            style: Theme.of(context).textTheme.titleSmall,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                              if (widget.isSelectionMode && widget.isSelected)
+                                Container(color: colorScheme.primary.withValues(alpha: 0.15)),
+                              if (widget.isSelectionMode)
+                                Positioned(
+                                  top: Spacing.xs,
+                                  right: Spacing.xs,
+                                  child: _SelectionIconButton(
+                                    selected: widget.isSelected,
+                                    onTap: widget.onSelectToggle,
+                                  ),
+                                )
+                              else if (_isDesktop)
+                                Positioned(
+                                  top: Spacing.xs,
+                                  right: Spacing.xs,
+                                  child: AnimatedOpacity(
+                                    opacity: _isHovered ? 1 : 0,
+                                    duration: const Duration(milliseconds: 150),
+                                    child: _SelectionIconButton(selected: false, onTap: widget.onEnterSelectionMode),
+                                  ),
+                                ),
+                            ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            status,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: widget.job.requiresAttention ? colorScheme.error : colorScheme.onSurfaceVariant,
-                              fontWeight: widget.job.requiresAttention ? FontWeight.w600 : null,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        ),
+                        if (widget.job.progress case final progress?)
+                          LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            color: widget.job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                            minHeight: 3,
                           ),
-                          if (details != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              details,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.all(Spacing.sm),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.job.title,
+                                style: Theme.of(context).textTheme.titleSmall,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                status,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: widget.job.requiresAttention
+                                      ? colorScheme.error
+                                      : colorScheme.onSurfaceVariant,
+                                  fontWeight: widget.job.requiresAttention ? FontWeight.w600 : null,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (details != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  details,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          if (!widget.isSelectionMode && _isDesktop && widget.onEnterSelectionMode != null)
+            Positioned(
+              top: Spacing.xs,
+              right: Spacing.xs,
+              child: Semantics(
+                key: ValueKey('acquisition-selector-${widget.job.id}'),
+                container: true,
+                label: 'Select ${widget.job.title}',
+                button: true,
+                onTap: widget.onEnterSelectionMode,
+                child: ExcludeSemantics(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    excludeFromSemantics: true,
+                    onTap: widget.onEnterSelectionMode,
+                    child: const SizedBox(width: 32, height: 32),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
