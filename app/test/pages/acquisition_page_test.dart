@@ -12,9 +12,11 @@ import 'package:papyrus/auth/papyrus_api_config.dart';
 import 'package:papyrus/auth/token_store.dart';
 import 'package:papyrus/pages/acquisition_page.dart';
 import 'package:papyrus/providers/auth_provider.dart';
+import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:papyrus/widgets/settings/settings_section.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -70,15 +72,12 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   int createEndpointCalls = 0;
   int updateEndpointCalls = 0;
   String? lastCreatedName;
+  String? lastCreatedDownloadRoot;
   String? lastUpdatedEndpointId;
   String? lastUpdatedApiKey;
   String? lastUpdatedUsername;
   String? lastUpdatedPassword;
   List<AcquisitionEndpoint> endpointsResult = [];
-  List<TorrentRelease> releasesResult = [];
-  Completer<List<TorrentRelease>>? searchCompleter;
-  final searchEndpointIds = <List<String>?>[];
-  final submissionCompleters = <String, Completer<AcquisitionJob>>{};
   Completer<AcquisitionJob>? arrCommandCompleter;
   final arrEndpointIds = <String>[];
   final arrCommands = <String>[];
@@ -109,6 +108,7 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   }) async {
     createEndpointCalls += 1;
     lastCreatedName = name;
+    lastCreatedDownloadRoot = downloadRoot;
 
     return AcquisitionEndpoint(id: 'created', name: name, kind: kind, baseUrl: baseUrl, enabled: true);
   }
@@ -151,28 +151,6 @@ class _FakeAcquisitionApiClient extends AcquisitionApiClient {
   }) {
     connectionTestCalls += 1;
     return connectionTestCompleter?.future ?? Future<void>.value();
-  }
-
-  @override
-  Future<List<TorrentRelease>> search({
-    required String accessToken,
-    required String query,
-    List<String>? endpointIds,
-  }) async {
-    searchEndpointIds.add(endpointIds);
-    return searchCompleter?.future ?? releasesResult;
-  }
-
-  @override
-  Future<AcquisitionJob> submitRelease({
-    required String accessToken,
-    required String endpointId,
-    required TorrentRelease release,
-    String? category,
-    String? savePath,
-  }) {
-    final key = _fakeSubmissionKey(release, endpointId);
-    return submissionCompleters.putIfAbsent(key, Completer<AcquisitionJob>.new).future;
   }
 
   @override
@@ -273,6 +251,36 @@ void main() {
     expect(apiClient.listEndpointCalls, 2);
   });
 
+  testWidgets('qBittorrent editor forwards the normalized download root', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient();
+    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpAndSettle();
+
+    await _tapSectionAdd(tester, 'acquisition-clients-section');
+    await tester.enterText(find.byKey(const Key('acquisition-name')), 'Home qBittorrent');
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://qbittorrent.local');
+    await tester.enterText(find.byKey(const Key('acquisition-download-root')), '  /downloads/books  ');
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.createEndpointCalls, 1);
+    expect(apiClient.lastCreatedDownloadRoot, '/downloads/books');
+  });
+
+  testWidgets('saved integrations refresh Books-page acquisition readiness', (tester) async {
+    final apiClient = _FakeAcquisitionApiClient();
+    await tester.pumpWidget(await _buildPage(apiClient, includeDownloadsProvider: true));
+    await tester.pumpAndSettle();
+
+    await _tapSectionAdd(tester, 'acquisition-sources-section');
+    await tester.enterText(find.byKey(const Key('acquisition-name')), 'Home Prowlarr');
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://prowlarr.local');
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pumpAndSettle();
+
+    expect(apiClient.listEndpointCalls, 3);
+  });
+
   testWidgets('integration editor updates without replacing blank credentials', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
     await tester.pumpWidget(await _buildPage(apiClient));
@@ -291,247 +299,6 @@ void main() {
     expect(apiClient.listEndpointCalls, 2);
   });
 
-  testWidgets('search and submission requires selected indexer and client', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _indexerTwo, _clientOne];
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(FilterChip), findsNWidgets(2));
-
-    await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(FilterChip, 'Indexer Two'));
-    await tester.pump();
-
-    expect(_searchField, findsNothing);
-    expect(find.text('Select at least one torrent indexer.'), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
-    await tester.pump();
-    expect(_searchField, findsOneWidget);
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
-
-    expect(apiClient.searchEndpointIds, [
-      ['indexer-1'],
-    ]);
-  });
-
-  testWidgets('search action exposes an accessible label', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
-    final semantics = tester.ensureSemantics();
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-
-    expect(find.byTooltip('Search releases'), findsOneWidget);
-    expect(find.bySemanticsLabel('Search releases'), findsOneWidget);
-    semantics.dispose();
-  });
-
-  testWidgets('available search uses a book-specific hint', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-
-    final searchField = tester.widget<TextField>(_searchField);
-    expect(searchField.decoration?.hintText, 'Book title, author, or ISBN');
-    expect(searchField.decoration?.labelText, isNull);
-    expect(find.text('Title, author, movie, album, or series'), findsNothing);
-  });
-
-  testWidgets('unavailable search shows guidance instead of a disabled input', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient();
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-
-    expect(_searchField, findsNothing);
-    expect(find.text('Add an enabled Prowlarr or Torznab indexer first.'), findsOneWidget);
-  });
-
-  testWidgets('search and submission requires an enabled download client', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-
-    expect(_searchField, findsNothing);
-    expect(find.text('Add an enabled download client before searching.'), findsOneWidget);
-  });
-
-  testWidgets('results stay hidden before an explicit search', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
-    expect(find.text('No releases found.'), findsNothing);
-  });
-
-  testWidgets('typing a query and rebuilding search controls does not show results', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(FilterChip, 'Indexer One'));
-    await tester.pump();
-
-    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
-    expect(find.text('No releases found.'), findsNothing);
-  });
-
-  testWidgets('an explicit empty search shows the quiet results state', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _clientOne];
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'missing book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
-
-    final resultsSection = find.byKey(const Key('acquisition-results-section'));
-    expect(resultsSection, findsOneWidget);
-    expect(find.descendant(of: resultsSection, matching: find.text('No releases found.')), findsOneWidget);
-  });
-
-  testWidgets('release results use quiet rows without nested cards', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()
-      ..endpointsResult = [_indexerOne, _clientOne]
-      ..releasesResult = [_releaseOne];
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
-
-    final resultsSection = find.byKey(const Key('acquisition-results-section'));
-    expect(find.descendant(of: resultsSection, matching: find.byType(Card)), findsNothing);
-    expect(find.descendant(of: resultsSection, matching: find.byType(ListTile)), findsOneWidget);
-    expect(find.descendant(of: resultsSection, matching: find.text('Release One')), findsOneWidget);
-  });
-
-  testWidgets('duplicate download URLs retain independent row and submission identities', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()
-      ..endpointsResult = [_indexerOne, _indexerTwo, _clientOne]
-      ..releasesResult = [_releaseOne, _releaseMirror];
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
-
-    final resultsSection = find.byKey(const Key('acquisition-results-section'));
-    final releaseRows = tester.widgetList<ListTile>(
-      find.descendant(of: resultsSection, matching: find.byType(ListTile)),
-    );
-
-    expect(releaseRows.map((row) => row.key).toSet(), hasLength(2));
-
-    _submissionMenu(tester, _releaseOne).onSelected?.call(_clientOne);
-    await tester.pump();
-
-    expect(_submissionItem(tester, _releaseOne, _clientOne).enabled, isFalse);
-    expect(_submissionItem(tester, _releaseMirror, _clientOne).enabled, isTrue);
-    expect(_submissionMenu(tester, _releaseMirror).enabled, isTrue);
-
-    apiClient.submissionCompleters[_fakeSubmissionKey(_releaseOne, _clientOne.id)]!.complete(_job(status: 'submitted'));
-    await tester.pumpAndSettle();
-  });
-
-  testWidgets('refresh invalidates results from a pending search', (tester) async {
-    final searchCompleter = Completer<List<TorrentRelease>>();
-    final apiClient = _FakeAcquisitionApiClient()
-      ..endpointsResult = [_indexerOne, _clientOne]
-      ..searchCompleter = searchCompleter;
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pump();
-
-    await tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
-    await tester.pump();
-
-    searchCompleter.complete([_releaseOne]);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
-    expect(find.text('Release One'), findsNothing);
-  });
-
-  testWidgets('refresh prevents a stale search error from replacing current state', (tester) async {
-    final searchCompleter = Completer<List<TorrentRelease>>();
-    final apiClient = _FakeAcquisitionApiClient()
-      ..endpointsResult = [_indexerOne, _clientOne]
-      ..searchCompleter = searchCompleter;
-
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pump();
-
-    await tester.widget<RefreshIndicator>(find.byType(RefreshIndicator)).onRefresh();
-    await tester.pump();
-
-    searchCompleter.completeError(const AuthApiException(statusCode: 502, message: 'Stale search failed'));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('acquisition-results-section')), findsNothing);
-    expect(find.text('Stale search failed'), findsNothing);
-    expect(find.text('Search failed. Check your torrent indexers.'), findsNothing);
-  });
-
-  testWidgets('search and submission scopes progress and shows job failure', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()
-      ..endpointsResult = [_indexerOne, _clientOne, _clientTwo]
-      ..releasesResult = [_releaseOne, _releaseTwo];
-    await tester.pumpWidget(await _buildPage(apiClient));
-    await tester.pumpAndSettle();
-    await tester.enterText(_searchField, 'book');
-    await tester.tap(find.byIcon(Icons.search));
-    await tester.pumpAndSettle();
-
-    final resultsSection = find.byKey(const Key('acquisition-results-section'));
-    expect(resultsSection, findsOneWidget);
-    expect(find.descendant(of: resultsSection, matching: find.text('Release One')), findsOneWidget);
-
-    await tester.scrollUntilVisible(find.text('Release One'), 400, scrollable: find.byType(Scrollable).first);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.send_outlined).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Client One').last);
-    await tester.pump();
-
-    expect(_submissionItem(tester, _releaseOne, _clientOne).enabled, isFalse);
-    expect(_submissionItem(tester, _releaseOne, _clientTwo).enabled, isTrue);
-
-    final releaseTwoTile = find.ancestor(of: find.text('Release Two'), matching: find.byType(ListTile));
-    final releaseTwoMenu = find.descendant(
-      of: releaseTwoTile,
-      matching: find.byType(PopupMenuButton<AcquisitionEndpoint>),
-    );
-    expect(tester.widget<PopupMenuButton<AcquisitionEndpoint>>(releaseTwoMenu).enabled, isTrue);
-
-    apiClient.submissionCompleters[_fakeSubmissionKey(_releaseOne, _clientOne.id)]!.complete(
-      _job(status: 'failed', error: 'Transmission rejected the release'),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Transmission rejected the release'), findsOneWidget);
-    expect(find.text('Sent to Client One.'), findsNothing);
-  });
-
   testWidgets('acquisition page uses the constrained settings-section layout', (tester) async {
     final apiClient = _FakeAcquisitionApiClient();
 
@@ -540,30 +307,30 @@ void main() {
 
     expect(find.text('Acquisition'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
-    expect(find.byKey(const Key('acquisition-search-section')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-search-section')), findsNothing);
     expect(find.byKey(const Key('acquisition-sources-section')), findsOneWidget);
     expect(find.byKey(const Key('acquisition-clients-section')), findsOneWidget);
     expect(find.byKey(const Key('acquisition-apps-section')), findsOneWidget);
-    expect(find.text('Search releases'), findsOneWidget);
+    expect(find.text('Search releases'), findsNothing);
     expect(find.text('No sources configured'), findsOneWidget);
     expect(find.text('No download clients configured'), findsOneWidget);
     expect(find.text('No connected apps configured'), findsOneWidget);
     expect(find.text('Torrent indexers'), findsNothing);
-    expect(find.byType(SettingsCard), findsNWidgets(4));
+    expect(find.byType(SettingsCard), findsNWidgets(3));
     expect(find.byType(Card), findsNothing);
 
     final listView = tester.widget<ListView>(find.byType(ListView));
     expect(listView.padding, const EdgeInsets.all(Spacing.md));
     expect(
       find.ancestor(
-        of: find.byKey(const Key('acquisition-search-section')),
+        of: find.byKey(const Key('acquisition-sources-section')),
         matching: find.byWidgetPredicate((widget) => widget is ConstrainedBox && widget.constraints.maxWidth == 760),
       ),
       findsOneWidget,
     );
     expect(
       find.ancestor(
-        of: find.byKey(const Key('acquisition-search-section')),
+        of: find.byKey(const Key('acquisition-sources-section')),
         matching: find.byWidgetPredicate(
           (widget) => widget is Column && widget.crossAxisAlignment == CrossAxisAlignment.stretch,
         ),
@@ -571,18 +338,24 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.ancestor(of: find.byKey(const Key('acquisition-search-section')), matching: find.byType(Center)),
+      find.ancestor(of: find.byKey(const Key('acquisition-sources-section')), matching: find.byType(Center)),
       findsOneWidget,
     );
   });
 
   testWidgets('integration rows expose role status and contextual action variants', (tester) async {
-    final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne, _pausedClient, _readarr];
+    final apiClient = _FakeAcquisitionApiClient()
+      ..endpointsResult = [_indexerOne, _configuredClient, _pausedClient, _readarr];
 
     await tester.pumpWidget(await _buildPage(apiClient));
     await tester.pumpAndSettle();
 
     expect(find.text('Prowlarr • indexer-one.local • Enabled'), findsOneWidget);
+    final configuredClientRow = tester.widget<SettingsRow>(
+      find.byKey(const Key('acquisition-endpoint-configured-client')),
+    );
+    expect(configuredClientRow.value, 'qBittorrent • qbittorrent.local • Enabled');
+    expect(configuredClientRow.value, isNot(contains('/private/downloads')));
     expect(find.text('Transmission • paused-client.local • Paused'), findsOneWidget);
     expect(find.text('Readarr • readarr.local • Enabled'), findsOneWidget);
     expect(
@@ -665,7 +438,7 @@ void main() {
   testWidgets('remove action confirms through the shelf-style dialog', (tester) async {
     final apiClient = _FakeAcquisitionApiClient()..endpointsResult = [_indexerOne];
 
-    await tester.pumpWidget(await _buildPage(apiClient));
+    await tester.pumpWidget(await _buildPage(apiClient, includeDownloadsProvider: true));
     await tester.pumpAndSettle();
 
     await _tapEndpointMenuItem(tester, _indexerOne, 'Remove');
@@ -679,7 +452,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(apiClient.deletedEndpointIds, ['indexer-1']);
-    expect(apiClient.listEndpointCalls, 2);
+    expect(apiClient.listEndpointCalls, 3);
   });
 
   testWidgets('disabled Arr integration cannot run', (tester) async {
@@ -734,8 +507,6 @@ void main() {
     expect(_endpointMenuItem(tester, _readarr, 'run').enabled, isTrue);
   });
 }
-
-final _searchField = find.byKey(const Key('acquisition-search-field'));
 
 AcquisitionEndpointKind? _editorKind(WidgetTester tester) {
   return tester
@@ -824,58 +595,11 @@ void _selectEndpointMenu(WidgetTester tester, AcquisitionEndpoint endpoint, Stri
   menu.onSelected?.call(value);
 }
 
-PopupMenuItem<AcquisitionEndpoint> _submissionItem(
-  WidgetTester tester,
-  TorrentRelease release,
-  AcquisitionEndpoint client,
-) {
-  final menu = _submissionMenu(tester, release);
-  final releaseTile = find.ancestor(of: find.text(release.title), matching: find.byType(ListTile));
-  final menuFinder = find.descendant(of: releaseTile, matching: find.byType(PopupMenuButton<AcquisitionEndpoint>));
-
-  return menu
-      .itemBuilder(tester.element(menuFinder))
-      .whereType<PopupMenuItem<AcquisitionEndpoint>>()
-      .singleWhere((item) => item.value == client);
-}
-
-PopupMenuButton<AcquisitionEndpoint> _submissionMenu(WidgetTester tester, TorrentRelease release) {
-  final releaseTile = find.ancestor(of: find.text(release.title), matching: find.byType(ListTile));
-  final menuFinder = find.descendant(of: releaseTile, matching: find.byType(PopupMenuButton<AcquisitionEndpoint>));
-
-  return tester.widget<PopupMenuButton<AcquisitionEndpoint>>(menuFinder);
-}
-
-String _fakeSubmissionKey(TorrentRelease release, String endpointId) {
-  return '${release.indexer}\u001f${release.downloadUrl}\u001f$endpointId';
-}
-
 final _indexerOne = AcquisitionEndpoint(
   id: 'indexer-1',
   name: 'Indexer One',
   kind: AcquisitionEndpointKind.prowlarr,
   baseUrl: Uri.parse('http://indexer-one.local'),
-  enabled: true,
-);
-final _indexerTwo = AcquisitionEndpoint(
-  id: 'indexer-2',
-  name: 'Indexer Two',
-  kind: AcquisitionEndpointKind.prowlarr,
-  baseUrl: Uri.parse('http://indexer-two.local'),
-  enabled: true,
-);
-final _clientOne = AcquisitionEndpoint(
-  id: 'client-1',
-  name: 'Client One',
-  kind: AcquisitionEndpointKind.transmission,
-  baseUrl: Uri.parse('http://client-one.local'),
-  enabled: true,
-);
-final _clientTwo = AcquisitionEndpoint(
-  id: 'client-2',
-  name: 'Client Two',
-  kind: AcquisitionEndpointKind.qbittorrent,
-  baseUrl: Uri.parse('http://client-two.local'),
   enabled: true,
 );
 final _pausedClient = AcquisitionEndpoint(
@@ -884,6 +608,14 @@ final _pausedClient = AcquisitionEndpoint(
   kind: AcquisitionEndpointKind.transmission,
   baseUrl: Uri.parse('http://paused-client.local'),
   enabled: false,
+);
+final _configuredClient = AcquisitionEndpoint(
+  id: 'configured-client',
+  name: 'qBittorrent',
+  kind: AcquisitionEndpointKind.qbittorrent,
+  baseUrl: Uri.parse('http://qbittorrent.local'),
+  downloadRoot: '/private/downloads',
+  enabled: true,
 );
 final _readarr = AcquisitionEndpoint(
   id: 'arr-1',
@@ -899,25 +631,6 @@ final _disabledReadarr = AcquisitionEndpoint(
   baseUrl: Uri.parse('http://readarr-disabled.local'),
   enabled: false,
 );
-const _releaseOne = TorrentRelease(
-  title: 'Release One',
-  releaseToken: 'release-one-token',
-  protocol: 'torrent',
-  indexer: 'Indexer One',
-);
-const _releaseTwo = TorrentRelease(
-  title: 'Release Two',
-  releaseToken: 'release-two-token',
-  protocol: 'torrent',
-  indexer: 'Indexer One',
-);
-const _releaseMirror = TorrentRelease(
-  title: 'Release Mirror',
-  releaseToken: 'release-one-token',
-  protocol: 'torrent',
-  indexer: 'Indexer Two',
-);
-
 AcquisitionJob _job({required String status, String? error}) {
   return AcquisitionJob(
     id: 'job-1',
@@ -947,7 +660,7 @@ AcquisitionJob _job({required String status, String? error}) {
   );
 }
 
-Future<Widget> _buildPage(_FakeAcquisitionApiClient apiClient) async {
+Future<Widget> _buildPage(_FakeAcquisitionApiClient apiClient, {bool includeDownloadsProvider = false}) async {
   final prefs = await SharedPreferences.getInstance();
   final authProvider = AuthProvider(prefs, repository: _FakeAuthRepository(), bootstrapOnCreate: false);
   await authProvider.bootstrap();
@@ -957,6 +670,13 @@ Future<Widget> _buildPage(_FakeAcquisitionApiClient apiClient) async {
       ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
       ChangeNotifierProvider<PreferencesProvider>(create: (_) => PreferencesProvider(prefs)),
       ChangeNotifierProvider<SyncSettingsProvider>(create: (_) => SyncSettingsProvider(prefs, officialConfig: _config)),
+      if (includeDownloadsProvider)
+        ChangeNotifierProvider<AcquisitionDownloadsProvider>(
+          create: (_) => AcquisitionDownloadsProvider(
+            gateway: AuthenticatedAcquisitionDownloadsGateway(authProvider: authProvider, apiClient: apiClient),
+            pollingInterval: Duration.zero,
+          ),
+        ),
     ],
     child: MaterialApp(home: AcquisitionPage(clientFactory: (_) => apiClient)),
   );

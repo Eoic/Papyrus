@@ -5,6 +5,7 @@ import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
 import 'package:papyrus/auth/papyrus_api_config.dart';
 import 'package:papyrus/providers/auth_provider.dart';
+import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -26,19 +27,12 @@ class AcquisitionPage extends StatefulWidget {
 }
 
 class _AcquisitionPageState extends State<AcquisitionPage> {
-  final _queryController = TextEditingController();
   AcquisitionApiClient? _client;
   Uri? _clientBaseUri;
   AcquisitionCapabilities? _capabilities;
   List<AcquisitionEndpoint> _endpoints = [];
-  List<TorrentRelease> _releases = [];
-  Set<String> _selectedIndexerIds = {};
   final Set<String> _submittingKeys = {};
-  bool _hasExplicitIndexerSelection = false;
-  bool _hasSearched = false;
   bool _loading = true;
-  bool _searching = false;
-  int _searchGeneration = 0;
   String? _error;
 
   @override
@@ -49,15 +43,12 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     _client?.close();
     _client = widget.clientFactory?.call(config) ?? AcquisitionApiClient(config: config);
     _clientBaseUri = config.serverBaseUri;
-    _selectedIndexerIds = {};
-    _hasExplicitIndexerSelection = false;
     _load();
   }
 
   @override
   void dispose() {
     _client?.close();
-    _queryController.dispose();
     super.dispose();
   }
 
@@ -73,13 +64,8 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       return;
     }
 
-    _searchGeneration += 1;
-
     setState(() {
       _loading = true;
-      _searching = false;
-      _hasSearched = false;
-      _releases = [];
       _error = null;
     });
 
@@ -87,18 +73,9 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       final capabilities = await _authenticated(_apiClient.capabilities);
       final endpoints = await _authenticated(_apiClient.listEndpoints);
       if (!mounted) return;
-      final enabledIndexerIds = endpoints
-          .where((endpoint) => endpoint.enabled && endpoint.kind.isIndexer)
-          .map((endpoint) => endpoint.id)
-          .toSet();
       setState(() {
         _capabilities = capabilities;
         _endpoints = endpoints;
-        if (_hasExplicitIndexerSelection) {
-          _selectedIndexerIds = _selectedIndexerIds.intersection(enabledIndexerIds);
-        } else {
-          _selectedIndexerIds = enabledIndexerIds;
-        }
       });
     } on AuthApiException catch (error) {
       if (!mounted) return;
@@ -110,70 +87,6 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       });
     } finally {
       if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _search() async {
-    final query = _queryController.text.trim();
-    final indexerIds = _endpoints
-        .where((endpoint) => endpoint.enabled && endpoint.kind.isIndexer && _selectedIndexerIds.contains(endpoint.id))
-        .map((endpoint) => endpoint.id)
-        .toList();
-    final hasClient = _endpoints.any((endpoint) => endpoint.enabled && endpoint.kind.isDownloadClient);
-    if (query.isEmpty || _capabilities == null || indexerIds.isEmpty || !hasClient) return;
-
-    final searchGeneration = ++_searchGeneration;
-
-    setState(() {
-      _searching = true;
-      _hasSearched = false;
-      _error = null;
-      _releases = [];
-    });
-
-    try {
-      final releases = await _authenticated((token) {
-        return _apiClient.search(accessToken: token, query: query, endpointIds: indexerIds);
-      });
-      if (mounted && searchGeneration == _searchGeneration) {
-        setState(() {
-          _releases = releases;
-          _hasSearched = true;
-        });
-      }
-    } on AuthApiException catch (error) {
-      if (mounted && searchGeneration == _searchGeneration) {
-        setState(() => _error = _messageFor(error));
-      }
-    } catch (_) {
-      if (mounted && searchGeneration == _searchGeneration) {
-        setState(() => _error = 'Search failed. Check your torrent indexers.');
-      }
-    } finally {
-      if (mounted && searchGeneration == _searchGeneration) {
-        setState(() => _searching = false);
-      }
-    }
-  }
-
-  Future<void> _submitRelease(TorrentRelease release, AcquisitionEndpoint client) async {
-    final submissionKey = _submissionKey(release, client);
-    if (_submittingKeys.contains(submissionKey)) return;
-
-    setState(() => _submittingKeys.add(submissionKey));
-    try {
-      final job = await _authenticated((token) {
-        return _apiClient.submitRelease(accessToken: token, endpointId: client.id, release: release);
-      });
-      if (!mounted) return;
-
-      _showMessage(job.isSubmitted ? 'Sent to ${client.name}.' : job.error ?? 'Submission failed.');
-    } on AuthApiException catch (error) {
-      if (mounted) _showMessage(error.message);
-    } catch (_) {
-      if (mounted) _showMessage('Could not submit this release.');
-    } finally {
-      if (mounted) setState(() => _submittingKeys.remove(submissionKey));
     }
   }
 
@@ -227,6 +140,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     if (capabilities == null || capabilities.endpointKinds.isEmpty) return;
     final endpointKinds = allowedKinds ?? capabilities.endpointKinds;
     if (endpointKinds.isEmpty) return;
+    final downloadsProvider = context.read<AcquisitionDownloadsProvider?>();
 
     final saved = await showAcquisitionEndpointEditor(
       context: context,
@@ -246,39 +160,55 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
           );
         });
       },
-      onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) async {
-        await _authenticated((token) async {
-          if (endpoint == null) {
-            await _apiClient.createEndpoint(
-              accessToken: token,
-              name: name,
-              kind: kind,
-              baseUrl: baseUrl,
-              apiKey: apiKey,
-              username: username,
-              password: password,
-            );
-            return;
-          }
+      onSave:
+          ({
+            required name,
+            required kind,
+            required baseUrl,
+            required enabled,
+            downloadRoot,
+            apiKey,
+            username,
+            password,
+          }) async {
+            await _authenticated((token) async {
+              if (endpoint == null) {
+                await _apiClient.createEndpoint(
+                  accessToken: token,
+                  name: name,
+                  kind: kind,
+                  baseUrl: baseUrl,
+                  downloadRoot: downloadRoot,
+                  apiKey: apiKey,
+                  username: username,
+                  password: password,
+                );
+                return;
+              }
 
-          await _apiClient.updateEndpoint(
-            accessToken: token,
-            endpointId: endpoint.id,
-            name: name,
-            baseUrl: baseUrl,
-            apiKey: apiKey,
-            username: username,
-            password: password,
-            enabled: enabled,
-          );
-        });
-      },
+              await _apiClient.updateEndpoint(
+                accessToken: token,
+                endpointId: endpoint.id,
+                name: name,
+                baseUrl: baseUrl,
+                downloadRoot: downloadRoot,
+                apiKey: apiKey,
+                username: username,
+                password: password,
+                enabled: enabled,
+              );
+            });
+          },
     );
 
-    if (saved == true) await _load();
+    if (saved == true) {
+      await _load();
+      await downloadsProvider?.refreshConfiguration();
+    }
   }
 
   Future<void> _deleteEndpoint(AcquisitionEndpoint endpoint) async {
+    final downloadsProvider = context.read<AcquisitionDownloadsProvider?>();
     final confirmed = await showAcquisitionRemoveDialog(context: context, endpointName: endpoint.name);
     if (confirmed != true) return;
 
@@ -287,6 +217,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
         return _apiClient.deleteEndpoint(accessToken: token, endpointId: endpoint.id);
       });
       await _load();
+      await downloadsProvider?.refreshConfiguration();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not remove this integration.')));
@@ -297,11 +228,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   @override
   Widget build(BuildContext context) {
     final capabilities = _capabilities;
-    final clients = _endpoints.where((endpoint) => endpoint.enabled && endpoint.kind.isDownloadClient).toList();
     final indexers = _endpoints.where((endpoint) => endpoint.kind.isIndexer).toList();
-    final enabledIndexers = indexers.where((endpoint) => endpoint.enabled).toList();
-    final canSearch =
-        clients.isNotEmpty && enabledIndexers.any((endpoint) => _selectedIndexerIds.contains(endpoint.id));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Acquisition')),
@@ -320,13 +247,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
                     if (_submittingKeys.isNotEmpty) const LinearProgressIndicator(),
                     if (_error != null) _ErrorBanner(message: _error!, onRetry: _load),
                     if (!_loading && _error == null && capabilities != null)
-                      ..._buildSettingsSections(
-                        capabilities: capabilities,
-                        clients: clients,
-                        indexers: indexers,
-                        enabledIndexers: enabledIndexers,
-                        canSearch: canSearch,
-                      ),
+                      ..._buildSettingsSections(capabilities: capabilities, indexers: indexers),
                   ],
                 ),
               ),
@@ -339,32 +260,12 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
 
   List<Widget> _buildSettingsSections({
     required AcquisitionCapabilities capabilities,
-    required List<AcquisitionEndpoint> clients,
     required List<AcquisitionEndpoint> indexers,
-    required List<AcquisitionEndpoint> enabledIndexers,
-    required bool canSearch,
   }) {
     final downloadClients = _endpoints.where((endpoint) => endpoint.kind.isDownloadClient).toList();
     final arrApps = _endpoints.where((endpoint) => endpoint.kind.isArr).toList();
 
     return [
-      AcquisitionSettingsSection(
-        key: const Key('acquisition-search-section'),
-        title: 'Search releases',
-        children: [
-          _SearchCard(
-            queryController: _queryController,
-            searching: _searching,
-            canSearch: canSearch,
-            indexers: enabledIndexers,
-            selectedIndexerIds: _selectedIndexerIds,
-            hasEnabledClient: clients.isNotEmpty,
-            onIndexerSelected: _setIndexerSelected,
-            onSearch: _search,
-          ),
-        ],
-      ),
-      const SizedBox(height: Spacing.md),
       _buildIntegrationSettingsSection(
         key: const Key('acquisition-sources-section'),
         title: 'Sources',
@@ -389,24 +290,6 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
         addKinds: capabilities.arrKinds,
         allowRun: true,
       ),
-      if (_hasSearched) ...[
-        const SizedBox(height: Spacing.md),
-        AcquisitionSettingsSection(
-          key: const Key('acquisition-results-section'),
-          title: 'Results',
-          emptyMessage: 'No releases found.',
-          children: _releases
-              .map(
-                (release) => _ReleaseTile(
-                  release: release,
-                  clients: clients,
-                  submittingKeys: _submittingKeys,
-                  onSubmit: _submitRelease,
-                ),
-              )
-              .toList(),
-        ),
-      ],
     ];
   }
 
@@ -463,17 +346,6 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     return error.message;
   }
 
-  void _setIndexerSelected(AcquisitionEndpoint endpoint, bool selected) {
-    setState(() {
-      _hasExplicitIndexerSelection = true;
-      if (selected) {
-        _selectedIndexerIds.add(endpoint.id);
-      } else {
-        _selectedIndexerIds.remove(endpoint.id);
-      }
-    });
-  }
-
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
@@ -499,141 +371,6 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     AcquisitionEndpointKind.prowlarr || AcquisitionEndpointKind.torznab => Icons.travel_explore,
     _ => Icons.auto_awesome_motion_outlined,
   };
-}
-
-class _SearchCard extends StatelessWidget {
-  const _SearchCard({
-    required this.queryController,
-    required this.searching,
-    required this.canSearch,
-    required this.indexers,
-    required this.selectedIndexerIds,
-    required this.hasEnabledClient,
-    required this.onIndexerSelected,
-    required this.onSearch,
-  });
-
-  final TextEditingController queryController;
-  final bool searching;
-  final bool canSearch;
-  final List<AcquisitionEndpoint> indexers;
-  final Set<String> selectedIndexerIds;
-  final bool hasEnabledClient;
-  final void Function(AcquisitionEndpoint endpoint, bool selected) onIndexerSelected;
-  final VoidCallback onSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (indexers.isNotEmpty) ...[
-          Wrap(
-            spacing: Spacing.sm,
-            runSpacing: Spacing.xs,
-            children: indexers
-                .map(
-                  (endpoint) => FilterChip(
-                    label: Text(endpoint.name),
-                    selected: selectedIndexerIds.contains(endpoint.id),
-                    onSelected: searching ? null : (selected) => onIndexerSelected(endpoint, selected),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: Spacing.sm),
-        ],
-        if (canSearch)
-          TextField(
-            key: const Key('acquisition-search-field'),
-            controller: queryController,
-            enabled: !searching,
-            onSubmitted: (_) => onSearch(),
-            decoration: InputDecoration(
-              hintText: 'Book title, author, or ISBN',
-              suffixIcon: searching
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                    )
-                  : IconButton(tooltip: 'Search releases', icon: const Icon(Icons.search), onPressed: onSearch),
-            ),
-          )
-        else
-          Text(
-            indexers.isEmpty
-                ? 'Add an enabled Prowlarr or Torznab indexer first.'
-                : !hasEnabledClient
-                ? 'Add an enabled download client before searching.'
-                : 'Select at least one torrent indexer.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-      ],
-    );
-  }
-}
-
-class _ReleaseTile extends StatelessWidget {
-  const _ReleaseTile({
-    required this.release,
-    required this.clients,
-    required this.submittingKeys,
-    required this.onSubmit,
-  });
-
-  final TorrentRelease release;
-  final List<AcquisitionEndpoint> clients;
-  final Set<String> submittingKeys;
-  final void Function(TorrentRelease release, AcquisitionEndpoint client) onSubmit;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      key: ValueKey('acquisition-release:${_releaseIdentity(release)}'),
-      contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-      title: Text(release.title),
-      subtitle: Text(
-        [
-          release.indexer,
-          if (release.seeders != null) '${release.seeders} seeders',
-          if (release.sizeBytes != null) _formatBytes(release.sizeBytes!),
-          if (release.isMagnet) 'magnet',
-        ].join(' • '),
-      ),
-      trailing: PopupMenuButton<AcquisitionEndpoint>(
-        enabled: clients.any((client) => !submittingKeys.contains(_submissionKey(release, client))),
-        icon: const Icon(Icons.send_outlined),
-        tooltip: 'Send to client',
-        itemBuilder: (context) => clients.map((client) {
-          final key = _submissionKey(release, client);
-          return PopupMenuItem(
-            key: Key('submission:$key'),
-            value: client,
-            enabled: !submittingKeys.contains(key),
-            child: Text(client.name),
-          );
-        }).toList(),
-        onSelected: (client) => onSubmit(release, client),
-      ),
-    );
-  }
-
-  String _formatBytes(int bytes) {
-    if (bytes >= 1073741824) return '${(bytes / 1073741824).toStringAsFixed(1)} GB';
-    if (bytes >= 1048576) return '${(bytes / 1048576).toStringAsFixed(1)} MB';
-    if (bytes >= 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '$bytes B';
-  }
-}
-
-String _submissionKey(TorrentRelease release, AcquisitionEndpoint client) {
-  return '${_releaseIdentity(release)}\u001f${client.id}';
-}
-
-String _releaseIdentity(TorrentRelease release) {
-  return '${release.indexer}\u001f${release.downloadUrl}';
 }
 
 class _ErrorBanner extends StatelessWidget {

@@ -23,6 +23,7 @@ typedef AcquisitionEndpointSaveCallback =
       required AcquisitionEndpointKind kind,
       required Uri baseUrl,
       required bool enabled,
+      String? downloadRoot,
       String? apiKey,
       String? username,
       String? password,
@@ -103,6 +104,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   final _urlFieldKey = GlobalKey<FormFieldState<String>>();
   late final TextEditingController _nameController;
   late final TextEditingController _urlController;
+  late final TextEditingController _downloadRootController;
   final _apiKeyController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -125,11 +127,14 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
 
   bool get _usesPassword => _usesUsername || _kind == AcquisitionEndpointKind.deluge;
 
+  bool get _usesDownloadRoot => _kind == AcquisitionEndpointKind.qbittorrent;
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.endpoint?.name ?? '');
     _urlController = TextEditingController(text: widget.endpoint?.baseUrl.toString() ?? '');
+    _downloadRootController = TextEditingController(text: widget.endpoint?.downloadRoot ?? '');
     _kind = widget.endpoint?.kind ?? widget.initialKind ?? widget.endpointKinds.first;
     _enabled = widget.endpoint?.enabled ?? true;
   }
@@ -138,6 +143,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
   void dispose() {
     _nameController.dispose();
     _urlController.dispose();
+    _downloadRootController.dispose();
     _apiKeyController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
@@ -269,6 +275,22 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
                         ),
                       ),
                     ],
+                    if (_usesDownloadRoot) ...[
+                      const SizedBox(height: Spacing.formFieldSpacing),
+                      TextFormField(
+                        key: const Key('acquisition-download-root'),
+                        controller: _downloadRootController,
+                        enabled: !_busy,
+                        decoration: const InputDecoration(
+                          labelText: 'Download root',
+                          helperText: 'The qBittorrent path for downloads, such as /downloads.',
+                        ),
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          return value == null || value.trim().isEmpty ? 'Enter the download root' : null;
+                        },
+                      ),
+                    ],
                     if (widget.endpoint != null) ...[
                       const SizedBox(height: Spacing.formFieldSpacing),
                       SwitchListTile(
@@ -362,6 +384,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
         kind: _kind,
         baseUrl: Uri.parse(_urlController.text.trim()),
         enabled: _enabled,
+        downloadRoot: _usesDownloadRoot ? _optional(_downloadRootController.text) : null,
         apiKey: _usesApiKey ? _optional(_apiKeyController.text) : null,
         username: _usesUsername ? _optional(_usernameController.text) : null,
         password: _usesPassword ? _optional(_passwordController.text) : null,

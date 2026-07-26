@@ -17,6 +17,7 @@ class AcquisitionAvailabilityProvider extends ChangeNotifier {
   Future<void>? _refreshOperation;
   int _generation = 0;
   AcquisitionAvailabilityState _state = AcquisitionAvailabilityState.unknown;
+  bool _managedDownloadsReady = false;
 
   AcquisitionAvailabilityProvider({AuthProvider? authProvider, AcquisitionCapabilitiesLoader? loadCapabilities})
     : assert((authProvider == null) != (loadCapabilities == null), 'Provide either authProvider or loadCapabilities'),
@@ -27,6 +28,10 @@ class AcquisitionAvailabilityProvider extends ChangeNotifier {
 
   bool isAvailableFor(Uri serverBaseUri) {
     return _serverBaseUri == serverBaseUri && _state == AcquisitionAvailabilityState.available;
+  }
+
+  bool managedDownloadsReadyFor(Uri serverBaseUri) {
+    return isAvailableFor(serverBaseUri) && _managedDownloadsReady;
   }
 
   Future<void> refresh(Uri serverBaseUri, {bool force = false}) {
@@ -62,6 +67,7 @@ class AcquisitionAvailabilityProvider extends ChangeNotifier {
     _apiClient = null;
     _serverBaseUri = null;
     _refreshOperation = null;
+    _managedDownloadsReady = false;
 
     if (_state != AcquisitionAvailabilityState.unknown) {
       _state = AcquisitionAvailabilityState.unknown;
@@ -79,12 +85,14 @@ class AcquisitionAvailabilityProvider extends ChangeNotifier {
       }
 
       _state = capabilities.enabled ? AcquisitionAvailabilityState.available : AcquisitionAvailabilityState.unavailable;
+      _managedDownloadsReady = capabilities.enabled && capabilities.managedDownloadsReady;
     } catch (_) {
       if (generation != _generation || _serverBaseUri != serverBaseUri) {
         return;
       }
 
       _state = AcquisitionAvailabilityState.unavailable;
+      _managedDownloadsReady = false;
     }
 
     notifyListeners();
@@ -102,6 +110,7 @@ class AcquisitionAvailabilityProvider extends ChangeNotifier {
     _serverBaseUri = serverBaseUri;
     _refreshOperation = null;
     _state = AcquisitionAvailabilityState.unknown;
+    _managedDownloadsReady = false;
   }
 
   @override

@@ -125,11 +125,13 @@ void main() {
     expect(find.byKey(const Key('acquisition-api-key')), findsNothing);
     expect(find.byKey(const Key('acquisition-username')), findsOneWidget);
     expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-download-root')), findsOneWidget);
 
     await _chooseKind(tester, 'Transmission');
 
     expect(find.byKey(const Key('acquisition-username')), findsOneWidget);
     expect(find.byKey(const Key('acquisition-password')), findsOneWidget);
+    expect(find.byKey(const Key('acquisition-download-root')), findsNothing);
 
     await _chooseKind(tester, 'Deluge');
 
@@ -175,6 +177,48 @@ void main() {
 
       expect(find.text('Enter a valid server URL'), findsOneWidget);
     }
+  });
+
+  testWidgets('qBittorrent requires and trims its download root', (tester) async {
+    await _setWindowSize(tester, const Size(900, 900));
+    var saveCalls = 0;
+    String? savedDownloadRoot;
+    await tester.pumpWidget(
+      _EditorLauncher(
+        onSave:
+            ({
+              required name,
+              required kind,
+              required baseUrl,
+              required enabled,
+              downloadRoot,
+              apiKey,
+              username,
+              password,
+            }) async {
+              saveCalls += 1;
+              savedDownloadRoot = downloadRoot;
+            },
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await _chooseKind(tester, 'qBittorrent');
+    await tester.enterText(find.byKey(const Key('acquisition-name')), 'Downloads');
+    await tester.enterText(find.byKey(const Key('acquisition-url')), 'https://qbittorrent.local');
+
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pump();
+
+    expect(find.text('Enter the download root'), findsOneWidget);
+    expect(saveCalls, 0);
+
+    await tester.enterText(find.byKey(const Key('acquisition-download-root')), '  /books  ');
+    await tester.tap(find.byKey(const Key('acquisition-save')));
+    await tester.pumpAndSettle();
+
+    expect(saveCalls, 1);
+    expect(savedDownloadRoot, '/books');
   });
 
   testWidgets('toggles secret visibility', (tester) async {
@@ -321,8 +365,17 @@ void main() {
     await _setWindowSize(tester, const Size(390, 844));
     await tester.pumpWidget(
       _EditorLauncher(
-        onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) =>
-            saveCompleter.future,
+        onSave:
+            ({
+              required name,
+              required kind,
+              required baseUrl,
+              required enabled,
+              downloadRoot,
+              apiKey,
+              username,
+              password,
+            }) => saveCompleter.future,
       ),
     );
     await tester.tap(find.text('Open'));
@@ -394,11 +447,21 @@ void main() {
     await tester.pumpWidget(
       _EditorLauncher(
         endpoint: _endpoint,
-        onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) async {
-          savedApiKey = apiKey;
-          savedUsername = username;
-          savedPassword = password;
-        },
+        onSave:
+            ({
+              required name,
+              required kind,
+              required baseUrl,
+              required enabled,
+              downloadRoot,
+              apiKey,
+              username,
+              password,
+            }) async {
+              savedApiKey = apiKey;
+              savedUsername = username;
+              savedPassword = password;
+            },
       ),
     );
     await tester.tap(find.text('Open'));
@@ -416,13 +479,25 @@ void main() {
     await _setWindowSize(tester, const Size(900, 900));
     String? savedUsername = 'not-called';
     String? savedPassword = 'not-called';
+    String? savedDownloadRoot;
     await tester.pumpWidget(
       _EditorLauncher(
         endpoint: _downloadClient,
-        onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) async {
-          savedUsername = username;
-          savedPassword = password;
-        },
+        onSave:
+            ({
+              required name,
+              required kind,
+              required baseUrl,
+              required enabled,
+              downloadRoot,
+              apiKey,
+              username,
+              password,
+            }) async {
+              savedUsername = username;
+              savedPassword = password;
+              savedDownloadRoot = downloadRoot;
+            },
       ),
     );
     await tester.tap(find.text('Open'));
@@ -436,6 +511,7 @@ void main() {
 
     expect(savedUsername, isNull);
     expect(savedPassword, isNull);
+    expect(savedDownloadRoot, '/downloads');
   });
 
   testWidgets('pending save blocks sheet barrier dismissal', (tester) async {
@@ -479,6 +555,7 @@ class _EditorLauncher extends StatelessWidget {
                         required kind,
                         required baseUrl,
                         required enabled,
+                        downloadRoot,
                         apiKey,
                         username,
                         password,
@@ -528,6 +605,7 @@ class _SaveRaceLauncher extends StatelessWidget {
                             required kind,
                             required baseUrl,
                             required enabled,
+                            downloadRoot,
                             apiKey,
                             username,
                             password,
@@ -596,8 +674,17 @@ Future<void> _expectPendingSaveBlocksDismissal(WidgetTester tester, _DismissAtte
   final saveCompleter = Completer<void>();
   await tester.pumpWidget(
     _EditorLauncher(
-      onSave: ({required name, required kind, required baseUrl, required enabled, apiKey, username, password}) =>
-          saveCompleter.future,
+      onSave:
+          ({
+            required name,
+            required kind,
+            required baseUrl,
+            required enabled,
+            downloadRoot,
+            apiKey,
+            username,
+            password,
+          }) => saveCompleter.future,
     ),
   );
   await tester.tap(find.text('Open'));
@@ -645,5 +732,6 @@ final _downloadClient = AcquisitionEndpoint(
   name: 'qBittorrent',
   kind: AcquisitionEndpointKind.qbittorrent,
   baseUrl: Uri.parse('https://qbittorrent.local'),
+  downloadRoot: '/downloads',
   enabled: true,
 );
