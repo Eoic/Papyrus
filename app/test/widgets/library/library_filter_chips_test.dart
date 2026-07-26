@@ -151,7 +151,7 @@ void main() {
       expect(labels, ['All', 'Reading', 'Favorites', 'Finished', 'Unread', 'Downloading']);
     });
 
-    testWidgets('reflects Downloading selection independently', (tester) async {
+    testWidgets('shows Downloading as the only selected chip', (tester) async {
       await tester.pumpWidget(buildChips(showDownloading: true, isDownloadingSelected: true));
 
       final chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
@@ -159,12 +159,14 @@ void main() {
       final downloadingChip = chips.filters.last;
 
       expect(downloadingChip.isSelected, isTrue);
-      expect(allChip.isSelected, isTrue);
+      expect(allChip.isSelected, isFalse);
+      expect(chips.filters.where((filter) => filter.isSelected), [downloadingChip]);
     });
 
-    testWidgets('dispatches Downloading only to its callback', (tester) async {
+    testWidgets('selecting Downloading resets library filters before dispatching its callback', (tester) async {
       var downloadingTaps = 0;
       var libraryFilterTaps = 0;
+      libraryProvider.addFilter(LibraryFilterType.reading);
 
       await tester.pumpWidget(
         buildChips(

@@ -20,6 +20,7 @@ import 'package:papyrus/widgets/library/online_results_view.dart';
 import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
+import 'package:papyrus/widgets/shared/quick_filter_chips.dart';
 import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:provider/provider.dart';
 import '../helpers/test_helpers.dart';
@@ -778,6 +779,59 @@ void main() {
         expect(placeholders, hasLength(1));
         expect(placeholders.single.job.id, 'orphan-job');
         expect(find.text('Ordinary book'), findsNothing);
+
+        downloadsProvider.dispose();
+      });
+
+      testWidgets('Downloading is exclusive and toggles back to All', (tester) async {
+        final store = createTestDataStore(
+          books: [
+            Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026)),
+            Book(id: 'ordinary-book', title: 'Ordinary book', author: 'Author', addedAt: DateTime(2026)),
+          ],
+        );
+        final downloadsProvider = AcquisitionDownloadsProvider(
+          gateway: _LibraryAcquisitionGateway(
+            jobs: [
+              _libraryJob(
+                AcquisitionJobStatus.downloading,
+                id: 'linked-job',
+                bookId: 'linked-book',
+                title: 'Linked book',
+              ),
+            ],
+          ),
+          pollingInterval: Duration.zero,
+        );
+        await downloadsProvider.refreshConfiguration();
+        await downloadsProvider.refreshJobs();
+
+        await tester.pumpWidget(
+          buildPage(screenSize: const Size(1200, 1000), store: store, downloadsProvider: downloadsProvider),
+        );
+        await tester.pumpAndSettle();
+
+        var chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
+        final downloadingIndex = chips.filters.indexWhere((filter) => filter.label == 'Downloading');
+
+        expect(downloadingIndex, isNonNegative);
+        chips.onFilterTapped(downloadingIndex);
+        await tester.pumpAndSettle();
+
+        chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
+
+        expect(chips.filters.singleWhere((filter) => filter.label == 'Downloading').isSelected, isTrue);
+        expect(chips.filters.singleWhere((filter) => filter.label == 'All').isSelected, isFalse);
+        expect(find.text('Ordinary book'), findsNothing);
+
+        chips.onFilterTapped(downloadingIndex);
+        await tester.pumpAndSettle();
+
+        chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
+
+        expect(chips.filters.singleWhere((filter) => filter.label == 'Downloading').isSelected, isFalse);
+        expect(chips.filters.singleWhere((filter) => filter.label == 'All').isSelected, isTrue);
+        expect(find.text('Ordinary book'), findsWidgets);
 
         downloadsProvider.dispose();
       });

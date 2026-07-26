@@ -222,7 +222,7 @@ class _LibraryPageState extends State<LibraryPage> {
               LibraryFilterChips(
                 showDownloading: localItems.hasDownloadingItems,
                 isDownloadingSelected: showDownloadingOnly,
-                onDownloadingTapped: () => setState(() => _showDownloadingOnly = true),
+                onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
                 onLibraryFilterTapped: () {
                   if (_showDownloadingOnly) {
                     setState(() => _showDownloadingOnly = false);
@@ -863,7 +863,7 @@ class _LibraryPageState extends State<LibraryPage> {
                   horizontalPadding: Spacing.lg,
                   showDownloading: localItems.hasDownloadingItems,
                   isDownloadingSelected: showDownloadingOnly,
-                  onDownloadingTapped: () => setState(() => _showDownloadingOnly = true),
+                  onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
                   onLibraryFilterTapped: () {
                     if (_showDownloadingOnly) {
                       setState(() => _showDownloadingOnly = false);

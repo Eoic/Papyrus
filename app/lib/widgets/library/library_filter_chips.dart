@@ -37,7 +37,7 @@ class LibraryFilterChips extends StatelessWidget {
           (filter) => QuickFilterChipData(
             label: filter.label,
             icon: filter.icon,
-            isSelected: libraryProvider.isFilterActive(filter.type),
+            isSelected: !isDownloadingSelected && libraryProvider.isFilterActive(filter.type),
           ),
         )
         .toList();
@@ -53,6 +53,7 @@ class LibraryFilterChips extends StatelessWidget {
       filters: filters,
       onFilterTapped: (index) {
         if (index == _filters.length) {
+          libraryProvider.resetFilters();
           onDownloadingTapped?.call();
 
           return;
