@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsAction, Tristate;
+import 'dart:ui' show PointerDeviceKind, SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -189,13 +189,35 @@ void main() {
         );
 
         tester.semantics.tap(find.semantics.byLabel('Select A Downloading Book'));
-        await tester.tap(find.byKey(const ValueKey('acquisition-selector-job-1')));
+        await tester.tap(find.byIcon(Icons.radio_button_unchecked));
 
         expect(selections, 2);
         expect(details, 0);
       } finally {
         semantics.dispose();
       }
+    });
+
+    testWidgets('desktop card stays hovered over its selection control', (tester) async {
+      await tester.pumpWidget(
+        _buildCard(
+          job: _job(status: AcquisitionJobStatus.cancelled),
+          onEnterSelectionMode: () {},
+          size: const Size(240, 360),
+          screenSize: const Size(1200, 800),
+        ),
+      );
+
+      final pointer = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await pointer.addPointer(location: tester.getCenter(find.byType(AcquisitionPlaceholderCard)));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity, 1);
+
+      await pointer.moveTo(tester.getCenter(find.byKey(const ValueKey('acquisition-selector-job-1'))));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity, 1);
     });
 
     testWidgets('without callbacks has no button role or actions', (tester) async {

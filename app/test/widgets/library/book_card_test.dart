@@ -1,4 +1,4 @@
-import 'dart:ui' show SemanticsAction, Tristate;
+import 'dart:ui' show PointerDeviceKind, SemanticsAction, Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -250,13 +250,34 @@ void main() {
         );
 
         tester.semantics.tap(find.semantics.byLabel('Select The Hobbit'));
-        await tester.tap(find.byKey(const ValueKey('acquisition-selector-job-1')));
+        await tester.tap(find.byIcon(Icons.radio_button_unchecked));
 
         expect(selections, 2);
         expect(details, 0);
       } finally {
         semantics.dispose();
       }
+    });
+
+    testWidgets('linked acquisition stays hovered over its selection control', (tester) async {
+      await tester.pumpWidget(
+        buildCard(
+          acquisitionJob: _acquisitionJob(status: AcquisitionJobStatus.cancelled),
+          onEnterSelectionMode: () {},
+          screenSize: const Size(1200, 800),
+        ),
+      );
+
+      final pointer = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await pointer.addPointer(location: tester.getCenter(find.byType(BookCard)));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity, 1);
+
+      await pointer.moveTo(tester.getCenter(find.byKey(const ValueKey('acquisition-selector-job-1'))));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity, 1);
     });
 
     testWidgets('linked acquisition hides favorite and exposes only its acquisition action', (tester) async {

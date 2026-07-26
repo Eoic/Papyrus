@@ -264,14 +264,7 @@ class _BookCardState extends State<BookCard> {
                 label: 'Select ${widget.book.title}',
                 button: true,
                 onTap: widget.onEnterSelectionMode,
-                child: ExcludeSemantics(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    excludeFromSemantics: true,
-                    onTap: widget.onEnterSelectionMode,
-                    child: const SizedBox(width: 32, height: 32),
-                  ),
-                ),
+                child: const ExcludeSemantics(child: SizedBox(width: 32, height: 32)),
               ),
             ),
         ],
