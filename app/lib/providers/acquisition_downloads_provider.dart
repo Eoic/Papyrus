@@ -181,6 +181,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   int _remoteStateGeneration = 0;
   int _submissionGeneration = 0;
   int _jobMutationGeneration = 0;
+  int _jobStateRevision = 0;
 
   AcquisitionDownloadsProvider({
     AcquisitionDownloadsGateway? gateway,
@@ -311,7 +312,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     _pollTimer?.cancel();
     _gateway?.close();
     _gateway = gateway;
-    _jobs.clear();
+    _clearJobs();
     _endpoints = const [];
     _selectedJobIds.clear();
     _remoteResults = const [];
@@ -370,6 +371,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
     }
 
     final generation = _generation;
+    final jobStateRevision = _jobStateRevision;
     _isLoadingJobs = true;
     _notifyListeners();
 
@@ -396,9 +398,11 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
         offset += page.items.length;
       } while (offset < total);
 
-      _jobs
-        ..clear()
-        ..addEntries(jobs.map((job) => MapEntry(job.id, job)));
+      if (_jobStateRevision != jobStateRevision) {
+        return;
+      }
+
+      _replaceJobs(jobs);
       _selectedJobIds.removeWhere((jobId) => !_jobs.containsKey(jobId));
       _error = null;
     } catch (error) {
@@ -610,7 +614,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
         final releaseToken = selected[item.index].releaseToken;
 
         if (item.job case final job?) {
-          _jobs[job.id] = job;
+          _setJob(job);
           successfulReleaseTokens.add(releaseToken);
           successfulCount += 1;
         } else {
@@ -827,7 +831,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
       final cancelled = await gateway.cancelJob(jobId);
 
       if (_isCurrent(gateway, generation)) {
-        _jobs[cancelled.id] = cancelled;
+        _setJob(cancelled);
         _error = null;
 
         return const AcquisitionJobActionOutcome.success();
@@ -914,7 +918,7 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
               return const AcquisitionJobActionOutcome.ignored();
             }
 
-            _jobs.remove(jobId);
+            _removeJob(jobId);
             _selectedJobIds.remove(jobId);
           } catch (error) {
             if (!_isCurrentJobMutation(gateway, generation, mutationGeneration)) {
@@ -938,10 +942,33 @@ class AcquisitionDownloadsProvider extends ChangeNotifier with WidgetsBindingObs
   }
 
   void _replaceJob(AcquisitionJob job) {
-    _jobs[job.id] = job;
+    _setJob(job);
     _error = null;
     _schedulePolling();
     _notifyListeners();
+  }
+
+  void _replaceJobs(Iterable<AcquisitionJob> jobs) {
+    _jobs
+      ..clear()
+      ..addEntries(jobs.map((job) => MapEntry(job.id, job)));
+    _jobStateRevision += 1;
+  }
+
+  void _setJob(AcquisitionJob job) {
+    _jobs[job.id] = job;
+    _jobStateRevision += 1;
+  }
+
+  void _removeJob(String jobId) {
+    if (_jobs.remove(jobId) != null) {
+      _jobStateRevision += 1;
+    }
+  }
+
+  void _clearJobs() {
+    _jobs.clear();
+    _jobStateRevision += 1;
   }
 
   void _schedulePolling() {

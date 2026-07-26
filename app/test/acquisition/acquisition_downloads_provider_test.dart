@@ -66,6 +66,142 @@ void main() {
     provider.dispose();
   });
 
+  test('discards a stale refresh after removal and lets a later refresh converge', () async {
+    final staleRefresh = Completer<AcquisitionJobPage>();
+    final gateway = _FakeGateway(
+      jobResponses: [
+        AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.failed)], total: 1, limit: 100, offset: 0),
+        staleRefresh.future,
+        AcquisitionJobPage(
+          items: [_job(id: 'server-job', status: AcquisitionJobStatus.completed)],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        ),
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    await provider.refreshJobs();
+    provider.toggleJobSelection('job-1');
+    final refresh = provider.refreshJobs();
+
+    await provider.removeSelectedJobs();
+    expect(provider.jobs, isEmpty);
+
+    staleRefresh.complete(
+      AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.failed)], total: 1, limit: 100, offset: 0),
+    );
+    await refresh;
+
+    expect(provider.jobs, isEmpty);
+    expect(provider.isLoadingJobs, isFalse);
+
+    await provider.refreshJobs();
+
+    expect(provider.jobs.single.id, 'server-job');
+    expect(provider.isLoadingJobs, isFalse);
+
+    provider.dispose();
+  });
+
+  test('discards a stale refresh after successful cancellation', () async {
+    final staleRefresh = Completer<AcquisitionJobPage>();
+    final gateway = _FakeGateway(
+      jobResponses: [
+        AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.downloading)], total: 1, limit: 100, offset: 0),
+        staleRefresh.future,
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    await provider.refreshJobs();
+    final refresh = provider.refreshJobs();
+
+    await provider.cancelJob('job-1');
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.cancelled);
+
+    staleRefresh.complete(
+      AcquisitionJobPage(items: [_job(status: AcquisitionJobStatus.downloading)], total: 1, limit: 100, offset: 0),
+    );
+    await refresh;
+
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.cancelled);
+    expect(provider.isLoadingJobs, isFalse);
+
+    provider.dispose();
+  });
+
+  test('discards a stale refresh after successful retry', () async {
+    final staleRefresh = Completer<AcquisitionJobPage>();
+    final gateway = _FakeGateway(
+      jobResponses: [
+        AcquisitionJobPage(
+          items: [_job(status: AcquisitionJobStatus.failed, retryable: true)],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        ),
+        staleRefresh.future,
+      ],
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+
+    await provider.refreshJobs();
+    final refresh = provider.refreshJobs();
+
+    await provider.retryJobImport('job-1');
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.downloading);
+
+    staleRefresh.complete(
+      AcquisitionJobPage(
+        items: [_job(status: AcquisitionJobStatus.failed, retryable: true)],
+        total: 1,
+        limit: 100,
+        offset: 0,
+      ),
+    );
+    await refresh;
+
+    expect(provider.jobById('job-1')?.status, AcquisitionJobStatus.downloading);
+    expect(provider.isLoadingJobs, isFalse);
+
+    provider.dispose();
+  });
+
+  test('discards a stale refresh after successful submission inserts a job', () async {
+    final staleRefresh = Completer<AcquisitionJobPage>();
+    final gateway = _FakeGateway(
+      jobResponses: [staleRefresh.future],
+      batchResult: BatchSubmissionResponse(
+        items: [
+          BatchSubmissionItem(
+            index: 0,
+            job: _job(id: 'submitted-job', status: AcquisitionJobStatus.submitted),
+            error: null,
+          ),
+        ],
+      ),
+    );
+    final provider = AcquisitionDownloadsProvider(gateway: gateway, pollingInterval: Duration.zero);
+    const release = TorrentRelease(title: 'One', releaseToken: 'token-1', protocol: 'torrent', indexer: 'Prowlarr');
+
+    final refresh = provider.refreshJobs();
+    provider.setRemoteResults('query', const [release]);
+    provider.toggleReleaseSelection('token-1');
+
+    await provider.submitSelectedReleases('endpoint-1');
+    expect(provider.jobs.single.id, 'submitted-job');
+
+    staleRefresh.complete(const AcquisitionJobPage(items: [], total: 0, limit: 100, offset: 0));
+    await refresh;
+
+    expect(provider.jobs.single.id, 'submitted-job');
+    expect(provider.isLoadingJobs, isFalse);
+
+    provider.dispose();
+  });
+
   test('search keeps task state separate from job refresh errors', () async {
     final gateway = _FakeGateway(
       endpointsError: StateError('https://download-client.local/settings?token=secret'),
@@ -961,6 +1097,7 @@ void main() {
 class _FakeGateway implements AcquisitionDownloadsGateway {
   final List<AcquisitionEndpoint> endpoints;
   final List<AcquisitionJobPage> jobPages;
+  final List<Object> _jobResponses;
   final BatchSubmissionResponse batchResult;
   final Completer<BatchSubmissionResponse>? batchCompleter;
   final List<Object> _batchResponses;
@@ -991,6 +1128,7 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
   _FakeGateway({
     this.endpoints = const [],
     this.jobPages = const [],
+    List<Object> jobResponses = const [],
     this.batchResult = const BatchSubmissionResponse(items: []),
     this.batchCompleter,
     List<Object> batchResponses = const [],
@@ -1009,7 +1147,8 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     this.retryImportCompleter,
     this.cancelCompleter,
     this.removeCompleter,
-  }) : _batchResponses = [...batchResponses],
+  }) : _jobResponses = [...jobResponses],
+       _batchResponses = [...batchResponses],
        _searchResponses = [...searchResponses];
 
   @override
@@ -1027,6 +1166,18 @@ class _FakeGateway implements AcquisitionDownloadsGateway {
     jobOffsets.add(offset);
     if (jobListError case final error?) {
       throw error;
+    }
+    if (_jobResponses.isNotEmpty) {
+      final response = _jobResponses.removeAt(0);
+
+      if (response is Future<AcquisitionJobPage>) {
+        return response;
+      }
+      if (response is AcquisitionJobPage) {
+        return response;
+      }
+
+      throw response;
     }
     if (jobPages.isNotEmpty) {
       return jobPages.removeAt(0);
