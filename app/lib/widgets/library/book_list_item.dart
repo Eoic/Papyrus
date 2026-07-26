@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
+import 'package:papyrus/widgets/library/acquisition_status_text.dart';
 
 /// List row for displaying a book with cover thumbnail, title, author,
 /// progress, format badge, and favorite indicator.
@@ -15,6 +17,11 @@ class BookListItem extends StatefulWidget {
   final bool isSelectionMode;
   final bool isSelected;
   final VoidCallback? onSelectToggle;
+  final AcquisitionJob? acquisitionJob;
+  final VoidCallback? onAcquisitionTap;
+  final bool isAcquisitionSelectionMode;
+  final bool isAcquisitionSelected;
+  final VoidCallback? onAcquisitionSelectionToggle;
 
   const BookListItem({
     super.key,
@@ -25,6 +32,11 @@ class BookListItem extends StatefulWidget {
     this.isSelectionMode = false,
     this.isSelected = false,
     this.onSelectToggle,
+    this.acquisitionJob,
+    this.onAcquisitionTap,
+    this.isAcquisitionSelectionMode = false,
+    this.isAcquisitionSelected = false,
+    this.onAcquisitionSelectionToggle,
   });
 
   @override
@@ -39,21 +51,35 @@ class _BookListItemState extends State<BookListItem> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final inSelection = widget.isSelectionMode;
+    final isAcquisition = widget.acquisitionJob != null;
+    final inSelection = isAcquisition ? widget.isAcquisitionSelectionMode : widget.isSelectionMode;
+    final isSelected = isAcquisition ? widget.isAcquisitionSelected : widget.isSelected;
+    final onSelectionToggle = isAcquisition ? widget.onAcquisitionSelectionToggle : widget.onSelectToggle;
+    final onTap = isAcquisition
+        ? inSelection
+              ? widget.onAcquisitionSelectionToggle
+              : widget.onAcquisitionTap
+        : inSelection
+        ? widget.onSelectToggle
+        : widget.onTap;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onLongPressStart: _isDesktop
+        onLongPressStart: isAcquisition
+            ? widget.onAcquisitionSelectionToggle == null
+                  ? null
+                  : (_) => widget.onAcquisitionSelectionToggle!()
+            : _isDesktop
             ? null
             : (details) {
                 showBookContextMenu(context: context, book: widget.book, position: details.globalPosition);
               },
         child: Material(
-          color: inSelection && widget.isSelected ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
+          color: inSelection && isSelected ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
           child: InkWell(
-            onTap: inSelection ? widget.onSelectToggle : widget.onTap,
+            onTap: onTap,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
               decoration: BoxDecoration(
@@ -63,7 +89,7 @@ class _BookListItemState extends State<BookListItem> {
                 children: [
                   // Selection checkbox (leading)
                   if (inSelection) ...[
-                    Checkbox(value: widget.isSelected, onChanged: (_) => widget.onSelectToggle?.call()),
+                    Checkbox(value: isSelected, onChanged: (_) => onSelectionToggle?.call()),
                     const SizedBox(width: Spacing.sm),
                   ],
                   // Cover thumbnail
@@ -93,7 +119,38 @@ class _BookListItemState extends State<BookListItem> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (widget.showProgress && widget.book.progress > 0) ...[
+                        if (widget.acquisitionJob case final job?) ...[
+                          const SizedBox(height: Spacing.xs),
+                          Text(
+                            acquisitionStatusLabel(job),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: job.requiresAttention ? colorScheme.error : colorScheme.onSurfaceVariant,
+                              fontWeight: job.requiresAttention ? FontWeight.w600 : null,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (acquisitionTransferDetails(job) case final details?) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              details,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          if (job.progress case final progress?) ...[
+                            const SizedBox(height: Spacing.xs),
+                            LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: colorScheme.surfaceContainerHighest,
+                              color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
+                              minHeight: 3,
+                            ),
+                          ],
+                        ] else if (widget.showProgress && widget.book.progress > 0) ...[
                           const SizedBox(height: Spacing.xs),
                           Row(
                             children: [
@@ -149,7 +206,7 @@ class _BookListItemState extends State<BookListItem> {
                               : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                         ),
                         // Overflow menu - show on hover (desktop only)
-                        if (_isDesktop)
+                        if (_isDesktop && !isAcquisition)
                           AnimatedOpacity(
                             opacity: _isHovered ? 1.0 : 0.0,
                             duration: const Duration(milliseconds: 150),

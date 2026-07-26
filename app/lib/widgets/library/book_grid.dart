@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 import 'package:provider/provider.dart';
 
@@ -13,8 +15,23 @@ class BookGrid extends StatelessWidget {
   final List<Book> books;
   final void Function(Book book)? onBookTap;
   final EdgeInsets? padding;
+  final Map<String, AcquisitionJob> acquisitionJobsByBookId;
+  final List<AcquisitionJob> placeholderJobs;
+  final Set<String> selectedAcquisitionJobIds;
+  final ValueChanged<AcquisitionJob>? onAcquisitionTap;
+  final ValueChanged<AcquisitionJob>? onAcquisitionSelectionToggle;
 
-  const BookGrid({super.key, required this.books, this.onBookTap, this.padding});
+  const BookGrid({
+    super.key,
+    required this.books,
+    this.onBookTap,
+    this.padding,
+    this.acquisitionJobsByBookId = const {},
+    this.placeholderJobs = const [],
+    this.selectedAcquisitionJobIds = const {},
+    this.onAcquisitionTap,
+    this.onAcquisitionSelectionToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +61,45 @@ class BookGrid extends StatelessWidget {
     }
 
     final libraryProvider = context.watch<LibraryProvider>();
-    final isSelectionMode = libraryProvider.isSelectionMode;
+    final bookIds = books.map((book) => book.id).toSet();
+    final placeholderJobsByBookId = <String, AcquisitionJob>{};
+
+    for (final job in placeholderJobs) {
+      final bookId = job.bookId;
+
+      if (bookId != null) {
+        placeholderJobsByBookId.putIfAbsent(bookId, () => job);
+      }
+    }
+
+    final linkedJobsByBookId = <String, AcquisitionJob>{};
+    final claimedJobIds = <String>{};
+
+    for (final book in books) {
+      final job = acquisitionJobsByBookId[book.id] ?? placeholderJobsByBookId[book.id];
+
+      if (job != null && claimedJobIds.add(job.id)) {
+        linkedJobsByBookId[book.id] = job;
+      }
+    }
+
+    final orphanJobs = <AcquisitionJob>[];
+    final seenJobIds = <String>{...claimedJobIds};
+    final seenPendingBookIds = <String>{};
+
+    for (final job in placeholderJobs) {
+      if (!seenJobIds.add(job.id)) {
+        continue;
+      }
+
+      final bookId = job.bookId;
+
+      if (bookId != null && (bookIds.contains(bookId) || !seenPendingBookIds.add(bookId))) {
+        continue;
+      }
+
+      orphanJobs.add(job);
+    }
 
     return MediaQuery.removePadding(
       context: context,
@@ -58,19 +113,56 @@ class BookGrid extends StatelessWidget {
           crossAxisSpacing: spacing,
           childAspectRatio: childAspectRatio,
         ),
-        itemCount: books.length,
+        itemCount: books.length + orphanJobs.length,
         itemBuilder: (context, index) {
+          if (index >= books.length) {
+            final job = orphanJobs[index - books.length];
+            final canSelect = job.status != AcquisitionJobStatus.completed;
+
+            return AcquisitionPlaceholderCard(
+              job: job,
+              onTap: onAcquisitionTap == null ? null : () => onAcquisitionTap!(job),
+              isSelectionMode: canSelect && selectedAcquisitionJobIds.isNotEmpty,
+              isSelected: selectedAcquisitionJobIds.contains(job.id),
+              onSelectToggle: !canSelect || onAcquisitionSelectionToggle == null
+                  ? null
+                  : () => onAcquisitionSelectionToggle!(job),
+              onEnterSelectionMode: !canSelect || onAcquisitionSelectionToggle == null
+                  ? null
+                  : () => onAcquisitionSelectionToggle!(job),
+            );
+          }
+
           final book = books[index];
+          final job = linkedJobsByBookId[book.id];
           final isFavorite = libraryProvider.isBookFavorite(book.id, book.isFavorite);
+
           return BookCard(
             book: book,
             isFavorite: isFavorite,
-            onToggleFavorite: (current) => libraryProvider.toggleFavorite(book.id, current),
-            onTap: onBookTap != null ? () => onBookTap!(book) : null,
-            isSelectionMode: isSelectionMode,
-            isSelected: libraryProvider.isBookSelected(book.id),
-            onSelectToggle: () => libraryProvider.toggleBookSelection(book.id),
-            onEnterSelectionMode: () => libraryProvider.enterSelectionMode(book.id),
+            onToggleFavorite: job == null ? (current) => libraryProvider.toggleFavorite(book.id, current) : null,
+            onTap: job != null
+                ? onAcquisitionTap == null
+                      ? null
+                      : () => onAcquisitionTap!(job)
+                : onBookTap == null
+                ? null
+                : () => onBookTap!(book),
+            isSelectionMode: job != null ? selectedAcquisitionJobIds.isNotEmpty : libraryProvider.isSelectionMode,
+            isSelected: job != null
+                ? selectedAcquisitionJobIds.contains(job.id)
+                : libraryProvider.isBookSelected(book.id),
+            onSelectToggle: job != null
+                ? onAcquisitionSelectionToggle == null
+                      ? null
+                      : () => onAcquisitionSelectionToggle!(job)
+                : () => libraryProvider.toggleBookSelection(book.id),
+            onEnterSelectionMode: job != null
+                ? onAcquisitionSelectionToggle == null
+                      ? null
+                      : () => onAcquisitionSelectionToggle!(job)
+                : () => libraryProvider.enterSelectionMode(book.id),
+            acquisitionJob: job,
           );
         },
       ),

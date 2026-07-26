@@ -64,6 +64,81 @@ void main() {
     expect(find.text('EPUB, PDF, AZW3, MOBI, CBZ/CBR'), findsOneWidget);
   });
 
+  testWidgets('does not show the online search option without a callback', (tester) async {
+    await pumpLauncher(
+      tester,
+      (context) =>
+          () => AddBookChoiceSheet.show(context),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Find books online'), findsNothing);
+  });
+
+  testWidgets('invokes online search once after the choice sheet has dismissed', (tester) async {
+    var findOnlineCalls = 0;
+    var sheetWasAbsentAtCallback = false;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1400, 1000);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (homeContext) => Scaffold(
+            body: FilledButton(
+              onPressed: () {
+                Navigator.of(homeContext).push(
+                  MaterialPageRoute<void>(
+                    builder: (pageContext) => Scaffold(
+                      body: Builder(
+                        builder: (sheetContext) => FilledButton(
+                          onPressed: () => AddBookChoiceSheet.show(
+                            sheetContext,
+                            onFindOnline: () {
+                              findOnlineCalls++;
+                              sheetWasAbsentAtCallback = find.byType(BottomSheet).evaluate().isEmpty;
+                            },
+                          ),
+                          child: const Text('Open add book'),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Open page'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open page'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open add book'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.travel_explore_outlined), findsOneWidget);
+    expect(find.text('Find books online'), findsOneWidget);
+    expect(find.text('Search connected book sources'), findsOneWidget);
+
+    final onlineOption = tester.widget<InkWell>(
+      find.ancestor(of: find.text('Find books online'), matching: find.byType(InkWell)),
+    );
+
+    onlineOption.onTap!();
+    onlineOption.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(findOnlineCalls, 1);
+    expect(sheetWasAbsentAtCallback, isTrue);
+    expect(find.text('Open add book'), findsOneWidget);
+    expect(find.text('Open page'), findsNothing);
+  });
+
   testWidgets('import book opens as a format-neutral bottom sheet on desktop', (tester) async {
     await pumpLauncher(
       tester,

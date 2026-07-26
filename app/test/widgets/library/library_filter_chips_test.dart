@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
+import 'package:papyrus/widgets/shared/quick_filter_chips.dart';
 
 import '../../helpers/test_helpers.dart';
 
@@ -13,8 +14,23 @@ void main() {
       libraryProvider = LibraryProvider();
     });
 
-    Widget buildChips({LibraryProvider? provider}) {
-      return createTestApp(libraryProvider: provider ?? libraryProvider, child: const LibraryFilterChips());
+    Widget buildChips({
+      LibraryProvider? provider,
+      bool showDownloading = false,
+      bool isDownloadingSelected = false,
+      VoidCallback? onDownloadingTapped,
+      VoidCallback? onLibraryFilterTapped,
+    }) {
+      return createTestApp(
+        libraryProvider: provider ?? libraryProvider,
+        screenSize: const Size(1000, 800),
+        child: LibraryFilterChips(
+          showDownloading: showDownloading,
+          isDownloadingSelected: isDownloadingSelected,
+          onDownloadingTapped: onDownloadingTapped,
+          onLibraryFilterTapped: onLibraryFilterTapped,
+        ),
+      );
     }
 
     testWidgets('displays all five filter chips', (tester) async {
@@ -118,6 +134,75 @@ void main() {
       // ListView should be present with horizontal scrolling
       final listView = tester.widget<ListView>(find.byType(ListView));
       expect(listView.scrollDirection, Axis.horizontal);
+    });
+
+    testWidgets('does not show Downloading by default', (tester) async {
+      await tester.pumpWidget(buildChips());
+
+      expect(find.text('Downloading'), findsNothing);
+    });
+
+    testWidgets('shows Downloading after the library filters when requested', (tester) async {
+      await tester.pumpWidget(buildChips(showDownloading: true));
+
+      final chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
+      final labels = chips.filters.map((filter) => filter.label).toList();
+
+      expect(labels, ['All', 'Reading', 'Favorites', 'Finished', 'Unread', 'Downloading']);
+    });
+
+    testWidgets('shows Downloading as the only selected chip', (tester) async {
+      await tester.pumpWidget(buildChips(showDownloading: true, isDownloadingSelected: true));
+
+      final chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
+      final allChip = chips.filters.first;
+      final downloadingChip = chips.filters.last;
+
+      expect(downloadingChip.isSelected, isTrue);
+      expect(allChip.isSelected, isFalse);
+      expect(chips.filters.where((filter) => filter.isSelected), [downloadingChip]);
+    });
+
+    testWidgets('selecting Downloading resets library filters before dispatching its callback', (tester) async {
+      var downloadingTaps = 0;
+      var libraryFilterTaps = 0;
+      libraryProvider.addFilter(LibraryFilterType.reading);
+
+      await tester.pumpWidget(
+        buildChips(
+          showDownloading: true,
+          onDownloadingTapped: () => downloadingTaps++,
+          onLibraryFilterTapped: () => libraryFilterTaps++,
+        ),
+      );
+
+      final chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
+      chips.onFilterTapped(chips.filters.length - 1);
+      await tester.pump();
+
+      expect(downloadingTaps, 1);
+      expect(libraryFilterTaps, 0);
+      expect(libraryProvider.activeFilters, {LibraryFilterType.all});
+    });
+
+    testWidgets('dispatches ordinary chips through the provider and callback', (tester) async {
+      var downloadingTaps = 0;
+      var libraryFilterTaps = 0;
+
+      await tester.pumpWidget(
+        buildChips(
+          showDownloading: true,
+          onDownloadingTapped: () => downloadingTaps++,
+          onLibraryFilterTapped: () => libraryFilterTaps++,
+        ),
+      );
+
+      await tester.tap(find.text('Reading'));
+      await tester.pump();
+
+      expect(downloadingTaps, 0);
+      expect(libraryFilterTaps, 1);
+      expect(libraryProvider.activeFilters, {LibraryFilterType.reading});
     });
   });
 }

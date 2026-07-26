@@ -9,6 +9,8 @@ class BottomSheetHeader extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback? onSave;
   final String saveLabel;
+  final Key? saveButtonKey;
+  final bool canCancel;
   final bool canSave;
 
   const BottomSheetHeader({
@@ -17,6 +19,8 @@ class BottomSheetHeader extends StatelessWidget {
     required this.onCancel,
     this.onSave,
     this.saveLabel = 'Save',
+    this.saveButtonKey,
+    this.canCancel = true,
     this.canSave = true,
   });
 
@@ -27,16 +31,24 @@ class BottomSheetHeader extends StatelessWidget {
         Expanded(
           child: Align(
             alignment: Alignment.centerLeft,
-            child: TextButton(onPressed: onCancel, child: const Text('Cancel')),
+            child: TextButton(onPressed: canCancel ? onCancel : null, child: const Text('Cancel')),
           ),
         ),
-        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
             child: onSave == null
                 ? const SizedBox.shrink()
-                : FilledButton(onPressed: canSave ? onSave : null, child: Text(saveLabel)),
+                : FilledButton(key: saveButtonKey, onPressed: canSave ? onSave : null, child: Text(saveLabel)),
           ),
         ),
       ],

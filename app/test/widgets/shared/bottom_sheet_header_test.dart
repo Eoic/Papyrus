@@ -9,6 +9,7 @@ void main() {
       VoidCallback? onCancel,
       VoidCallback? onSave,
       String saveLabel = 'Save',
+      bool canCancel = true,
       bool canSave = true,
     }) {
       return MaterialApp(
@@ -18,6 +19,7 @@ void main() {
             onCancel: onCancel ?? () {},
             onSave: onSave ?? () {},
             saveLabel: saveLabel,
+            canCancel: canCancel,
             canSave: canSave,
           ),
         ),
@@ -56,6 +58,16 @@ void main() {
       expect(saved, isFalse);
     });
 
+    testWidgets('cancel button is disabled when canCancel is false', (tester) async {
+      var cancelled = false;
+      await tester.pumpWidget(buildHeader(canCancel: false, onCancel: () => cancelled = true));
+
+      final cancelButton = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Cancel'));
+      expect(cancelButton.onPressed, isNull);
+      await tester.tap(find.text('Cancel'));
+      expect(cancelled, isFalse);
+    });
+
     testWidgets('uses custom save label', (tester) async {
       await tester.pumpWidget(buildHeader(saveLabel: 'Done'));
 
@@ -68,6 +80,23 @@ void main() {
 
       final filledButton = find.ancestor(of: find.text('Save'), matching: find.byType(FilledButton));
       expect(filledButton, findsOneWidget);
+    });
+
+    testWidgets('keeps long titles and actions visible on narrow text-scaled layouts', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(buildHeader(title: 'Search all monitored books', saveLabel: 'Run'));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Search all monitored books'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Cancel'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Run'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Cancel').hitTestable(), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Run').hitTestable(), findsOneWidget);
     });
   });
 }

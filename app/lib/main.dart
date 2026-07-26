@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:papyrus/acquisition/acquisition_api_client.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
 import 'package:papyrus/auth/auth_repository.dart';
 import 'package:papyrus/auth/papyrus_api_config.dart';
@@ -19,6 +20,7 @@ import 'package:papyrus/powersync/sync_profile_switch_queue.dart';
 import 'package:papyrus/powersync/sync_state.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/acquisition_availability_provider.dart';
+import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
@@ -50,10 +52,109 @@ class Papyrus extends StatefulWidget {
   State<Papyrus> createState() => _PapyrusState();
 }
 
+typedef AcquisitionDownloadsGatewayFactory =
+    AcquisitionDownloadsGateway Function(AuthProvider authProvider, PapyrusApiConfig config);
+
+class AcquisitionDownloadsComposition {
+  AcquisitionDownloadsComposition({
+    required AuthProvider authProvider,
+    required AcquisitionAvailabilityProvider availabilityProvider,
+    required PapyrusApiConfig Function() activeApiConfig,
+    AcquisitionDownloadsProvider? downloadsProvider,
+    AcquisitionDownloadsGatewayFactory? gatewayFactory,
+  }) : _authProvider = authProvider,
+       _availabilityProvider = availabilityProvider,
+       _activeApiConfig = activeApiConfig,
+       provider = downloadsProvider ?? AcquisitionDownloadsProvider(),
+       _gatewayFactory = gatewayFactory ?? _createGateway {
+    _authProvider.addListener(_synchronizeAvailability);
+    _availabilityProvider.addListener(_synchronizeDownloads);
+    _synchronizeAvailability();
+    _synchronizeDownloads();
+  }
+
+  final AuthProvider _authProvider;
+  final AcquisitionAvailabilityProvider _availabilityProvider;
+  final PapyrusApiConfig Function() _activeApiConfig;
+  final AcquisitionDownloadsGatewayFactory _gatewayFactory;
+  final AcquisitionDownloadsProvider provider;
+
+  Uri? _downloadsServerBaseUri;
+  bool _disposed = false;
+
+  ChangeNotifierProvider<AcquisitionDownloadsProvider> providerRegistration() {
+    return ChangeNotifierProvider.value(value: provider);
+  }
+
+  void handleServerChanged() {
+    _availabilityProvider.clear();
+    _synchronizeDownloads();
+  }
+
+  void _synchronizeAvailability() {
+    if (_disposed) {
+      return;
+    }
+
+    if (!_authProvider.isSignedIn || _authProvider.isOfflineMode) {
+      _availabilityProvider.clear();
+      _synchronizeDownloads();
+      return;
+    }
+
+    unawaited(_availabilityProvider.refresh(_activeApiConfig().serverBaseUri));
+  }
+
+  void _synchronizeDownloads() {
+    if (_disposed) {
+      return;
+    }
+
+    final config = _activeApiConfig();
+    final serverBaseUri = config.serverBaseUri;
+    final available =
+        _authProvider.isSignedIn && !_authProvider.isOfflineMode && _availabilityProvider.isAvailableFor(serverBaseUri);
+
+    provider.setServerManagedDownloadsReady(_availabilityProvider.managedDownloadsReadyFor(serverBaseUri));
+
+    if (!available) {
+      _downloadsServerBaseUri = null;
+      provider.setGateway(null);
+      return;
+    }
+
+    if (_downloadsServerBaseUri == serverBaseUri) {
+      return;
+    }
+
+    _downloadsServerBaseUri = serverBaseUri;
+    provider.setGateway(_gatewayFactory(_authProvider, config));
+  }
+
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+
+    _disposed = true;
+    _authProvider.removeListener(_synchronizeAvailability);
+    _availabilityProvider.removeListener(_synchronizeDownloads);
+    provider.dispose();
+  }
+
+  static AcquisitionDownloadsGateway _createGateway(AuthProvider authProvider, PapyrusApiConfig config) {
+    return AuthenticatedAcquisitionDownloadsGateway(
+      authProvider: authProvider,
+      apiClient: AcquisitionApiClient(config: config),
+    );
+  }
+}
+
 class _PapyrusState extends State<Papyrus> {
   late final DataStore _dataStore;
   late final AuthProvider _authProvider;
   late final AcquisitionAvailabilityProvider _acquisitionAvailabilityProvider;
+  late final AcquisitionDownloadsComposition _acquisitionDownloadsComposition;
   late final PreferencesProvider _preferencesProvider;
   late final SyncSettingsProvider _syncSettingsProvider;
   late final MediaUploadQueue _mediaUploadQueue;
@@ -91,6 +192,11 @@ class _PapyrusState extends State<Papyrus> {
     _bookImportService = BookImportService();
     _authProvider = AuthProvider(widget.prefs, repository: _authRepository);
     _acquisitionAvailabilityProvider = AcquisitionAvailabilityProvider(authProvider: _authProvider);
+    _acquisitionDownloadsComposition = AcquisitionDownloadsComposition(
+      authProvider: _authProvider,
+      availabilityProvider: _acquisitionAvailabilityProvider,
+      activeApiConfig: () => _syncSettingsProvider.activeApiConfig,
+    );
     _powerSyncService = PapyrusPowerSyncService(
       connectorFactory: () => PapyrusPowerSyncConnector(
         authRepository: _authRepository,
@@ -107,19 +213,17 @@ class _PapyrusState extends State<Papyrus> {
       acquisitionAvailabilityProvider: _acquisitionAvailabilityProvider,
     );
     _authProvider.addListener(_syncPowerSyncAuthState);
-    _authProvider.addListener(_syncAcquisitionAvailability);
     _syncSettingsProvider.addListener(_handleSyncSettingsChanged);
     _syncPowerSyncAuthState();
-    _syncAcquisitionAvailability();
   }
 
   @override
   void dispose() {
     _authProvider.removeListener(_syncPowerSyncAuthState);
-    _authProvider.removeListener(_syncAcquisitionAvailability);
     _syncSettingsProvider.removeListener(_handleSyncSettingsChanged);
     unawaited(_disposeDataServices());
     _bookImportService.dispose();
+    _acquisitionDownloadsComposition.dispose();
     _acquisitionAvailabilityProvider.dispose();
     _authProvider.dispose();
     _syncSettingsProvider.dispose();
@@ -199,19 +303,10 @@ class _PapyrusState extends State<Papyrus> {
   }
 
   void _handleSyncSettingsChanged() {
-    _acquisitionAvailabilityProvider.clear();
+    _acquisitionDownloadsComposition.handleServerChanged();
     final nextProfileKey = _syncSettingsProvider.activeProfileKey;
     final nextConfig = _syncSettingsProvider.activeApiConfig;
     _profileSwitchQueue.request(nextProfileKey, () => _switchActiveSyncProfile(nextProfileKey, nextConfig));
-  }
-
-  void _syncAcquisitionAvailability() {
-    if (!_authProvider.isSignedIn || _authProvider.isOfflineMode) {
-      _acquisitionAvailabilityProvider.clear();
-      return;
-    }
-
-    unawaited(_acquisitionAvailabilityProvider.refresh(_syncSettingsProvider.activeApiConfig.serverBaseUri));
   }
 
   Future<void> _switchActiveSyncProfile(String nextProfileKey, PapyrusApiConfig nextConfig) async {
@@ -299,6 +394,7 @@ class _PapyrusState extends State<Papyrus> {
         // Auth and UI state providers
         ChangeNotifierProvider.value(value: _authProvider),
         ChangeNotifierProvider.value(value: _acquisitionAvailabilityProvider),
+        _acquisitionDownloadsComposition.providerRegistration(),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
         ChangeNotifierProvider.value(value: _preferencesProvider),

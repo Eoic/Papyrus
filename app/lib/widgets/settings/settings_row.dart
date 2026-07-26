@@ -39,6 +39,12 @@ class SettingsRow extends StatelessWidget {
   /// Optional value text displayed below or to the right of label.
   final String? value;
 
+  /// Optional widget displayed before the label and value content.
+  final Widget? leading;
+
+  /// Optional widget displayed after the label and value content.
+  final Widget? trailing;
+
   /// Called when the row is tapped (for navigation rows).
   final VoidCallback? onTap;
 
@@ -46,39 +52,62 @@ class SettingsRow extends StatelessWidget {
   final bool showChevron;
 
   /// Creates a settings row widget.
-  const SettingsRow({super.key, required this.label, this.value, this.onTap, this.showChevron = true});
+  const SettingsRow({
+    super.key,
+    required this.label,
+    this.value,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.showChevron = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final showsValueAsTrailing = value != null && !showChevron && trailing == null;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.sm),
-          child: Row(
-            children: [
-              Expanded(
-                child: value != null
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(label, style: textTheme.bodyLarge),
-                          const SizedBox(height: 2),
-                          Text(value!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-                        ],
-                      )
-                    : Text(label, style: textTheme.bodyLarge),
-              ),
-              if (showChevron && onTap != null)
-                Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: IconSizes.medium)
-              else if (value != null && !showChevron)
-                Text(value!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-            ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: TouchTargets.mobileRecommended),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.sm),
+            child: Row(
+              children: [
+                if (leading != null) ...[leading!, const SizedBox(width: Spacing.md)],
+                Expanded(
+                  child: showsValueAsTrailing
+                      ? Text(label, style: textTheme.bodyLarge)
+                      : value != null
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(label, style: textTheme.bodyLarge),
+                            const SizedBox(height: 2),
+                            Text(value!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+                          ],
+                        )
+                      : Text(label, style: textTheme.bodyLarge),
+                ),
+                if (trailing != null)
+                  trailing!
+                else if (showChevron && onTap != null)
+                  Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: IconSizes.medium)
+                else if (showsValueAsTrailing)
+                  Expanded(
+                    child: Text(
+                      value!,
+                      textAlign: TextAlign.end,
+                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
