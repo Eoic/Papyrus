@@ -33,9 +33,7 @@ void main() {
   }
 
   IconButton searchButton(WidgetTester tester) {
-    return tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, Icons.search),
-    );
+    return tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.search));
   }
 
   testWidgets('renders back control, title, and search field', (tester) async {
@@ -43,13 +41,7 @@ void main() {
     addTearDown(controller.dispose);
     var backCalls = 0;
 
-    await tester.pumpWidget(
-      buildHeader(
-        controller: controller,
-        onBack: () => backCalls++,
-        onSearch: (_) {},
-      ),
-    );
+    await tester.pumpWidget(buildHeader(controller: controller, onBack: () => backCalls++, onSearch: (_) {}));
 
     expect(find.byTooltip('Back'), findsOneWidget);
     expect(find.bySemanticsLabel('Back'), findsOneWidget);
@@ -63,9 +55,7 @@ void main() {
     expect(backCalls, 1);
   });
 
-  testWidgets('matches the library search field height on desktop', (
-    tester,
-  ) async {
+  testWidgets('matches the library search field height on desktop', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
 
@@ -92,19 +82,10 @@ void main() {
       ),
     );
 
-    final onlineField = find.descendant(
-      of: find.byType(OnlineBooksHeader),
-      matching: find.byType(TextField),
-    );
-    final libraryField = find.descendant(
-      of: find.byType(LibrarySearchBar),
-      matching: find.byType(TextField),
-    );
+    final onlineField = find.descendant(of: find.byType(OnlineBooksHeader), matching: find.byType(TextField));
+    final libraryField = find.descendant(of: find.byType(LibrarySearchBar), matching: find.byType(TextField));
 
-    expect(
-      tester.getSize(onlineField).height,
-      tester.getSize(libraryField).height,
-    );
+    expect(tester.getSize(onlineField).height, tester.getSize(libraryField).height);
   });
 
   testWidgets('matches the selection header height on desktop', (tester) async {
@@ -145,48 +126,25 @@ void main() {
       ),
     );
 
-    expect(
-      tester.getSize(find.byType(OnlineBooksHeader)).height,
-      tester.getSize(find.byType(SelectionHeader)).height,
-    );
+    expect(tester.getSize(find.byType(OnlineBooksHeader)).height, tester.getSize(find.byType(SelectionHeader)).height);
   });
 
-  testWidgets('honors autofocus for online search entered from add book', (
-    tester,
-  ) async {
+  testWidgets('honors autofocus for online search entered from add book', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
 
-    await tester.pumpWidget(
-      buildHeader(
-        controller: controller,
-        autofocus: true,
-        onBack: () {},
-        onSearch: (_) {},
-      ),
-    );
+    await tester.pumpWidget(buildHeader(controller: controller, autofocus: true, onBack: () {}, onSearch: (_) {}));
     await tester.pump();
 
-    expect(
-      tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus,
-      isTrue,
-    );
+    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isTrue);
   });
 
-  testWidgets('typing does not search and enables search for non-empty input', (
-    tester,
-  ) async {
+  testWidgets('typing does not search and enables search for non-empty input', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     final submitted = <String>[];
 
-    await tester.pumpWidget(
-      buildHeader(
-        controller: controller,
-        onBack: () {},
-        onSearch: submitted.add,
-      ),
-    );
+    await tester.pumpWidget(buildHeader(controller: controller, onBack: () {}, onSearch: submitted.add));
 
     expect(searchButton(tester).onPressed, isNull);
 
@@ -202,44 +160,25 @@ void main() {
     expect(searchButton(tester).onPressed, isNull);
   });
 
-  testWidgets('keyboard submit searches the trimmed query exactly once', (
-    tester,
-  ) async {
+  testWidgets('keyboard submit searches the trimmed query exactly once', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     final submitted = <String>[];
 
-    await tester.pumpWidget(
-      buildHeader(
-        controller: controller,
-        onBack: () {},
-        onSearch: submitted.add,
-      ),
-    );
+    await tester.pumpWidget(buildHeader(controller: controller, onBack: () {}, onSearch: submitted.add));
 
-    await tester.enterText(
-      find.byType(TextField),
-      '  The Left Hand of Darkness  ',
-    );
+    await tester.enterText(find.byType(TextField), '  The Left Hand of Darkness  ');
     await tester.testTextInput.receiveAction(TextInputAction.search);
 
     expect(submitted, ['The Left Hand of Darkness']);
   });
 
-  testWidgets('search icon submits the trimmed query exactly once', (
-    tester,
-  ) async {
+  testWidgets('search icon submits the trimmed query exactly once', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     final submitted = <String>[];
 
-    await tester.pumpWidget(
-      buildHeader(
-        controller: controller,
-        onBack: () {},
-        onSearch: submitted.add,
-      ),
-    );
+    await tester.pumpWidget(buildHeader(controller: controller, onBack: () {}, onSearch: submitted.add));
 
     await tester.enterText(find.byType(TextField), '  A Wizard of Earthsea  ');
     await tester.pump();
@@ -252,21 +191,12 @@ void main() {
     final controller = TextEditingController(text: 'Dune');
     addTearDown(controller.dispose);
 
-    await tester.pumpWidget(
-      buildHeader(
-        controller: controller,
-        isSearching: true,
-        onBack: () {},
-        onSearch: (_) {},
-      ),
-    );
+    await tester.pumpWidget(buildHeader(controller: controller, isSearching: true, onBack: () {}, onSearch: (_) {}));
 
     expect(searchButton(tester).onPressed, isNull);
   });
 
-  testWidgets('fits compact mobile and desktop layouts with the dark theme', (
-    tester,
-  ) async {
+  testWidgets('fits compact mobile and desktop layouts with the dark theme', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     tester.view.devicePixelRatio = 1;
@@ -275,47 +205,32 @@ void main() {
     for (final size in [const Size(320, 640), const Size(1280, 800)]) {
       tester.view.physicalSize = size;
 
-      await tester.pumpWidget(
-        buildHeader(controller: controller, onBack: () {}, onSearch: (_) {}),
-      );
+      await tester.pumpWidget(buildHeader(controller: controller, onBack: () {}, onSearch: (_) {}));
       await tester.pump();
 
       expect(tester.takeException(), isNull);
     }
   });
 
-  testWidgets(
-    'keeps search visible near the desktop breakpoint with large text',
-    (tester) async {
-      final controller = TextEditingController();
-      addTearDown(controller.dispose);
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(640, 640);
-      addTearDown(tester.view.reset);
+  testWidgets('keeps search visible near the desktop breakpoint with large text', (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(640, 640);
+    addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-          child: buildHeader(
-            controller: controller,
-            onBack: () {},
-            onSearch: (_) {},
-          ),
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: buildHeader(controller: controller, onBack: () {}, onSearch: (_) {}),
+      ),
+    );
+    await tester.pump();
 
-      final headerRow = find.ancestor(
-        of: find.text('Online results'),
-        matching: find.byType(Row),
-      );
+    final headerRow = find.ancestor(of: find.text('Online results'), matching: find.byType(Row));
 
-      expect(headerRow, findsOneWidget);
-      expect(
-        find.descendant(of: headerRow, matching: find.byType(TextField)),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(headerRow, findsOneWidget);
+    expect(find.descendant(of: headerRow, matching: find.byType(TextField)), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
