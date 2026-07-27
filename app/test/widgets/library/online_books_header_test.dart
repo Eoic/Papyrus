@@ -126,10 +126,7 @@ void main() {
       ),
     );
 
-    expect(
-      tester.getSize(find.byType(OnlineBooksHeader)).height,
-      tester.getSize(find.byType(SelectionHeader)).height,
-    );
+    expect(tester.getSize(find.byType(OnlineBooksHeader)).height, tester.getSize(find.byType(SelectionHeader)).height);
   });
 
   testWidgets('honors autofocus for online search entered from add book', (tester) async {
