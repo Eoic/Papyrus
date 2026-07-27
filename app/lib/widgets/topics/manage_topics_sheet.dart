@@ -30,6 +30,7 @@ class ManageTopicsSheet extends StatefulWidget {
   static Future<void> show(BuildContext context, {required Book book, void Function(List<String> tagIds)? onSave}) {
     return showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (context) => ManageTopicsSheet(book: book, onSave: onSave),

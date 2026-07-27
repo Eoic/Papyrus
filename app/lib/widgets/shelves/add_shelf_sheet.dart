@@ -23,6 +23,7 @@ class AddShelfSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (context) => AddShelfSheet(shelf: shelf, onSave: onSave),
     );

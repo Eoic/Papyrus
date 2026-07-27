@@ -18,6 +18,7 @@ class NoteDialog extends StatelessWidget {
     return showModalBottomSheet<Note>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => _BottomSheetNote(bookId: bookId, existingNote: existingNote),
     );

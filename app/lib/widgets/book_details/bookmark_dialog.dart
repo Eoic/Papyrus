@@ -23,6 +23,7 @@ class BookmarkDialog extends StatefulWidget {
     return showModalBottomSheet<Bookmark>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
       ),

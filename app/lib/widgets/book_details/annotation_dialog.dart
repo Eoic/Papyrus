@@ -17,6 +17,7 @@ class AnnotationDialog extends StatefulWidget {
     return showModalBottomSheet<Annotation>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) => AnnotationDialog(bookId: bookId, existingAnnotation: existingAnnotation),
     );
