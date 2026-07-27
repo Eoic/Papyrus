@@ -33,9 +33,4 @@ Please avoid including real credentials, personal data, copyrighted books, or ot
 
 ## What to expect
 
-The maintainers will review the report and communicate through the private GitHub advisory.
-
-If the issue is confirmed, we will work with the reporter to understand its impact, prepare a fix, and coordinate disclosure. We ask reporters to avoid publishing details until the issue has been investigated and a fix or mitigation is available.
-
-Reporters may be credited in the advisory or release notes unless they prefer to remain anonymous.
-::: 
+The maintainers will review the report and communicate through the private GitHub advisory. If the issue is confirmed, we will work with the reporter to understand its impact, prepare a fix, and coordinate disclosure. We ask reporters to avoid publishing details until the issue has been investigated and a fix or mitigation is available. Reporters may be credited in the advisory or release notes unless they prefer to remain anonymous.
