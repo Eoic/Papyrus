@@ -4,9 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 
 /// Context menu for book actions.
-/// Shows a bottom sheet on mobile and a popup menu on desktop.
 class BookContextMenu {
-  /// Show the context menu for a book.
   static void show({
     required BuildContext context,
     required Book book,
@@ -21,161 +19,9 @@ class BookContextMenu {
     VoidCallback? onDownload,
     VoidCallback? onDelete,
   }) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= Breakpoints.desktopSmall;
-
-    if (isDesktop && tapPosition != null) {
-      _showDesktopMenu(
-        context: context,
-        position: tapPosition,
-        book: book,
-        isFavorite: isFavorite,
-        onSelect: onSelect,
-        onFavoriteToggle: onFavoriteToggle,
-        onEdit: onEdit,
-        onMoveToShelf: onMoveToShelf,
-        onManageTopics: onManageTopics,
-        onStatusChange: onStatusChange,
-        onDownload: onDownload,
-        onDelete: onDelete,
-      );
-    } else {
-      _showMobileSheet(
-        context: context,
-        book: book,
-        isFavorite: isFavorite,
-        onSelect: onSelect,
-        onFavoriteToggle: onFavoriteToggle,
-        onEdit: onEdit,
-        onMoveToShelf: onMoveToShelf,
-        onManageTopics: onManageTopics,
-        onStatusChange: onStatusChange,
-        onDownload: onDownload,
-        onDelete: onDelete,
-      );
-    }
-  }
-
-  static void _showDesktopMenu({
-    required BuildContext context,
-    required Offset position,
-    required Book book,
-    required bool isFavorite,
-    VoidCallback? onSelect,
-    VoidCallback? onFavoriteToggle,
-    VoidCallback? onEdit,
-    VoidCallback? onMoveToShelf,
-    VoidCallback? onManageTopics,
-    Function(ReadingStatus)? onStatusChange,
-    VoidCallback? onDownload,
-    VoidCallback? onDelete,
-  }) {
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromRect(Rect.fromLTWH(position.dx, position.dy, 0, 0), Offset.zero & overlay.size),
-      elevation: AppElevation.level2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-      items: [
-        const PopupMenuItem(
-          value: 'select',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.checklist, label: 'Select'),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: 'favorite',
-          height: 40,
-          child: _MenuItemRow(
-            icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-            label: isFavorite ? 'Remove from favorites' : 'Add to favorites',
-            iconColor: isFavorite ? colorScheme.error : null,
-          ),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-          value: 'edit',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.edit_outlined, label: 'Edit details'),
-        ),
-        const PopupMenuItem(
-          value: 'shelf',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.folder_outlined, label: 'Move to shelf'),
-        ),
-        const PopupMenuItem(
-          value: 'topics',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.label_outline, label: 'Manage topics'),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: 'reading',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.auto_stories, label: 'Mark as reading', isSelected: book.isReading),
-        ),
-        PopupMenuItem(
-          value: 'finished',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.check_circle_outline, label: 'Mark as finished', isSelected: book.isFinished),
-        ),
-        const PopupMenuDivider(),
-        if (!book.isPhysical)
-          const PopupMenuItem(
-            value: 'download',
-            height: 40,
-            child: _MenuItemRow(icon: Icons.file_download_outlined, label: 'Download'),
-          ),
-        const PopupMenuItem(
-          value: 'delete',
-          height: 40,
-          child: _MenuItemRow(icon: Icons.delete_outline, label: 'Delete', isDestructive: true),
-        ),
-      ],
-    ).then((value) {
-      if (value == null) return;
-      if (!context.mounted) return;
-
-      switch (value) {
-        case 'select':
-          onSelect?.call();
-        case 'favorite':
-          onFavoriteToggle?.call();
-        case 'edit':
-          onEdit?.call();
-        case 'shelf':
-          onMoveToShelf?.call();
-        case 'topics':
-          onManageTopics?.call();
-        case 'reading':
-          onStatusChange?.call(ReadingStatus.inProgress);
-        case 'finished':
-          onStatusChange?.call(ReadingStatus.completed);
-        case 'download':
-          onDownload?.call();
-        case 'delete':
-          _confirmDelete(context, book, onDelete);
-      }
-    });
-  }
-
-  static void _showMobileSheet({
-    required BuildContext context,
-    required Book book,
-    required bool isFavorite,
-    VoidCallback? onSelect,
-    VoidCallback? onFavoriteToggle,
-    VoidCallback? onEdit,
-    VoidCallback? onMoveToShelf,
-    VoidCallback? onManageTopics,
-    Function(ReadingStatus)? onStatusChange,
-    VoidCallback? onDownload,
-    VoidCallback? onDelete,
-  }) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
@@ -216,41 +62,6 @@ class BookContextMenu {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Menu item row for desktop popup menu.
-class _MenuItemRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDestructive;
-  final bool isSelected;
-  final Color? iconColor;
-
-  const _MenuItemRow({
-    required this.icon,
-    required this.label,
-    this.isDestructive = false,
-    this.isSelected = false,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final color = isDestructive ? colorScheme.error : null;
-    final effectiveIconColor = iconColor ?? color;
-
-    return Row(
-      children: [
-        Icon(icon, size: IconSizes.action, color: effectiveIconColor),
-        const SizedBox(width: Spacing.sm),
-        Expanded(
-          child: Text(label, style: TextStyle(color: color)),
-        ),
-        if (isSelected) Icon(Icons.check, size: IconSizes.small, color: colorScheme.primary),
-      ],
     );
   }
 }
