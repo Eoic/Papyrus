@@ -5,7 +5,8 @@
   <p><strong>A cross-platform book management application</strong></p>
 
   <p>
-    <a href="https://papyrusreader.github.io/docs/"><img src="https://img.shields.io/badge/Documentation-blue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
+    <a href="https://trello.com/invite/b/681367b2ba91db4e40b0cfea/ATTI5156837607437467bd3d646f933528054D126F02/papyrus"><img src="https://img.shields.io/badge/Trello-blue?logo=trello&logoColor=white" alt="Trello"/></a>
+    <a href="https://papyrusreader.github.io/docs/"><img src="https://img.shields.io/badge/Documentation-darkslateblue?logo=gitbook&logoColor=white" alt="Documentation"/></a>
     <a href="https://codecov.io/gh/Eoic/Papyrus"><img src="https://codecov.io/gh/Eoic/Papyrus/branch/master/graph/badge.svg" alt="Coverage"/></a>
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue" alt="License"/>
   </p>
@@ -172,5 +173,6 @@ See [PapyrusReader/docs](https://github.com/PapyrusReader/docs).
 | Repository | Description |
 |---|---|
 | [server](https://github.com/PapyrusReader/server) | Back-end for self-hosted sync and file storage |
+| [reader](https://github.com/PapyrusReader/reader) | Book file viewer library |
 | [website](https://github.com/PapyrusReader/website) | Landing page |
 | [docs](https://github.com/PapyrusReader/docs) | Documentation |
