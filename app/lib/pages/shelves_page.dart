@@ -402,6 +402,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (context) => SafeArea(
         child: Padding(
