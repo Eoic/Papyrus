@@ -16,7 +16,7 @@ void main() {
         id: 'book-1',
         title: 'The Hobbit',
         author: 'J.R.R. Tolkien',
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPosition: 0.5,
         isFavorite: false,
         fileFormat: BookFormat.epub,
@@ -238,7 +238,7 @@ void main() {
     });
 
     testWidgets('displays 100% progress for finished book', (tester) async {
-      final finishedBook = testBook.copyWith(readingStatus: ReadingStatus.completed, currentPosition: 1.0);
+      final finishedBook = testBook.copyWith(readingStatus: LibraryReadingStatus.completed, currentPosition: 1.0);
       await tester.pumpWidget(buildListItem(book: finishedBook));
       expect(find.text('100%'), findsOneWidget);
     });

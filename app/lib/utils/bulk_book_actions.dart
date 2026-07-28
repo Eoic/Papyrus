@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/media/media_upload_queue.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/services/book_delete_cleanup_service.dart';
 import 'package:papyrus/services/book_import_service_stub.dart'
@@ -36,7 +37,7 @@ void bulkAddTopics(DataStore dataStore, Set<String> bookIds, List<String> tagIds
 }
 
 /// Change reading status for all selected books.
-void bulkChangeStatus(DataStore dataStore, Set<String> bookIds, ReadingStatus status) {
+void bulkChangeStatus(DataStore dataStore, Set<String> bookIds, LibraryReadingStatus status) {
   for (final bookId in bookIds) {
     final book = dataStore.getBook(bookId);
     if (book != null) {

@@ -1674,7 +1674,7 @@ void main() {
               id: 'book-1',
               title: 'Test Book',
               author: 'Test Author',
-              readingStatus: ReadingStatus.notStarted,
+              readingStatus: LibraryReadingStatus.unread,
               addedAt: DateTime.now(),
             ),
           ],
@@ -1754,7 +1754,7 @@ void main() {
         await tester.tap(find.byIcon(Icons.grid_view));
         await tester.pumpAndSettle();
 
-        expect(libraryProvider.viewMode, LibraryViewMode.grid);
+        expect(libraryProvider.viewMode, LibraryViewMode.largeGrid);
       });
 
       testWidgets('tapping list segment on mobile selects list view', (tester) async {

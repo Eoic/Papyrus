@@ -24,7 +24,7 @@ void main() {
             title: 'Test Book',
             author: 'Author',
             currentPosition: 0.5,
-            readingStatus: ReadingStatus.inProgress,
+            readingStatus: LibraryReadingStatus.inProgress,
             isFavorite: false,
             pageCount: 300,
           ),
@@ -465,7 +465,7 @@ void main() {
 
         provider.updatePageProgress(300, 1.0);
 
-        expect(provider.book!.readingStatus, ReadingStatus.completed);
+        expect(provider.book!.readingStatus, LibraryReadingStatus.completed);
       });
 
       test('sets status to inProgress when position > 0', () async {
@@ -474,7 +474,7 @@ void main() {
 
         provider.updatePageProgress(10, 0.1);
 
-        expect(provider.book!.readingStatus, ReadingStatus.inProgress);
+        expect(provider.book!.readingStatus, LibraryReadingStatus.inProgress);
       });
 
       test('clamps position to 0.0-1.0', () async {

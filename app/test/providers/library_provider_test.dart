@@ -11,7 +11,7 @@ void main() {
 
     group('initial state', () {
       test('should have grid view mode by default', () {
-        expect(provider.viewMode, LibraryViewMode.grid);
+        expect(provider.viewMode, LibraryViewMode.largeGrid);
         expect(provider.isGridView, true);
         expect(provider.isListView, false);
       });
@@ -36,11 +36,11 @@ void main() {
       test('should toggle between grid and list view', () {
         expect(provider.isGridView, true);
 
-        provider.toggleViewMode();
+        provider.setViewMode();
         expect(provider.isListView, true);
         expect(provider.isGridView, false);
 
-        provider.toggleViewMode();
+        provider.setViewMode();
         expect(provider.isGridView, true);
         expect(provider.isListView, false);
       });
@@ -49,8 +49,8 @@ void main() {
         provider.setViewMode(LibraryViewMode.list);
         expect(provider.viewMode, LibraryViewMode.list);
 
-        provider.setViewMode(LibraryViewMode.grid);
-        expect(provider.viewMode, LibraryViewMode.grid);
+        provider.setViewMode(LibraryViewMode.largeGrid);
+        expect(provider.viewMode, LibraryViewMode.largeGrid);
       });
     });
 
@@ -220,7 +220,7 @@ void main() {
         var notified = false;
         provider.addListener(() => notified = true);
 
-        provider.toggleViewMode();
+        provider.setViewMode();
         expect(notified, true);
       });
 

@@ -10,6 +10,7 @@ import 'package:papyrus/models/reading_session.dart';
 import 'package:papyrus/models/series.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/models/tag.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// Comprehensive sample data for development and testing.
 class SampleData {
@@ -40,7 +41,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1401432508i/4099.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPage: 264,
         currentPosition: 0.75,
         isFavorite: true,
@@ -64,7 +65,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1436202607i/3735293.jpg',
         fileFormat: BookFormat.pdf,
-        readingStatus: ReadingStatus.completed,
+        readingStatus: LibraryReadingStatus.completed,
         currentPage: 464,
         currentPosition: 1.0,
         isFavorite: true,
@@ -88,7 +89,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1555447414i/44767458.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPage: 310,
         currentPosition: 0.45,
         seriesId: 'series-1',
@@ -112,7 +113,7 @@ class SampleData {
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1657781256i/61439040.jpg',
         isPhysical: true,
         physicalLocation: 'Bookshelf A, Row 2',
-        readingStatus: ReadingStatus.completed,
+        readingStatus: LibraryReadingStatus.completed,
         currentPage: 328,
         currentPosition: 1.0,
         rating: 4,
@@ -137,7 +138,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1348027904i/85009.jpg',
         fileFormat: BookFormat.pdf,
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPage: 83,
         currentPosition: 0.2,
         addedAt: _daysAgo(45),
@@ -158,7 +159,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1546071216i/5907.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0.0,
         isFavorite: true,
         seriesId: 'series-2',
@@ -180,7 +181,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1386925632i/44936.jpg',
         fileFormat: BookFormat.mobi,
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPage: 269,
         currentPosition: 0.6,
         addedAt: _daysAgo(60),
@@ -202,7 +203,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1703329310i/23692271.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPage: 394,
         currentPosition: 0.85,
         isFavorite: true,
@@ -225,7 +226,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1554437249i/6088007.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0.0,
         addedAt: _daysAgo(14),
       ),
@@ -244,7 +245,7 @@ class SampleData {
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg',
         isPhysical: true,
         physicalLocation: 'Bookshelf B, Row 1',
-        readingStatus: ReadingStatus.completed,
+        readingStatus: LibraryReadingStatus.completed,
         currentPage: 320,
         currentPosition: 1.0,
         isFavorite: true,
@@ -269,7 +270,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1344692678i/11724436.jpg',
         fileFormat: BookFormat.pdf,
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPage: 144,
         currentPosition: 0.3,
         addedAt: _daysAgo(90),
@@ -290,7 +291,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1417900846i/29579.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0.0,
         seriesId: 'series-3',
         seriesNumber: 1,
@@ -310,7 +311,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1472680751i/44492285.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0.0,
         seriesId: 'series-1',
         seriesNumber: 2,
@@ -330,7 +331,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1564063404i/44492286.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0.0,
         seriesId: 'series-1',
         seriesNumber: 3,
@@ -350,7 +351,7 @@ class SampleData {
         coverUrl:
             'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1546071217i/15241.jpg',
         fileFormat: BookFormat.epub,
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0.0,
         seriesId: 'series-2',
         seriesNumber: 2,

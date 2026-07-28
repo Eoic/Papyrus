@@ -76,7 +76,7 @@ void main() {
       expect(updated.customMetadata?[ReaderBookAdapter.locatorMetadataKey], locator.toJson());
       expect(updated.currentPage, 5);
       expect(updated.currentPosition, 0.35);
-      expect(updated.readingStatus, ReadingStatus.inProgress);
+      expect(updated.readingStatus, LibraryReadingStatus.inProgress);
       expect(updated.lastReadAt, now);
       expect(updated.startedAt, now);
     });

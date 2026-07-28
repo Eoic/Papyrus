@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 const syncedBookColumns = [
   'title',
@@ -260,13 +261,13 @@ WHERE id = ?
     return false;
   }
 
-  static ReadingStatus _readingStatus(Object? value) {
+  static LibraryReadingStatus _readingStatus(Object? value) {
     return switch (value) {
-      'inProgress' || 'in_progress' || 'reading' => ReadingStatus.inProgress,
-      'completed' || 'finished' => ReadingStatus.completed,
-      'paused' => ReadingStatus.paused,
-      'abandoned' => ReadingStatus.abandoned,
-      _ => ReadingStatus.notStarted,
+      'inProgress' || 'in_progress' || 'reading' => LibraryReadingStatus.inProgress,
+      'completed' || 'finished' => LibraryReadingStatus.completed,
+      'paused' => LibraryReadingStatus.paused,
+      'abandoned' => LibraryReadingStatus.abandoned,
+      _ => LibraryReadingStatus.unread,
     };
   }
 

@@ -20,7 +20,7 @@ void main() {
       fileHash: 'hash',
       isPhysical: true,
       physicalLocation: 'Shelf',
-      readingStatus: ReadingStatus.inProgress,
+      readingStatus: LibraryReadingStatus.inProgress,
       currentPosition: 0.4,
       isFavorite: true,
       addedAt: DateTime.parse('2026-05-09T12:00:00Z'),
@@ -60,7 +60,7 @@ void main() {
 
     expect(book.title, 'Synced Book');
     expect(book.coAuthors, ['Co Author']);
-    expect(book.readingStatus, ReadingStatus.inProgress);
+    expect(book.readingStatus, LibraryReadingStatus.inProgress);
     expect(book.currentPosition, 0.5);
     expect(book.isFavorite, isTrue);
     expect(book.fileFormat, BookFormat.epub);

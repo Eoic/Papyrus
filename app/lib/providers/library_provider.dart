@@ -1,33 +1,18 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
+import 'package:papyrus/providers/enums/library_sort_option.dart';
+import 'package:papyrus/providers/enums/library_view_mode.dart';
 
-/// View mode for displaying books in the library.
-enum LibraryViewMode { grid, list }
-
-/// Active filter type for library content.
-enum LibraryFilterType { all, shelves, topics, favorites, reading, finished, unread }
-
-/// Sort options for library books. Each value encodes its direction.
-enum LibrarySortOption {
-  dateAddedNewest,
-  dateAddedOldest,
-  titleAZ,
-  titleZA,
-  authorAZ,
-  authorZA,
-  lastRead,
-  rating,
-  progress,
-}
-
-/// Provider for managing library view state.
 class LibraryProvider extends ChangeNotifier {
-  LibraryViewMode _viewMode = LibraryViewMode.grid;
-  final Set<LibraryFilterType> _activeFilters = {LibraryFilterType.all};
-  LibrarySortOption _sortOption = LibrarySortOption.dateAddedNewest;
   String _searchQuery = '';
   String? _selectedShelf;
   String? _selectedTopic;
+  bool _isFavoritesSelected = false;
+  LibraryReadingStatus? _selectedStatus;
+  LibraryViewMode _viewMode = LibraryViewMode.smallGrid;
+  LibrarySortOption _sortOption = LibrarySortOption.dateAddedNewest;
 
   // Selection mode state
   bool _isSelectionMode = false;
@@ -49,9 +34,6 @@ class LibraryProvider extends ChangeNotifier {
   /// Current view mode (grid or list).
   LibraryViewMode get viewMode => _viewMode;
 
-  /// Active filters for library content.
-  Set<LibraryFilterType> get activeFilters => Set.unmodifiable(_activeFilters);
-
   /// Current sort option.
   LibrarySortOption get sortOption => _sortOption;
 
@@ -64,40 +46,83 @@ class LibraryProvider extends ChangeNotifier {
   /// Currently selected topic for filtering.
   String? get selectedTopic => _selectedTopic;
 
+  /// Currently selected reading status for filtering.
+  LibraryReadingStatus? get selectedStatus => _selectedStatus;
+
+  /// Whether the favorites filter is active.
+  bool get isFavoritesSelected => _isFavoritesSelected;
+
   /// Whether the search query contains advanced field filters.
   bool get hasActiveAdvancedFilters => _searchQuery.contains(':');
 
-  /// Whether the list view is currently active.
-  bool get isListView => _viewMode == LibraryViewMode.list;
-
-  /// Whether the grid view is currently active.
-  bool get isGridView => _viewMode == LibraryViewMode.grid;
-
-  /// Set the view mode.
   void setViewMode(LibraryViewMode mode) {
-    if (_viewMode != mode) {
-      _viewMode = mode;
-      notifyListeners();
+    if (_viewMode == mode) {
+      return;
     }
-  }
 
-  /// Toggle between grid and list view.
-  void toggleViewMode() {
-    _viewMode = _viewMode == LibraryViewMode.grid ? LibraryViewMode.list : LibraryViewMode.grid;
+    switch (mode) {
+      case LibraryViewMode.smallGrid:
+        _viewMode = LibraryViewMode.smallGrid;
+        break;
+      case LibraryViewMode.largeGrid:
+        _viewMode = LibraryViewMode.largeGrid;
+        break;
+      case LibraryViewMode.list:
+        _viewMode = LibraryViewMode.list;
+        break;
+    }
+
     notifyListeners();
   }
 
-  /// Set the sort option.
   void setSortOption(LibrarySortOption option) {
-    if (_sortOption != option) {
-      _sortOption = option;
-      notifyListeners();
+    if (_sortOption == option) {
+      return;
     }
+
+    _sortOption = option;
+    notifyListeners();
   }
 
-  /// Sort a list of books according to the current sort option.
+  void setStatusFilter(LibraryReadingStatus? status) {
+    if (_selectedStatus == status) {
+      return;
+    }
+
+    _selectedStatus = status;
+    notifyListeners();
+  }
+
+  void setIsFavoritesSelected(bool isSelected) {
+    if (_isFavoritesSelected == isSelected) {
+      return;
+    }
+
+    _isFavoritesSelected = isSelected;
+    notifyListeners();
+  }
+
+  void resetQuickFilters() {
+    final hasChanges =
+        _selectedStatus != null ||
+        _sortOption != LibrarySortOption.dateAddedNewest ||
+        _viewMode != LibraryViewMode.smallGrid ||
+        _isFavoritesSelected;
+
+    if (!hasChanges) {
+      return;
+    }
+
+    _selectedStatus = null;
+    _sortOption = LibrarySortOption.dateAddedNewest;
+    _isFavoritesSelected = false;
+    _viewMode = LibraryViewMode.smallGrid;
+    notifyListeners();
+  }
+
   List<Book> sortBooks(List<Book> books) {
     final sorted = List<Book>.of(books);
+
     sorted.sort((a, b) {
       switch (_sortOption) {
         case LibrarySortOption.dateAddedNewest:
@@ -113,71 +138,80 @@ class LibraryProvider extends ChangeNotifier {
         case LibrarySortOption.authorZA:
           return b.author.toLowerCase().compareTo(a.author.toLowerCase());
         case LibrarySortOption.lastRead:
-          // Nulls sort to end
           if (a.lastReadAt == null && b.lastReadAt == null) return 0;
           if (a.lastReadAt == null) return 1;
           if (b.lastReadAt == null) return -1;
           return b.lastReadAt!.compareTo(a.lastReadAt!);
-        case LibrarySortOption.rating:
-          // Nulls sort to end, highest first
+        case LibrarySortOption.ratingAsc:
+          if (a.rating == null && b.rating == null) return 0;
+          if (a.rating == null) return 1;
+          if (b.rating == null) return -1;
+          return a.rating!.compareTo(b.rating!);
+        case LibrarySortOption.ratingDesc:
           if (a.rating == null && b.rating == null) return 0;
           if (a.rating == null) return 1;
           if (b.rating == null) return -1;
           return b.rating!.compareTo(a.rating!);
-        case LibrarySortOption.progress:
+        case LibrarySortOption.progressAsc:
+          return a.currentPosition.compareTo(b.currentPosition);
+        case LibrarySortOption.progressDesc:
           return b.currentPosition.compareTo(a.currentPosition);
       }
     });
+
     return sorted;
   }
 
   /// Set a single filter (replaces existing filters).
-  void setFilter(LibraryFilterType filter) {
-    _activeFilters.clear();
-    _activeFilters.add(filter);
-    // Clear shelf/topic selection when switching filters
-    if (filter != LibraryFilterType.shelves) {
-      _selectedShelf = null;
-    }
-    if (filter != LibraryFilterType.topics) {
-      _selectedTopic = null;
-    }
-    notifyListeners();
-  }
+  // void setFilter(LibraryFilterType filter) {
+  //   _activeFilters.clear();
+  //   _activeFilters.add(filter);
+
+  //   // Clear shelf/topic selection when switching filters
+  //   if (filter != LibraryFilterType.shelves) {
+  //     _selectedShelf = null;
+  //   }
+
+  //   if (filter != LibraryFilterType.topics) {
+  //     _selectedTopic = null;
+  //   }
+
+  //   notifyListeners();
+  // }
 
   /// Add a filter to active filters.
-  void addFilter(LibraryFilterType filter) {
-    // Remove 'all' filter when adding specific filters
-    if (filter != LibraryFilterType.all) {
-      _activeFilters.remove(LibraryFilterType.all);
-    }
-    _activeFilters.add(filter);
-    notifyListeners();
-  }
+  // void addFilter(LibraryFilterType filter) {
+  //   // Remove 'all' filter when adding specific filters
+  //   if (filter != LibraryFilterType.all) {
+  //     _activeFilters.remove(LibraryFilterType.all);
+  //   }
+  //   _activeFilters.add(filter);
+  //   notifyListeners();
+  // }
 
   /// Remove a filter from active filters.
-  void removeFilter(LibraryFilterType filter) {
-    _activeFilters.remove(filter);
-    // If no filters remain, default to 'all'
-    if (_activeFilters.isEmpty) {
-      _activeFilters.add(LibraryFilterType.all);
-    }
-    notifyListeners();
-  }
+  // void removeFilter(LibraryFilterType filter) {
+  //   _activeFilters.remove(filter);
+  //   // If no filters remain, default to 'all'
+  //   if (_activeFilters.isEmpty) {
+  //     _activeFilters.add(LibraryFilterType.all);
+  //   }
+  //   notifyListeners();
+  // }
 
   /// Toggle a filter on/off.
-  void toggleFilter(LibraryFilterType filter) {
-    if (_activeFilters.contains(filter)) {
-      removeFilter(filter);
-    } else {
-      addFilter(filter);
-    }
-  }
+  // void toggleFilter(LibraryFilterType filter) {
+  //   if (_activeFilters.contains(filter)) {
+  //     removeFilter(filter);
+  //   } else {
+  //     addFilter(filter);
+  //   }
+  // }
 
   /// Check if a specific filter is active.
-  bool isFilterActive(LibraryFilterType filter) {
-    return _activeFilters.contains(filter);
-  }
+  // bool isFilterActive(LibraryFilterType filter) {
+  //   return _activeFilters.contains(filter);
+  // }
 
   /// Set the search query.
   void setSearchQuery(String query) {
@@ -192,39 +226,43 @@ class LibraryProvider extends ChangeNotifier {
     _searchQuery = '';
     _selectedShelf = null;
     _selectedTopic = null;
-    _activeFilters.remove(LibraryFilterType.shelves);
-    _activeFilters.remove(LibraryFilterType.topics);
-    if (_activeFilters.isEmpty) {
-      _activeFilters.add(LibraryFilterType.all);
-    }
+    // _activeFilters.remove(LibraryFilterType.shelves);
+    // _activeFilters.remove(LibraryFilterType.topics);
+
+    // if (_activeFilters.isEmpty) {
+    //   _activeFilters.add(LibraryFilterType.all);
+    // }
+
     notifyListeners();
   }
 
   /// Select a shelf for filtering.
   void selectShelf(String? shelf) {
     _selectedShelf = shelf;
-    if (shelf != null) {
-      setFilter(LibraryFilterType.shelves);
-    }
+
+    // if (shelf != null) {
+    //   setFilter(LibraryFilterType.shelves);
+    // }
+
     notifyListeners();
   }
 
   /// Select a topic for filtering.
   void selectTopic(String? topic) {
     _selectedTopic = topic;
-    if (topic != null) {
-      setFilter(LibraryFilterType.topics);
-    }
+
+    // if (topic != null) {
+    //   setFilter(LibraryFilterType.topics);
+    // }
+
     notifyListeners();
   }
 
-  /// Reset all filters to default state.
   void resetFilters() {
-    _activeFilters.clear();
-    _activeFilters.add(LibraryFilterType.all);
     _searchQuery = '';
     _selectedShelf = null;
     _selectedTopic = null;
+    _selectedStatus = null;
     notifyListeners();
   }
 

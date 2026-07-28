@@ -1,38 +1,5 @@
-/// Reading status of a book.
-enum ReadingStatus { notStarted, inProgress, completed, paused, abandoned }
-
-/// Extension to get display labels for reading status.
-extension ReadingStatusExtension on ReadingStatus {
-  String get label {
-    switch (this) {
-      case ReadingStatus.notStarted:
-        return 'Not started';
-      case ReadingStatus.inProgress:
-        return 'Reading';
-      case ReadingStatus.completed:
-        return 'Completed';
-      case ReadingStatus.paused:
-        return 'Paused';
-      case ReadingStatus.abandoned:
-        return 'Abandoned';
-    }
-  }
-
-  String get shortLabel {
-    switch (this) {
-      case ReadingStatus.notStarted:
-        return 'Not started';
-      case ReadingStatus.inProgress:
-        return 'Reading';
-      case ReadingStatus.completed:
-        return 'Finished';
-      case ReadingStatus.paused:
-        return 'Paused';
-      case ReadingStatus.abandoned:
-        return 'DNF';
-    }
-  }
-}
+import 'package:flutter/material.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// Format of the book file.
 enum BookFormat { epub, pdf, mobi, azw3, txt, cbr, cbz }
@@ -90,7 +57,7 @@ class Book {
   final DateTime? lentAt;
 
   // Reading state
-  final ReadingStatus readingStatus;
+  final LibraryReadingStatus readingStatus;
   final int? currentPage;
   final double currentPosition; // 0.0 to 1.0
   final String? currentCfi; // EPUB CFI position
@@ -135,7 +102,7 @@ class Book {
     this.physicalLocation,
     this.lentTo,
     this.lentAt,
-    this.readingStatus = ReadingStatus.notStarted,
+    this.readingStatus = LibraryReadingStatus.unread,
     this.currentPage,
     this.currentPosition = 0.0,
     this.currentCfi,
@@ -168,12 +135,6 @@ class Book {
 
   /// Progress as a percentage string.
   String get progressLabel => '$progressPercent%';
-
-  /// Whether the book is currently being read.
-  bool get isReading => readingStatus == ReadingStatus.inProgress;
-
-  /// Whether the book has been finished.
-  bool get isFinished => readingStatus == ReadingStatus.completed;
 
   /// Whether the book has any progress.
   bool get hasProgress => currentPosition > 0;
@@ -230,7 +191,7 @@ class Book {
     bool clearLentTo = false,
     DateTime? lentAt,
     bool clearLentAt = false,
-    ReadingStatus? readingStatus,
+    LibraryReadingStatus? readingStatus,
     int? currentPage,
     double? currentPosition,
     String? currentCfi,
@@ -358,7 +319,7 @@ class Book {
       physicalLocation: json['physical_location'] as String?,
       lentTo: json['lent_to'] as String?,
       lentAt: json['lent_at'] != null ? DateTime.parse(json['lent_at'] as String) : null,
-      readingStatus: ReadingStatus.values.byName(json['reading_status'] as String? ?? 'notStarted'),
+      readingStatus: LibraryReadingStatus.values.byName(json['reading_status'] as String? ?? 'notStarted'),
       currentPage: json['current_page'] as int?,
       currentPosition: (json['current_position'] as num?)?.toDouble() ?? 0.0,
       currentCfi: json['current_cfi'] as String?,

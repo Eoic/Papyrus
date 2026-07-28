@@ -392,7 +392,7 @@ Book _book({required String id, required String title}) {
     id: id,
     title: title,
     author: 'Author',
-    readingStatus: ReadingStatus.notStarted,
+    readingStatus: LibraryReadingStatus.unread,
     currentPosition: 0,
     isFavorite: false,
     fileFormat: BookFormat.epub,

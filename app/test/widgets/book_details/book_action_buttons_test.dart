@@ -19,7 +19,11 @@ void main() {
         child: BookActionButtons(
           book:
               book ??
-              buildTestBook(fileFormat: BookFormat.epub, currentPosition: 0.5, readingStatus: ReadingStatus.inProgress),
+              buildTestBook(
+                fileFormat: BookFormat.epub,
+                currentPosition: 0.5,
+                readingStatus: LibraryReadingStatus.inProgress,
+              ),
           onContinueReading: onContinueReading,
           onUpdateProgress: onUpdateProgress,
           onToggleFavorite: onToggleFavorite,
