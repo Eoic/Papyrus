@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
@@ -189,7 +190,9 @@ class _BookCardState extends State<BookCard> {
                   LinearProgressIndicator(
                     value: widget.book.progress,
                     backgroundColor: colorScheme.surfaceContainerHighest,
-                    color: widget.book.isFinished ? colorScheme.tertiary : colorScheme.primary,
+                    color: widget.book.readingStatus == LibraryReadingStatus.completed
+                        ? colorScheme.tertiary
+                        : colorScheme.primary,
                     minHeight: 3,
                   ),
                 // Title and author

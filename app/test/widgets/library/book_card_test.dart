@@ -19,7 +19,7 @@ void main() {
         id: 'book-1',
         title: 'The Hobbit',
         author: 'J.R.R. Tolkien',
-        readingStatus: ReadingStatus.inProgress,
+        readingStatus: LibraryReadingStatus.inProgress,
         currentPosition: 0.5,
         isFavorite: false,
         fileFormat: BookFormat.epub,

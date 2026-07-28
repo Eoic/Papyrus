@@ -148,7 +148,7 @@ void main() {
         id: 'book-1',
         title: 'A Book',
         author: 'An Author',
-        readingStatus: ReadingStatus.notStarted,
+        readingStatus: LibraryReadingStatus.unread,
         currentPosition: 0,
         isFavorite: false,
         fileFormat: BookFormat.epub,

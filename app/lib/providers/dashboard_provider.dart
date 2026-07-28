@@ -3,6 +3,7 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/daily_activity.dart';
 import 'package:papyrus/models/reading_goal.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// Provider for dashboard state management.
 /// Uses DataStore as the single source of truth.
@@ -54,8 +55,11 @@ class DashboardProvider extends ChangeNotifier {
   /// Get current book (most recently read with progress < 100%).
   Book? get currentBook {
     if (_dataStore == null) return null;
-    final readingBooks = _dataStore!.books.where((b) => b.isReading).toList()
-      ..sort((a, b) => (b.lastReadAt ?? DateTime(2000)).compareTo(a.lastReadAt ?? DateTime(2000)));
+
+    final readingBooks =
+        _dataStore!.books.where((book) => book.readingStatus == LibraryReadingStatus.inProgress).toList()
+          ..sort((a, b) => (b.lastReadAt ?? DateTime(2000)).compareTo(a.lastReadAt ?? DateTime(2000)));
+
     return readingBooks.isNotEmpty ? readingBooks.first : null;
   }
 

@@ -25,14 +25,14 @@ void main() {
       });
 
       test('isReading returns true only for inProgress status', () {
-        expect(buildTestBook(readingStatus: ReadingStatus.inProgress).isReading, true);
-        expect(buildTestBook(readingStatus: ReadingStatus.completed).isReading, false);
-        expect(buildTestBook(readingStatus: ReadingStatus.notStarted).isReading, false);
+        expect(buildTestBook(readingStatus: LibraryReadingStatus.inProgress).isReading, true);
+        expect(buildTestBook(readingStatus: LibraryReadingStatus.completed).isReading, false);
+        expect(buildTestBook(readingStatus: LibraryReadingStatus.unread).isReading, false);
       });
 
       test('isFinished returns true only for completed status', () {
-        expect(buildTestBook(readingStatus: ReadingStatus.completed).isFinished, true);
-        expect(buildTestBook(readingStatus: ReadingStatus.inProgress).isFinished, false);
+        expect(buildTestBook(readingStatus: LibraryReadingStatus.completed).isFinished, true);
+        expect(buildTestBook(readingStatus: LibraryReadingStatus.inProgress).isFinished, false);
       });
 
       test('hasProgress returns true when currentPosition > 0', () {
@@ -136,7 +136,7 @@ void main() {
           fileSize: 1024,
           fileHash: 'abc123',
           isPhysical: false,
-          readingStatus: ReadingStatus.inProgress,
+          readingStatus: LibraryReadingStatus.inProgress,
           currentPage: 150,
           currentPosition: 0.5,
           currentCfi: 'epubcfi(/6/14)',
@@ -259,7 +259,7 @@ void main() {
         expect(book.isPhysical, true);
         expect(book.physicalLocation, 'Shelf A');
         expect(book.lentTo, 'Alice');
-        expect(book.readingStatus, ReadingStatus.completed);
+        expect(book.readingStatus, LibraryReadingStatus.completed);
         expect(book.currentPage, 300);
         expect(book.currentPosition, 1.0);
         expect(book.currentCfi, 'cfi');
@@ -277,7 +277,7 @@ void main() {
 
         expect(book.coAuthors, isEmpty);
         expect(book.isPhysical, false);
-        expect(book.readingStatus, ReadingStatus.notStarted);
+        expect(book.readingStatus, LibraryReadingStatus.unread);
         expect(book.currentPosition, 0.0);
         expect(book.isFavorite, false);
         expect(book.fileFormat, isNull);
@@ -293,7 +293,7 @@ void main() {
           author: 'Author',
           coAuthors: ['Co1', 'Co2'],
           fileFormat: BookFormat.mobi,
-          readingStatus: ReadingStatus.paused,
+          readingStatus: LibraryReadingStatus.paused,
           currentPosition: 0.42,
           currentPage: 126,
           isFavorite: true,
@@ -325,19 +325,19 @@ void main() {
 
   group('ReadingStatus', () {
     test('label returns display text', () {
-      expect(ReadingStatus.notStarted.label, 'Not started');
-      expect(ReadingStatus.inProgress.label, 'Reading');
-      expect(ReadingStatus.completed.label, 'Completed');
-      expect(ReadingStatus.paused.label, 'Paused');
-      expect(ReadingStatus.abandoned.label, 'Abandoned');
+      expect(LibraryReadingStatus.unread.label, 'Not started');
+      expect(LibraryReadingStatus.inProgress.label, 'Reading');
+      expect(LibraryReadingStatus.completed.label, 'Completed');
+      expect(LibraryReadingStatus.paused.label, 'Paused');
+      expect(LibraryReadingStatus.abandoned.label, 'Abandoned');
     });
 
     test('shortLabel returns abbreviated text', () {
-      expect(ReadingStatus.notStarted.shortLabel, 'Not started');
-      expect(ReadingStatus.inProgress.shortLabel, 'Reading');
-      expect(ReadingStatus.completed.shortLabel, 'Finished');
-      expect(ReadingStatus.paused.shortLabel, 'Paused');
-      expect(ReadingStatus.abandoned.shortLabel, 'DNF');
+      expect(LibraryReadingStatus.unread.shortLabel, 'Not started');
+      expect(LibraryReadingStatus.inProgress.shortLabel, 'Reading');
+      expect(LibraryReadingStatus.completed.shortLabel, 'Finished');
+      expect(LibraryReadingStatus.paused.shortLabel, 'Paused');
+      expect(LibraryReadingStatus.abandoned.shortLabel, 'DNF');
     });
   });
 

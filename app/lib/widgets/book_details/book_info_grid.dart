@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Information grid for book metadata.
@@ -81,7 +82,7 @@ class BookInfoGrid extends StatelessWidget {
     }
 
     // Reading status
-    if (book.readingStatus != ReadingStatus.notStarted) {
+    if (book.readingStatus != LibraryReadingStatus.unread) {
       entries.add(_InfoEntry('Status', book.readingStatus.label));
     }
 

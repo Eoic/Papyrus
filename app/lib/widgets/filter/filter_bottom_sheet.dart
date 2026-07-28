@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Filter options available for dropdowns.
@@ -197,6 +198,7 @@ class AppliedFilters {
 class FilterBottomSheet extends StatefulWidget {
   /// Available filter options.
   final FilterOptions filterOptions;
+  final ScrollController scrollController;
 
   /// Callback when filters are applied.
   final ValueChanged<AppliedFilters>? onApply;
@@ -207,7 +209,14 @@ class FilterBottomSheet extends StatefulWidget {
   /// Initial filter values.
   final AppliedFilters? initialFilters;
 
-  const FilterBottomSheet({super.key, required this.filterOptions, this.onApply, this.onReset, this.initialFilters});
+  const FilterBottomSheet({
+    super.key,
+    required this.filterOptions,
+    required this.scrollController,
+    this.onApply,
+    this.onReset,
+    this.initialFilters,
+  });
 
   @override
   State<FilterBottomSheet> createState() => _FilterBottomSheetState();
@@ -221,12 +230,13 @@ class FilterBottomSheet extends StatefulWidget {
     return showModalBottomSheet<AppliedFilters>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        snap: true,
         minChildSize: 0.4,
-        maxChildSize: 0.95,
+        maxChildSize: 1.0,
         builder: (context, scrollController) => Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
@@ -235,6 +245,7 @@ class FilterBottomSheet extends StatefulWidget {
           child: FilterBottomSheet(
             filterOptions: filterOptions,
             initialFilters: initialFilters,
+            scrollController: scrollController,
             onApply: (filters) => Navigator.of(context).pop(filters),
             onReset: () => Navigator.of(context).pop(null),
           ),
@@ -251,14 +262,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   String? _selectedShelf;
   String? _selectedTopic;
   String? _selectedStatus;
-
-  bool _filterReading = false;
-  bool _filterFavorites = false;
-  bool _filterFinished = false;
-  bool _filterUnread = false;
-
-  RangeValues _progressRange = const RangeValues(0, 100);
   bool _useProgressFilter = false;
+  RangeValues _progressRange = const RangeValues(0, 100);
 
   @override
   void initState() {
@@ -274,10 +279,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _selectedShelf = initial.shelf;
       _selectedTopic = initial.topic;
       _selectedStatus = initial.status;
-      _filterReading = initial.filterReading;
-      _filterFavorites = initial.filterFavorites;
-      _filterFinished = initial.filterFinished;
-      _filterUnread = initial.filterUnread;
+      // _filterReading = initial.filterReading;
+      // _filterFavorites = initial.filterFavorites;
+      // _filterFinished = initial.filterFinished;
+      // _filterUnread = initial.filterUnread;
+
       if (initial.progressRange != null) {
         _progressRange = initial.progressRange!;
         _useProgressFilter = true;
@@ -298,12 +304,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       shelf: _selectedShelf,
       topic: _selectedTopic,
       status: _selectedStatus,
-      filterReading: _filterReading,
-      filterFavorites: _filterFavorites,
-      filterFinished: _filterFinished,
-      filterUnread: _filterUnread,
       progressRange: _useProgressFilter ? _progressRange : null,
     );
+
     widget.onApply?.call(filters);
   }
 
@@ -314,13 +317,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _selectedShelf = null;
       _selectedTopic = null;
       _selectedStatus = null;
-      _filterReading = false;
-      _filterFavorites = false;
-      _filterFinished = false;
-      _filterUnread = false;
       _progressRange = const RangeValues(0, 100);
       _useProgressFilter = false;
     });
+
     // Apply empty filters to actually clear them
     widget.onApply?.call(const AppliedFilters());
   }
@@ -335,21 +335,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         const Divider(height: 1),
         Expanded(
           child: SingleChildScrollView(
+            controller: widget.scrollController,
             padding: const EdgeInsets.all(Spacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionHeader('Quick filters'),
-                const SizedBox(height: Spacing.sm),
-                _buildQuickFilters(),
-                const SizedBox(height: Spacing.md),
-                const Divider(),
-                const SizedBox(height: Spacing.md),
-                _buildSectionHeader('Filter by'),
-                const SizedBox(height: Spacing.md),
-                _buildAdvancedFilters(context),
-                _buildProgressSlider(context),
-              ],
+              children: [_buildAdvancedFilters(context), _buildProgressSlider(context)],
             ),
           ),
         ),
@@ -423,7 +413,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             hintText: 'Any shelf',
             dropdownMenuEntries: [
               const DropdownMenuEntry(value: '', label: 'Any shelf'),
-              ...widget.filterOptions.shelves.map((s) => DropdownMenuEntry(value: s, label: s)),
+              ...widget.filterOptions.shelves.map((shelf) => DropdownMenuEntry(value: shelf, label: shelf)),
             ],
             onSelected: (v) => setState(() => _selectedShelf = v?.isEmpty == true ? null : v),
           ),
@@ -439,9 +429,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             hintText: 'Any topic',
             dropdownMenuEntries: [
               const DropdownMenuEntry(value: '', label: 'Any topic'),
-              ...widget.filterOptions.topics.map((t) => DropdownMenuEntry(value: t, label: t)),
+              ...widget.filterOptions.topics.map((topic) => DropdownMenuEntry(value: topic, label: topic)),
             ],
-            onSelected: (v) => setState(() => _selectedTopic = v?.isEmpty == true ? null : v),
+            onSelected: (value) => setState(() => _selectedTopic = value?.isEmpty == true ? null : value),
           ),
         ),
 
@@ -453,11 +443,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             initialSelection: _selectedStatus,
             expandedInsets: EdgeInsets.zero,
             hintText: 'Any status',
-            dropdownMenuEntries: const [
+            dropdownMenuEntries: [
               DropdownMenuEntry(value: '', label: 'Any status'),
-              DropdownMenuEntry(value: 'reading', label: 'Currently reading'),
-              DropdownMenuEntry(value: 'finished', label: 'Finished'),
-              DropdownMenuEntry(value: 'unread', label: 'Unread'),
+              for (final status in LibraryReadingStatus.values)
+                DropdownMenuEntry(value: status.name, label: status.label),
             ],
             onSelected: (v) => setState(() => _selectedStatus = v?.isEmpty == true ? null : v),
           ),
@@ -520,80 +509,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         child: Row(
           children: [
             Expanded(
-              child: SizedBox(
-                height: 48,
-                child: OutlinedButton(
-                  onPressed: _resetFilters,
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-                  ),
-                  child: const Text('Reset'),
-                ),
-              ),
+              child: TextButton(onPressed: _resetFilters, child: const Text('Reset')),
             ),
             const SizedBox(width: Spacing.sm),
             Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 48,
-                child: FilledButton(
-                  onPressed: _applyFilters,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-                  ),
-                  child: const Text('Apply filters'),
-                ),
-              ),
+              child: FilledButton(onPressed: _applyFilters, child: const Text('Apply filters')),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildQuickFilters() {
-    return Wrap(
-      spacing: Spacing.sm,
-      runSpacing: Spacing.sm,
-      children: [
-        _QuickFilterCheckbox(
-          label: 'Reading',
-          icon: Icons.auto_stories,
-          value: _filterReading,
-          onChanged: (v) => setState(() => _filterReading = v ?? false),
-        ),
-        _QuickFilterCheckbox(
-          label: 'Favorites',
-          icon: Icons.favorite,
-          value: _filterFavorites,
-          onChanged: (v) => setState(() => _filterFavorites = v ?? false),
-        ),
-        _QuickFilterCheckbox(
-          label: 'Finished',
-          icon: Icons.check_circle,
-          value: _filterFinished,
-          onChanged: (v) => setState(() => _filterFinished = v ?? false),
-        ),
-        _QuickFilterCheckbox(
-          label: 'Unread',
-          icon: Icons.book,
-          value: _filterUnread,
-          onChanged: (v) => setState(() => _filterUnread = v ?? false),
-        ),
-      ],
     );
   }
 
@@ -618,53 +542,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           const SizedBox(height: Spacing.sm),
           child,
         ],
-      ),
-    );
-  }
-}
-
-class _QuickFilterCheckbox extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool value;
-  final ValueChanged<bool?>? onChanged;
-
-  const _QuickFilterCheckbox({required this.label, required this.icon, required this.value, this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return InkWell(
-      onTap: () => onChanged?.call(!value),
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Container(
-        width: (MediaQuery.of(context).size.width - Spacing.md * 3) / 2,
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-        decoration: BoxDecoration(
-          color: value ? colorScheme.secondaryContainer : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: value ? null : Border.all(color: colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            Checkbox(value: value, onChanged: onChanged, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
-            Icon(
-              icon,
-              size: IconSizes.small,
-              color: value ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: Spacing.sm),
-            Text(
-              label,
-              style: TextStyle(
-                color: value ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
-                fontWeight: value ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

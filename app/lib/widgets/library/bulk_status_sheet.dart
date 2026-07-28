@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/text_utils.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 final statusTiles = [
-  (icon: Icons.auto_stories, status: ReadingStatus.inProgress, title: "in progress"),
-  (icon: Icons.check_circle_outline, status: ReadingStatus.completed, title: "finished"),
-  (icon: Icons.bookmark_add_outlined, status: ReadingStatus.notStarted, title: "unread"),
+  (icon: Icons.auto_stories, status: LibraryReadingStatus.inProgress, title: "in progress"),
+  (icon: Icons.check_circle_outline, status: LibraryReadingStatus.completed, title: "finished"),
+  (icon: Icons.bookmark_add_outlined, status: LibraryReadingStatus.unread, title: "unread"),
 ];
 
 /// Bottom sheet for changing reading status of multiple books.
 class BulkStatusSheet extends StatelessWidget {
   final int bookCount;
-  final void Function(ReadingStatus status) onStatusSelected;
+  final void Function(LibraryReadingStatus status) onStatusSelected;
 
   const BulkStatusSheet({super.key, required this.bookCount, required this.onStatusSelected});
 
@@ -21,7 +22,7 @@ class BulkStatusSheet extends StatelessWidget {
   static Future<void> show(
     BuildContext context, {
     required int bookCount,
-    required void Function(ReadingStatus status) onStatusSelected,
+    required void Function(LibraryReadingStatus status) onStatusSelected,
   }) {
     return showModalBottomSheet(
       context: context,

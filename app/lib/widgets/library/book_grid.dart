@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 import 'package:provider/provider.dart';
 
-/// Responsive grid for displaying books.
-/// - Mobile: 2 columns with 8px gap
-/// - Tablet: 3-4 columns with 12px gap
-/// - Desktop: 5 columns with 16px gap
+typedef _GridLayout = ({int crossAxisCount, double spacing, double childAspectRatio});
+
 class BookGrid extends StatelessWidget {
   final List<Book> books;
+  final LibraryViewMode libraryViewMode;
   final void Function(Book book)? onBookTap;
   final EdgeInsets? padding;
   final Map<String, AcquisitionJob> acquisitionJobsByBookId;
@@ -24,6 +25,7 @@ class BookGrid extends StatelessWidget {
   const BookGrid({
     super.key,
     required this.books,
+    required this.libraryViewMode,
     this.onBookTap,
     this.padding,
     this.acquisitionJobsByBookId = const {},
@@ -33,33 +35,31 @@ class BookGrid extends StatelessWidget {
     this.onAcquisitionSelectionToggle,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Calculate columns and spacing based on screen width
-    int crossAxisCount;
-    double spacing;
-    double childAspectRatio;
-
-    if (screenWidth >= Breakpoints.desktopLarge) {
-      crossAxisCount = 6;
-      spacing = Spacing.md;
-      childAspectRatio = 0.55;
-    } else if (screenWidth >= Breakpoints.desktopSmall) {
-      crossAxisCount = 5;
-      spacing = Spacing.md;
-      childAspectRatio = 0.55;
-    } else if (screenWidth >= Breakpoints.tablet) {
-      crossAxisCount = 4;
-      spacing = Spacing.sm + 4;
-      childAspectRatio = 0.55;
-    } else {
-      crossAxisCount = 2;
-      spacing = Spacing.sm;
-      childAspectRatio = 0.58;
+  _GridLayout _resolveGridLayout({required double width, required LibraryViewMode viewMode}) {
+    if (viewMode == LibraryViewMode.list) {
+      throw ArgumentError('List mode does not use a grid layout');
     }
 
+    final isLargeGrid = viewMode == LibraryViewMode.largeGrid;
+
+    if (width >= Breakpoints.desktopLarge) {
+      return (crossAxisCount: isLargeGrid ? 4 : 6, spacing: Spacing.md, childAspectRatio: 0.55);
+    }
+
+    if (width >= Breakpoints.desktopSmall) {
+      return (crossAxisCount: isLargeGrid ? 3 : 5, spacing: Spacing.md, childAspectRatio: 0.55);
+    }
+
+    if (width >= Breakpoints.tablet) {
+      return (crossAxisCount: isLargeGrid ? 3 : 4, spacing: Spacing.sm + 4, childAspectRatio: 0.55);
+    }
+
+    return (crossAxisCount: 2, spacing: Spacing.sm, childAspectRatio: 0.58);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final layout = _resolveGridLayout(width: MediaQuery.sizeOf(context).width, viewMode: libraryViewMode);
     final libraryProvider = context.watch<LibraryProvider>();
     final bookIds = books.map((book) => book.id).toSet();
     final placeholderJobsByBookId = <String, AcquisitionJob>{};
@@ -106,12 +106,12 @@ class BookGrid extends StatelessWidget {
       removeTop: true,
       child: GridView.builder(
         padding: padding ?? const EdgeInsets.only(left: Spacing.md, right: Spacing.md, bottom: Spacing.md),
-        cacheExtent: 200,
+        scrollCacheExtent: ScrollCacheExtent.pixels(200),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          childAspectRatio: childAspectRatio,
+          crossAxisCount: layout.crossAxisCount,
+          mainAxisSpacing: layout.spacing,
+          crossAxisSpacing: layout.spacing,
+          childAspectRatio: layout.childAspectRatio,
         ),
         itemCount: books.length + orphanJobs.length,
         itemBuilder: (context, index) {

@@ -271,7 +271,7 @@ Widget _buildCardPair({required ThemeData theme}) {
     id: 'book-1',
     title: 'A Synchronized Book',
     author: 'An Author',
-    readingStatus: ReadingStatus.notStarted,
+    readingStatus: LibraryReadingStatus.unread,
     currentPosition: 0,
     isFavorite: false,
     fileFormat: BookFormat.epub,

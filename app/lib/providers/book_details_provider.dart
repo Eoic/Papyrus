@@ -5,6 +5,7 @@ import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// Tab indices for book details page.
 enum BookDetailsTab { details, bookmarks, annotations, notes }
@@ -273,9 +274,9 @@ class BookDetailsProvider extends ChangeNotifier {
       currentPage: page,
       currentPosition: position.clamp(0.0, 1.0),
       readingStatus: position >= 1.0
-          ? ReadingStatus.completed
+          ? LibraryReadingStatus.completed
           : position > 0
-          ? ReadingStatus.inProgress
+          ? LibraryReadingStatus.inProgress
           : _book!.readingStatus,
       lastReadAt: DateTime.now(),
     );

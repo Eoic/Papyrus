@@ -1,5 +1,6 @@
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// Represents a search filter condition.
 class SearchFilter {
@@ -47,9 +48,9 @@ class SearchFilter {
       case SearchField.topic:
         return dataStore?.getTagsForBook(book.id).map((t) => t.name).join(',') ?? book.topics.join(',');
       case SearchField.status:
-        if (book.isFinished) return 'finished';
-        if (book.isReading) return 'reading';
-        if (book.progress == 0) return 'unread';
+        if (book.readingStatus == LibraryReadingStatus.completed) return 'finished';
+        if (book.readingStatus == LibraryReadingStatus.inProgress) return 'reading';
+        if (book.readingStatus == LibraryReadingStatus.unread) return 'unread';
         return 'reading';
       case SearchField.progress:
         return (book.progress * 100).round().toString();

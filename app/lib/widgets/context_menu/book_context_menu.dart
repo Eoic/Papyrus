@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 
@@ -15,7 +16,7 @@ class BookContextMenu {
     VoidCallback? onEdit,
     VoidCallback? onMoveToShelf,
     VoidCallback? onManageTopics,
-    Function(ReadingStatus)? onStatusChange,
+    Function(LibraryReadingStatus)? onStatusChange,
     VoidCallback? onDownload,
     VoidCallback? onDelete,
   }) {
@@ -75,7 +76,7 @@ class _BookContextBottomSheet extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onMoveToShelf;
   final VoidCallback? onManageTopics;
-  final Function(ReadingStatus)? onStatusChange;
+  final Function(LibraryReadingStatus)? onStatusChange;
   final VoidCallback? onDownload;
   final VoidCallback? onDelete;
 
@@ -202,29 +203,29 @@ class _BookContextBottomSheet extends StatelessWidget {
             ),
             _BottomSheetItem(
               icon: Icons.auto_stories,
-              label: 'Currently reading',
-              isSelected: book.isReading,
+              label: 'Reading',
+              isSelected: book.readingStatus == LibraryReadingStatus.inProgress,
               onTap: () {
                 Navigator.pop(context);
-                onStatusChange?.call(ReadingStatus.inProgress);
+                onStatusChange?.call(LibraryReadingStatus.inProgress);
               },
             ),
             _BottomSheetItem(
               icon: Icons.check_circle_outline,
-              label: 'Finished',
-              isSelected: book.isFinished,
+              label: 'Completed',
+              isSelected: book.readingStatus == LibraryReadingStatus.completed,
               onTap: () {
                 Navigator.pop(context);
-                onStatusChange?.call(ReadingStatus.completed);
+                onStatusChange?.call(LibraryReadingStatus.completed);
               },
             ),
             _BottomSheetItem(
               icon: Icons.bookmark_outline,
               label: 'Unread',
-              isSelected: book.progress == 0 && !book.isFinished,
+              isSelected: book.readingStatus == LibraryReadingStatus.unread,
               onTap: () {
                 Navigator.pop(context);
-                onStatusChange?.call(ReadingStatus.notStarted);
+                onStatusChange?.call(LibraryReadingStatus.unread);
               },
             ),
 

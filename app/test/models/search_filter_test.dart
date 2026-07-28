@@ -16,7 +16,7 @@ void main() {
     String author = 'J.R.R. Tolkien',
     bool isPhysical = false,
     BookFormat? fileFormat = BookFormat.epub,
-    ReadingStatus readingStatus = ReadingStatus.notStarted,
+    LibraryReadingStatus readingStatus = LibraryReadingStatus.unread,
     double currentPosition = 0.0,
   }) {
     return Book(
@@ -95,18 +95,18 @@ void main() {
     group('SearchField.status', () {
       test('matches reading status', () {
         final filter = SearchFilter(field: SearchField.status, operator: SearchOperator.equals, value: 'reading');
-        expect(filter.matches(makeBook(readingStatus: ReadingStatus.inProgress)), true);
-        expect(filter.matches(makeBook(readingStatus: ReadingStatus.notStarted)), false);
+        expect(filter.matches(makeBook(readingStatus: LibraryReadingStatus.inProgress)), true);
+        expect(filter.matches(makeBook(readingStatus: LibraryReadingStatus.unread)), false);
       });
 
       test('matches finished status', () {
         final filter = SearchFilter(field: SearchField.status, operator: SearchOperator.equals, value: 'finished');
-        expect(filter.matches(makeBook(readingStatus: ReadingStatus.completed)), true);
+        expect(filter.matches(makeBook(readingStatus: LibraryReadingStatus.completed)), true);
       });
 
       test('matches unread status', () {
         final filter = SearchFilter(field: SearchField.status, operator: SearchOperator.equals, value: 'unread');
-        expect(filter.matches(makeBook(readingStatus: ReadingStatus.notStarted, currentPosition: 0.0)), true);
+        expect(filter.matches(makeBook(readingStatus: LibraryReadingStatus.unread, currentPosition: 0.0)), true);
       });
     });
 

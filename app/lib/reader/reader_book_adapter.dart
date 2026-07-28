@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus_reader/papyrus_reader.dart';
 
@@ -50,9 +51,9 @@ final class ReaderBookAdapter {
       PdfReaderLocator() => null,
     };
     final status = position >= 1
-        ? ReadingStatus.completed
+        ? LibraryReadingStatus.completed
         : position > 0
-        ? ReadingStatus.inProgress
+        ? LibraryReadingStatus.inProgress
         : book.readingStatus;
 
     return book.copyWith(

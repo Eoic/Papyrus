@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
 
 /// View mode for displaying shelves.
@@ -318,18 +319,21 @@ class ShelvesProvider extends ChangeNotifier {
     // Apply book filters (AND logic — each active filter narrows the list)
     if (!_activeBookFilters.contains(BookFilterType.all)) {
       if (_activeBookFilters.contains(BookFilterType.reading)) {
-        books = books.where((book) => book.isReading).toList();
+        books = books.where((book) => book.readingStatus == LibraryReadingStatus.inProgress).toList();
       }
+
       if (_activeBookFilters.contains(BookFilterType.favorites)) {
         books = books.where((book) {
           return isFavorite?.call(book.id) ?? book.isFavorite;
         }).toList();
       }
+
       if (_activeBookFilters.contains(BookFilterType.finished)) {
-        books = books.where((book) => book.isFinished).toList();
+        books = books.where((book) => book.readingStatus == LibraryReadingStatus.completed).toList();
       }
+
       if (_activeBookFilters.contains(BookFilterType.unread)) {
-        books = books.where((book) => book.readingStatus == ReadingStatus.notStarted).toList();
+        books = books.where((book) => book.readingStatus == LibraryReadingStatus.unread).toList();
       }
     }
 

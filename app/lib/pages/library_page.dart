@@ -8,12 +8,13 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/active_filter.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/acquisition_downloads_provider.dart';
+import 'package:papyrus/providers/enums/library_sort_option.dart';
+import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/bulk_book_actions.dart';
 import 'package:papyrus/utils/search_query_parser.dart';
 import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
-import 'package:papyrus/widgets/filter/filter_dialog.dart';
 import 'package:papyrus/widgets/library/acquisition_confirmation_dialog.dart';
 import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
@@ -53,12 +54,12 @@ class _AcquisitionLibraryView {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  AcquisitionDownloadsProvider? _visibleDownloadsProvider;
-  _BooksPresentationMode _presentationMode = _BooksPresentationMode.local;
-  bool _showDownloadingOnly = false;
   int _presentationGeneration = 0;
+  bool _showDownloadingOnly = false;
+  AcquisitionDownloadsProvider? _visibleDownloadsProvider;
   late final TextEditingController _onlineSearchController;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  _BooksPresentationMode _presentationMode = _BooksPresentationMode.local;
 
   @override
   void initState() {
@@ -93,8 +94,6 @@ class _LibraryPageState extends State<LibraryPage> {
     final dataStore = context.watch<DataStore>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
-
-    // Get filtered books from DataStore (single source of truth)
     final books = _getFilteredBooks(libraryProvider, dataStore);
     final isLoading = !dataStore.isLoaded;
 
@@ -111,36 +110,37 @@ class _LibraryPageState extends State<LibraryPage> {
     // Apply search filter using query parser
     if (provider.searchQuery.isNotEmpty) {
       final searchQuery = SearchQueryParser.parse(provider.searchQuery);
+
       if (searchQuery.isNotEmpty) {
         books = books.where((book) => searchQuery.matches(book, dataStore: dataStore)).toList();
       }
     }
 
     // Apply category filters (quick filters from chips)
-    if (!provider.isFilterActive(LibraryFilterType.all)) {
-      if (provider.isFilterActive(LibraryFilterType.favorites)) {
-        books = books.where((book) => provider.isBookFavorite(book.id, book.isFavorite)).toList();
-      }
-      if (provider.isFilterActive(LibraryFilterType.reading)) {
-        books = books.where((book) => book.isReading).toList();
-      }
-      if (provider.isFilterActive(LibraryFilterType.finished)) {
-        books = books.where((book) => book.isFinished).toList();
-      }
-      if (provider.isFilterActive(LibraryFilterType.unread)) {
-        books = books.where((book) => book.readingStatus == ReadingStatus.notStarted).toList();
-      }
-      if (provider.isFilterActive(LibraryFilterType.shelves) && provider.selectedShelf != null) {
-        books = books
-            .where((book) => dataStore.getShelvesForBook(book.id).any((s) => s.name == provider.selectedShelf))
-            .toList();
-      }
-      if (provider.isFilterActive(LibraryFilterType.topics) && provider.selectedTopic != null) {
-        books = books
-            .where((book) => dataStore.getTagsForBook(book.id).any((t) => t.name == provider.selectedTopic))
-            .toList();
-      }
-    }
+    // if (!provider.isFilterActive(LibraryFilterType.all)) {
+    //   if (provider.isFilterActive(LibraryFilterType.favorites)) {
+    //     books = books.where((book) => provider.isBookFavorite(book.id, book.isFavorite)).toList();
+    //   }
+    //   if (provider.isFilterActive(LibraryFilterType.reading)) {
+    //     books = books.where((book) => book.readingStatus == ReadingStatus.inProgress).toList();
+    //   }
+    //   if (provider.isFilterActive(LibraryFilterType.finished)) {
+    //     books = books.where((book) => book.readingStatus == ReadingStatus.completed).toList();
+    //   }
+    //   if (provider.isFilterActive(LibraryFilterType.unread)) {
+    //     books = books.where((book) => book.readingStatus == ReadingStatus.unread).toList();
+    //   }
+    //   if (provider.isFilterActive(LibraryFilterType.shelves) && provider.selectedShelf != null) {
+    //     books = books
+    //         .where((book) => dataStore.getShelvesForBook(book.id).any((s) => s.name == provider.selectedShelf))
+    //         .toList();
+    //   }
+    //   if (provider.isFilterActive(LibraryFilterType.topics) && provider.selectedTopic != null) {
+    //     books = books
+    //         .where((book) => dataStore.getTagsForBook(book.id).any((t) => t.name == provider.selectedTopic))
+    //         .toList();
+    //   }
+    // }
 
     return provider.sortBooks(books);
   }
@@ -161,12 +161,14 @@ class _LibraryPageState extends State<LibraryPage> {
     final isBookSelection = libraryProvider.isSelectionMode;
     final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
     final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
+
     final acquisitionView = _buildAcquisitionLibraryView(
       books: books,
       items: localItems,
       libraryProvider: libraryProvider,
       showDownloadingOnly: showDownloadingOnly,
     );
+
     final selectedJobs = _visibleSelectedJobs(downloadsProvider, acquisitionView.selectableJobs);
     final hasJobSelection = selectedJobs.isNotEmpty;
     final hideLocalControls = isOnline || hasJobSelection || isBookSelection;
@@ -179,7 +181,6 @@ class _LibraryPageState extends State<LibraryPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header: selection header or normal header
             Padding(
               padding: const EdgeInsets.only(top: Spacing.md, left: Spacing.md, right: Spacing.md),
               child: isOnline
@@ -200,55 +201,34 @@ class _LibraryPageState extends State<LibraryPage> {
                     )
                   : Row(
                       children: [
-                        // Drawer hamburger button
                         IconButton(
                           icon: const Icon(Icons.menu),
-                          onPressed: () {
-                            _scaffoldKey.currentState?.openDrawer();
-                          },
+                          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                           tooltip: 'Library sections',
                         ),
                         const SizedBox(width: Spacing.xs),
-                        // Search bar
                         Expanded(child: _buildSearchBar(libraryProvider)),
-                        const SizedBox(width: Spacing.sm),
-                        _buildSortButton(libraryProvider),
                       ],
                     ),
             ),
 
-            // Quick filter chips
             if (!isOnline)
-              LibraryFilterChips(
-                showDownloading: localItems.hasDownloadingItems,
-                isDownloadingSelected: showDownloadingOnly,
-                onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
-                onLibraryFilterTapped: () {
-                  if (_showDownloadingOnly) {
-                    setState(() => _showDownloadingOnly = false);
-                  }
-                },
+              Column(
+                children: [
+                  SizedBox(height: Spacing.sm),
+                  LibraryFilterChips(
+                    showDownloading: localItems.hasDownloadingItems,
+                    isDownloadingSelected: showDownloadingOnly,
+                    onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
+                    onLibraryFilterTapped: () {
+                      if (_showDownloadingOnly) {
+                        setState(() => _showDownloadingOnly = false);
+                      }
+                    },
+                  ),
+                ],
               ),
 
-            // View toggle row
-            if (!hideLocalControls)
-              Padding(
-                padding: const EdgeInsets.only(left: Spacing.md, right: Spacing.md, bottom: Spacing.md),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isLoading ? 'Loading books…' : '${books.length} ${books.length == 1 ? 'book' : 'books'}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                    _buildViewToggle(libraryProvider),
-                  ],
-                ),
-              ),
-
-            // Book grid or list
             Expanded(child: _buildBookContent(context, libraryProvider, downloadsProvider, isLoading, acquisitionView)),
           ],
         ),
@@ -322,14 +302,14 @@ class _LibraryPageState extends State<LibraryPage> {
     return filters.toList();
   }
 
-  /// Show the filter bottom sheet.
   Future<void> _showFilterBottomSheet(BuildContext context) async {
     final libraryProvider = context.read<LibraryProvider>();
     final dataStore = context.read<DataStore>();
+
     final filterOptions = FilterOptions.fromBooks(
       dataStore.books,
-      shelfNames: dataStore.shelves.map((s) => s.name).toList(),
-      topicNames: dataStore.tags.map((t) => t.name).toList(),
+      shelfNames: dataStore.shelves.map((shelf) => shelf.name).toList(),
+      topicNames: dataStore.tags.map((topic) => topic.name).toList(),
     );
 
     final result = await FilterBottomSheet.show(
@@ -337,43 +317,15 @@ class _LibraryPageState extends State<LibraryPage> {
       filterOptions: filterOptions,
       initialFilters: AppliedFilters.fromQueryString(
         libraryProvider.searchQuery,
-        filterReading: libraryProvider.isFilterActive(LibraryFilterType.reading),
-        filterFavorites: libraryProvider.isFilterActive(LibraryFilterType.favorites),
-        filterFinished: libraryProvider.isFilterActive(LibraryFilterType.finished),
-        filterUnread: libraryProvider.isFilterActive(LibraryFilterType.unread),
+        // filterReading: libraryProvider.isFilterActive(LibraryFilterType.reading),
+        // filterFavorites: libraryProvider.isFilterActive(LibraryFilterType.favorites),
+        // filterFinished: libraryProvider.isFilterActive(LibraryFilterType.finished),
+        // filterUnread: libraryProvider.isFilterActive(LibraryFilterType.unread),
         shelf: libraryProvider.selectedShelf,
         topic: libraryProvider.selectedTopic,
       ),
     );
 
-    if (result != null) {
-      _applyFilterResult(result);
-    }
-  }
-
-  /// Show the filter dialog (desktop).
-  Future<void> _showFilterDialog(BuildContext context) async {
-    final libraryProvider = context.read<LibraryProvider>();
-    final dataStore = context.read<DataStore>();
-    final filterOptions = FilterOptions.fromBooks(
-      dataStore.books,
-      shelfNames: dataStore.shelves.map((s) => s.name).toList(),
-      topicNames: dataStore.tags.map((t) => t.name).toList(),
-    );
-
-    final result = await FilterDialog.show(
-      context,
-      filterOptions: filterOptions,
-      initialFilters: AppliedFilters.fromQueryString(
-        libraryProvider.searchQuery,
-        filterReading: libraryProvider.isFilterActive(LibraryFilterType.reading),
-        filterFavorites: libraryProvider.isFilterActive(LibraryFilterType.favorites),
-        filterFinished: libraryProvider.isFilterActive(LibraryFilterType.finished),
-        filterUnread: libraryProvider.isFilterActive(LibraryFilterType.unread),
-        shelf: libraryProvider.selectedShelf,
-        topic: libraryProvider.selectedTopic,
-      ),
-    );
     if (result != null) {
       _applyFilterResult(result);
     }
@@ -382,35 +334,11 @@ class _LibraryPageState extends State<LibraryPage> {
   /// Apply the filter result from either the bottom sheet or dialog.
   void _applyFilterResult(AppliedFilters result) {
     final libraryProvider = context.read<LibraryProvider>();
-
-    // Apply quick filters
-    if (result.filterReading) {
-      libraryProvider.addFilter(LibraryFilterType.reading);
-    } else {
-      libraryProvider.removeFilter(LibraryFilterType.reading);
-    }
-    if (result.filterFavorites) {
-      libraryProvider.addFilter(LibraryFilterType.favorites);
-    } else {
-      libraryProvider.removeFilter(LibraryFilterType.favorites);
-    }
-    if (result.filterFinished) {
-      libraryProvider.addFilter(LibraryFilterType.finished);
-    } else {
-      libraryProvider.removeFilter(LibraryFilterType.finished);
-    }
-    if (result.filterUnread) {
-      libraryProvider.addFilter(LibraryFilterType.unread);
-    } else {
-      libraryProvider.removeFilter(LibraryFilterType.unread);
-    }
-
-    // Apply shelf/topic
     libraryProvider.selectShelf(result.shelf);
     libraryProvider.selectTopic(result.topic);
 
-    // Set or clear search query from advanced filters
     final queryString = result.toQueryString();
+
     if (queryString.isNotEmpty) {
       libraryProvider.setSearchQuery(queryString);
     } else {
@@ -420,7 +348,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildSearchBar(LibraryProvider libraryProvider) {
     final activeFilters = _buildActiveFilters(libraryProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= Breakpoints.desktopSmall;
 
     return LibrarySearchBar(
       initialQuery: libraryProvider.searchQuery,
@@ -432,7 +359,7 @@ class _LibraryPageState extends State<LibraryPage> {
           libraryProvider.setSearchQuery(query);
         }
       },
-      onFilterTap: () => isDesktop ? _showFilterDialog(context) : _showFilterBottomSheet(context),
+      onFilterTap: () => _showFilterBottomSheet(context),
     );
   }
 
@@ -691,64 +618,6 @@ class _LibraryPageState extends State<LibraryPage> {
   // DESKTOP LAYOUT
   // ============================================================================
 
-  Widget _buildViewToggle(LibraryProvider libraryProvider) {
-    return ViewModeToggle(
-      isGridView: libraryProvider.isGridView,
-      onChanged: (isGrid) => libraryProvider.setViewMode(isGrid ? LibraryViewMode.grid : LibraryViewMode.list),
-    );
-  }
-
-  Widget _buildAddBookButton(double height, AcquisitionDownloadsProvider? downloadsProvider) {
-    return FilledButton.icon(
-      onPressed: () => _showAddBook(downloadsProvider),
-      icon: const Icon(Icons.add),
-      label: const Text('Add book'),
-      style: FilledButton.styleFrom(minimumSize: Size(0, height)),
-    );
-  }
-
-  Widget _buildSortButton(LibraryProvider provider) {
-    return PopupMenuButton<LibrarySortOption>(
-      icon: const Icon(Icons.sort),
-      tooltip: 'Sort books',
-      onSelected: provider.setSortOption,
-      itemBuilder: (context) => [
-        _buildSortMenuItem(LibrarySortOption.dateAddedNewest, 'Date added (newest)', provider.sortOption),
-        _buildSortMenuItem(LibrarySortOption.dateAddedOldest, 'Date added (oldest)', provider.sortOption),
-        const PopupMenuDivider(),
-        _buildSortMenuItem(LibrarySortOption.titleAZ, 'Title (A\u2013Z)', provider.sortOption),
-        _buildSortMenuItem(LibrarySortOption.titleZA, 'Title (Z\u2013A)', provider.sortOption),
-        const PopupMenuDivider(),
-        _buildSortMenuItem(LibrarySortOption.authorAZ, 'Author (A\u2013Z)', provider.sortOption),
-        _buildSortMenuItem(LibrarySortOption.authorZA, 'Author (Z\u2013A)', provider.sortOption),
-        const PopupMenuDivider(),
-        _buildSortMenuItem(LibrarySortOption.lastRead, 'Last read', provider.sortOption),
-        _buildSortMenuItem(LibrarySortOption.rating, 'Rating', provider.sortOption),
-        _buildSortMenuItem(LibrarySortOption.progress, 'Progress', provider.sortOption),
-      ],
-    );
-  }
-
-  PopupMenuItem<LibrarySortOption> _buildSortMenuItem(
-    LibrarySortOption option,
-    String label,
-    LibrarySortOption current,
-  ) {
-    return PopupMenuItem(
-      value: option,
-      child: Row(
-        children: [
-          Expanded(child: Text(label)),
-          Icon(
-            Icons.check,
-            size: IconSizes.small,
-            color: option == current ? Theme.of(context).colorScheme.primary : Colors.transparent,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDesktopLayout(
     BuildContext context,
     List<Book> books,
@@ -795,7 +664,6 @@ class _LibraryPageState extends State<LibraryPage> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
               Container(
                 padding: const EdgeInsets.only(top: Spacing.lg, left: Spacing.lg, right: Spacing.lg),
                 child: isOnline
@@ -815,61 +683,37 @@ class _LibraryPageState extends State<LibraryPage> {
                         onDeselectAll: libraryProvider.deselectAll,
                         actions: buildBulkActionBar(context, libraryProvider),
                       )
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          final useCompactLayout = constraints.maxWidth < 800;
-
-                          if (useCompactLayout) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(child: _buildSearchBar(libraryProvider)),
-                                    const SizedBox(width: Spacing.sm),
-                                    _buildSortButton(libraryProvider),
-                                  ],
-                                ),
-                                const SizedBox(height: Spacing.md),
-                                Row(
-                                  children: [
-                                    const Spacer(),
-                                    _buildViewToggle(libraryProvider),
-                                    const SizedBox(width: Spacing.sm),
-                                    _buildAddBookButton(controlHeight, downloadsProvider),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }
-
-                          return Row(
-                            children: [
-                              Expanded(child: _buildSearchBar(libraryProvider)),
-                              const SizedBox(width: Spacing.md),
-                              _buildSortButton(libraryProvider),
-                              const SizedBox(width: Spacing.md),
-                              _buildViewToggle(libraryProvider),
-                              const SizedBox(width: Spacing.md),
-                              _buildAddBookButton(controlHeight, downloadsProvider),
-                            ],
-                          );
-                        },
+                    : Row(
+                        children: [
+                          Expanded(child: _buildSearchBar(libraryProvider)),
+                          const SizedBox(width: Spacing.md),
+                          FilledButton.icon(
+                            onPressed: () => _showAddBook(downloadsProvider),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add book'),
+                            style: FilledButton.styleFrom(minimumSize: Size(0, controlHeight)),
+                          ),
+                        ],
                       ),
               ),
-              // Filter chips
               if (!isOnline)
-                LibraryFilterChips(
-                  horizontalPadding: Spacing.lg,
-                  showDownloading: localItems.hasDownloadingItems,
-                  isDownloadingSelected: showDownloadingOnly,
-                  onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
-                  onLibraryFilterTapped: () {
-                    if (_showDownloadingOnly) {
-                      setState(() => _showDownloadingOnly = false);
-                    }
-                  },
+                Column(
+                  children: [
+                    SizedBox(height: Spacing.sm),
+                    LibraryFilterChips(
+                      horizontalPadding: Spacing.lg,
+                      showDownloading: localItems.hasDownloadingItems,
+                      isDownloadingSelected: showDownloadingOnly,
+                      onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
+                      onLibraryFilterTapped: () {
+                        if (_showDownloadingOnly) {
+                          setState(() => _showDownloadingOnly = false);
+                        }
+                      },
+                    ),
+                  ],
                 ),
+
               // Book grid or list
               Expanded(
                 child: _buildBookContent(context, libraryProvider, downloadsProvider, isLoading, acquisitionView),
@@ -923,7 +767,7 @@ class _LibraryPageState extends State<LibraryPage> {
       downloadsProvider?.toggleJobSelection(job.id);
     }
 
-    if (libraryProvider.isListView) {
+    if (libraryProvider.viewMode == LibraryViewMode.list) {
       return _buildBookList(
         context,
         visibleBooks,
@@ -937,6 +781,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return BookGrid(
       books: visibleBooks,
+      libraryViewMode: libraryProvider.viewMode,
       acquisitionJobsByBookId: _linkedJobsByBookId(acquisitionView.selectableJobs),
       placeholderJobs: visiblePlaceholderJobs,
       selectedAcquisitionJobIds: downloadsProvider?.selectedJobIds ?? const {},
