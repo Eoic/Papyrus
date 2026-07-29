@@ -1,0 +1,122 @@
+const Map<String, String> _languageLabels = {
+  'ar': 'Arabic',
+  'cs': 'Czech',
+  'da': 'Danish',
+  'de': 'German',
+  'el': 'Greek',
+  'en': 'English',
+  'es': 'Spanish',
+  'et': 'Estonian',
+  'fi': 'Finnish',
+  'fr': 'French',
+  'he': 'Hebrew',
+  'hi': 'Hindi',
+  'hu': 'Hungarian',
+  'is': 'Icelandic',
+  'it': 'Italian',
+  'ja': 'Japanese',
+  'ko': 'Korean',
+  'lt': 'Lithuanian',
+  'lv': 'Latvian',
+  'nl': 'Dutch',
+  'no': 'Norwegian',
+  'pl': 'Polish',
+  'pt': 'Portuguese',
+  'ro': 'Romanian',
+  'ru': 'Russian',
+  'sk': 'Slovak',
+  'sv': 'Swedish',
+  'tr': 'Turkish',
+  'uk': 'Ukrainian',
+  'zh': 'Chinese',
+};
+
+const Map<String, String> _languageAliases = {
+  'ara': 'ar',
+  'arabic': 'ar',
+  'ces': 'cs',
+  'cze': 'cs',
+  'czech': 'cs',
+  'dan': 'da',
+  'danish': 'da',
+  'deu': 'de',
+  'ger': 'de',
+  'german': 'de',
+  'ell': 'el',
+  'gre': 'el',
+  'greek': 'el',
+  'eng': 'en',
+  'english': 'en',
+  'spa': 'es',
+  'spanish': 'es',
+  'est': 'et',
+  'estonian': 'et',
+  'fin': 'fi',
+  'finnish': 'fi',
+  'fra': 'fr',
+  'fre': 'fr',
+  'french': 'fr',
+  'heb': 'he',
+  'hebrew': 'he',
+  'hin': 'hi',
+  'hindi': 'hi',
+  'hun': 'hu',
+  'hungarian': 'hu',
+  'isl': 'is',
+  'ice': 'is',
+  'icelandic': 'is',
+  'ita': 'it',
+  'italian': 'it',
+  'jpn': 'ja',
+  'japanese': 'ja',
+  'kor': 'ko',
+  'korean': 'ko',
+  'lit': 'lt',
+  'lithuanian': 'lt',
+  'lav': 'lv',
+  'latvian': 'lv',
+  'nld': 'nl',
+  'dut': 'nl',
+  'dutch': 'nl',
+  'nor': 'no',
+  'norwegian': 'no',
+  'pol': 'pl',
+  'polish': 'pl',
+  'por': 'pt',
+  'portuguese': 'pt',
+  'ron': 'ro',
+  'rum': 'ro',
+  'romanian': 'ro',
+  'rus': 'ru',
+  'russian': 'ru',
+  'slk': 'sk',
+  'slo': 'sk',
+  'slovak': 'sk',
+  'swe': 'sv',
+  'swedish': 'sv',
+  'tur': 'tr',
+  'turkish': 'tr',
+  'ukr': 'uk',
+  'ukrainian': 'uk',
+  'zho': 'zh',
+  'chi': 'zh',
+  'chinese': 'zh',
+};
+
+String? normalizeBookLanguage(String? language) {
+  final normalized = language?.trim().toLowerCase();
+  if (normalized == null || normalized.isEmpty) {
+    return null;
+  }
+
+  return _languageAliases[normalized] ?? normalized;
+}
+
+String bookLanguageLabel(String language) {
+  final normalized = normalizeBookLanguage(language);
+  if (normalized == null) {
+    return '';
+  }
+
+  return _languageLabels[normalized] ?? language.trim();
+}

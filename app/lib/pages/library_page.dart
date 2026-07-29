@@ -5,16 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/data/data_store.dart';
-import 'package:papyrus/models/active_filter.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/acquisition_downloads_provider.dart';
-import 'package:papyrus/providers/enums/library_sort_option.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/bulk_book_actions.dart';
-import 'package:papyrus/utils/search_query_parser.dart';
-import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
 import 'package:papyrus/widgets/library/acquisition_confirmation_dialog.dart';
 import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
@@ -30,7 +26,6 @@ import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
-import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:provider/provider.dart';
 
 /// Main library page with responsive layouts for all platforms.
@@ -105,43 +100,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   List<Book> _getFilteredBooks(LibraryProvider provider, DataStore dataStore) {
-    var books = dataStore.books;
-
-    // Apply search filter using query parser
-    if (provider.searchQuery.isNotEmpty) {
-      final searchQuery = SearchQueryParser.parse(provider.searchQuery);
-
-      if (searchQuery.isNotEmpty) {
-        books = books.where((book) => searchQuery.matches(book, dataStore: dataStore)).toList();
-      }
-    }
-
-    // Apply category filters (quick filters from chips)
-    // if (!provider.isFilterActive(LibraryFilterType.all)) {
-    //   if (provider.isFilterActive(LibraryFilterType.favorites)) {
-    //     books = books.where((book) => provider.isBookFavorite(book.id, book.isFavorite)).toList();
-    //   }
-    //   if (provider.isFilterActive(LibraryFilterType.reading)) {
-    //     books = books.where((book) => book.readingStatus == ReadingStatus.inProgress).toList();
-    //   }
-    //   if (provider.isFilterActive(LibraryFilterType.finished)) {
-    //     books = books.where((book) => book.readingStatus == ReadingStatus.completed).toList();
-    //   }
-    //   if (provider.isFilterActive(LibraryFilterType.unread)) {
-    //     books = books.where((book) => book.readingStatus == ReadingStatus.unread).toList();
-    //   }
-    //   if (provider.isFilterActive(LibraryFilterType.shelves) && provider.selectedShelf != null) {
-    //     books = books
-    //         .where((book) => dataStore.getShelvesForBook(book.id).any((s) => s.name == provider.selectedShelf))
-    //         .toList();
-    //   }
-    //   if (provider.isFilterActive(LibraryFilterType.topics) && provider.selectedTopic != null) {
-    //     books = books
-    //         .where((book) => dataStore.getTagsForBook(book.id).any((t) => t.name == provider.selectedTopic))
-    //         .toList();
-    //   }
-    // }
-
+    final books = provider.filterBooks(dataStore.books, dataStore: dataStore);
     return provider.sortBooks(books);
   }
 
@@ -246,112 +205,9 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  /// Build list of active filters for display.
-  /// Uses a Set to prevent duplicate filters.
-  /// Quick filters (Reading, Favorites, Finished) are excluded because they
-  /// are already shown as highlighted buttons in the QuickFilterChips bar.
-  List<ActiveFilter> _buildActiveFilters(LibraryProvider provider) {
-    final filters = <ActiveFilter>{};
-
-    if (provider.selectedShelf != null) {
-      filters.add(
-        ActiveFilter(
-          type: ActiveFilterType.query,
-          label: 'shelf',
-          value: provider.selectedShelf!,
-          queryString: 'shelf:"${provider.selectedShelf}"',
-        ),
-      );
-    }
-    if (provider.selectedTopic != null) {
-      filters.add(
-        ActiveFilter(
-          type: ActiveFilterType.query,
-          label: 'topic',
-          value: provider.selectedTopic!,
-          queryString: 'topic:"${provider.selectedTopic}"',
-        ),
-      );
-    }
-
-    // Parse search query into individual filters
-    // Skip shelf/topic if already added from provider to avoid duplicates
-    if (provider.searchQuery.isNotEmpty && provider.searchQuery.contains(':')) {
-      final query = SearchQueryParser.parse(provider.searchQuery);
-      for (final filter in query.filters) {
-        if (filter.field.name != 'any') {
-          // Skip if this field is already represented by provider selection
-          if (filter.field.name == 'shelf' && provider.selectedShelf != null) {
-            continue;
-          }
-          if (filter.field.name == 'topic' && provider.selectedTopic != null) {
-            continue;
-          }
-          filters.add(
-            ActiveFilter(
-              type: ActiveFilterType.query,
-              label: filter.field.name,
-              value: filter.value,
-              queryString: '${filter.field.name}:${filter.value}',
-            ),
-          );
-        }
-      }
-    }
-
-    return filters.toList();
-  }
-
-  Future<void> _showFilterBottomSheet(BuildContext context) async {
-    final libraryProvider = context.read<LibraryProvider>();
-    final dataStore = context.read<DataStore>();
-
-    final filterOptions = FilterOptions.fromBooks(
-      dataStore.books,
-      shelfNames: dataStore.shelves.map((shelf) => shelf.name).toList(),
-      topicNames: dataStore.tags.map((topic) => topic.name).toList(),
-    );
-
-    final result = await FilterBottomSheet.show(
-      context,
-      filterOptions: filterOptions,
-      initialFilters: AppliedFilters.fromQueryString(
-        libraryProvider.searchQuery,
-        // filterReading: libraryProvider.isFilterActive(LibraryFilterType.reading),
-        // filterFavorites: libraryProvider.isFilterActive(LibraryFilterType.favorites),
-        // filterFinished: libraryProvider.isFilterActive(LibraryFilterType.finished),
-        // filterUnread: libraryProvider.isFilterActive(LibraryFilterType.unread),
-        shelf: libraryProvider.selectedShelf,
-        topic: libraryProvider.selectedTopic,
-      ),
-    );
-
-    if (result != null) {
-      _applyFilterResult(result);
-    }
-  }
-
-  /// Apply the filter result from either the bottom sheet or dialog.
-  void _applyFilterResult(AppliedFilters result) {
-    final libraryProvider = context.read<LibraryProvider>();
-    libraryProvider.selectShelf(result.shelf);
-    libraryProvider.selectTopic(result.topic);
-
-    final queryString = result.toQueryString();
-
-    if (queryString.isNotEmpty) {
-      libraryProvider.setSearchQuery(queryString);
-    } else {
-      libraryProvider.clearSearch();
-    }
-  }
-
   Widget _buildSearchBar(LibraryProvider libraryProvider) {
-    final activeFilters = _buildActiveFilters(libraryProvider);
-
     return LibrarySearchBar(
       initialQuery: libraryProvider.searchQuery,
-      activeFilterCount: activeFilters.length,
       onQueryChanged: (query) {
         if (query.isEmpty) {
           libraryProvider.clearSearch();
@@ -359,7 +215,6 @@ class _LibraryPageState extends State<LibraryPage> {
           libraryProvider.setSearchQuery(query);
         }
       },
-      onFilterTap: () => _showFilterBottomSheet(context),
     );
   }
 

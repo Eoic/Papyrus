@@ -1,14 +1,18 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/enums/library_sort_option.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
+import 'package:papyrus/utils/book_language.dart';
 
 class LibraryProvider extends ChangeNotifier {
   String _searchQuery = '';
-  String? _selectedShelf;
-  String? _selectedTopic;
+  String? _selectedAuthor;
+  String? _selectedLanguage;
+  String? _selectedFormat;
+  String? _selectedShelfId;
+  String? _selectedTopicId;
   bool _isFavoritesSelected = false;
   LibraryReadingStatus? _selectedStatus;
   LibraryViewMode _viewMode = LibraryViewMode.smallGrid;
@@ -40,20 +44,26 @@ class LibraryProvider extends ChangeNotifier {
   /// Current search query.
   String get searchQuery => _searchQuery;
 
-  /// Currently selected shelf for filtering.
-  String? get selectedShelf => _selectedShelf;
+  /// Currently selected author for filtering.
+  String? get selectedAuthor => _selectedAuthor;
 
-  /// Currently selected topic for filtering.
-  String? get selectedTopic => _selectedTopic;
+  /// Currently selected normalized language for filtering.
+  String? get selectedLanguage => _selectedLanguage;
+
+  /// Currently selected normalized format for filtering.
+  String? get selectedFormat => _selectedFormat;
+
+  /// ID of the currently selected shelf for filtering.
+  String? get selectedShelfId => _selectedShelfId;
+
+  /// ID of the currently selected topic for filtering.
+  String? get selectedTopicId => _selectedTopicId;
 
   /// Currently selected reading status for filtering.
   LibraryReadingStatus? get selectedStatus => _selectedStatus;
 
   /// Whether the favorites filter is active.
   bool get isFavoritesSelected => _isFavoritesSelected;
-
-  /// Whether the search query contains advanced field filters.
-  bool get hasActiveAdvancedFilters => _searchQuery.contains(':');
 
   void setViewMode(LibraryViewMode mode) {
     if (_viewMode == mode) {
@@ -102,12 +112,65 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setAuthorFilter(String? author) {
+    final normalized = _normalizeFilterValue(author);
+    if (_selectedAuthor == normalized) {
+      return;
+    }
+
+    _selectedAuthor = normalized;
+    notifyListeners();
+  }
+
+  void setLanguageFilter(String? language) {
+    final normalized = normalizeBookLanguage(language);
+    if (_selectedLanguage == normalized) {
+      return;
+    }
+
+    _selectedLanguage = normalized;
+    notifyListeners();
+  }
+
+  void setFormatFilter(String? format) {
+    final normalized = _normalizeFilterValue(format);
+    if (_selectedFormat == normalized) {
+      return;
+    }
+
+    _selectedFormat = normalized;
+    notifyListeners();
+  }
+
+  void setShelfFilter(String? shelfId) {
+    if (_selectedShelfId == shelfId) {
+      return;
+    }
+
+    _selectedShelfId = shelfId;
+    notifyListeners();
+  }
+
+  void setTopicFilter(String? topicId) {
+    if (_selectedTopicId == topicId) {
+      return;
+    }
+
+    _selectedTopicId = topicId;
+    notifyListeners();
+  }
+
   void resetQuickFilters() {
     final hasChanges =
         _selectedStatus != null ||
         _sortOption != LibrarySortOption.dateAddedNewest ||
         _viewMode != LibraryViewMode.smallGrid ||
-        _isFavoritesSelected;
+        _isFavoritesSelected ||
+        _selectedAuthor != null ||
+        _selectedLanguage != null ||
+        _selectedFormat != null ||
+        _selectedShelfId != null ||
+        _selectedTopicId != null;
 
     if (!hasChanges) {
       return;
@@ -117,7 +180,55 @@ class LibraryProvider extends ChangeNotifier {
     _sortOption = LibrarySortOption.dateAddedNewest;
     _isFavoritesSelected = false;
     _viewMode = LibraryViewMode.smallGrid;
+    _selectedAuthor = null;
+    _selectedLanguage = null;
+    _selectedFormat = null;
+    _selectedShelfId = null;
+    _selectedTopicId = null;
     notifyListeners();
+  }
+
+  List<Book> filterBooks(List<Book> books, {required DataStore dataStore}) {
+    final searchQuery = _searchQuery.trim().toLowerCase();
+
+    return books.where((book) {
+      if (searchQuery.isNotEmpty &&
+          !book.title.toLowerCase().contains(searchQuery) &&
+          !book.allAuthors.toLowerCase().contains(searchQuery)) {
+        return false;
+      }
+
+      if (_selectedStatus != null && book.readingStatus != _selectedStatus) {
+        return false;
+      }
+
+      if (_isFavoritesSelected && !isBookFavorite(book.id, book.isFavorite)) {
+        return false;
+      }
+
+      if (_selectedAuthor != null &&
+          ![book.author, ...book.coAuthors].any((author) => _normalizeFilterValue(author) == _selectedAuthor)) {
+        return false;
+      }
+
+      if (_selectedLanguage != null && normalizeBookLanguage(book.language) != _selectedLanguage) {
+        return false;
+      }
+
+      if (_selectedFormat != null && _normalizeFilterValue(book.formatLabel) != _selectedFormat) {
+        return false;
+      }
+
+      if (_selectedShelfId != null && !dataStore.getShelfIdsForBook(book.id).contains(_selectedShelfId)) {
+        return false;
+      }
+
+      if (_selectedTopicId != null && !dataStore.getTagIdsForBook(book.id).contains(_selectedTopicId)) {
+        return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   List<Book> sortBooks(List<Book> books) {
@@ -162,57 +273,6 @@ class LibraryProvider extends ChangeNotifier {
     return sorted;
   }
 
-  /// Set a single filter (replaces existing filters).
-  // void setFilter(LibraryFilterType filter) {
-  //   _activeFilters.clear();
-  //   _activeFilters.add(filter);
-
-  //   // Clear shelf/topic selection when switching filters
-  //   if (filter != LibraryFilterType.shelves) {
-  //     _selectedShelf = null;
-  //   }
-
-  //   if (filter != LibraryFilterType.topics) {
-  //     _selectedTopic = null;
-  //   }
-
-  //   notifyListeners();
-  // }
-
-  /// Add a filter to active filters.
-  // void addFilter(LibraryFilterType filter) {
-  //   // Remove 'all' filter when adding specific filters
-  //   if (filter != LibraryFilterType.all) {
-  //     _activeFilters.remove(LibraryFilterType.all);
-  //   }
-  //   _activeFilters.add(filter);
-  //   notifyListeners();
-  // }
-
-  /// Remove a filter from active filters.
-  // void removeFilter(LibraryFilterType filter) {
-  //   _activeFilters.remove(filter);
-  //   // If no filters remain, default to 'all'
-  //   if (_activeFilters.isEmpty) {
-  //     _activeFilters.add(LibraryFilterType.all);
-  //   }
-  //   notifyListeners();
-  // }
-
-  /// Toggle a filter on/off.
-  // void toggleFilter(LibraryFilterType filter) {
-  //   if (_activeFilters.contains(filter)) {
-  //     removeFilter(filter);
-  //   } else {
-  //     addFilter(filter);
-  //   }
-  // }
-
-  /// Check if a specific filter is active.
-  // bool isFilterActive(LibraryFilterType filter) {
-  //   return _activeFilters.contains(filter);
-  // }
-
   /// Set the search query.
   void setSearchQuery(String query) {
     if (_searchQuery != query) {
@@ -221,48 +281,13 @@ class LibraryProvider extends ChangeNotifier {
     }
   }
 
-  /// Clear the search query and associated shelf/topic filters.
+  /// Clear only the text search query.
   void clearSearch() {
+    if (_searchQuery.isEmpty) {
+      return;
+    }
+
     _searchQuery = '';
-    _selectedShelf = null;
-    _selectedTopic = null;
-    // _activeFilters.remove(LibraryFilterType.shelves);
-    // _activeFilters.remove(LibraryFilterType.topics);
-
-    // if (_activeFilters.isEmpty) {
-    //   _activeFilters.add(LibraryFilterType.all);
-    // }
-
-    notifyListeners();
-  }
-
-  /// Select a shelf for filtering.
-  void selectShelf(String? shelf) {
-    _selectedShelf = shelf;
-
-    // if (shelf != null) {
-    //   setFilter(LibraryFilterType.shelves);
-    // }
-
-    notifyListeners();
-  }
-
-  /// Select a topic for filtering.
-  void selectTopic(String? topic) {
-    _selectedTopic = topic;
-
-    // if (topic != null) {
-    //   setFilter(LibraryFilterType.topics);
-    // }
-
-    notifyListeners();
-  }
-
-  void resetFilters() {
-    _searchQuery = '';
-    _selectedShelf = null;
-    _selectedTopic = null;
-    _selectedStatus = null;
     notifyListeners();
   }
 
@@ -325,5 +350,10 @@ class LibraryProvider extends ChangeNotifier {
   void deselectAll() {
     _selectedBookIds.clear();
     notifyListeners();
+  }
+
+  static String? _normalizeFilterValue(String? value) {
+    final normalized = value?.trim().toLowerCase();
+    return normalized == null || normalized.isEmpty ? null : normalized;
   }
 }
