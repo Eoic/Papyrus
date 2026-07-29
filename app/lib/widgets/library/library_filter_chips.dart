@@ -5,8 +5,6 @@ import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:provider/provider.dart';
 
-const _collapsedSheetExtent = 0.5;
-
 class _ChipEntry {
   final String id;
   final bool isActive;
@@ -75,20 +73,15 @@ class _SelectionSheet<T> extends StatelessWidget {
   final String title;
   final List<_SelectionOption<T>> options;
   final T selectedValue;
-  final ScrollController scrollController;
 
-  const _SelectionSheet({
-    required this.title,
-    required this.options,
-    required this.selectedValue,
-    required this.scrollController,
-  });
+  const _SelectionSheet({required this.title, required this.options, required this.selectedValue});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
@@ -98,9 +91,9 @@ class _SelectionSheet<T> extends StatelessWidget {
           ),
         ),
         const Divider(height: 1),
-        Expanded(
+        Flexible(
           child: ListView.builder(
-            controller: scrollController,
+            shrinkWrap: true,
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: options.length,
             itemBuilder: (context, index) {
@@ -136,30 +129,7 @@ Future<_SelectionOption<T>?> _showSelectionSheet<T>(
     useRootNavigator: true,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (sheetContext) {
-      return DraggableScrollableSheet(
-        expand: false,
-
-        // The sheet opens at half-screen and cannot collapse below it.
-        initialChildSize: _collapsedSheetExtent,
-        minChildSize: _collapsedSheetExtent,
-
-        // A swipe upward can expand it to all available height.
-        maxChildSize: 1,
-
-        // With no intermediate snap sizes, it settles at 50% or 100%.
-        snap: true,
-
-        builder: (context, scrollController) {
-          return _SelectionSheet<T>(
-            title: title,
-            options: options,
-            selectedValue: selectedValue,
-            scrollController: scrollController,
-          );
-        },
-      );
-    },
+    builder: (_) => _SelectionSheet<T>(title: title, options: options, selectedValue: selectedValue),
   );
 }
 
