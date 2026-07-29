@@ -3,7 +3,6 @@ import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
-import 'package:papyrus/utils/search_query_parser.dart';
 
 /// View mode for displaying shelves.
 enum ShelvesViewMode { grid, list }
@@ -308,12 +307,11 @@ class ShelvesProvider extends ChangeNotifier {
 
     var books = _dataStore!.getBooksInShelf(shelfId);
 
-    // Apply book search using SearchQueryParser
-    if (_bookSearchQuery.isNotEmpty) {
-      final searchQuery = SearchQueryParser.parse(_bookSearchQuery);
-      if (searchQuery.isNotEmpty) {
-        books = books.where((book) => searchQuery.matches(book, dataStore: _dataStore)).toList();
-      }
+    final searchQuery = _bookSearchQuery.trim().toLowerCase();
+    if (searchQuery.isNotEmpty) {
+      books = books.where((book) {
+        return book.title.toLowerCase().contains(searchQuery) || book.allAuthors.toLowerCase().contains(searchQuery);
+      }).toList();
     }
 
     // Apply book filters (AND logic — each active filter narrows the list)

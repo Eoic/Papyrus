@@ -8,16 +8,12 @@ import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/bulk_book_actions.dart';
-import 'package:papyrus/utils/search_query_parser.dart';
-import 'package:papyrus/widgets/filter/filter_bottom_sheet.dart';
-// import 'package:papyrus/widgets/filter/filter_dialog.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
-// import 'package:papyrus/widgets/shared/quick_filter_chips.dart';
 import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:papyrus/widgets/shelves/shelf_card.dart';
 import 'package:provider/provider.dart';
@@ -144,7 +140,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
                       children: [
                         IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/library/shelves')),
                         const SizedBox(width: Spacing.xs),
-                        Expanded(child: _buildSearchBar(provider, isDesktop: false)),
+                        Expanded(child: _buildSearchBar(provider)),
                         const SizedBox(width: Spacing.sm),
                         _buildSortButton(provider),
                       ],
@@ -245,7 +241,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
                               children: [
                                 Row(
                                   children: [
-                                    Expanded(child: _buildSearchBar(provider, isDesktop: true)),
+                                    Expanded(child: _buildSearchBar(provider)),
                                     const SizedBox(width: Spacing.sm),
                                     _buildSortButton(provider),
                                   ],
@@ -258,7 +254,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
 
                           return Row(
                             children: [
-                              Expanded(child: _buildSearchBar(provider, isDesktop: true)),
+                              Expanded(child: _buildSearchBar(provider)),
                               const SizedBox(width: Spacing.md),
                               _buildSortButton(provider),
                               const SizedBox(width: Spacing.md),
@@ -283,15 +279,8 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
   // HEADER CONTROLS
   // ============================================================================
 
-  Widget _buildSearchBar(ShelvesProvider provider, {required bool isDesktop}) {
-    final activeFilterCount = _countActiveAdvancedFilters(provider);
-
-    return LibrarySearchBar(
-      onQueryChanged: provider.setBookSearchQuery,
-      initialQuery: provider.bookSearchQuery,
-      activeFilterCount: activeFilterCount,
-      onFilterTap: () => _showFilterBottomSheet(context, provider),
-    );
+  Widget _buildSearchBar(ShelvesProvider provider) {
+    return LibrarySearchBar(onQueryChanged: provider.setBookSearchQuery, initialQuery: provider.bookSearchQuery);
   }
 
   Widget _buildSortButton(ShelvesProvider provider) {
@@ -329,124 +318,6 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
       isGridView: provider.isGridView,
       onChanged: (isGrid) => provider.setViewMode(isGrid ? ShelvesViewMode.grid : ShelvesViewMode.list),
     );
-  }
-
-  // ============================================================================
-  // FILTER CHIPS
-  // ============================================================================
-
-  // static const _quickFilters = [
-  //   (type: BookFilterType.all, label: 'All', icon: Icons.apps),
-  //   (type: BookFilterType.reading, label: 'Reading', icon: Icons.auto_stories),
-  //   (type: BookFilterType.favorites, label: 'Favorites', icon: Icons.favorite),
-  //   (type: BookFilterType.finished, label: 'Finished', icon: Icons.check_circle),
-  //   (type: BookFilterType.unread, label: 'Unread', icon: Icons.book),
-  // ];
-
-  // Widget _buildFilterChips(ShelvesProvider provider, {double? horizontalPadding}) {
-  //   return QuickFilterChips(
-  //     horizontalPadding: horizontalPadding,
-  //     filters: _quickFilters
-  //         .map(
-  //           (f) => QuickFilterChipData(label: f.label, icon: f.icon, isSelected: provider.isBookFilterActive(f.type)),
-  //         )
-  //         .toList(),
-  //     onFilterTapped: (index) => provider.toggleBookFilter(_quickFilters[index].type),
-  //   );
-  // }
-
-  // ============================================================================
-  // ADVANCED FILTERS
-  // ============================================================================
-
-  int _countActiveAdvancedFilters(ShelvesProvider provider) {
-    if (provider.bookSearchQuery.isEmpty || !provider.bookSearchQuery.contains(':')) {
-      return 0;
-    }
-    final query = SearchQueryParser.parse(provider.bookSearchQuery);
-    return query.filters.where((f) => f.field.name != 'any').length;
-  }
-
-  Future<void> _showFilterBottomSheet(BuildContext context, ShelvesProvider provider) async {
-    final dataStore = context.read<DataStore>();
-    final filterOptions = FilterOptions.fromBooks(
-      dataStore.books,
-      shelfNames: dataStore.shelves.map((s) => s.name).toList(),
-      topicNames: dataStore.tags.map((t) => t.name).toList(),
-    );
-
-    final result = await FilterBottomSheet.show(
-      context,
-      filterOptions: filterOptions,
-      initialFilters: AppliedFilters.fromQueryString(
-        provider.bookSearchQuery,
-        filterReading: provider.isBookFilterActive(BookFilterType.reading),
-        filterFavorites: provider.isBookFilterActive(BookFilterType.favorites),
-        filterFinished: provider.isBookFilterActive(BookFilterType.finished),
-        filterUnread: provider.isBookFilterActive(BookFilterType.unread),
-      ),
-    );
-
-    if (result != null) {
-      _applyShelfFilterResult(result, provider);
-    }
-  }
-
-  // Future<void> _showFilterDialog(BuildContext context, ShelvesProvider provider) async {
-  //   final dataStore = context.read<DataStore>();
-  //   final filterOptions = FilterOptions.fromBooks(
-  //     dataStore.books,
-  //     shelfNames: dataStore.shelves.map((s) => s.name).toList(),
-  //     topicNames: dataStore.tags.map((t) => t.name).toList(),
-  //   );
-
-  //   final result = await FilterDialog.show(
-  //     context,
-  //     filterOptions: filterOptions,
-  //     initialFilters: AppliedFilters.fromQueryString(
-  //       provider.bookSearchQuery,
-  //       filterReading: provider.isBookFilterActive(BookFilterType.reading),
-  //       filterFavorites: provider.isBookFilterActive(BookFilterType.favorites),
-  //       filterFinished: provider.isBookFilterActive(BookFilterType.finished),
-  //       filterUnread: provider.isBookFilterActive(BookFilterType.unread),
-  //     ),
-  //   );
-
-  //   if (result != null) {
-  //     _applyShelfFilterResult(result, provider);
-  //   }
-  // }
-
-  void _applyShelfFilterResult(AppliedFilters result, ShelvesProvider provider) {
-    // Apply quick filters
-    if (result.filterReading) {
-      provider.addBookFilter(BookFilterType.reading);
-    } else {
-      provider.removeBookFilter(BookFilterType.reading);
-    }
-    if (result.filterFavorites) {
-      provider.addBookFilter(BookFilterType.favorites);
-    } else {
-      provider.removeBookFilter(BookFilterType.favorites);
-    }
-    if (result.filterFinished) {
-      provider.addBookFilter(BookFilterType.finished);
-    } else {
-      provider.removeBookFilter(BookFilterType.finished);
-    }
-    if (result.filterUnread) {
-      provider.addBookFilter(BookFilterType.unread);
-    } else {
-      provider.removeBookFilter(BookFilterType.unread);
-    }
-
-    // Set or clear search query from advanced filters
-    final queryString = result.toQueryString();
-    if (queryString.isNotEmpty) {
-      provider.setBookSearchQuery(queryString);
-    } else {
-      provider.clearBookSearch();
-    }
   }
 
   // ============================================================================
