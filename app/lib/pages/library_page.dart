@@ -18,6 +18,7 @@ import 'package:papyrus/widgets/library/acquisition_job_sheets.dart';
 import 'package:papyrus/widgets/library/acquisition_job_visibility.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
+import 'package:papyrus/widgets/library/library_advanced_filter_sheet.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/library/online_books_header.dart';
 import 'package:papyrus/widgets/library/online_results_view.dart';
@@ -208,6 +209,8 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget _buildSearchBar(LibraryProvider libraryProvider) {
     return LibrarySearchBar(
       initialQuery: libraryProvider.searchQuery,
+      activeFilterCount: libraryProvider.activeFilterCount,
+      onFilterTap: _showAdvancedFilters,
       onQueryChanged: (query) {
         if (query.isEmpty) {
           libraryProvider.clearSearch();
@@ -216,6 +219,20 @@ class _LibraryPageState extends State<LibraryPage> {
         }
       },
     );
+  }
+
+  Future<void> _showAdvancedFilters() async {
+    final libraryProvider = context.read<LibraryProvider>();
+    final dataStore = context.read<DataStore>();
+    final filters = await LibraryAdvancedFilterSheet.show(
+      context,
+      libraryProvider: libraryProvider,
+      dataStore: dataStore,
+    );
+
+    if (filters != null && mounted) {
+      libraryProvider.applyFilters(filters);
+    }
   }
 
   void _enterOnlineMode(
