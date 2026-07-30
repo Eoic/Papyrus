@@ -6,26 +6,29 @@ Redesign the advanced library filter sheet without changing its filtering behavi
 
 ## Visual Direction
 
-Use a borderless, tonal grouped form.
+Use the web prototype as the structural reference while retaining Papyrus theme tokens.
 
 - Keep the existing narrow, bottom-centered sheet and fixed header and action bar.
-- Remove subsection icons, card outlines, `ExpansionTile` dividers, and full-width separator rules.
-- Distinguish Metadata, Organization, Reading, and Dates with typography, spacing, and a subtle tonal section label.
+- Preserve the existing header divider and action-bar top border.
+- Remove subsection icons and generic card backgrounds.
+- Distinguish Metadata, Organization, Reading, and Dates with uppercase labels, compact spacing, and a single divider between major sections.
 - Hide option-based facets that have no available values.
-- Use spacing and surface color—not strokes—to establish hierarchy.
+- Use outlines to communicate expandable facets, inactive chips, and date controls.
+- Reserve filled surfaces for search inputs and selected chips.
+- Do not copy prototype shadows or color tints; derive colors from the active Papyrus theme.
 
 ## Sheet Structure
 
 The sheet remains a single scrollable column between a fixed header and fixed action bar.
 
 - The header contains the drag handle, title, and close action.
-- The scrolling body uses consistent horizontal padding and larger gaps between sections than between fields.
-- The action bar uses a slightly different surface color and spacing to remain distinct without a top border.
+- The scrolling body uses consistent horizontal padding and compact gaps between sections.
+- The original header divider and action-bar top border remain unchanged.
 - Reset, Cancel, and Show N books retain their current behavior.
 
 ## Section Presentation
 
-Each section starts with a compact text label on a subtle tonal background. Section labels have no icons. A section contains only fields that have meaningful controls; unavailable option facets such as an empty Publishers or Series list are omitted.
+Each section starts with a compact uppercase text label. Section labels have no icons or background block. Section labels, field labels, inputs, options, and chip boundaries follow one consistent left-alignment grid. A section contains only fields that have meaningful controls; unavailable option facets such as an empty Publishers or Series list are omitted.
 
 Sections retain their current order:
 
@@ -38,25 +41,25 @@ Sections retain their current order:
 
 Authors, Languages, Publishers, Series, Shelves, and Topics use a custom expandable facet instead of `Card` and `ExpansionTile`.
 
-- The collapsed row is a rounded, borderless tonal surface.
+- The expandable facet uses one rounded outline for its collapsed and expanded states.
 - It shows the field label, either `Any` or the selected count, and a chevron.
 - The entire row is clickable and keyboard accessible.
 - Hover, focus, and pressed feedback is rendered by `Material` and `InkWell` using the same border radius, preventing rectangular or clipped state layers.
-- The expanded content remains within the same surface without divider lines.
-- Search inputs are compact, filled, and borderless.
-- Matching options use rounded selectable rows with checkboxes and contained hover feedback.
+- A separator divides the expanded header from its content.
+- Search inputs are compact, pill-shaped, surface-filled, and borderless at rest with a primary focus border.
+- Matching options use transparent selectable rows with trailing checkboxes and separators contained within the facet outline.
 - The options area shrink-wraps short lists and becomes scrollable only after a maximum height.
 - A search with no matches shows a compact text state rather than an oversized empty panel.
 
 ## Compact Controls
 
-Formats, reading statuses, ratings, and favorite state use borderless tonal choice chips. Selected values use the theme's selected-container colors; inactive values use a quieter surface-container color.
+Formats, reading statuses, ratings, and favorite state use compact choice chips. Selected values use the theme's selected-container colors; inactive chips are transparent with an `outlineVariant` border.
 
-Progress and date filters use plain labeled blocks rather than cards:
+Progress and date filters use plain labels without wrapper cards:
 
-- Progress keeps its enable switch, summary, and range slider.
-- Date ranges keep their inclusive range behavior and clear action.
-- Controls are grouped by spacing and background tone, without outlines or horizontal separators.
+- Progress keeps its enable switch, summary, and range slider in one compact left-aligned row.
+- Date ranges keep their inclusive range behavior and clear action inside outlined rows.
+- Labeled groups do not receive full-width wrapper backgrounds.
 
 ## Interaction and State
 
@@ -87,7 +90,7 @@ No new automated tests are required.
 - Run targeted `flutter analyze` on the advanced filter feature files.
 - Build and launch the Linux app.
 - Inspect the sheet in dark mode at desktop width.
-- Verify outlines and separator lines are gone.
+- Verify only purposeful outlines and separators remain: facets, date rows, inactive chips, option rows, and major section boundaries.
 - Verify hover, focus, and pressed states follow rounded boundaries.
 - Verify short option lists do not reserve excessive height.
 - Verify empty option facets are hidden.

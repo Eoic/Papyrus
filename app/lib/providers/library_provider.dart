@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/library_filters.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/enums/library_sort_option.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
@@ -8,13 +9,7 @@ import 'package:papyrus/utils/book_language.dart';
 
 class LibraryProvider extends ChangeNotifier {
   String _searchQuery = '';
-  String? _selectedAuthor;
-  String? _selectedLanguage;
-  String? _selectedFormat;
-  String? _selectedShelfId;
-  String? _selectedTopicId;
-  bool _isFavoritesSelected = false;
-  LibraryReadingStatus? _selectedStatus;
+  LibraryFilters _filters = LibraryFilters();
   LibraryViewMode _viewMode = LibraryViewMode.smallGrid;
   LibrarySortOption _sortOption = LibrarySortOption.dateAddedNewest;
 
@@ -44,26 +39,23 @@ class LibraryProvider extends ChangeNotifier {
   /// Current search query.
   String get searchQuery => _searchQuery;
 
-  /// Currently selected author for filtering.
-  String? get selectedAuthor => _selectedAuthor;
+  LibraryFilters get filters => _filters;
 
-  /// Currently selected normalized language for filtering.
-  String? get selectedLanguage => _selectedLanguage;
+  int get activeFilterCount => _filters.activeCategoryCount;
 
-  /// Currently selected normalized format for filtering.
-  String? get selectedFormat => _selectedFormat;
+  Set<String> get selectedAuthors => _filters.authors;
 
-  /// ID of the currently selected shelf for filtering.
-  String? get selectedShelfId => _selectedShelfId;
+  Set<String> get selectedLanguages => _filters.languages;
 
-  /// ID of the currently selected topic for filtering.
-  String? get selectedTopicId => _selectedTopicId;
+  Set<String> get selectedFormats => _filters.formats;
 
-  /// Currently selected reading status for filtering.
-  LibraryReadingStatus? get selectedStatus => _selectedStatus;
+  Set<String> get selectedShelfIds => _filters.shelfIds;
 
-  /// Whether the favorites filter is active.
-  bool get isFavoritesSelected => _isFavoritesSelected;
+  Set<String> get selectedTopicIds => _filters.topicIds;
+
+  Set<LibraryReadingStatus> get selectedStatuses => _filters.statuses;
+
+  FavoriteFilter get favoriteFilter => _filters.favoriteFilter;
 
   void setViewMode(LibraryViewMode mode) {
     if (_viewMode == mode) {
@@ -94,102 +86,64 @@ class LibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setStatusFilter(LibraryReadingStatus? status) {
-    if (_selectedStatus == status) {
+  void setStatusFilters(Set<LibraryReadingStatus> statuses) {
+    applyFilters(_filters.copyWith(statuses: statuses));
+  }
+
+  void setFavoriteFilter(FavoriteFilter favoriteFilter) {
+    applyFilters(_filters.copyWith(favoriteFilter: favoriteFilter));
+  }
+
+  void setAuthorFilters(Set<String> authors) {
+    applyFilters(_filters.copyWith(authors: _normalizeFilterValues(authors)));
+  }
+
+  void setLanguageFilters(Set<String> languages) {
+    applyFilters(_filters.copyWith(languages: languages.map(normalizeBookLanguage).whereType<String>().toSet()));
+  }
+
+  void setFormatFilters(Set<String> formats) {
+    applyFilters(_filters.copyWith(formats: _normalizeFilterValues(formats)));
+  }
+
+  void setShelfFilters(Set<String> shelfIds) {
+    applyFilters(_filters.copyWith(shelfIds: shelfIds));
+  }
+
+  void setTopicFilters(Set<String> topicIds) {
+    applyFilters(_filters.copyWith(topicIds: topicIds));
+  }
+
+  void applyFilters(LibraryFilters filters) {
+    if (_filters == filters) {
       return;
     }
 
-    _selectedStatus = status;
+    _filters = filters;
     notifyListeners();
   }
 
-  void setIsFavoritesSelected(bool isSelected) {
-    if (_isFavoritesSelected == isSelected) {
-      return;
-    }
-
-    _isFavoritesSelected = isSelected;
-    notifyListeners();
-  }
-
-  void setAuthorFilter(String? author) {
-    final normalized = _normalizeFilterValue(author);
-    if (_selectedAuthor == normalized) {
-      return;
-    }
-
-    _selectedAuthor = normalized;
-    notifyListeners();
-  }
-
-  void setLanguageFilter(String? language) {
-    final normalized = normalizeBookLanguage(language);
-    if (_selectedLanguage == normalized) {
-      return;
-    }
-
-    _selectedLanguage = normalized;
-    notifyListeners();
-  }
-
-  void setFormatFilter(String? format) {
-    final normalized = _normalizeFilterValue(format);
-    if (_selectedFormat == normalized) {
-      return;
-    }
-
-    _selectedFormat = normalized;
-    notifyListeners();
-  }
-
-  void setShelfFilter(String? shelfId) {
-    if (_selectedShelfId == shelfId) {
-      return;
-    }
-
-    _selectedShelfId = shelfId;
-    notifyListeners();
-  }
-
-  void setTopicFilter(String? topicId) {
-    if (_selectedTopicId == topicId) {
-      return;
-    }
-
-    _selectedTopicId = topicId;
-    notifyListeners();
+  void clearFilters() {
+    applyFilters(LibraryFilters());
   }
 
   void resetQuickFilters() {
     final hasChanges =
-        _selectedStatus != null ||
-        _sortOption != LibrarySortOption.dateAddedNewest ||
-        _viewMode != LibraryViewMode.smallGrid ||
-        _isFavoritesSelected ||
-        _selectedAuthor != null ||
-        _selectedLanguage != null ||
-        _selectedFormat != null ||
-        _selectedShelfId != null ||
-        _selectedTopicId != null;
+        !_filters.isEmpty || _sortOption != LibrarySortOption.dateAddedNewest || _viewMode != LibraryViewMode.smallGrid;
 
     if (!hasChanges) {
       return;
     }
 
-    _selectedStatus = null;
+    _filters = LibraryFilters();
     _sortOption = LibrarySortOption.dateAddedNewest;
-    _isFavoritesSelected = false;
     _viewMode = LibraryViewMode.smallGrid;
-    _selectedAuthor = null;
-    _selectedLanguage = null;
-    _selectedFormat = null;
-    _selectedShelfId = null;
-    _selectedTopicId = null;
     notifyListeners();
   }
 
-  List<Book> filterBooks(List<Book> books, {required DataStore dataStore}) {
+  List<Book> filterBooks(List<Book> books, {required DataStore dataStore, LibraryFilters? filters}) {
     final searchQuery = _searchQuery.trim().toLowerCase();
+    final appliedFilters = filters ?? _filters;
 
     return books.where((book) {
       if (searchQuery.isNotEmpty &&
@@ -198,32 +152,77 @@ class LibraryProvider extends ChangeNotifier {
         return false;
       }
 
-      if (_selectedStatus != null && book.readingStatus != _selectedStatus) {
+      if (appliedFilters.statuses.isNotEmpty && !appliedFilters.statuses.contains(book.readingStatus)) {
         return false;
       }
 
-      if (_isFavoritesSelected && !isBookFavorite(book.id, book.isFavorite)) {
+      final isFavorite = isBookFavorite(book.id, book.isFavorite);
+      if (appliedFilters.favoriteFilter == FavoriteFilter.favorites && !isFavorite) {
         return false;
       }
 
-      if (_selectedAuthor != null &&
-          ![book.author, ...book.coAuthors].any((author) => _normalizeFilterValue(author) == _selectedAuthor)) {
+      if (appliedFilters.favoriteFilter == FavoriteFilter.notFavorites && isFavorite) {
         return false;
       }
 
-      if (_selectedLanguage != null && normalizeBookLanguage(book.language) != _selectedLanguage) {
+      if (appliedFilters.authors.isNotEmpty &&
+          ![
+            book.author,
+            ...book.coAuthors,
+          ].any((author) => appliedFilters.authors.contains(_normalizeFilterValue(author)))) {
         return false;
       }
 
-      if (_selectedFormat != null && _normalizeFilterValue(book.formatLabel) != _selectedFormat) {
+      if (appliedFilters.languages.isNotEmpty &&
+          !appliedFilters.languages.contains(normalizeBookLanguage(book.language))) {
         return false;
       }
 
-      if (_selectedShelfId != null && !dataStore.getShelfIdsForBook(book.id).contains(_selectedShelfId)) {
+      if (appliedFilters.formats.isNotEmpty &&
+          !appliedFilters.formats.contains(_normalizeFilterValue(book.formatLabel))) {
         return false;
       }
 
-      if (_selectedTopicId != null && !dataStore.getTagIdsForBook(book.id).contains(_selectedTopicId)) {
+      if (appliedFilters.shelfIds.isNotEmpty &&
+          !dataStore.getShelfIdsForBook(book.id).any(appliedFilters.shelfIds.contains)) {
+        return false;
+      }
+
+      if (appliedFilters.topicIds.isNotEmpty &&
+          !dataStore.getTagIdsForBook(book.id).any(appliedFilters.topicIds.contains)) {
+        return false;
+      }
+
+      if (appliedFilters.publishers.isNotEmpty &&
+          !appliedFilters.publishers.contains(_normalizeFilterValue(book.publisher))) {
+        return false;
+      }
+
+      if (appliedFilters.seriesNames.isNotEmpty &&
+          !appliedFilters.seriesNames.contains(_normalizeFilterValue(book.seriesName))) {
+        return false;
+      }
+
+      if (appliedFilters.progressRange case final range? when !range.contains(book.currentPosition)) {
+        return false;
+      }
+
+      if (appliedFilters.ratings.isNotEmpty || appliedFilters.includeUnrated) {
+        final rating = book.rating;
+        if (rating == null ? !appliedFilters.includeUnrated : !appliedFilters.ratings.contains(rating)) {
+          return false;
+        }
+      }
+
+      if (appliedFilters.publicationDateRange case final range? when !range.contains(book.publicationDate)) {
+        return false;
+      }
+
+      if (appliedFilters.dateAddedRange case final range? when !range.contains(book.addedAt)) {
+        return false;
+      }
+
+      if (appliedFilters.lastReadDateRange case final range? when !range.contains(book.lastReadAt)) {
         return false;
       }
 
@@ -355,5 +354,9 @@ class LibraryProvider extends ChangeNotifier {
   static String? _normalizeFilterValue(String? value) {
     final normalized = value?.trim().toLowerCase();
     return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
+  static Set<String> _normalizeFilterValues(Set<String> values) {
+    return values.map(_normalizeFilterValue).whereType<String>().toSet();
   }
 }
