@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:papyrus/services/book_import_result.dart';
 
+@immutable
 class SelectedBookFile {
   const SelectedBookFile({required this.name, required this.bytes});
 
@@ -11,6 +13,7 @@ class SelectedBookFile {
 
 enum BookImportBatchStatus { queued, processing, ready, processingFailed, adding, added, commitFailed }
 
+@immutable
 class BookImportBatchItem {
   const BookImportBatchItem._({
     required this.id,
