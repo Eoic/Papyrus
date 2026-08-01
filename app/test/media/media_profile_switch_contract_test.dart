@@ -46,9 +46,12 @@ void main() {
     );
     expect(processor, contains('readPendingCover: _bookImportService.getPendingCoverFile'));
 
-    final importSource = File('lib/widgets/add_book/import_book_sheet.dart').readAsStringSync();
-    final commitStart = importSource.indexOf('Future<void> _addToLibrary()');
-    final commit = importSource.substring(commitStart, importSource.indexOf('@override\n  Widget build', commitStart));
+    final importSource = File('lib/widgets/add_book/book_import_results_sheet.dart').readAsStringSync();
+    final commitStart = importSource.indexOf('static Future<Book> _commitResult(');
+    final commit = importSource.substring(
+      commitStart,
+      importSource.indexOf('/// Opens the processing step', commitStart),
+    );
     expect(commit, contains('final accountScope = isOnlineAccount ? queue.activeScope : null;'));
     expect(commit, contains("throw StateError('Cannot import account media without an active media storage scope')"));
     expect(commit, contains('storePendingCover: importService.storePendingCoverFile'));
@@ -67,15 +70,15 @@ void main() {
   });
 
   test('import commit guard prevents repeat commits and disables mutable actions', () {
-    final source = File('lib/widgets/add_book/import_book_sheet.dart').readAsStringSync();
-    final commitStart = source.indexOf('Future<void> _addToLibrary()');
-    final commit = source.substring(commitStart, source.indexOf('@override\n  Widget build', commitStart));
+    final source = File('lib/widgets/add_book/book_import_results_sheet.dart').readAsStringSync();
+    final addStart = source.indexOf('Future<void> _addReadyBooks()');
+    final add = source.substring(addStart, source.indexOf('Future<void> _retryCommit', addStart));
 
-    expect(commit, contains('if (_committing) return;'));
-    expect(commit, contains('_committing = true'));
-    expect(commit, contains('_committing = false'));
-    expect(source, contains('onPressed: _committing ? null : _addToLibrary'));
-    expect(RegExp(r'onPressed: _committing \? null : _pickAndProcess').allMatches(source), hasLength(2));
-    expect(source, contains('onPressed: _committing\n                    ? null'));
+    expect(add, contains('if (!_canAdd) return;'));
+    expect(add, contains('_isAdding = true'));
+    expect(add, contains('_isAdding = false'));
+    expect(source, contains('canClose: !_isClosing && !_isAdding'));
+    expect(source, contains('onPressed: _canAdd ? () => unawaited(_addReadyBooks()) : null'));
+    expect(source, contains('onRemove: _isClosing || _isAdding ? null'));
   });
 }

@@ -2,7 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/media/media_upload_queue.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/powersync/powersync_service.dart';
+import 'package:papyrus/powersync/sync_state.dart';
+import 'package:papyrus/providers/auth_provider.dart';
+import 'package:papyrus/services/book_import_commit_service.dart';
 import 'package:papyrus/services/book_import_service_stub.dart'
     if (dart.library.js_interop) 'package:papyrus/services/book_import_service.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -22,14 +28,60 @@ class BookImportResultsSheet extends StatefulWidget {
     required this.processor,
     required this.deleteBookFile,
     required this.onClose,
+    this.committer,
+    this.onCompleted,
     this.scrollController,
   });
 
   final List<SelectedBookFile> files;
   final BookImportProcessor processor;
   final ImportedBookFileDeleter deleteBookFile;
+  final ImportedBookCommitter? committer;
   final VoidCallback onClose;
+  final ValueChanged<List<Book>>? onCompleted;
   final ScrollController? scrollController;
+
+  static Future<Book> _commitResult(BuildContext context, BookImportResult result, String sourceFilename) async {
+    final dataStore = context.read<DataStore>();
+    final bookRepository = dataStore.requireBookRepository();
+    final queue = context.read<MediaUploadQueue>();
+    final importService = context.read<BookImportService>();
+    final authProvider = context.read<AuthProvider>();
+    final powerSyncService = context.read<PapyrusPowerSyncService>();
+    final isOnlineAccount = authProvider.isSignedIn && powerSyncService.mode == LibraryDatabaseMode.authenticated;
+    final accountScope = isOnlineAccount ? queue.activeScope : null;
+    if (isOnlineAccount && accountScope == null) {
+      throw StateError('Cannot import account media without an active media storage scope');
+    }
+
+    final extension = result.fileExtension;
+    final filePath = kIsWeb
+        ? 'opfs://books/${result.bookId}.$extension'
+        : result.bookId; // Native resolves via BookImportService.getBookFile.
+    final commitService = BookImportCommitService(
+      storePendingCover: importService.storePendingCoverFile,
+      storeGuestCover: importService.storeGuestCoverFile,
+      deletePendingCover: importService.deletePendingCoverFile,
+      deleteGuestCover: importService.deleteGuestCoverFile,
+      addBook: (book) => dataStore.addBookToRepositoryAndWait(bookRepository, book),
+      deleteBook: (bookId) => dataStore.deleteBookFromRepositoryAndWait(bookRepository, bookId),
+      enqueueImportedBookMedia: queue.enqueueImportedBookMedia,
+      isLibraryContextCurrent: () {
+        final currentIsOnlineAccount =
+            authProvider.isSignedIn && powerSyncService.mode == LibraryDatabaseMode.authenticated;
+        return dataStore.isBookRepositoryCurrent(bookRepository) &&
+            currentIsOnlineAccount == isOnlineAccount &&
+            queue.activeScope == accountScope;
+      },
+    );
+    return commitService.commit(
+      result: result,
+      sourceFilename: sourceFilename,
+      addedAt: DateTime.now(),
+      localFilePath: filePath,
+      accountScope: accountScope,
+    );
+  }
 
   /// Opens the processing step as its own root-level modal sheet.
   static Future<void> show(
@@ -37,10 +89,13 @@ class BookImportResultsSheet extends StatefulWidget {
     required List<SelectedBookFile> files,
     BookImportProcessor? processor,
     ImportedBookFileDeleter? deleteBookFile,
+    ImportedBookCommitter? committer,
   }) {
     final importService = processor == null || deleteBookFile == null ? context.read<BookImportService>() : null;
     final effectiveProcessor = processor ?? importService!.importBook;
     final effectiveDeleter = deleteBookFile ?? importService!.deleteBookFile;
+    final effectiveCommitter = committer ?? (result, filename) => _commitResult(context, result, filename);
+    final messenger = ScaffoldMessenger.maybeOf(context);
 
     return showModalBottomSheet<void>(
       context: context,
@@ -58,8 +113,15 @@ class BookImportResultsSheet extends StatefulWidget {
           files: files,
           processor: effectiveProcessor,
           deleteBookFile: effectiveDeleter,
+          committer: effectiveCommitter,
           scrollController: scrollController,
           onClose: () => Navigator.of(sheetContext).pop(),
+          onCompleted: (books) {
+            final count = books.length;
+            messenger?.showSnackBar(
+              SnackBar(content: Text('Added $count ${count == 1 ? 'book' : 'books'} to library')),
+            );
+          },
         ),
       ),
     );
@@ -75,7 +137,10 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
   final Set<String> _removingIds = {};
   final Set<String> _cleanedBookIds = {};
   final Map<String, Future<bool>> _cleanupFutures = {};
+  final List<Book> _addedBooks = [];
   bool _isClosing = false;
+  bool _isAdding = false;
+  bool _didComplete = false;
   Future<void>? _closeFuture;
 
   @override
@@ -145,12 +210,103 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     return message.isEmpty ? 'Could not import this file.' : message;
   }
 
-  Future<void> _remove(String id) async {
-    if (_isClosing || _removingIds.contains(id)) return;
+  int get _readyCount => _items.where((item) => item.status == BookImportBatchStatus.ready).length;
+
+  bool get _processingSettled => _items.every((item) => item.isSettled);
+
+  bool get _hasCleanupAction => _isClosing || _removingIds.isNotEmpty;
+
+  bool get _canAdd => _processingSettled && _readyCount > 0 && !_isAdding && !_hasCleanupAction;
+
+  Future<void> _addReadyBooks() async {
+    if (!_canAdd) return;
+    final readyIds = _items
+        .where((item) => item.status == BookImportBatchStatus.ready)
+        .map((item) => item.id)
+        .toList(growable: false);
+    if (readyIds.isEmpty) return;
+
+    setState(() {
+      _isAdding = true;
+      for (final id in readyIds) {
+        final index = _indexOf(id);
+        if (index >= 0 && _items[index].status == BookImportBatchStatus.ready) {
+          _items[index] = _items[index].startAdding();
+        }
+      }
+    });
+
+    for (final id in readyIds) {
+      await _commitAddingItem(id);
+    }
+    if (!mounted) return;
+    setState(() => _isAdding = false);
+    _completeIfAllAdded();
+  }
+
+  Future<void> _retryCommit(String id) async {
+    if (_isAdding || _hasCleanupAction || !mounted) return;
+    final index = _indexOf(id);
+    if (index < 0 || _items[index].status != BookImportBatchStatus.commitFailed) return;
+
+    setState(() {
+      _isAdding = true;
+      _items[index] = _items[index].startAdding();
+    });
+    await _commitAddingItem(id);
+    if (!mounted) return;
+    setState(() => _isAdding = false);
+    _completeIfAllAdded();
+  }
+
+  Future<void> _commitAddingItem(String id) async {
     final index = _indexOf(id);
     if (index < 0) return;
     final item = _items[index];
-    if (item.status != BookImportBatchStatus.processingFailed && item.status != BookImportBatchStatus.ready) return;
+    if (item.status != BookImportBatchStatus.adding || item.result == null) return;
+
+    try {
+      final book =
+          await (widget.committer ??
+              (result, filename) =>
+                  BookImportResultsSheet._commitResult(context, result, filename))(item.result!, item.file.name);
+      if (!mounted) return;
+      final currentIndex = _indexOf(id);
+      if (currentIndex < 0 || _items[currentIndex].status != BookImportBatchStatus.adding) return;
+      setState(() {
+        _items[currentIndex] = _items[currentIndex].added();
+        _addedBooks.add(book);
+      });
+    } catch (error) {
+      if (!mounted) return;
+      final currentIndex = _indexOf(id);
+      if (currentIndex < 0 || _items[currentIndex].status != BookImportBatchStatus.adding) return;
+      setState(() {
+        _items[currentIndex] = _items[currentIndex].commitFailed(_safeErrorMessage(error));
+      });
+    }
+  }
+
+  void _completeIfAllAdded() {
+    if (_didComplete || _items.isEmpty || !_items.every((item) => item.status == BookImportBatchStatus.added)) {
+      return;
+    }
+    _didComplete = true;
+    final books = List<Book>.unmodifiable(_addedBooks);
+    widget.onClose();
+    widget.onCompleted?.call(books);
+  }
+
+  Future<void> _remove(String id) async {
+    if (_isClosing || _isAdding || _removingIds.contains(id)) return;
+    final index = _indexOf(id);
+    if (index < 0) return;
+    final item = _items[index];
+    if (item.status != BookImportBatchStatus.processingFailed &&
+        item.status != BookImportBatchStatus.ready &&
+        item.status != BookImportBatchStatus.commitFailed) {
+      return;
+    }
 
     _removingIds.add(id);
     if (mounted) setState(() {});
@@ -175,6 +331,7 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     final currentIndex = _indexOf(id);
     if (currentIndex >= 0) {
       setState(() => _items.removeAt(currentIndex));
+      _completeIfAllAdded();
     }
   }
 
@@ -207,6 +364,7 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
   }
 
   Future<void> _requestClose() {
+    if (_isAdding) return Future.value();
     final inFlight = _closeFuture;
     if (inFlight != null) return inFlight;
 
@@ -254,7 +412,7 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
       },
       child: AddBookSheetScaffold(
         title: 'Import results',
-        canClose: !_isClosing,
+        canClose: !_isClosing && !_isAdding,
         onClose: () => unawaited(_requestClose()),
         body: ListView.separated(
           key: const Key('book-import-results-list'),
@@ -268,17 +426,28 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
               key: ValueKey(item.id),
               item: item,
               isRemoving: _removingIds.contains(item.id),
-              onRetry: _isClosing ? null : () => unawaited(_process(item.id)),
-              onRemove: _isClosing ? null : () => unawaited(_remove(item.id)),
+              onRetry: _isClosing || _isAdding
+                  ? null
+                  : () => unawaited(
+                      item.status == BookImportBatchStatus.commitFailed ? _retryCommit(item.id) : _process(item.id),
+                    ),
+              onRemove: _isClosing || _isAdding ? null : () => unawaited(_remove(item.id)),
             );
           },
         ),
-        footer: Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: _isClosing ? null : () => unawaited(_requestClose()),
-            child: const Text('Close'),
-          ),
+        footer: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: _isClosing || _isAdding ? null : () => unawaited(_requestClose()),
+              child: const Text('Close'),
+            ),
+            const SizedBox(width: Spacing.sm),
+            FilledButton(
+              onPressed: _canAdd ? () => unawaited(_addReadyBooks()) : null,
+              child: Text('Add $_readyCount to library'),
+            ),
+          ],
         ),
       ),
     );
@@ -302,7 +471,8 @@ class _ImportResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final failed = item.status == BookImportBatchStatus.processingFailed;
+    final failed =
+        item.status == BookImportBatchStatus.processingFailed || item.status == BookImportBatchStatus.commitFailed;
     final ready = item.status == BookImportBatchStatus.ready;
 
     return ListTile(

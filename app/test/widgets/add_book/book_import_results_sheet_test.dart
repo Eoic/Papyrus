@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/book_import_result.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
 import 'package:papyrus/widgets/add_book/book_import_results_sheet.dart';
@@ -28,13 +29,19 @@ BookImportResult resultFor(String filename, {String? bookId}) {
   );
 }
 
+Book bookFor(BookImportResult result) {
+  return Book(id: result.bookId, title: result.title, author: result.author, addedAt: DateTime(2026));
+}
+
 void main() {
   Future<void> pumpResults(
     WidgetTester tester, {
     required List<SelectedBookFile> files,
     required BookImportProcessor processor,
     ImportedBookFileDeleter? deleter,
+    ImportedBookCommitter? committer,
     VoidCallback? onClose,
+    ValueChanged<List<Book>>? onCompleted,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -45,7 +52,9 @@ void main() {
               files: files,
               processor: processor,
               deleteBookFile: deleter ?? (_) async {},
+              committer: committer,
               onClose: onClose ?? () {},
+              onCompleted: onCompleted,
             ),
           ),
         ),
@@ -386,5 +395,218 @@ void main() {
       ),
       findsNothing,
     );
+  });
+
+  testWidgets('enables the counted add action only after processing settles', (tester) async {
+    final processing = Completer<BookImportResult>();
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'one.epub', bytes: Uint8List.fromList([1])),
+      ],
+      processor: (_, _) => processing.future,
+      committer: (result, _) async => bookFor(result),
+    );
+
+    final addButton = find.widgetWithText(FilledButton, 'Add 0 to library');
+    expect(addButton, findsOneWidget);
+    expect(tester.widget<FilledButton>(addButton).onPressed, isNull);
+
+    processing.complete(resultFor('one.epub'));
+    await tester.pump();
+
+    final enabledButton = find.widgetWithText(FilledButton, 'Add 1 to library');
+    expect(enabledButton, findsOneWidget);
+    expect(tester.widget<FilledButton>(enabledButton).onPressed, isNotNull);
+  });
+
+  testWidgets('commits every ready book and reports the completed batch', (tester) async {
+    final committed = <String>[];
+    List<Book>? completed;
+    var closed = false;
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'one.epub', bytes: Uint8List.fromList([1])),
+        SelectedBookFile(name: 'two.epub', bytes: Uint8List.fromList([2])),
+      ],
+      processor: (_, filename) async => resultFor(filename),
+      committer: (result, filename) async {
+        committed.add(filename);
+        return bookFor(result);
+      },
+      onClose: () => closed = true,
+      onCompleted: (books) => completed = books,
+    );
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 2 to library'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(committed, ['one.epub', 'two.epub']);
+    expect(completed?.map((book) => book.id), ['book-one.epub', 'book-two.epub']);
+    expect(closed, isTrue);
+  });
+
+  testWidgets('partial commit retries only the failed final commit without duplicating successes', (tester) async {
+    final processCalls = <String, int>{};
+    final commitCalls = <String, int>{};
+    List<Book>? completed;
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'a.epub', bytes: Uint8List.fromList([1])),
+        SelectedBookFile(name: 'b.epub', bytes: Uint8List.fromList([2])),
+      ],
+      processor: (_, filename) async {
+        processCalls.update(filename, (count) => count + 1, ifAbsent: () => 1);
+        return resultFor(filename);
+      },
+      committer: (result, filename) async {
+        final attempt = commitCalls.update(filename, (count) => count + 1, ifAbsent: () => 1);
+        if (filename == 'b.epub' && attempt == 1) throw Exception('Could not save');
+        return bookFor(result);
+      },
+      onCompleted: (books) => completed = books,
+    );
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 2 to library'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Added'), findsOneWidget);
+    expect(find.text('Could not save'), findsOneWidget);
+    expect(completed, isNull);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Retry'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(processCalls, {'a.epub': 1, 'b.epub': 1});
+    expect(commitCalls, {'a.epub': 1, 'b.epub': 2});
+    expect(completed, isNotNull);
+  });
+
+  testWidgets('removing a commit failure cleans only its temporary result', (tester) async {
+    final deleted = <String>[];
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'added.epub', bytes: Uint8List.fromList([1])),
+        SelectedBookFile(name: 'failed.epub', bytes: Uint8List.fromList([2])),
+      ],
+      processor: (_, filename) async => resultFor(filename, bookId: 'temporary-$filename'),
+      committer: (result, filename) async {
+        if (filename == 'failed.epub') throw Exception('Commit failed');
+        return bookFor(result);
+      },
+      deleter: (bookId) async => deleted.add(bookId),
+    );
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 2 to library'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byTooltip('Remove added.epub'), findsNothing);
+    await tester.tap(find.byTooltip('Remove failed.epub'));
+    await tester.pump();
+
+    expect(deleted, ['temporary-failed.epub']);
+    expect(find.text('failed.epub'), findsNothing);
+  });
+
+  testWidgets('disables dismissal and mutable actions while a commit is active', (tester) async {
+    final commit = Completer<Book>();
+    var closed = false;
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'slow.epub', bytes: Uint8List.fromList([1])),
+      ],
+      processor: (_, filename) async => resultFor(filename),
+      committer: (_, _) => commit.future,
+      onClose: () => closed = true,
+    );
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 1 to library'));
+    await tester.pump();
+
+    final closeButton = find.descendant(
+      of: find.byKey(const Key('add-book-sheet-header')),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(closeButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Close')).onPressed, isNull);
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Add 0 to library')).onPressed, isNull);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(closed, isFalse);
+
+    commit.complete(bookFor(resultFor('slow.epub')));
+    await tester.pump();
+    await tester.pump();
+  });
+
+  testWidgets('closing after a partial commit deletes only uncommitted temporary files', (tester) async {
+    final deleted = <String>[];
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'added.epub', bytes: Uint8List.fromList([1])),
+        SelectedBookFile(name: 'failed.epub', bytes: Uint8List.fromList([2])),
+      ],
+      processor: (_, filename) async => resultFor(filename, bookId: filename),
+      committer: (result, filename) async {
+        if (filename == 'failed.epub') throw Exception('Commit failed');
+        return bookFor(result);
+      },
+      deleter: (bookId) async => deleted.add(bookId),
+    );
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 2 to library'));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(deleted, ['failed.epub']);
+  });
+
+  testWidgets('production route closes and reports the completed book count', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => BookImportResultsSheet.show(
+                context,
+                files: [
+                  SelectedBookFile(name: 'one.epub', bytes: Uint8List.fromList([1])),
+                  SelectedBookFile(name: 'two.epub', bytes: Uint8List.fromList([2])),
+                ],
+                processor: (_, filename) async => resultFor(filename),
+                deleteBookFile: (_) async {},
+                committer: (result, _) async => bookFor(result),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 2 to library'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BookImportResultsSheet), findsNothing);
+    expect(find.text('Added 2 books to library'), findsOneWidget);
   });
 }
