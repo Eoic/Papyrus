@@ -134,6 +134,7 @@ class BookImportResultsSheet extends StatefulWidget {
 class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
   late List<BookImportBatchItem> _items;
   final Map<String, int> _processingTokens = {};
+  final Map<String, Future<bool>> _processingFutures = {};
   final Set<String> _removingIds = {};
   final Set<String> _cleanedBookIds = {};
   final Map<String, Future<bool>> _cleanupFutures = {};
@@ -153,17 +154,33 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final item in List<BookImportBatchItem>.of(_items)) {
-        unawaited(_process(item.id));
+        unawaited(_startProcessing(item.id));
       }
     });
   }
 
   int _indexOf(String id) => _items.indexWhere((item) => item.id == id);
 
-  Future<void> _process(String id) async {
-    if (_isClosing || !mounted) return;
+  Future<bool> _startProcessing(String id) {
+    final inFlight = _processingFutures[id];
+    if (inFlight != null) return inFlight;
+
+    final processing = _process(id);
+    _processingFutures[id] = processing;
+    unawaited(
+      processing.whenComplete(() {
+        if (identical(_processingFutures[id], processing)) {
+          _processingFutures.remove(id);
+        }
+      }),
+    );
+    return processing;
+  }
+
+  Future<bool> _process(String id) async {
+    if (_isClosing || !mounted) return true;
     final index = _indexOf(id);
-    if (index < 0) return;
+    if (index < 0) return true;
 
     final token = (_processingTokens[id] ?? 0) + 1;
     _processingTokens[id] = token;
@@ -172,35 +189,50 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
 
     final bytes = processingItem.file.bytes;
     if (bytes == null) {
-      if (!_isCurrentProcessing(id, token)) return;
+      if (!_isCurrentProcessing(id, token)) return true;
       setState(() {
         final currentIndex = _indexOf(id);
         _items[currentIndex] = _items[currentIndex].processingFailed('Could not read this file.');
       });
-      return;
+      return true;
     }
 
     try {
       final result = await widget.processor(bytes, processingItem.file.name);
-      if (_isClosing || !mounted || !_isCurrentProcessing(id, token)) {
-        await _deleteTemporary(result.bookId);
-        return;
+      if (_isClosing) {
+        final deleted = await _deleteTemporary(result.bookId);
+        if (!deleted && _isMatchingProcessing(id, token)) {
+          setState(() {
+            final currentIndex = _indexOf(id);
+            _items[currentIndex] = _items[currentIndex].processingSucceeded(result);
+          });
+        }
+        return deleted;
+      }
+      if (!mounted || !_isMatchingProcessing(id, token)) {
+        return _deleteTemporary(result.bookId);
       }
       setState(() {
         final currentIndex = _indexOf(id);
         _items[currentIndex] = _items[currentIndex].processingSucceeded(result);
       });
+      return true;
     } catch (error) {
-      if (!_isCurrentProcessing(id, token)) return;
+      if (!_isCurrentProcessing(id, token)) return true;
       setState(() {
         final currentIndex = _indexOf(id);
         _items[currentIndex] = _items[currentIndex].processingFailed(_safeErrorMessage(error));
       });
+      return true;
     }
   }
 
   bool _isCurrentProcessing(String id, int token) {
-    if (_isClosing || !mounted || _processingTokens[id] != token) return false;
+    return !_isClosing && _isMatchingProcessing(id, token);
+  }
+
+  bool _isMatchingProcessing(String id, int token) {
+    if (!mounted || _processingTokens[id] != token) return false;
     final index = _indexOf(id);
     return index >= 0 && _items[index].status == BookImportBatchStatus.processing;
   }
@@ -388,19 +420,28 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
       _isClosing = true;
     }
 
+    final processingResults = await Future.wait(List<Future<bool>>.of(_processingFutures.values));
+    if (processingResults.any((cleaned) => !cleaned)) {
+      _restoreAfterCloseFailure();
+      return;
+    }
+
     final bookIds = _items.where((item) => item.hasTemporaryFile).map((item) => item.result!.bookId).toSet();
     final cleanupResults = await Future.wait(bookIds.map(_deleteTemporary));
     if (cleanupResults.any((deleted) => !deleted)) {
-      if (mounted) {
-        setState(() => _isClosing = false);
-        ScaffoldMessenger.maybeOf(
-          context,
-        )?.showSnackBar(const SnackBar(content: Text('Could not remove temporary files. Please try again.')));
-      }
+      _restoreAfterCloseFailure();
       return;
     }
     if (!mounted) return;
     widget.onClose();
+  }
+
+  void _restoreAfterCloseFailure() {
+    if (!mounted) return;
+    setState(() => _isClosing = false);
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(const SnackBar(content: Text('Could not remove temporary files. Please try again.')));
   }
 
   @override
@@ -429,7 +470,9 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
               onRetry: _isClosing || _isAdding
                   ? null
                   : () => unawaited(
-                      item.status == BookImportBatchStatus.commitFailed ? _retryCommit(item.id) : _process(item.id),
+                      item.status == BookImportBatchStatus.commitFailed
+                          ? _retryCommit(item.id)
+                          : _startProcessing(item.id),
                     ),
               onRemove: _isClosing || _isAdding ? null : () => unawaited(_remove(item.id)),
             );

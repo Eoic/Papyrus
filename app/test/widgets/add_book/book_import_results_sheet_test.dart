@@ -333,7 +333,7 @@ void main() {
     expect(find.byType(BookImportResultsSheet), findsNothing);
   });
 
-  testWidgets('a success arriving after close is deleted without updating disposed state', (tester) async {
+  testWidgets('close waits for a late success to be cleaned before disposing state', (tester) async {
     final processing = Completer<BookImportResult>();
     final deleted = <String>[];
     await tester.pumpWidget(
@@ -362,13 +362,76 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Close'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byType(BookImportResultsSheet), findsNothing);
+    expect(find.byType(BookImportResultsSheet), findsOneWidget);
 
     processing.complete(resultFor('slow.epub', bookId: 'late-book'));
     await tester.pump();
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
 
     expect(deleted, ['late-book']);
+    expect(find.byType(BookImportResultsSheet), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('failed late-success cleanup keeps close retryable without reprocessing', (tester) async {
+    final processing = Completer<BookImportResult>();
+    final observer = _PopCountingObserver();
+    var processorCalls = 0;
+    var deleteAttempts = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [observer],
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => BookImportResultsSheet.show(
+                context,
+                files: [
+                  SelectedBookFile(name: 'slow.epub', bytes: Uint8List.fromList([1])),
+                ],
+                processor: (_, _) {
+                  processorCalls++;
+                  return processing.future;
+                },
+                deleteBookFile: (_) async {
+                  deleteAttempts++;
+                  if (deleteAttempts == 1) throw Exception('private cleanup detail');
+                },
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pump();
+    expect(find.byType(BookImportResultsSheet), findsOneWidget);
+
+    processing.complete(resultFor('slow.epub', bookId: 'late-book'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(processorCalls, 1);
+    expect(deleteAttempts, 1);
+    expect(observer.pops, 0);
+    expect(find.byType(BookImportResultsSheet), findsOneWidget);
+    expect(find.text('Could not remove temporary files. Please try again.'), findsOneWidget);
+    expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Close')).onPressed, isNotNull);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(processorCalls, 1);
+    expect(deleteAttempts, 2);
+    expect(observer.pops, 1);
+    expect(find.byType(BookImportResultsSheet), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
