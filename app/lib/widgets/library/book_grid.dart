@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
@@ -106,7 +105,9 @@ class BookGrid extends StatelessWidget {
       removeTop: true,
       child: GridView.builder(
         padding: padding ?? const EdgeInsets.only(left: Spacing.md, right: Spacing.md, bottom: Spacing.md),
-        scrollCacheExtent: ScrollCacheExtent.pixels(200),
+        // Flutter 3.41 compatibility; replaced by scrollCacheExtent in 3.42+.
+        // ignore: deprecated_member_use
+        cacheExtent: 200,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: layout.crossAxisCount,
           mainAxisSpacing: layout.spacing,
