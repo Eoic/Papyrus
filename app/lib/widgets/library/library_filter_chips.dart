@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/library_filter_options.dart';
 import 'package:papyrus/models/library_filters.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/enums/library_sort_option.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
+import 'package:papyrus/utils/book_language.dart';
 import 'package:provider/provider.dart';
 
 class _ChipEntry {
@@ -305,11 +307,51 @@ class LibraryFilterChips extends StatelessWidget {
       for (final option in filterOptions.readingStatuses)
         _SelectionOption<LibraryReadingStatus>(value: option.value, label: option.label, icon: option.value.icon),
     ];
-    final authorOptions = _withIcon(filterOptions.authors, Icons.person_outline_rounded);
-    final languageOptions = _withIcon(filterOptions.languages, Icons.language_rounded);
-    final formatOptions = _withIcon(filterOptions.formats, Icons.description_outlined);
-    final topicOptions = _withIcon(filterOptions.topics, Icons.label_outline_rounded);
-    final shelfOptions = _withIcon(filterOptions.shelves, Icons.folder_outlined);
+    final effectiveStatusOptions = _withSelectedSelectionOptions(
+      statusOptions,
+      provider.selectedStatuses,
+      (status) => status.label,
+    );
+    final authorOptions = _withIcon(
+      _withSelectedFilterOptions(
+        filterOptions.authors,
+        provider.selectedAuthors,
+        (value) => _authorLabel(dataStore.books, value),
+      ),
+      Icons.person_outline_rounded,
+    );
+    final languageOptions = _withIcon(
+      _withSelectedFilterOptions(
+        filterOptions.languages,
+        provider.selectedLanguages,
+        (value) => _languageLabel(dataStore.books, value),
+      ),
+      Icons.language_rounded,
+    );
+    final formatOptions = _withIcon(
+      _withSelectedFilterOptions(
+        filterOptions.formats,
+        provider.selectedFormats,
+        (value) => _formatLabel(dataStore.books, value),
+      ),
+      Icons.description_outlined,
+    );
+    final topicOptions = _withIcon(
+      _withSelectedFilterOptions(
+        filterOptions.topics,
+        provider.selectedTopicIds,
+        (value) => _topicLabel(dataStore, value),
+      ),
+      Icons.label_outline_rounded,
+    );
+    final shelfOptions = _withIcon(
+      _withSelectedFilterOptions(
+        filterOptions.shelves,
+        provider.selectedShelfIds,
+        (value) => _shelfLabel(dataStore, value),
+      ),
+      Icons.folder_outlined,
+    );
     final selectedSort = _sortOptions.firstWhere((option) => option.value == provider.sortOption);
     final selectedFavorite = _favoriteOptions.firstWhere((option) => option.value == provider.favoriteFilter);
     final selectedViewMode = _viewModeOptions.firstWhere((option) => option.value == provider.viewMode);
@@ -320,7 +362,7 @@ class LibraryFilterChips extends StatelessWidget {
         defaultOrder: 0,
         isActive: provider.selectedStatuses.isNotEmpty,
         child: _DropdownFilterChip(
-          label: _multiSelectionLabel('Status', provider.selectedStatuses, statusOptions),
+          label: _multiSelectionLabel('Status', provider.selectedStatuses, effectiveStatusOptions),
           semanticLabel: 'Reading status',
           icon: Icons.auto_stories_outlined,
           isSelected: provider.selectedStatuses.isNotEmpty,
@@ -328,7 +370,7 @@ class LibraryFilterChips extends StatelessWidget {
           onPressed: () => _selectMultiple<LibraryReadingStatus>(
             context: context,
             title: 'Reading status',
-            options: statusOptions,
+            options: effectiveStatusOptions,
             selectedValues: provider.selectedStatuses,
             onSelected: provider.setStatusFilters,
           ),
@@ -621,5 +663,79 @@ class LibraryFilterChips extends StatelessWidget {
 
   static List<_SelectionOption<String>> _withIcon(List<LibraryFilterOption<String>> options, IconData icon) {
     return [for (final option in options) _SelectionOption(value: option.value, label: option.label, icon: icon)];
+  }
+
+  static List<_SelectionOption<T>> _withSelectedSelectionOptions<T>(
+    List<_SelectionOption<T>> options,
+    Set<T> selectedValues,
+    String Function(T value) labelForValue,
+  ) {
+    return [
+      ...options,
+      for (final value in selectedValues)
+        if (!options.any((option) => option.value == value))
+          _SelectionOption(value: value, label: labelForValue(value)),
+    ];
+  }
+
+  static List<LibraryFilterOption<String>> _withSelectedFilterOptions(
+    List<LibraryFilterOption<String>> options,
+    Set<String> selectedValues,
+    String Function(String value) labelForValue,
+  ) {
+    return [
+      ...options,
+      for (final value in selectedValues)
+        if (!options.any((option) => option.value == value))
+          LibraryFilterOption(value: value, label: labelForValue(value)),
+    ];
+  }
+
+  static String _authorLabel(Iterable<Book> books, String value) {
+    for (final book in books) {
+      for (final author in [book.author, ...book.coAuthors]) {
+        if (author.trim().toLowerCase() == value) {
+          return author.trim();
+        }
+      }
+    }
+    return 'Unknown author ($value)';
+  }
+
+  static String _formatLabel(Iterable<Book> books, String value) {
+    for (final book in books) {
+      if (book.formatLabel.toLowerCase() == value) {
+        return book.formatLabel;
+      }
+    }
+    return 'Unknown format ($value)';
+  }
+
+  static String _languageLabel(Iterable<Book> books, String value) {
+    for (final book in books) {
+      if (normalizeBookLanguage(book.language) == value) {
+        return bookLanguageLabel(book.language ?? value);
+      }
+    }
+    final label = bookLanguageLabel(value);
+    return label == value ? 'Unknown language ($value)' : label;
+  }
+
+  static String _topicLabel(DataStore dataStore, String value) {
+    for (final topic in dataStore.tags) {
+      if (topic.id == value) {
+        return topic.name;
+      }
+    }
+    return 'Unknown topic ($value)';
+  }
+
+  static String _shelfLabel(DataStore dataStore, String value) {
+    for (final shelf in dataStore.shelves) {
+      if (shelf.id == value) {
+        return shelf.name;
+      }
+    }
+    return 'Unknown shelf ($value)';
   }
 }

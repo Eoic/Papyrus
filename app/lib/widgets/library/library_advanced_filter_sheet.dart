@@ -6,6 +6,7 @@ import 'package:papyrus/models/library_filters.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/utils/book_language.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 bool _isEinkTheme(ThemeData theme) {
@@ -107,16 +108,94 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
     Navigator.of(context).pop(_draft);
   }
 
+  List<LibraryFilterOption<T>> _withSelectedOptions<T>(
+    List<LibraryFilterOption<T>> options,
+    Set<T> selectedValues,
+    String Function(T value) labelForValue,
+  ) {
+    return [
+      ...options,
+      for (final value in selectedValues)
+        if (!options.any((option) => option.value == value))
+          LibraryFilterOption(value: value, label: labelForValue(value)),
+    ];
+  }
+
+  String _authorLabel(String value) {
+    for (final book in widget.dataStore.books) {
+      for (final author in [book.author, ...book.coAuthors]) {
+        if (author.trim().toLowerCase() == value) return author.trim();
+      }
+    }
+    return 'Unknown author ($value)';
+  }
+
+  String _languageLabel(String value) {
+    for (final book in widget.dataStore.books) {
+      if (normalizeBookLanguage(book.language) == value) return bookLanguageLabel(book.language ?? value);
+    }
+    final label = bookLanguageLabel(value);
+    return label == value ? 'Unknown language ($value)' : label;
+  }
+
+  String _bookFieldLabel(String value, String? Function(Book book) field, String fieldName) {
+    for (final book in widget.dataStore.books) {
+      final label = field(book)?.trim();
+      if (label != null && label.toLowerCase() == value) return label;
+    }
+    return 'Unknown $fieldName ($value)';
+  }
+
+  String _shelfLabel(String value) {
+    for (final shelf in widget.dataStore.shelves) {
+      if (shelf.id == value) return shelf.name;
+    }
+    return 'Unknown shelf ($value)';
+  }
+
+  String _topicLabel(String value) {
+    for (final topic in widget.dataStore.tags) {
+      if (topic.id == value) return topic.name;
+    }
+    return 'Unknown topic ($value)';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authorOptions = _withSelectedOptions(_options.authors, _draft.authors, _authorLabel);
+    final languageOptions = _withSelectedOptions(_options.languages, _draft.languages, _languageLabel);
+    final publisherOptions = _withSelectedOptions(
+      _options.publishers,
+      _draft.publishers,
+      (value) => _bookFieldLabel(value, (book) => book.publisher, 'publisher'),
+    );
+    final formatOptions = _withSelectedOptions(
+      _options.formats,
+      _draft.formats,
+      (value) => _bookFieldLabel(value, (book) => book.formatLabel, 'format'),
+    );
+    final seriesOptions = _withSelectedOptions(
+      _options.series,
+      _draft.seriesNames,
+      (value) => _bookFieldLabel(value, (book) => book.seriesName, 'series'),
+    );
+    final shelfOptions = _withSelectedOptions(_options.shelves, _draft.shelfIds, _shelfLabel);
+    final topicOptions = _withSelectedOptions(_options.topics, _draft.topicIds, _topicLabel);
+    final readingStatusOptions = _withSelectedOptions(
+      _options.readingStatuses,
+      _draft.statuses,
+      (status) => status.label,
+    );
+    final availableRatings = {..._options.ratings, ..._draft.ratings}.toList()..sort();
+    final showUnrated = _options.hasUnrated || _draft.includeUnrated;
     final hasMetadataOptions =
-        _options.authors.isNotEmpty ||
-        _options.languages.isNotEmpty ||
-        _options.formats.isNotEmpty ||
-        _options.publishers.isNotEmpty ||
-        _options.series.isNotEmpty;
-    final hasOrganizationOptions = _options.shelves.isNotEmpty || _options.topics.isNotEmpty;
-    final hasRatingOptions = _options.ratings.isNotEmpty || _options.hasUnrated;
+        authorOptions.isNotEmpty ||
+        languageOptions.isNotEmpty ||
+        formatOptions.isNotEmpty ||
+        publisherOptions.isNotEmpty ||
+        seriesOptions.isNotEmpty;
+    final hasOrganizationOptions = shelfOptions.isNotEmpty || topicOptions.isNotEmpty;
+    final hasRatingOptions = availableRatings.isNotEmpty || showUnrated;
 
     return Column(
       children: [
@@ -131,65 +210,65 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
               children: [
                 if (hasMetadataOptions) ...[
                   const _SectionHeader(title: 'Metadata'),
-                  if (_options.authors.isNotEmpty)
+                  if (authorOptions.isNotEmpty)
                     _SearchableFacet<String>(
                       label: 'Authors',
-                      options: _options.authors,
+                      options: authorOptions,
                       selectedValues: _draft.authors,
                       onChanged: (values) => _updateDraft(_draft.copyWith(authors: values)),
                     ),
-                  if (_options.languages.isNotEmpty)
+                  if (languageOptions.isNotEmpty)
                     _SearchableFacet<String>(
                       label: 'Languages',
-                      options: _options.languages,
+                      options: languageOptions,
                       selectedValues: _draft.languages,
                       onChanged: (values) => _updateDraft(_draft.copyWith(languages: values)),
                     ),
-                  if (_options.publishers.isNotEmpty)
+                  if (publisherOptions.isNotEmpty)
                     _SearchableFacet<String>(
                       label: 'Publishers',
-                      options: _options.publishers,
+                      options: publisherOptions,
                       selectedValues: _draft.publishers,
                       onChanged: (values) => _updateDraft(_draft.copyWith(publishers: values)),
                     ),
-                  if (_options.formats.isNotEmpty)
+                  if (formatOptions.isNotEmpty)
                     _SmallFacet<String>(
                       label: 'Formats',
-                      options: _options.formats,
+                      options: formatOptions,
                       selectedValues: _draft.formats,
                       onChanged: (values) => _updateDraft(_draft.copyWith(formats: values)),
                     ),
-                  if (_options.series.isNotEmpty)
+                  if (seriesOptions.isNotEmpty)
                     _SearchableFacet<String>(
                       label: 'Series',
-                      options: _options.series,
+                      options: seriesOptions,
                       selectedValues: _draft.seriesNames,
                       onChanged: (values) => _updateDraft(_draft.copyWith(seriesNames: values)),
                     ),
                 ],
                 if (hasOrganizationOptions) ...[
                   _SectionHeader(title: 'Organization', dividerBefore: hasMetadataOptions),
-                  if (_options.shelves.isNotEmpty)
+                  if (shelfOptions.isNotEmpty)
                     _SearchableFacet<String>(
                       label: 'Shelves',
-                      options: _options.shelves,
+                      options: shelfOptions,
                       selectedValues: _draft.shelfIds,
                       onChanged: (values) => _updateDraft(_draft.copyWith(shelfIds: values)),
                     ),
-                  if (_options.topics.isNotEmpty)
+                  if (topicOptions.isNotEmpty)
                     _SearchableFacet<String>(
                       label: 'Topics',
-                      options: _options.topics,
+                      options: topicOptions,
                       selectedValues: _draft.topicIds,
                       onChanged: (values) => _updateDraft(_draft.copyWith(topicIds: values)),
                     ),
                 ],
                 _SectionHeader(title: 'Reading', dividerBefore: hasMetadataOptions || hasOrganizationOptions),
-                if (_options.readingStatuses.isNotEmpty)
+                if (readingStatusOptions.isNotEmpty)
                   _SmallFacet<LibraryReadingStatus>(
                     label: 'Reading status',
                     showSummary: false,
-                    options: _options.readingStatuses,
+                    options: readingStatusOptions,
                     selectedValues: _draft.statuses,
                     onChanged: (values) => _updateDraft(_draft.copyWith(statuses: values)),
                   ),
@@ -205,8 +284,8 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
                   _RatingFilterField(
                     ratings: _draft.ratings,
                     includeUnrated: _draft.includeUnrated,
-                    availableRatings: _options.ratings,
-                    showUnrated: _options.hasUnrated,
+                    availableRatings: availableRatings,
+                    showUnrated: showUnrated,
                     onChanged: (ratings, includeUnrated) {
                       _updateDraft(_draft.copyWith(ratings: ratings, includeUnrated: includeUnrated));
                     },
