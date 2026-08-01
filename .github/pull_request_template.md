@@ -1,26 +1,26 @@
 ## Ticket
 
-`<Trello card link>`
+> `<Trello card link>`
 
 ## Summary
 
-Describe the problem, what changed, and why this approach was chosen.
+> Describe the problem, what changed, and why this approach was chosen.
 
 ## Testing
 
-Describe the testing steps so that reviewers can follow them step-by-step and test the introduced changes.
+> Describe the testing steps so that reviewers can follow them step-by-step and test the introduced changes.
 
 ## UI evidence
 
-Add screenshots or recordings, or write `-` if not applicable.
+> Add screenshots or recordings, or write `-` if not applicable.
 
 ## Compatibility and migration
 
-Describe breaking changes and migrations, or write `-` if not applicable.
+> Describe breaking changes and migrations, or write `-` if not applicable.
 
 ## Notes
 
-Add reviewer guidance, risks, or follow-up tasks, if any.
+> Add reviewer guidance, risks, or follow-up tasks, if any.
 
 ## Checklist
 
