@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
-import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
-import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// View mode for displaying shelves.
 enum ShelvesViewMode { smallGrid, largeGrid, list }
@@ -15,12 +13,6 @@ enum ShelfTypeFilter { all, regular, smart }
 
 /// Sort options for shelves.
 enum ShelfSortOption { name, bookCount, dateCreated, dateModified }
-
-/// Sort options for books within a shelf.
-enum BookSortOption { title, author, progress, dateAdded }
-
-/// Filter types for books within a shelf.
-enum BookFilterType { all, reading, favorites, finished, unread }
 
 /// Provider for shelves page state management.
 /// Uses DataStore as the single source of truth.
@@ -36,9 +28,6 @@ class ShelvesProvider extends ChangeNotifier {
   ShelfContentsFilter _contentsFilter = ShelfContentsFilter.all;
   ShelfTypeFilter _typeFilter = ShelfTypeFilter.all;
 
-  // View mode for books within a shelf
-  bool _isBookGridView = true;
-
   // Selected shelf for detail view
   Shelf? _selectedShelf;
 
@@ -48,14 +37,6 @@ class ShelvesProvider extends ChangeNotifier {
 
   // Search
   String _searchQuery = '';
-
-  // Sorting state for books within shelves
-  BookSortOption _bookSortOption = BookSortOption.title;
-  bool _bookSortAscending = true;
-
-  // Book filtering state (for shelf contents page)
-  String _bookSearchQuery = '';
-  final Set<BookFilterType> _activeBookFilters = {BookFilterType.all};
 
   /// Attach to a DataStore instance.
   void attach(DataStore dataStore) {
@@ -94,9 +75,6 @@ class ShelvesProvider extends ChangeNotifier {
   bool get isSmallGridView => _viewMode == ShelvesViewMode.smallGrid;
   bool get isLargeGridView => _viewMode == ShelvesViewMode.largeGrid;
   bool get isListView => _viewMode == ShelvesViewMode.list;
-
-  bool get isBookGridView => _isBookGridView;
-  bool get isBookListView => !_isBookGridView;
 
   bool get hasActiveShelfControls =>
       _contentsFilter != ShelfContentsFilter.all ||
@@ -147,15 +125,6 @@ class ShelvesProvider extends ChangeNotifier {
 
   ShelfSortOption get shelfSortOption => _shelfSortOption;
   bool get shelfSortAscending => _shelfSortAscending;
-
-  BookSortOption get bookSortOption => _bookSortOption;
-  bool get bookSortAscending => _bookSortAscending;
-
-  String get bookSearchQuery => _bookSearchQuery;
-  Set<BookFilterType> get activeBookFilters => Set.unmodifiable(_activeBookFilters);
-
-  /// Whether a specific book filter is active.
-  bool isBookFilterActive(BookFilterType filter) => _activeBookFilters.contains(filter);
 
   /// Get total book count across all shelves.
   int get totalBookCount {
@@ -245,14 +214,6 @@ class ShelvesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sets the grid/list view used for books within a shelf.
-  void setBookViewMode(bool isGrid) {
-    if (_isBookGridView != isGrid) {
-      _isBookGridView = isGrid;
-      notifyListeners();
-    }
-  }
-
   /// Applies the current sorting to a shelves list.
   void _applySorting(List<Shelf> list) {
     list.sort((a, b) {
@@ -273,139 +234,10 @@ class ShelvesProvider extends ChangeNotifier {
     });
   }
 
-  /// Sets the book sort option for shelf detail view.
-  void setBookSortOption(BookSortOption option, {bool? ascending}) {
-    if (_bookSortOption == option && ascending == null) {
-      _bookSortAscending = !_bookSortAscending;
-    } else {
-      _bookSortOption = option;
-      if (ascending != null) _bookSortAscending = ascending;
-    }
-    notifyListeners();
-  }
-
-  /// Sorts a list of books according to current book sort settings.
-  List<Book> sortBooks(List<Book> books) {
-    final sorted = List<Book>.from(books);
-    sorted.sort((a, b) {
-      int result;
-      switch (_bookSortOption) {
-        case BookSortOption.title:
-          result = a.title.toLowerCase().compareTo(b.title.toLowerCase());
-        case BookSortOption.author:
-          result = a.author.toLowerCase().compareTo(b.author.toLowerCase());
-        case BookSortOption.progress:
-          result = a.currentPosition.compareTo(b.currentPosition);
-        case BookSortOption.dateAdded:
-          result = a.addedAt.compareTo(b.addedAt);
-      }
-      return _bookSortAscending ? result : -result;
-    });
-    return sorted;
-  }
-
-  /// Sets the book search query for shelf contents.
-  void setBookSearchQuery(String query) {
-    if (_bookSearchQuery != query) {
-      _bookSearchQuery = query;
-      notifyListeners();
-    }
-  }
-
-  /// Clears the book search query.
-  void clearBookSearch() {
-    if (_bookSearchQuery.isNotEmpty) {
-      _bookSearchQuery = '';
-      notifyListeners();
-    }
-  }
-
-  /// Toggles a book filter type.
-  void toggleBookFilter(BookFilterType filter) {
-    if (filter == BookFilterType.all) {
-      _activeBookFilters.clear();
-      _activeBookFilters.add(BookFilterType.all);
-    } else {
-      _activeBookFilters.remove(BookFilterType.all);
-      if (_activeBookFilters.contains(filter)) {
-        _activeBookFilters.remove(filter);
-        if (_activeBookFilters.isEmpty) {
-          _activeBookFilters.add(BookFilterType.all);
-        }
-      } else {
-        _activeBookFilters.add(filter);
-      }
-    }
-    notifyListeners();
-  }
-
-  /// Add a book filter to active filters.
-  void addBookFilter(BookFilterType filter) {
-    if (filter != BookFilterType.all) {
-      _activeBookFilters.remove(BookFilterType.all);
-    }
-    _activeBookFilters.add(filter);
-    notifyListeners();
-  }
-
-  /// Remove a book filter from active filters.
-  void removeBookFilter(BookFilterType filter) {
-    _activeBookFilters.remove(filter);
-    if (_activeBookFilters.isEmpty) {
-      _activeBookFilters.add(BookFilterType.all);
-    }
-    notifyListeners();
-  }
-
-  /// Resets all book filters to default.
-  void resetBookFilters() {
-    _activeBookFilters.clear();
-    _activeBookFilters.add(BookFilterType.all);
-    _bookSearchQuery = '';
-    notifyListeners();
-  }
-
   /// Gets child shelves of a parent shelf.
   List<Shelf> getChildShelves(String parentShelfId) {
     if (_dataStore == null) return [];
     return _dataStore!.getChildShelves(parentShelfId);
-  }
-
-  /// Gets filtered and sorted books for a shelf, applying search and filters.
-  List<Book> getFilteredBooksForShelf(String shelfId, {bool Function(String bookId)? isFavorite}) {
-    if (_dataStore == null) return [];
-
-    var books = _dataStore!.getBooksInShelf(shelfId);
-
-    final searchQuery = _bookSearchQuery.trim().toLowerCase();
-    if (searchQuery.isNotEmpty) {
-      books = books.where((book) {
-        return book.title.toLowerCase().contains(searchQuery) || book.allAuthors.toLowerCase().contains(searchQuery);
-      }).toList();
-    }
-
-    // Apply book filters (AND logic — each active filter narrows the list)
-    if (!_activeBookFilters.contains(BookFilterType.all)) {
-      if (_activeBookFilters.contains(BookFilterType.reading)) {
-        books = books.where((book) => book.readingStatus == LibraryReadingStatus.inProgress).toList();
-      }
-
-      if (_activeBookFilters.contains(BookFilterType.favorites)) {
-        books = books.where((book) {
-          return isFavorite?.call(book.id) ?? book.isFavorite;
-        }).toList();
-      }
-
-      if (_activeBookFilters.contains(BookFilterType.finished)) {
-        books = books.where((book) => book.readingStatus == LibraryReadingStatus.completed).toList();
-      }
-
-      if (_activeBookFilters.contains(BookFilterType.unread)) {
-        books = books.where((book) => book.readingStatus == LibraryReadingStatus.unread).toList();
-      }
-    }
-
-    return sortBooks(books);
   }
 
   /// Selects a shelf for detail view.
@@ -537,14 +369,6 @@ class ShelvesProvider extends ChangeNotifier {
     for (var i = 0; i < shelfList.length; i++) {
       _dataStore!.updateShelf(shelfList[i].copyWith(sortOrder: i));
     }
-  }
-
-  /// Gets books for a specific shelf, sorted according to current settings.
-  List<Book> getBooksForShelf(String shelfId) {
-    if (_dataStore == null) return [];
-
-    final books = _dataStore!.getBooksInShelf(shelfId);
-    return sortBooks(books);
   }
 
   /// Get book count for a specific shelf.
