@@ -262,4 +262,37 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('physical import keeps its footer above the landscape keyboard', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 400);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 250);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(onPressed: () => AddPhysicalBookSheet.show(context), child: const Text('Open')),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('add-book-sheet-footer')), findsOneWidget);
+    expect(tester.getRect(find.byKey(const Key('add-book-sheet-footer'))).bottom, lessThanOrEqualTo(150));
+
+    final listView = find.byType(ListView);
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    expect(tester.getSize(listView).height, greaterThan(0));
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+
+    scrollable.position.jumpTo(1);
+    await tester.pump();
+
+    expect(scrollable.position.pixels, 1);
+  });
 }

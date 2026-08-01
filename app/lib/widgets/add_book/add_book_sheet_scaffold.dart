@@ -23,38 +23,58 @@ class AddBookSheetScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        Container(
-          key: const Key('add-book-sheet-header'),
-          padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.md, Spacing.lg, Spacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const BottomSheetHandle(),
-              const SizedBox(height: Spacing.lg),
-              Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompactHeight = constraints.maxHeight < 280;
+        final verticalPadding = isCompactHeight ? 0.0 : Spacing.md;
+        final handleSpacing = isCompactHeight ? Spacing.xs : Spacing.lg;
+
+        return Column(
+          children: [
+            Container(
+              key: const Key('add-book-sheet-header'),
+              padding: EdgeInsets.fromLTRB(Spacing.lg, verticalPadding, Spacing.lg, verticalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.headlineSmall),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close), tooltip: 'Close', onPressed: canClose ? onClose : null),
+                  const BottomSheetHandle(),
+                  SizedBox(height: handleSpacing),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: isCompactHeight ? 1 : 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
+                      IconButton(
+                        constraints: isCompactHeight ? const BoxConstraints.tightFor(width: 40, height: 40) : null,
+                        icon: const Icon(Icons.close),
+                        padding: isCompactHeight ? EdgeInsets.zero : null,
+                        tooltip: 'Close',
+                        onPressed: canClose ? onClose : null,
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-        Expanded(child: body),
-        Container(
-          key: const Key('add-book-sheet-footer'),
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-          ),
-          child: SafeArea(top: false, child: footer),
-        ),
-      ],
+            ),
+            const Divider(height: 1),
+            Expanded(child: body),
+            Container(
+              key: const Key('add-book-sheet-footer'),
+              padding: EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: verticalPadding),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+              ),
+              child: SafeArea(top: false, child: footer),
+            ),
+          ],
+        );
+      },
     );
   }
 }
