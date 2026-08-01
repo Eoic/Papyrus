@@ -8,6 +8,12 @@ import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/utils/book_language.dart';
 
 class LibraryProvider extends ChangeNotifier {
+  final LibraryProvider? _favoriteDelegate;
+
+  LibraryProvider({LibraryProvider? favoriteDelegate}) : _favoriteDelegate = favoriteDelegate {
+    _favoriteDelegate?.addListener(_onFavoriteDelegateChanged);
+  }
+
   String _searchQuery = '';
   LibraryFilters _filters = LibraryFilters();
   LibraryViewMode _viewMode = LibraryViewMode.smallGrid;
@@ -292,17 +298,33 @@ class LibraryProvider extends ChangeNotifier {
 
   /// Check if a book is favorited (considering overrides).
   bool isBookFavorite(String bookId, bool originalFavorite) {
+    final favoriteDelegate = _favoriteDelegate;
+    if (favoriteDelegate != null) {
+      return favoriteDelegate.isBookFavorite(bookId, originalFavorite);
+    }
+
     return _favoriteOverrides[bookId] ?? originalFavorite;
   }
 
   /// Toggle the favorite status of a book.
   void toggleFavorite(String bookId, bool currentFavorite) {
+    final favoriteDelegate = _favoriteDelegate;
+    if (favoriteDelegate != null) {
+      favoriteDelegate.toggleFavorite(bookId, currentFavorite);
+      return;
+    }
+
     _favoriteOverrides[bookId] = !currentFavorite;
     notifyListeners();
   }
 
   /// Get the effective favorite status for a book.
   bool? getFavoriteOverride(String bookId) {
+    final favoriteDelegate = _favoriteDelegate;
+    if (favoriteDelegate != null) {
+      return favoriteDelegate.getFavoriteOverride(bookId);
+    }
+
     return _favoriteOverrides[bookId];
   }
 
@@ -358,5 +380,15 @@ class LibraryProvider extends ChangeNotifier {
 
   static Set<String> _normalizeFilterValues(Set<String> values) {
     return values.map(_normalizeFilterValue).whereType<String>().toSet();
+  }
+
+  void _onFavoriteDelegateChanged() {
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _favoriteDelegate?.removeListener(_onFavoriteDelegateChanged);
+    super.dispose();
   }
 }
