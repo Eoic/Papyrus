@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/services/book_import_result.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
+import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
 import 'package:papyrus/widgets/add_book/import_book_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
@@ -235,5 +236,30 @@ void main() {
     expect(pickButton.style?.side?.resolve(disabled)?.color, colorScheme.outline);
     expect(addButton.style?.backgroundColor?.resolve(disabled), colorScheme.primary);
     expect(addButton.style?.foregroundColor?.resolve(disabled), colorScheme.onPrimary);
+  });
+
+  testWidgets('physical import places Add in the fixed footer', (tester) async {
+    await pumpLauncher(
+      tester,
+      (context) =>
+          () => AddPhysicalBookSheet.show(context),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.ancestor(
+        of: find.widgetWithText(FilledButton, 'Add'),
+        matching: find.byKey(const Key('add-book-sheet-footer')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.widgetWithText(FilledButton, 'Add'),
+        matching: find.byKey(const Key('add-book-sheet-header')),
+      ),
+      findsNothing,
+    );
   });
 }

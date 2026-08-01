@@ -7,13 +7,12 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/metadata_service.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/image_utils.dart';
+import 'package:papyrus/widgets/add_book/add_book_sheet_scaffold.dart';
 import 'package:papyrus/widgets/add_book/isbn_scanner_dialog.dart';
 import 'package:papyrus/widgets/book_edit/cover_image_picker.dart';
 import 'package:papyrus/widgets/book_form/book_date_field.dart';
 import 'package:papyrus/widgets/book_form/book_text_field.dart';
 import 'package:papyrus/widgets/book_form/co_author_editor.dart';
-import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
-import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -269,66 +268,51 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Form(
         key: _formKey,
-        child: Column(
-          children: [
-            // Fixed header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(Spacing.md, Spacing.md, Spacing.md, 0),
-              child: Column(
+        child: AddBookSheetScaffold(
+          title: 'Add physical book',
+          onClose: () => Navigator.of(context).pop(),
+          body: ListView(
+            controller: widget.scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const BottomSheetHandle(),
-                  const SizedBox(height: Spacing.md),
-                  BottomSheetHeader(
-                    title: 'Add physical book',
-                    onCancel: () => Navigator.pop(context),
-                    onSave: _onSave,
-                    saveLabel: 'Add',
-                    canSave: _canSave,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: Spacing.md),
-            const Divider(height: 1),
-
-            // Scrollable form content
-            Expanded(
-              child: ListView(
-                controller: widget.scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Card(
-                        margin: const EdgeInsets.only(bottom: Spacing.xs),
-                        child: Padding(
-                          padding: const EdgeInsets.all(Spacing.md),
-                          child: CoverImagePicker(
-                            initialUrl: _coverUrl,
-                            initialBytes: _coverImageBytes,
-                            onUrlChanged: (url) => setState(() => _coverUrl = url),
-                            onFileChanged: (bytes) => setState(() {
-                              _coverImageBytes = bytes;
-                              if (bytes != null) _coverUrl = null;
-                            }),
-                            coverWidth: 240,
-                          ),
-                        ),
+                  Card(
+                    margin: const EdgeInsets.only(bottom: Spacing.xs),
+                    child: Padding(
+                      padding: const EdgeInsets.all(Spacing.md),
+                      child: CoverImagePicker(
+                        initialUrl: _coverUrl,
+                        initialBytes: _coverImageBytes,
+                        onUrlChanged: (url) => setState(() => _coverUrl = url),
+                        onFileChanged: (bytes) => setState(() {
+                          _coverImageBytes = bytes;
+                          if (bytes != null) _coverUrl = null;
+                        }),
+                        coverWidth: 240,
                       ),
-
-                      _buildIsbnSection(),
-                      _buildBasicInfoSection(),
-                      _buildPublicationSection(),
-                      _buildIdentifiersSection(),
-                      _buildSeriesSection(),
-                      _buildPhysicalBookSection(),
-                    ],
+                    ),
                   ),
+
+                  _buildIsbnSection(),
+                  _buildBasicInfoSection(),
+                  _buildPublicationSection(),
+                  _buildIdentifiersSection(),
+                  _buildSeriesSection(),
+                  _buildPhysicalBookSection(),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
+          footer: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              const SizedBox(width: Spacing.sm),
+              FilledButton(onPressed: _canSave ? _onSave : null, child: const Text('Add')),
+            ],
+          ),
         ),
       ),
     );
