@@ -1,4 +1,6 @@
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/utils/book_language.dart';
 
 class LibraryFilterOption<T> {
@@ -16,6 +18,9 @@ class LibraryFilterOptions {
   final List<LibraryFilterOption<String>> shelves;
   final List<LibraryFilterOption<String>> publishers;
   final List<LibraryFilterOption<String>> series;
+  final List<LibraryFilterOption<LibraryReadingStatus>> readingStatuses;
+  final List<int> ratings;
+  final bool hasUnrated;
 
   const LibraryFilterOptions({
     required this.authors,
@@ -25,16 +30,26 @@ class LibraryFilterOptions {
     required this.shelves,
     required this.publishers,
     required this.series,
+    required this.readingStatuses,
+    required this.ratings,
+    required this.hasUnrated,
   });
 
-  factory LibraryFilterOptions.fromDataStore(DataStore dataStore) {
+  factory LibraryFilterOptions.fromDataStore(DataStore dataStore, {Iterable<Book>? books}) {
+    final isScoped = books != null;
+    final sourceBooks = books ?? dataStore.books;
     final authors = <String, String>{};
     final languages = <String, String>{};
     final formats = <String, String>{};
     final publishers = <String, String>{};
     final series = <String, String>{};
+    final topicIds = <String>{};
+    final shelfIds = <String>{};
+    final readingStatuses = <LibraryReadingStatus>{};
+    final ratings = <int>{};
+    var hasUnrated = false;
 
-    for (final book in dataStore.books) {
+    for (final book in sourceBooks) {
       for (final author in [book.author, ...book.coAuthors]) {
         _addNormalized(authors, author);
       }
@@ -48,18 +63,40 @@ class LibraryFilterOptions {
       _addNormalized(formats, book.formatLabel);
       _addNormalized(publishers, book.publisher);
       _addNormalized(series, book.seriesName);
+      topicIds.addAll(dataStore.getTagIdsForBook(book.id));
+      shelfIds.addAll(dataStore.getShelfIdsForBook(book.id));
+      readingStatuses.add(book.readingStatus);
+
+      final rating = book.rating;
+      if (rating == null) {
+        hasUnrated = true;
+      } else {
+        ratings.add(rating);
+      }
     }
 
     return LibraryFilterOptions(
       authors: _stringOptions(authors),
       languages: _stringOptions(languages),
       formats: _stringOptions(formats),
-      topics: _sortedOptions(dataStore.tags.map((topic) => LibraryFilterOption(value: topic.id, label: topic.name))),
+      topics: _sortedOptions(
+        dataStore.tags
+            .where((topic) => topicIds.contains(topic.id))
+            .map((topic) => LibraryFilterOption(value: topic.id, label: topic.name)),
+      ),
       shelves: _sortedOptions(
-        dataStore.shelves.map((shelf) => LibraryFilterOption(value: shelf.id, label: shelf.name)),
+        dataStore.shelves
+            .where((shelf) => shelfIds.contains(shelf.id))
+            .map((shelf) => LibraryFilterOption(value: shelf.id, label: shelf.name)),
       ),
       publishers: _stringOptions(publishers),
       series: _stringOptions(series),
+      readingStatuses: [
+        for (final status in LibraryReadingStatus.values)
+          if (!isScoped || readingStatuses.contains(status)) LibraryFilterOption(value: status, label: status.label),
+      ],
+      ratings: isScoped ? (ratings.toList()..sort()) : const [1, 2, 3, 4, 5],
+      hasUnrated: isScoped ? hasUnrated : true,
     );
   }
 
