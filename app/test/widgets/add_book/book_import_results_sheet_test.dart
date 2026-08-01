@@ -201,6 +201,129 @@ void main() {
     expect(find.byType(BookImportResultsSheet), findsNothing);
   });
 
+  testWidgets('dragging the route downward cannot dismiss and bypass cleanup', (tester) async {
+    final deleted = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => BookImportResultsSheet.show(
+                context,
+                files: [
+                  SelectedBookFile(name: 'ready.epub', bytes: Uint8List.fromList([1])),
+                ],
+                processor: (_, filename) async => resultFor(filename, bookId: 'temporary-ready'),
+                deleteBookFile: (bookId) async => deleted.add(bookId),
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byKey(const Key('add-book-sheet-header')), const Offset(0, 700));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BookImportResultsSheet), findsOneWidget);
+    expect(find.text('ready.epub'), findsOneWidget);
+    expect(deleted, isEmpty);
+  });
+
+  testWidgets('cleanup failure keeps the sheet open and close can retry', (tester) async {
+    var deleteAttempts = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => BookImportResultsSheet.show(
+                context,
+                files: [
+                  SelectedBookFile(name: 'ready.epub', bytes: Uint8List.fromList([1])),
+                ],
+                processor: (_, filename) async => resultFor(filename, bookId: 'temporary-ready'),
+                deleteBookFile: (_) async {
+                  deleteAttempts++;
+                  if (deleteAttempts == 1) throw Exception('private cleanup detail');
+                },
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(deleteAttempts, 1);
+    expect(find.byType(BookImportResultsSheet), findsOneWidget);
+    expect(find.text('Could not remove temporary files. Please try again.'), findsOneWidget);
+    expect(tester.widget<TextButton>(find.widgetWithText(TextButton, 'Close')).onPressed, isNotNull);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(deleteAttempts, 2);
+    expect(find.byType(BookImportResultsSheet), findsNothing);
+  });
+
+  testWidgets('close awaits and deduplicates cleanup already started by remove', (tester) async {
+    final deletionGate = Completer<void>();
+    var deleteCalls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => BookImportResultsSheet.show(
+                context,
+                files: [
+                  SelectedBookFile(name: 'ready.epub', bytes: Uint8List.fromList([1])),
+                ],
+                processor: (_, filename) async => resultFor(filename, bookId: 'temporary-ready'),
+                deleteBookFile: (_) async {
+                  deleteCalls++;
+                  await deletionGate.future;
+                },
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Remove ready.epub'));
+    await tester.pump();
+    expect(deleteCalls, 1);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Close'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(deleteCalls, 1);
+    expect(find.byType(BookImportResultsSheet), findsOneWidget);
+
+    deletionGate.complete();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(deleteCalls, 1);
+    expect(find.byType(BookImportResultsSheet), findsNothing);
+  });
+
   testWidgets('a success arriving after close is deleted without updating disposed state', (tester) async {
     final processing = Completer<BookImportResult>();
     final deleted = <String>[];

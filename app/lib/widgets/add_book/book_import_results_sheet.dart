@@ -47,6 +47,7 @@ class BookImportResultsSheet extends StatefulWidget {
       isScrollControlled: true,
       useRootNavigator: true,
       useSafeArea: true,
+      enableDrag: false,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (sheetContext) => DraggableScrollableSheet(
         initialChildSize: 0.9,
@@ -73,6 +74,7 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
   final Map<String, int> _processingTokens = {};
   final Set<String> _removingIds = {};
   final Set<String> _cleanedBookIds = {};
+  final Map<String, Future<bool>> _cleanupFutures = {};
   bool _isClosing = false;
   Future<void>? _closeFuture;
 
@@ -157,8 +159,12 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     if (result != null) {
       deleted = await _deleteTemporary(result.bookId);
     }
-    if (!mounted || _isClosing) return;
+    if (!mounted) return;
     _removingIds.remove(id);
+    if (_isClosing) {
+      setState(() {});
+      return;
+    }
     if (!deleted) {
       setState(() {});
       ScaffoldMessenger.maybeOf(
@@ -172,26 +178,49 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     }
   }
 
-  Future<bool> _deleteTemporary(String bookId) async {
-    if (!_cleanedBookIds.add(bookId)) return true;
+  Future<bool> _deleteTemporary(String bookId) {
+    if (_cleanedBookIds.contains(bookId)) return Future.value(true);
+    final inFlight = _cleanupFutures[bookId];
+    if (inFlight != null) return inFlight;
+
+    final cleanup = _performDelete(bookId);
+    _cleanupFutures[bookId] = cleanup;
+    unawaited(
+      cleanup.whenComplete(() {
+        if (identical(_cleanupFutures[bookId], cleanup)) {
+          _cleanupFutures.remove(bookId);
+        }
+      }),
+    );
+    return cleanup;
+  }
+
+  Future<bool> _performDelete(String bookId) async {
     try {
       await widget.deleteBookFile(bookId);
+      _cleanedBookIds.add(bookId);
       return true;
-    } catch (error, stackTrace) {
-      _cleanedBookIds.remove(bookId);
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'book import results cleanup',
-          context: ErrorDescription('while deleting a temporary imported book file'),
-        ),
-      );
+    } catch (_) {
+      debugPrint('Book import temporary-file cleanup failed.');
       return false;
     }
   }
 
-  Future<void> _requestClose() => _closeFuture ??= _close();
+  Future<void> _requestClose() {
+    final inFlight = _closeFuture;
+    if (inFlight != null) return inFlight;
+
+    final close = _close();
+    _closeFuture = close;
+    unawaited(
+      close.whenComplete(() {
+        if (identical(_closeFuture, close)) {
+          _closeFuture = null;
+        }
+      }),
+    );
+    return close;
+  }
 
   Future<void> _close() async {
     if (_isClosing) return;
@@ -202,7 +231,17 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     }
 
     final bookIds = _items.where((item) => item.hasTemporaryFile).map((item) => item.result!.bookId).toSet();
-    await Future.wait(bookIds.map(_deleteTemporary));
+    final cleanupResults = await Future.wait(bookIds.map(_deleteTemporary));
+    if (cleanupResults.any((deleted) => !deleted)) {
+      if (mounted) {
+        setState(() => _isClosing = false);
+        ScaffoldMessenger.maybeOf(
+          context,
+        )?.showSnackBar(const SnackBar(content: Text('Could not remove temporary files. Please try again.')));
+      }
+      return;
+    }
+    if (!mounted) return;
     widget.onClose();
   }
 
