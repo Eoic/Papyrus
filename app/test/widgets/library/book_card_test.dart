@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/book_card.dart';

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/text_utils.dart';

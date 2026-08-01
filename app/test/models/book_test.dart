@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 import '../helpers/test_helpers.dart';
 
@@ -22,17 +23,6 @@ void main() {
         expect(buildTestBook(currentPosition: 0.5).progressLabel, '50%');
         expect(buildTestBook(currentPosition: 1.0).progressLabel, '100%');
         expect(buildTestBook(currentPosition: 0.0).progressLabel, '0%');
-      });
-
-      test('isReading returns true only for inProgress status', () {
-        expect(buildTestBook(readingStatus: LibraryReadingStatus.inProgress).isReading, true);
-        expect(buildTestBook(readingStatus: LibraryReadingStatus.completed).isReading, false);
-        expect(buildTestBook(readingStatus: LibraryReadingStatus.unread).isReading, false);
-      });
-
-      test('isFinished returns true only for completed status', () {
-        expect(buildTestBook(readingStatus: LibraryReadingStatus.completed).isFinished, true);
-        expect(buildTestBook(readingStatus: LibraryReadingStatus.inProgress).isFinished, false);
       });
 
       test('hasProgress returns true when currentPosition > 0', () {
@@ -330,14 +320,6 @@ void main() {
       expect(LibraryReadingStatus.completed.label, 'Completed');
       expect(LibraryReadingStatus.paused.label, 'Paused');
       expect(LibraryReadingStatus.abandoned.label, 'Abandoned');
-    });
-
-    test('shortLabel returns abbreviated text', () {
-      expect(LibraryReadingStatus.unread.shortLabel, 'Not started');
-      expect(LibraryReadingStatus.inProgress.shortLabel, 'Reading');
-      expect(LibraryReadingStatus.completed.shortLabel, 'Finished');
-      expect(LibraryReadingStatus.paused.shortLabel, 'Paused');
-      expect(LibraryReadingStatus.abandoned.shortLabel, 'DNF');
     });
   });
 

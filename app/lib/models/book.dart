@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// Format of the book file.
@@ -319,7 +318,7 @@ class Book {
       physicalLocation: json['physical_location'] as String?,
       lentTo: json['lent_to'] as String?,
       lentAt: json['lent_at'] != null ? DateTime.parse(json['lent_at'] as String) : null,
-      readingStatus: LibraryReadingStatus.values.byName(json['reading_status'] as String? ?? 'notStarted'),
+      readingStatus: LibraryReadingStatus.values.byName(json['reading_status'] as String? ?? 'unread'),
       currentPage: json['current_page'] as int?,
       currentPosition: (json['current_position'] as num?)?.toDouble() ?? 0.0,
       currentCfi: json['current_cfi'] as String?,

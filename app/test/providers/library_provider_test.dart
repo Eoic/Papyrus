@@ -1,5 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:papyrus/models/library_filters.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
+import 'package:papyrus/providers/enums/library_sort_option.dart';
+import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
+
+import '../helpers/test_helpers.dart';
 
 void main() {
   group('LibraryProvider', () {
@@ -9,240 +15,157 @@ void main() {
       provider = LibraryProvider();
     });
 
+    tearDown(() {
+      provider.dispose();
+    });
+
     group('initial state', () {
-      test('should have grid view mode by default', () {
-        expect(provider.viewMode, LibraryViewMode.largeGrid);
-        expect(provider.isGridView, true);
-        expect(provider.isListView, false);
-      });
-
-      test('should have "all" filter active by default', () {
-        expect(provider.activeFilters, {LibraryFilterType.all});
-        expect(provider.isFilterActive(LibraryFilterType.all), true);
-      });
-
-      test('should have empty search query by default', () {
-        expect(provider.searchQuery, '');
-        expect(provider.hasActiveAdvancedFilters, false);
-      });
-
-      test('should have no shelf or topic selected by default', () {
-        expect(provider.selectedShelf, null);
-        expect(provider.selectedTopic, null);
+      test('uses the default view, sort, search, and filters', () {
+        expect(provider.viewMode, LibraryViewMode.smallGrid);
+        expect(provider.sortOption, LibrarySortOption.dateAddedNewest);
+        expect(provider.searchQuery, isEmpty);
+        expect(provider.filters.isEmpty, isTrue);
+        expect(provider.activeFilterCount, 0);
       });
     });
 
     group('view mode', () {
-      test('should toggle between grid and list view', () {
-        expect(provider.isGridView, true);
+      test('sets each view mode explicitly', () {
+        provider.setViewMode(LibraryViewMode.largeGrid);
+        expect(provider.viewMode, LibraryViewMode.largeGrid);
 
-        provider.setViewMode();
-        expect(provider.isListView, true);
-        expect(provider.isGridView, false);
-
-        provider.setViewMode();
-        expect(provider.isGridView, true);
-        expect(provider.isListView, false);
-      });
-
-      test('should set view mode directly', () {
         provider.setViewMode(LibraryViewMode.list);
         expect(provider.viewMode, LibraryViewMode.list);
 
-        provider.setViewMode(LibraryViewMode.largeGrid);
-        expect(provider.viewMode, LibraryViewMode.largeGrid);
+        provider.setViewMode(LibraryViewMode.smallGrid);
+        expect(provider.viewMode, LibraryViewMode.smallGrid);
+      });
+
+      test('does not notify when the view mode is unchanged', () {
+        var notifications = 0;
+        provider.addListener(() => notifications++);
+
+        provider.setViewMode(LibraryViewMode.smallGrid);
+
+        expect(notifications, 0);
       });
     });
 
-    group('quick filters', () {
-      test('should add filter and remove "all"', () {
-        provider.addFilter(LibraryFilterType.reading);
+    group('structured filters', () {
+      test('category setters update the shared filter model', () {
+        provider.setStatusFilters({LibraryReadingStatus.inProgress, LibraryReadingStatus.completed});
+        provider.setFavoriteFilter(FavoriteFilter.favorites);
+        provider.setAuthorFilters({' J.R.R. Tolkien '});
+        provider.setLanguageFilters({'EN'});
+        provider.setFormatFilters({' EPUB '});
+        provider.setShelfFilters({'shelf-1'});
+        provider.setTopicFilters({'topic-1'});
 
-        expect(provider.isFilterActive(LibraryFilterType.reading), true);
-        expect(provider.isFilterActive(LibraryFilterType.all), false);
+        expect(provider.selectedStatuses, {LibraryReadingStatus.inProgress, LibraryReadingStatus.completed});
+        expect(provider.favoriteFilter, FavoriteFilter.favorites);
+        expect(provider.selectedAuthors, {'j.r.r. tolkien'});
+        expect(provider.selectedLanguages, {'en'});
+        expect(provider.selectedFormats, {'epub'});
+        expect(provider.selectedShelfIds, {'shelf-1'});
+        expect(provider.selectedTopicIds, {'topic-1'});
+        expect(provider.activeFilterCount, 7);
       });
 
-      test('should allow multiple filters', () {
-        provider.addFilter(LibraryFilterType.reading);
-        provider.addFilter(LibraryFilterType.favorites);
+      test('applyFilters replaces the entire filter draft with one notification', () {
+        var notifications = 0;
+        provider.addListener(() => notifications++);
+        final filters = LibraryFilters(
+          authors: {'frank herbert'},
+          statuses: {LibraryReadingStatus.completed},
+          ratings: {5},
+        );
 
-        expect(provider.isFilterActive(LibraryFilterType.reading), true);
-        expect(provider.isFilterActive(LibraryFilterType.favorites), true);
-        expect(provider.activeFilters.length, 2);
+        provider.applyFilters(filters);
+
+        expect(provider.filters, filters);
+        expect(provider.activeFilterCount, 3);
+        expect(notifications, 1);
       });
 
-      test('should remove filter and default to "all" when empty', () {
-        provider.addFilter(LibraryFilterType.reading);
-        provider.removeFilter(LibraryFilterType.reading);
+      test('clearFilters clears structured filters without clearing search', () {
+        provider.setSearchQuery('dune');
+        provider.setStatusFilters({LibraryReadingStatus.completed});
+        provider.setFavoriteFilter(FavoriteFilter.notFavorites);
 
-        expect(provider.isFilterActive(LibraryFilterType.reading), false);
-        expect(provider.isFilterActive(LibraryFilterType.all), true);
+        provider.clearFilters();
+
+        expect(provider.filters.isEmpty, isTrue);
+        expect(provider.searchQuery, 'dune');
       });
 
-      test('should toggle filter on and off', () {
-        expect(provider.isFilterActive(LibraryFilterType.reading), false);
+      test('resetQuickFilters restores filters, sort, and view defaults', () {
+        provider.setStatusFilters({LibraryReadingStatus.inProgress});
+        provider.setSortOption(LibrarySortOption.titleAZ);
+        provider.setViewMode(LibraryViewMode.list);
 
-        provider.toggleFilter(LibraryFilterType.reading);
-        expect(provider.isFilterActive(LibraryFilterType.reading), true);
+        provider.resetQuickFilters();
 
-        provider.toggleFilter(LibraryFilterType.reading);
-        expect(provider.isFilterActive(LibraryFilterType.reading), false);
-      });
-
-      test('should not duplicate filters when added multiple times', () {
-        provider.addFilter(LibraryFilterType.reading);
-        provider.addFilter(LibraryFilterType.reading);
-        provider.addFilter(LibraryFilterType.reading);
-
-        // Set uses unique values
-        expect(provider.activeFilters.where((f) => f == LibraryFilterType.reading).length, 1);
+        expect(provider.filters.isEmpty, isTrue);
+        expect(provider.sortOption, LibrarySortOption.dateAddedNewest);
+        expect(provider.viewMode, LibraryViewMode.smallGrid);
       });
     });
 
     group('search query', () {
-      test('should set search query', () {
-        provider.setSearchQuery('test query');
-        expect(provider.searchQuery, 'test query');
-      });
-
-      test('should clear search query', () {
-        provider.setSearchQuery('test query');
-        provider.clearSearch();
-        expect(provider.searchQuery, '');
-      });
-
-      test('should detect advanced filters in query', () {
-        provider.setSearchQuery('simple search');
-        expect(provider.hasActiveAdvancedFilters, false);
-
-        provider.setSearchQuery('author:tolkien');
-        expect(provider.hasActiveAdvancedFilters, true);
-      });
-
-      test('should clear shelf and topic filters when clearing search', () {
-        // Simulate applying filters via the filter dialog:
-        // shelf filter sets selectedShelf + shelves filter type + query
-        provider.selectShelf('Fiction');
-        provider.setSearchQuery('shelf:"Fiction"');
-
-        // Simulate pressing the "X" clear button on the search bar
-        provider.clearSearch();
-
-        expect(provider.searchQuery, '');
-        expect(provider.selectedShelf, isNull);
-        expect(provider.isFilterActive(LibraryFilterType.shelves), false);
-        expect(provider.isFilterActive(LibraryFilterType.all), true);
-      });
-
-      test('should clear topic filter when clearing search', () {
-        provider.selectTopic('Science');
-        provider.setSearchQuery('topic:"Science"');
+      test('sets and clears plain text search independently', () {
+        provider.setStatusFilters({LibraryReadingStatus.inProgress});
+        provider.setSearchQuery('tolkien');
 
         provider.clearSearch();
 
-        expect(provider.searchQuery, '');
-        expect(provider.selectedTopic, isNull);
-        expect(provider.isFilterActive(LibraryFilterType.topics), false);
-        expect(provider.isFilterActive(LibraryFilterType.all), true);
+        expect(provider.searchQuery, isEmpty);
+        expect(provider.selectedStatuses, {LibraryReadingStatus.inProgress});
       });
 
-      test('should clear all filter state when clearing search', () {
-        // Set up shelf/topic filters then add a quick filter chip on top
-        provider.selectShelf('Fiction');
-        provider.selectTopic('Science');
-        provider.addFilter(LibraryFilterType.reading);
-        provider.setSearchQuery('author:tolkien shelf:"Fiction" topic:"Science"');
+      test('does not notify when the search query is unchanged', () {
+        provider.setSearchQuery('test');
+        var notifications = 0;
+        provider.addListener(() => notifications++);
 
-        provider.clearSearch();
-
-        expect(provider.searchQuery, '');
-        expect(provider.selectedShelf, isNull);
-        expect(provider.selectedTopic, isNull);
-        expect(provider.isFilterActive(LibraryFilterType.shelves), false);
-        expect(provider.isFilterActive(LibraryFilterType.topics), false);
-        // Reading filter was set via chip, not search — should be preserved
-        expect(provider.isFilterActive(LibraryFilterType.reading), true);
-      });
-    });
-
-    group('shelf and topic selection', () {
-      test('should select shelf and set shelves filter', () {
-        provider.selectShelf('Fiction');
-
-        expect(provider.selectedShelf, 'Fiction');
-        expect(provider.isFilterActive(LibraryFilterType.shelves), true);
-      });
-
-      test('should clear shelf when set to null', () {
-        provider.selectShelf('Fiction');
-        provider.selectShelf(null);
-
-        expect(provider.selectedShelf, null);
-      });
-
-      test('should select topic and set topics filter', () {
-        provider.selectTopic('Science');
-
-        expect(provider.selectedTopic, 'Science');
-        expect(provider.isFilterActive(LibraryFilterType.topics), true);
-      });
-
-      test('should clear topic when set to null', () {
-        provider.selectTopic('Science');
-        provider.selectTopic(null);
-
-        expect(provider.selectedTopic, null);
-      });
-    });
-
-    group('reset filters', () {
-      test('should reset all filters to default state', () {
-        // Set up various filters
-        provider.addFilter(LibraryFilterType.reading);
-        provider.addFilter(LibraryFilterType.favorites);
-        provider.setSearchQuery('author:tolkien');
-        provider.selectShelf('Fiction');
-        provider.selectTopic('Science');
-
-        // Reset
-        provider.resetFilters();
-
-        // Verify all reset
-        expect(provider.activeFilters, {LibraryFilterType.all});
-        expect(provider.searchQuery, '');
-        expect(provider.selectedShelf, null);
-        expect(provider.selectedTopic, null);
-      });
-    });
-
-    group('notifyListeners', () {
-      test('should notify on view mode change', () {
-        var notified = false;
-        provider.addListener(() => notified = true);
-
-        provider.setViewMode();
-        expect(notified, true);
-      });
-
-      test('should notify on filter change', () {
-        var notifyCount = 0;
-        provider.addListener(() => notifyCount++);
-
-        provider.addFilter(LibraryFilterType.reading);
-        provider.removeFilter(LibraryFilterType.reading);
-        provider.toggleFilter(LibraryFilterType.favorites);
-
-        expect(notifyCount, 3);
-      });
-
-      test('should not notify when setting same search query', () {
         provider.setSearchQuery('test');
 
-        var notified = false;
-        provider.addListener(() => notified = true);
+        expect(notifications, 0);
+      });
+    });
 
-        provider.setSearchQuery('test'); // Same value
-        expect(notified, false);
+    group('filterBooks', () {
+      test('combines text and structured categories with AND logic', () {
+        final books = createTestBooks();
+        final dataStore = createTestDataStore(books: books);
+        provider.setSearchQuery('tolkien');
+        provider.setStatusFilters({LibraryReadingStatus.inProgress});
+        provider.setFavoriteFilter(FavoriteFilter.favorites);
+
+        final filtered = provider.filterBooks(books, dataStore: dataStore);
+
+        expect(filtered.map((book) => book.id), ['book-1']);
+      });
+
+      test('uses OR logic within the reading-status category', () {
+        final books = createTestBooks();
+        final dataStore = createTestDataStore(books: books);
+        provider.setStatusFilters({LibraryReadingStatus.inProgress, LibraryReadingStatus.completed});
+
+        final filtered = provider.filterBooks(books, dataStore: dataStore);
+
+        expect(filtered.map((book) => book.id), ['book-1', 'book-2', 'book-5']);
+      });
+
+      test('can preview a draft without replacing applied filters', () {
+        final books = createTestBooks();
+        final dataStore = createTestDataStore(books: books);
+        provider.setStatusFilters({LibraryReadingStatus.unread});
+        final draft = LibraryFilters(favoriteFilter: FavoriteFilter.favorites);
+
+        final preview = provider.filterBooks(books, dataStore: dataStore, filters: draft);
+
+        expect(preview.map((book) => book.id), ['book-1', 'book-4']);
+        expect(provider.selectedStatuses, {LibraryReadingStatus.unread});
       });
     });
   });

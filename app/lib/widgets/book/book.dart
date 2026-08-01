@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/models/book.dart' as models;
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 class Book extends StatefulWidget {
   final String id;
@@ -21,7 +22,7 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    isFinished = widget.data.isFinished;
+    isFinished = widget.data.readingStatus == LibraryReadingStatus.completed;
     animationController = AnimationController(duration: const Duration(milliseconds: 250), vsync: this);
 
     animation = ColorTween(begin: Colors.transparent, end: Colors.green[500]).animate(animationController)
