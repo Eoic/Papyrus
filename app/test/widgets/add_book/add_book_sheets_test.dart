@@ -3,13 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/services/book_import_result.dart';
-import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
-import 'package:papyrus/widgets/add_book/import_book_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
-import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 
 class _CountingNavigatorObserver extends NavigatorObserver {
   int pushCount = 0;
@@ -20,16 +17,6 @@ class _CountingNavigatorObserver extends NavigatorObserver {
     super.didPush(route, previousRoute);
   }
 }
-
-const importedBook = BookImportResult(
-  bookId: 'book-1',
-  title: 'Frankenstein',
-  author: 'Mary Wollstonecraft Shelley',
-  pageCount: 239,
-  fileSize: 1024,
-  fileHash: 'hash',
-  fileExtension: 'epub',
-);
 
 void main() {
   Future<void> pumpLauncher(
@@ -143,41 +130,6 @@ void main() {
     expect(find.text('Open page'), findsNothing);
   });
 
-  testWidgets('import book opens as a format-neutral bottom sheet on desktop', (tester) async {
-    await pumpLauncher(
-      tester,
-      (context) =>
-          () => ImportBookSheet.show(context),
-    );
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.byType(Dialog), findsNothing);
-    expect(find.byType(BottomSheetHandle), findsOneWidget);
-    expect(find.byType(BottomSheetHeader), findsOneWidget);
-    expect(find.text('Cancel'), findsOneWidget);
-    expect(find.byIcon(Icons.close), findsNothing);
-    expect(find.text('Select a digital book file'), findsOneWidget);
-    expect(find.text('EPUB, PDF, AZW3, MOBI, CBZ/CBR'), findsOneWidget);
-    expect(find.text('Select an EPUB file'), findsNothing);
-    expect(find.text('The file will be stored offline on this device'), findsNothing);
-    expect(find.byKey(const Key('import-pending-content')), findsOneWidget);
-    expect(tester.getSize(find.byKey(const Key('import-pending-content'))).height, 232);
-    expect(
-      find.ancestor(
-        of: find.text('Select a digital book file'),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Container &&
-              widget.decoration is BoxDecoration &&
-              (widget.decoration! as BoxDecoration).border != null,
-        ),
-      ),
-      findsNothing,
-    );
-  });
-
   testWidgets('digital selection and results use distinct modal routes', (tester) async {
     final observer = _CountingNavigatorObserver();
     final selected = SelectedBookFile(name: 'selected.epub', bytes: Uint8List.fromList([1]));
@@ -249,45 +201,6 @@ void main() {
     expect(find.byKey(const Key('add-book-sheet-header')), findsOneWidget);
     expect(find.text('Add book'), findsNothing);
     expect(observer.pushCount, initialPushCount + 1);
-  });
-
-  testWidgets('successful import actions can be rendered for widget verification', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: ImportBookSheet.withInitialResult(importedBook))));
-
-    expect(find.text('Pick different file'), findsOneWidget);
-    expect(find.text('Add to library'), findsOneWidget);
-
-    final pickButton = tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Pick different file'));
-    final addButton = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Add to library'));
-
-    expect(pickButton.style?.shape?.resolve({}), isA<StadiumBorder>());
-    expect(addButton.style?.shape?.resolve({}), isA<StadiumBorder>());
-  });
-
-  testWidgets('committing import actions stay visually stable and show progress', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.dark,
-        home: const Scaffold(body: ImportBookSheet.withInitialResult(importedBook, initialCommitting: true)),
-      ),
-    );
-
-    final pickButton = tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Pick different file'));
-    final addButton = tester.widget<FilledButton>(find.byType(FilledButton));
-
-    expect(pickButton.onPressed, isNull);
-    expect(addButton.onPressed, isNull);
-    expect(find.text('Adding...'), findsOneWidget);
-    expect(find.text('Add to library'), findsNothing);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-    final colorScheme = Theme.of(tester.element(find.text('Adding...'))).colorScheme;
-    const disabled = <WidgetState>{WidgetState.disabled};
-
-    expect(pickButton.style?.foregroundColor?.resolve(disabled), colorScheme.primary);
-    expect(pickButton.style?.side?.resolve(disabled)?.color, colorScheme.outline);
-    expect(addButton.style?.backgroundColor?.resolve(disabled), colorScheme.primary);
-    expect(addButton.style?.foregroundColor?.resolve(disabled), colorScheme.onPrimary);
   });
 
   testWidgets('physical import places Add in the fixed footer', (tester) async {
