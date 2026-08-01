@@ -314,10 +314,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
   }
 
   Widget _buildViewToggle(ShelvesProvider provider) {
-    return ViewModeToggle(
-      isGridView: provider.isGridView,
-      onChanged: (isGrid) => provider.setViewMode(isGrid ? ShelvesViewMode.grid : ShelvesViewMode.list),
-    );
+    return ViewModeToggle(isGridView: provider.isBookGridView, onChanged: provider.setBookViewMode);
   }
 
   // ============================================================================
@@ -341,7 +338,7 @@ class _ShelfContentsPageState extends State<ShelfContentsPage> {
       );
     }
 
-    if (provider.isListView) {
+    if (provider.isBookListView) {
       return _buildListContent(context, childShelves, books, provider, libraryProvider);
     }
 
