@@ -86,7 +86,10 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
   late LibraryFilters _draft = widget.libraryProvider.filters;
   late final List<Book> _sourceBooks = widget.sourceBooks ?? widget.dataStore.books;
   late final LibraryFilterOptions _options =
-      widget.filterOptions ?? LibraryFilterOptions.fromDataStore(widget.dataStore, books: _sourceBooks);
+      widget.filterOptions ??
+      (widget.sourceBooks == null
+          ? LibraryFilterOptions.fromDataStore(widget.dataStore)
+          : LibraryFilterOptions.fromDataStore(widget.dataStore, books: _sourceBooks));
 
   int get _matchingBookCount {
     return widget.libraryProvider.filterBooks(_sourceBooks, dataStore: widget.dataStore, filters: _draft).length;
