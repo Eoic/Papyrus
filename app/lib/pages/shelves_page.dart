@@ -336,7 +336,14 @@ class _ShelvesPageState extends State<ShelvesPage> {
       context,
       shelf: shelf,
       onSave: (name, description, colorHex, icon) {
-        _provider.updateShelf(shelfId: shelf.id, name: name, description: description, colorHex: colorHex, icon: icon);
+        _provider.updateShelf(
+          shelfId: shelf.id,
+          name: name,
+          description: description,
+          clearDescription: description == null,
+          colorHex: colorHex,
+          icon: icon,
+        );
       },
     );
   }
