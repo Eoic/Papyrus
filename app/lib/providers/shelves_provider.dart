@@ -441,6 +441,7 @@ class ShelvesProvider extends ChangeNotifier {
     required String shelfId,
     String? name,
     String? description,
+    bool clearDescription = false,
     String? colorHex,
     IconData? icon,
   }) async {
@@ -456,7 +457,7 @@ class ShelvesProvider extends ChangeNotifier {
     final updatedShelf = shelf.copyWith(
       name: name,
       description: description,
-      clearDescription: description == null,
+      clearDescription: clearDescription,
       colorHex: colorHex,
       icon: icon,
       updatedAt: DateTime.now(),
