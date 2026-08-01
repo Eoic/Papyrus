@@ -290,7 +290,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return Column(
       children: [
-        _buildShelfIdentity(context, showBack: true),
+        _buildShelfIdentity(context, showBack: true, compact: true),
         const SizedBox(height: Spacing.md),
         SizedBox(width: double.infinity, child: _buildSearchBar(libraryProvider)),
       ],
@@ -717,47 +717,74 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return Column(
       children: [
-        _buildShelfIdentity(context, showBack: true),
+        _buildShelfIdentity(context, showBack: true, compact: false),
         const SizedBox(height: Spacing.md),
         searchAndAction,
       ],
     );
   }
 
-  Widget _buildShelfIdentity(BuildContext context, {required bool showBack}) {
+  Widget _buildShelfIdentity(BuildContext context, {required bool showBack, required bool compact}) {
     final shelf = widget.shelf!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final description = shelf.description?.trim();
+    final titleStyle = compact ? textTheme.titleLarge : textTheme.headlineSmall;
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (showBack && widget.onBack != null)
           IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back), tooltip: 'Back to shelves'),
-        Icon(shelf.displayIcon, size: IconSizes.medium, color: shelf.color ?? colorScheme.primary),
-        const SizedBox(width: Spacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                shelf.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: Spacing.xs),
-              Text(
-                description == null || description.isEmpty ? 'Add a description' : description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-            ],
+        Padding(
+          padding: const EdgeInsets.only(top: Spacing.sm),
+          child: Icon(shelf.displayIcon, size: IconSizes.medium, color: shelf.color ?? colorScheme.primary),
+        ),
+        const SizedBox(width: Spacing.md),
+        Flexible(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        shelf.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    if (widget.onEditShelf != null) ...[
+                      const SizedBox(width: Spacing.sm),
+                      if (compact)
+                        IconButton(
+                          onPressed: widget.onEditShelf,
+                          icon: const Icon(Icons.edit_outlined),
+                          tooltip: 'Edit shelf',
+                        )
+                      else
+                        TextButton.icon(
+                          onPressed: widget.onEditShelf,
+                          icon: const Icon(Icons.edit_outlined, size: IconSizes.small),
+                          label: const Text('Edit'),
+                        ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: Spacing.xs),
+                Text(
+                  description == null || description.isEmpty ? 'Add a description' : description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
           ),
         ),
-        if (widget.onEditShelf != null)
-          IconButton(onPressed: widget.onEditShelf, icon: const Icon(Icons.edit_outlined), tooltip: 'Edit shelf'),
       ],
     );
   }
