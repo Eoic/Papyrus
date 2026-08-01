@@ -69,5 +69,37 @@ void main() {
       expect(added.hasTemporaryFile, isFalse);
       expect(added.isSettled, isTrue);
     });
+
+    test('rejects invalid state transitions', () {
+      final queued = BookImportBatchItem.queued(id: 'row-3', file: file);
+      final processing = queued.startProcessing();
+      final ready = processing.processingSucceeded(result);
+      final adding = ready.startAdding();
+
+      expect(() => queued.processingSucceeded(result), throwsStateError);
+      expect(() => queued.processingFailed('Could not read the file.'), throwsStateError);
+      expect(() => ready.startProcessing(), throwsStateError);
+      expect(() => processing.startAdding(), throwsStateError);
+      expect(() => ready.added(), throwsStateError);
+      expect(() => adding.processingFailed('Could not read the file.'), throwsStateError);
+    });
+
+    test('reports settlement for every status', () {
+      final queued = BookImportBatchItem.queued(id: 'row-4', file: file);
+      final processing = queued.startProcessing();
+      final ready = processing.processingSucceeded(result);
+      final processingFailed = processing.processingFailed('Could not read the file.');
+      final adding = ready.startAdding();
+      final added = adding.added();
+      final commitFailed = adding.commitFailed('Could not add the book.');
+
+      expect(queued.isSettled, isFalse);
+      expect(processing.isSettled, isFalse);
+      expect(ready.isSettled, isTrue);
+      expect(processingFailed.isSettled, isTrue);
+      expect(adding.isSettled, isTrue);
+      expect(added.isSettled, isTrue);
+      expect(commitFailed.isSettled, isTrue);
+    });
   });
 }

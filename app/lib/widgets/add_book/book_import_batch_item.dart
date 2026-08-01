@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/services/book_import_result.dart';
 
@@ -8,6 +6,9 @@ class SelectedBookFile {
   const SelectedBookFile({required this.name, required this.bytes});
 
   final String name;
+
+  /// The import workflow takes ownership of these bytes; callers must not
+  /// mutate them after creating this file selection.
   final Uint8List? bytes;
 }
 
@@ -39,26 +40,74 @@ class BookImportBatchItem {
 
   bool get hasTemporaryFile => result != null && status != BookImportBatchStatus.added;
 
-  BookImportBatchItem startProcessing() =>
-      BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.processing);
+  BookImportBatchItem startProcessing() {
+    if (status != BookImportBatchStatus.queued && status != BookImportBatchStatus.processingFailed) {
+      throw StateError('Cannot start processing an item with status $status.');
+    }
 
-  BookImportBatchItem processingSucceeded(BookImportResult value) =>
-      BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.ready, result: value);
+    return BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.processing);
+  }
 
-  BookImportBatchItem processingFailed(String message) =>
-      BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.processingFailed, errorMessage: message);
+  BookImportBatchItem processingSucceeded(BookImportResult value) {
+    if (status != BookImportBatchStatus.processing) {
+      throw StateError('Cannot complete processing for an item with status $status.');
+    }
 
-  BookImportBatchItem startAdding() =>
-      BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.adding, result: result);
+    return BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.ready, result: value);
+  }
 
-  BookImportBatchItem added() =>
-      BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.added, result: result);
+  BookImportBatchItem processingFailed(String message) {
+    if (status != BookImportBatchStatus.processing) {
+      throw StateError('Cannot fail processing for an item with status $status.');
+    }
 
-  BookImportBatchItem commitFailed(String message) => BookImportBatchItem._(
-    id: id,
-    file: file,
-    status: BookImportBatchStatus.commitFailed,
-    result: result,
-    errorMessage: message,
-  );
+    return BookImportBatchItem._(
+      id: id,
+      file: file,
+      status: BookImportBatchStatus.processingFailed,
+      errorMessage: message,
+    );
+  }
+
+  BookImportBatchItem startAdding() {
+    if (status != BookImportBatchStatus.ready && status != BookImportBatchStatus.commitFailed) {
+      throw StateError('Cannot start adding an item with status $status.');
+    }
+    final value = result;
+    if (value == null) {
+      throw StateError('Cannot add an item without a processed result.');
+    }
+
+    return BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.adding, result: value);
+  }
+
+  BookImportBatchItem added() {
+    if (status != BookImportBatchStatus.adding) {
+      throw StateError('Cannot finish adding an item with status $status.');
+    }
+    final value = result;
+    if (value == null) {
+      throw StateError('Cannot finish adding an item without a processed result.');
+    }
+
+    return BookImportBatchItem._(id: id, file: file, status: BookImportBatchStatus.added, result: value);
+  }
+
+  BookImportBatchItem commitFailed(String message) {
+    if (status != BookImportBatchStatus.adding) {
+      throw StateError('Cannot fail adding an item with status $status.');
+    }
+    final value = result;
+    if (value == null) {
+      throw StateError('Cannot fail adding an item without a processed result.');
+    }
+
+    return BookImportBatchItem._(
+      id: id,
+      file: file,
+      status: BookImportBatchStatus.commitFailed,
+      result: value,
+      errorMessage: message,
+    );
+  }
 }
