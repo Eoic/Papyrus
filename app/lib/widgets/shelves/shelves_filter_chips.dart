@@ -154,44 +154,32 @@ class ShelvesFilterChips extends StatelessWidget {
   const ShelvesFilterChips({super.key, this.horizontalPadding});
 
   static const List<_SelectionOption<ShelfContentsFilter>> _contentsOptions = [
-    _SelectionOption(value: ShelfContentsFilter.all, label: 'All'),
+    _SelectionOption(value: ShelfContentsFilter.all, label: 'Any'),
     _SelectionOption(value: ShelfContentsFilter.withBooks, label: 'With books', icon: Icons.auto_stories_outlined),
     _SelectionOption(value: ShelfContentsFilter.empty, label: 'Empty', icon: Icons.inventory_2_outlined),
   ];
 
   static const List<_SelectionOption<ShelfTypeFilter>> _typeOptions = [
-    _SelectionOption(value: ShelfTypeFilter.all, label: 'All'),
+    _SelectionOption(value: ShelfTypeFilter.all, label: 'Any'),
     _SelectionOption(value: ShelfTypeFilter.regular, label: 'Regular', icon: Icons.shelves),
     _SelectionOption(value: ShelfTypeFilter.smart, label: 'Smart', icon: Icons.auto_awesome_outlined),
   ];
 
   static const List<_SelectionOption<_ShelfSortSelection>> _sortOptions = [
-    _SelectionOption(value: (option: ShelfSortOption.name, ascending: true), label: 'Name A–Z'),
-    _SelectionOption(value: (option: ShelfSortOption.name, ascending: false), label: 'Name Z–A'),
-    _SelectionOption(value: (option: ShelfSortOption.bookCount, ascending: false), label: 'Book count: highest first'),
-    _SelectionOption(value: (option: ShelfSortOption.bookCount, ascending: true), label: 'Book count: lowest first'),
-    _SelectionOption(
-      value: (option: ShelfSortOption.dateCreated, ascending: false),
-      label: 'Date created: newest first',
-    ),
-    _SelectionOption(
-      value: (option: ShelfSortOption.dateCreated, ascending: true),
-      label: 'Date created: oldest first',
-    ),
-    _SelectionOption(
-      value: (option: ShelfSortOption.dateModified, ascending: false),
-      label: 'Date modified: newest first',
-    ),
-    _SelectionOption(
-      value: (option: ShelfSortOption.dateModified, ascending: true),
-      label: 'Date modified: oldest first',
-    ),
+    _SelectionOption(value: (option: ShelfSortOption.name, ascending: true), label: 'Name (A-Z)'),
+    _SelectionOption(value: (option: ShelfSortOption.name, ascending: false), label: 'Name (Z-A)'),
+    _SelectionOption(value: (option: ShelfSortOption.bookCount, ascending: true), label: 'Book count (Ascending)'),
+    _SelectionOption(value: (option: ShelfSortOption.bookCount, ascending: false), label: 'Book count (Descending)'),
+    _SelectionOption(value: (option: ShelfSortOption.dateCreated, ascending: false), label: 'Date created (newest)'),
+    _SelectionOption(value: (option: ShelfSortOption.dateCreated, ascending: true), label: 'Date created (oldest)'),
+    _SelectionOption(value: (option: ShelfSortOption.dateModified, ascending: false), label: 'Date modified (newest)'),
+    _SelectionOption(value: (option: ShelfSortOption.dateModified, ascending: true), label: 'Date modified (oldest)'),
   ];
 
   static const List<_SelectionOption<ShelvesViewMode>> _viewOptions = [
-    _SelectionOption(value: ShelvesViewMode.smallGrid, label: 'Small grid', icon: Icons.grid_view_rounded),
-    _SelectionOption(value: ShelvesViewMode.largeGrid, label: 'Large grid', icon: Icons.view_module_rounded),
-    _SelectionOption(value: ShelvesViewMode.list, label: 'List', icon: Icons.view_list_rounded),
+    _SelectionOption(value: ShelvesViewMode.smallGrid, label: 'Small grid'),
+    _SelectionOption(value: ShelvesViewMode.largeGrid, label: 'Large grid'),
+    _SelectionOption(value: ShelvesViewMode.list, label: 'List'),
   ];
 
   @override
@@ -211,8 +199,8 @@ class ShelvesFilterChips extends StatelessWidget {
         isActive: provider.contentsFilter != ShelfContentsFilter.all,
         child: _DropdownFilterChip(
           label: provider.contentsFilter == ShelfContentsFilter.all ? 'Contents' : selectedContents.label,
-          semanticLabel: 'Shelf contents filter',
-          icon: Icons.inventory_2_outlined,
+          semanticLabel: 'Shelf contents',
+          icon: Icons.auto_stories_outlined,
           isSelected: provider.contentsFilter != ShelfContentsFilter.all,
           tooltip: 'Filter by shelf contents',
           onPressed: () => _selectSingle<ShelfContentsFilter>(
@@ -249,8 +237,8 @@ class ShelvesFilterChips extends StatelessWidget {
         isActive: provider.typeFilter != ShelfTypeFilter.all,
         child: _DropdownFilterChip(
           label: provider.typeFilter == ShelfTypeFilter.all ? 'Type' : selectedType.label,
-          semanticLabel: 'Shelf type filter',
-          icon: Icons.category_outlined,
+          semanticLabel: 'Shelf type',
+          icon: Icons.shelves,
           isSelected: provider.typeFilter != ShelfTypeFilter.all,
           tooltip: 'Filter by shelf type',
           onPressed: () => _selectSingle<ShelfTypeFilter>(
@@ -268,13 +256,13 @@ class ShelvesFilterChips extends StatelessWidget {
         isActive: provider.viewMode != ShelvesViewMode.smallGrid,
         child: _DropdownFilterChip(
           label: selectedView.label,
-          semanticLabel: 'Shelves view mode',
-          icon: Icons.grid_view_rounded,
+          semanticLabel: 'View mode',
+          icon: Icons.grid_on,
           isSelected: provider.viewMode != ShelvesViewMode.smallGrid,
-          tooltip: 'Change shelves view mode',
+          tooltip: 'Change view mode',
           onPressed: () => _selectSingle<ShelvesViewMode>(
             context: context,
-            title: 'Shelves view mode',
+            title: 'View mode',
             options: _viewOptions,
             selectedValue: provider.viewMode,
             onSelected: provider.setViewMode,
