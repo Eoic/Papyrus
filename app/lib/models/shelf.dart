@@ -72,6 +72,7 @@ class Shelf {
     String? id,
     String? name,
     String? description,
+    bool clearDescription = false,
     String? colorHex,
     IconData? icon,
     String? parentShelfId,
@@ -86,7 +87,7 @@ class Shelf {
     return Shelf(
       id: id ?? this.id,
       name: name ?? this.name,
-      description: description ?? this.description,
+      description: clearDescription ? null : description ?? this.description,
       colorHex: colorHex ?? this.colorHex,
       icon: icon ?? this.icon,
       parentShelfId: parentShelfId ?? this.parentShelfId,

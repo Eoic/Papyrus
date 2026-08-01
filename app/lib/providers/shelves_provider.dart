@@ -456,6 +456,7 @@ class ShelvesProvider extends ChangeNotifier {
     final updatedShelf = shelf.copyWith(
       name: name,
       description: description,
+      clearDescription: description == null,
       colorHex: colorHex,
       icon: icon,
       updatedAt: DateTime.now(),
