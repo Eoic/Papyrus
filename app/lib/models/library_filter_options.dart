@@ -43,6 +43,7 @@ class LibraryFilterOptions {
     final formats = <String, String>{};
     final publishers = <String, String>{};
     final series = <String, String>{};
+    final sourceBookIds = <String>{};
     final topicIds = <String>{};
     final shelfIds = <String>{};
     final readingStatuses = <LibraryReadingStatus>{};
@@ -50,6 +51,7 @@ class LibraryFilterOptions {
     var hasUnrated = false;
 
     for (final book in sourceBooks) {
+      sourceBookIds.add(book.id);
       for (final author in [book.author, ...book.coAuthors]) {
         _addNormalized(authors, author);
       }
@@ -63,8 +65,6 @@ class LibraryFilterOptions {
       _addNormalized(formats, book.formatLabel);
       _addNormalized(publishers, book.publisher);
       _addNormalized(series, book.seriesName);
-      topicIds.addAll(dataStore.getTagIdsForBook(book.id));
-      shelfIds.addAll(dataStore.getShelfIdsForBook(book.id));
       readingStatuses.add(book.readingStatus);
 
       final rating = book.rating;
@@ -72,6 +72,18 @@ class LibraryFilterOptions {
         hasUnrated = true;
       } else {
         ratings.add(rating);
+      }
+    }
+
+    for (final relation in dataStore.bookTagRelations) {
+      if (sourceBookIds.contains(relation.bookId)) {
+        topicIds.add(relation.tagId);
+      }
+    }
+
+    for (final relation in dataStore.bookShelfRelations) {
+      if (sourceBookIds.contains(relation.bookId)) {
+        shelfIds.add(relation.shelfId);
       }
     }
 
