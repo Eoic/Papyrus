@@ -113,7 +113,77 @@ void main() {
 
     expect(find.text('broken.epub'), findsOneWidget);
     expect(find.text('Unreadable'), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Import 0 books')).onPressed, isNull);
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Import 1 book')).onPressed, isNull);
+  });
+
+  testWidgets('confirms readable and unreadable retained files as one batch', (tester) async {
+    List<SelectedBookFile>? confirmedFiles;
+    final readable = SelectedBookFile(name: 'readable.epub', bytes: Uint8List.fromList([1]));
+    const unreadable = SelectedBookFile(name: 'unreadable.pdf', bytes: null);
+
+    await pumpSheet(
+      tester,
+      pickFiles: () async => [readable, unreadable],
+      onConfirm: (files) => confirmedFiles = files,
+    );
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Browse files'));
+    await tester.pump();
+
+    expect(find.widgetWithText(FilledButton, 'Import 2 books'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Import 2 books'));
+
+    expect(confirmedFiles, [same(readable), same(unreadable)]);
+  });
+
+  testWidgets('preserves the selection and shows safe feedback when picking fails', (tester) async {
+    var pickCount = 0;
+    final selected = SelectedBookFile(name: 'selected.epub', bytes: Uint8List.fromList([1]));
+
+    await pumpSheet(
+      tester,
+      pickFiles: () async {
+        pickCount++;
+        if (pickCount == 1) return [selected];
+        throw Exception('private platform path');
+      },
+      onConfirm: (_) {},
+    );
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Browse files'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Browse files'));
+    await tester.pump();
+
+    expect(find.text('selected.epub'), findsOneWidget);
+    expect(find.text('Could not open the selected files. Please try again.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps footer actions usable at narrow width with scaled text', (tester) async {
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = const Size(640, 1200);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await pumpSheet(tester, pickFiles: () async => [], onConfirm: (_) {});
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.ancestor(
+        of: find.widgetWithText(TextButton, 'Cancel'),
+        matching: find.byKey(const Key('add-book-sheet-footer')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.widgetWithText(FilledButton, 'Import 0 books'),
+        matching: find.byKey(const Key('add-book-sheet-footer')),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('show pushes the draggable sheet on the root navigator', (tester) async {

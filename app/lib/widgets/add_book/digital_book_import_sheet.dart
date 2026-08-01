@@ -68,17 +68,24 @@ class DigitalBookImportSheet extends StatefulWidget {
 class _DigitalBookImportSheetState extends State<DigitalBookImportSheet> {
   List<SelectedBookFile> _files = const [];
   bool _isPicking = false;
+  String? _pickerError;
 
   List<SelectedBookFile> get _readableFiles => _files.where((file) => file.bytes != null).toList(growable: false);
 
   Future<void> _browse() async {
     if (_isPicking) return;
-    setState(() => _isPicking = true);
+    setState(() {
+      _isPicking = true;
+      _pickerError = null;
+    });
 
     try {
       final files = await widget.pickFiles();
       if (!mounted || files.isEmpty) return;
       setState(() => _files = List.unmodifiable(files));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _pickerError = 'Could not open the selected files. Please try again.');
     } finally {
       if (mounted) setState(() => _isPicking = false);
     }
@@ -91,8 +98,8 @@ class _DigitalBookImportSheetState extends State<DigitalBookImportSheet> {
   @override
   Widget build(BuildContext context) {
     final readableFiles = _readableFiles;
-    final readableCount = readableFiles.length;
-    final importLabel = 'Import $readableCount ${readableCount == 1 ? 'book' : 'books'}';
+    final fileCount = _files.length;
+    final importLabel = 'Import $fileCount ${fileCount == 1 ? 'book' : 'books'}';
 
     return AddBookSheetScaffold(
       title: 'Import digital books',
@@ -114,6 +121,10 @@ class _DigitalBookImportSheetState extends State<DigitalBookImportSheet> {
               label: const Text('Browse files'),
             ),
           ),
+          if (_pickerError case final message?) ...[
+            const SizedBox(height: Spacing.sm),
+            Text(message, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ],
           if (_files.isNotEmpty) ...[
             const SizedBox(height: Spacing.lg),
             Text('${_files.length} selected', style: Theme.of(context).textTheme.titleSmall),
@@ -122,13 +133,15 @@ class _DigitalBookImportSheetState extends State<DigitalBookImportSheet> {
           ],
         ],
       ),
-      footer: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      footer: OverflowBar(
+        alignment: MainAxisAlignment.end,
+        overflowAlignment: OverflowBarAlignment.end,
+        spacing: Spacing.sm,
+        overflowSpacing: Spacing.sm,
         children: [
           TextButton(onPressed: widget.onCancel, child: const Text('Cancel')),
-          const SizedBox(width: Spacing.sm),
           FilledButton(
-            onPressed: readableFiles.isEmpty ? null : () => widget.onConfirm(readableFiles),
+            onPressed: readableFiles.isEmpty ? null : () => widget.onConfirm(_files),
             child: Text(importLabel),
           ),
         ],
