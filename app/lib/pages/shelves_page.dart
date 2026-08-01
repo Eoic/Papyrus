@@ -5,11 +5,11 @@ import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
-import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
 import 'package:papyrus/widgets/shelves/shelf_card.dart';
+import 'package:papyrus/widgets/shelves/shelves_filter_chips.dart';
 import 'package:provider/provider.dart';
 
 /// Shelves page for managing book collections.
@@ -86,13 +86,14 @@ class _ShelvesPageState extends State<ShelvesPage> {
   // ============================================================================
 
   Widget _buildMobileLayout(BuildContext context, ShelvesProvider provider) {
+    final shelves = provider.shelves;
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: const LibraryDrawer(currentPath: '/library/shelves'),
       body: SafeArea(
         child: Column(
           children: [
-            // Row 1: Menu + Search + Sort
             Padding(
               padding: const EdgeInsets.only(top: Spacing.md, left: Spacing.md, right: Spacing.md),
               child: Row(
@@ -106,41 +107,18 @@ class _ShelvesPageState extends State<ShelvesPage> {
                   ),
                   const SizedBox(width: Spacing.xs),
                   Expanded(child: _buildSearchField(provider)),
-                  const SizedBox(width: Spacing.sm),
-                  _buildSortButton(provider),
                 ],
               ),
             ),
-            SizedBox(height: Spacing.md),
-            // Row 2: Count + View toggle
-            Padding(
-              padding: const EdgeInsets.only(left: Spacing.md, right: Spacing.md, bottom: Spacing.md),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${provider.shelves.length} ${provider.shelves.length == 1 ? 'shelf' : 'shelves'}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                  _buildViewToggle(provider),
-                ],
-              ),
-            ),
-            // Shelves grid or list
-            Expanded(
-              child: provider.hasShelves
-                  ? provider.isListView
-                        ? _buildShelfList(context, provider)
-                        : _buildShelfGrid(context, provider)
-                  : _buildEmptyState(context),
-            ),
+            const SizedBox(height: Spacing.sm),
+            const ShelvesFilterChips(),
+            Expanded(child: _buildShelfResults(context, provider, shelves)),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddShelfSheet(context),
+        tooltip: 'New shelf',
         child: const Icon(Icons.add),
       ),
     );
@@ -152,66 +130,45 @@ class _ShelvesPageState extends State<ShelvesPage> {
 
   Widget _buildDesktopLayout(BuildContext context, ShelvesProvider provider) {
     const double controlHeight = 40.0;
+    final shelves = provider.shelves;
 
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row
-          Container(
-            padding: const EdgeInsets.only(top: Spacing.lg, left: Spacing.lg, right: Spacing.lg),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final useCompactLayout = constraints.maxWidth < 800;
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(top: Spacing.lg, left: Spacing.lg, right: Spacing.lg),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final useCompactLayout = constraints.maxWidth < 800;
 
-                if (useCompactLayout) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  if (useCompactLayout) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildSearchField(provider),
+                        const SizedBox(height: Spacing.sm),
+                        Align(alignment: Alignment.centerRight, child: _buildNewShelfButton(controlHeight)),
+                      ],
+                    );
+                  }
+
+                  return Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(child: _buildSearchField(provider)),
-                          const SizedBox(width: Spacing.sm),
-                          _buildSortButton(provider),
-                        ],
-                      ),
-                      const SizedBox(height: Spacing.md),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          _buildViewToggle(provider),
-                          const SizedBox(width: Spacing.sm),
-                          _buildNewShelfButton(controlHeight),
-                        ],
-                      ),
+                      Expanded(child: _buildSearchField(provider)),
+                      const SizedBox(width: Spacing.md),
+                      _buildNewShelfButton(controlHeight),
                     ],
                   );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: _buildSearchField(provider)),
-                    const SizedBox(width: Spacing.md),
-                    _buildSortButton(provider),
-                    const SizedBox(width: Spacing.md),
-                    _buildViewToggle(provider),
-                    const SizedBox(width: Spacing.md),
-                    _buildNewShelfButton(controlHeight),
-                  ],
-                );
-              },
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: Spacing.md),
-          // Shelves grid or list
-          Expanded(
-            child: provider.hasShelves
-                ? provider.isListView
-                      ? _buildShelfList(context, provider)
-                      : _buildShelfGrid(context, provider)
-                : _buildEmptyState(context),
-          ),
-        ],
+            const SizedBox(height: Spacing.sm),
+            const ShelvesFilterChips(horizontalPadding: Spacing.lg),
+            Expanded(child: _buildShelfResults(context, provider, shelves)),
+          ],
+        ),
       ),
     );
   }
@@ -229,6 +186,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
         suffixIcon: provider.searchQuery.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear),
+                tooltip: 'Clear shelf search',
                 onPressed: () {
                   _searchController.clear();
                   provider.clearSearch();
@@ -240,43 +198,6 @@ class _ShelvesPageState extends State<ShelvesPage> {
         isDense: true,
       ),
       onChanged: provider.setSearchQuery,
-    );
-  }
-
-  Widget _buildSortButton(ShelvesProvider provider) {
-    return PopupMenuButton<ShelfSortOption>(
-      icon: const Icon(Icons.sort),
-      tooltip: 'Sort shelves',
-      onSelected: (option) => provider.setShelfSortOption(option),
-      itemBuilder: (context) => [
-        _buildSortMenuItem(ShelfSortOption.name, 'Name', provider),
-        _buildSortMenuItem(ShelfSortOption.bookCount, 'Book count', provider),
-        _buildSortMenuItem(ShelfSortOption.dateCreated, 'Date created', provider),
-        _buildSortMenuItem(ShelfSortOption.dateModified, 'Date modified', provider),
-      ],
-    );
-  }
-
-  PopupMenuItem<ShelfSortOption> _buildSortMenuItem(ShelfSortOption option, String label, ShelvesProvider provider) {
-    return PopupMenuItem(
-      value: option,
-      child: Row(
-        children: [
-          Expanded(child: Text(label)),
-          Icon(
-            Icons.check,
-            size: IconSizes.small,
-            color: option == provider.shelfSortOption ? Theme.of(context).colorScheme.primary : Colors.transparent,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildViewToggle(ShelvesProvider provider) {
-    return ViewModeToggle(
-      isGridView: provider.isGridView,
-      onChanged: (isGrid) => provider.setViewMode(isGrid ? ShelvesViewMode.grid : ShelvesViewMode.list),
     );
   }
 
@@ -293,59 +214,78 @@ class _ShelvesPageState extends State<ShelvesPage> {
   // SHARED WIDGETS
   // ============================================================================
 
-  Widget _buildShelfGrid(BuildContext context, ShelvesProvider provider) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Match book-card proportions for visual consistency
-    int crossAxisCount;
-    double spacing;
-    double childAspectRatio;
-
-    if (screenWidth >= Breakpoints.desktopLarge) {
-      crossAxisCount = 6;
-      spacing = Spacing.md;
-      childAspectRatio = 0.55;
-    } else if (screenWidth >= Breakpoints.desktopSmall) {
-      crossAxisCount = 5;
-      spacing = Spacing.md;
-      childAspectRatio = 0.55;
-    } else if (screenWidth >= Breakpoints.tablet) {
-      crossAxisCount = 4;
-      spacing = Spacing.sm + 4;
-      childAspectRatio = 0.55;
-    } else {
-      crossAxisCount = 2;
-      spacing = Spacing.sm;
-      childAspectRatio = 0.58;
+  Widget _buildShelfResults(BuildContext context, ShelvesProvider provider, List<Shelf> shelves) {
+    if (!provider.hasAnyShelves) {
+      return _buildEmptyState(context);
     }
+    if (shelves.isEmpty) {
+      return _buildNoResultsState(context);
+    }
+    if (provider.viewMode == ShelvesViewMode.list) {
+      return _buildShelfList(context, shelves);
+    }
+    return _buildShelfGrid(context, shelves, provider.viewMode);
+  }
 
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.md),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: spacing,
-        crossAxisSpacing: spacing,
-        childAspectRatio: childAspectRatio,
-      ),
-      itemCount: provider.shelves.length,
-      itemBuilder: (context, index) {
-        final shelf = provider.shelves[index];
-        return ShelfCard(
-          shelf: shelf,
-          onTap: () => _showShelfDetail(context, shelf),
-          onMoreTap: () => _showShelfOptions(context, shelf),
-          onLongPress: () => _showShelfOptions(context, shelf),
+  Widget _buildShelfGrid(BuildContext context, List<Shelf> shelves, ShelvesViewMode viewMode) {
+    final isLargeGrid = viewMode == ShelvesViewMode.largeGrid;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        // Match book-card proportions for visual consistency.
+        int crossAxisCount;
+        double spacing;
+        double childAspectRatio;
+
+        if (width >= Breakpoints.desktopLarge) {
+          crossAxisCount = isLargeGrid ? 4 : 6;
+          spacing = Spacing.md;
+          childAspectRatio = 0.55;
+        } else if (width >= Breakpoints.desktopSmall) {
+          crossAxisCount = isLargeGrid ? 3 : 5;
+          spacing = Spacing.md;
+          childAspectRatio = 0.55;
+        } else if (width >= Breakpoints.tablet) {
+          crossAxisCount = isLargeGrid ? 3 : 4;
+          spacing = Spacing.sm + 4;
+          childAspectRatio = 0.55;
+        } else {
+          crossAxisCount = 2;
+          spacing = Spacing.sm;
+          childAspectRatio = 0.58;
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(Spacing.md, 0, Spacing.md, Spacing.md),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: shelves.length,
+          itemBuilder: (context, index) {
+            final shelf = shelves[index];
+            return ShelfCard(
+              shelf: shelf,
+              onTap: () => _showShelfDetail(context, shelf),
+              onMoreTap: () => _showShelfOptions(context, shelf),
+              onLongPress: () => _showShelfOptions(context, shelf),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildShelfList(BuildContext context, ShelvesProvider provider) {
+  Widget _buildShelfList(BuildContext context, List<Shelf> shelves) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
-      itemCount: provider.shelves.length,
+      itemCount: shelves.length,
       itemBuilder: (context, index) {
-        final shelf = provider.shelves[index];
+        final shelf = shelves[index];
         return ShelfCard(
           shelf: shelf,
           isListItem: true,
@@ -354,6 +294,14 @@ class _ShelvesPageState extends State<ShelvesPage> {
           onLongPress: () => _showShelfOptions(context, shelf),
         );
       },
+    );
+  }
+
+  Widget _buildNoResultsState(BuildContext context) {
+    return const EmptyState(
+      icon: Icons.search_off,
+      title: 'No shelves found',
+      subtitle: 'Try changing your search or filters',
     );
   }
 

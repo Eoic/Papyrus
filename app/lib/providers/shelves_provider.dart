@@ -5,7 +5,13 @@ import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 /// View mode for displaying shelves.
-enum ShelvesViewMode { grid, list }
+enum ShelvesViewMode { smallGrid, largeGrid, list }
+
+/// Filter options for shelf occupancy.
+enum ShelfContentsFilter { all, withBooks, empty }
+
+/// Filter options for shelf type.
+enum ShelfTypeFilter { all, regular, smart }
 
 /// Sort options for shelves.
 enum ShelfSortOption { name, bookCount, dateCreated, dateModified }
@@ -25,8 +31,13 @@ class ShelvesProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  // View mode
-  ShelvesViewMode _viewMode = ShelvesViewMode.grid;
+  // Shelf collection controls
+  ShelvesViewMode _viewMode = ShelvesViewMode.smallGrid;
+  ShelfContentsFilter _contentsFilter = ShelfContentsFilter.all;
+  ShelfTypeFilter _typeFilter = ShelfTypeFilter.all;
+
+  // View mode for books within a shelf
+  bool _isBookGridView = true;
 
   // Selected shelf for detail view
   Shelf? _selectedShelf;
@@ -78,8 +89,21 @@ class ShelvesProvider extends ChangeNotifier {
   String? get error => _error;
 
   ShelvesViewMode get viewMode => _viewMode;
-  bool get isGridView => _viewMode == ShelvesViewMode.grid;
+  ShelfContentsFilter get contentsFilter => _contentsFilter;
+  ShelfTypeFilter get typeFilter => _typeFilter;
+  bool get isSmallGridView => _viewMode == ShelvesViewMode.smallGrid;
+  bool get isLargeGridView => _viewMode == ShelvesViewMode.largeGrid;
   bool get isListView => _viewMode == ShelvesViewMode.list;
+
+  bool get isBookGridView => _isBookGridView;
+  bool get isBookListView => !_isBookGridView;
+
+  bool get hasActiveShelfControls =>
+      _contentsFilter != ShelfContentsFilter.all ||
+      _typeFilter != ShelfTypeFilter.all ||
+      _shelfSortOption != ShelfSortOption.name ||
+      !_shelfSortAscending ||
+      _viewMode != ShelvesViewMode.smallGrid;
 
   /// Get all shelves, filtered and sorted according to current settings.
   List<Shelf> get shelves {
@@ -91,11 +115,31 @@ class ShelvesProvider extends ChangeNotifier {
         return shelf.name.toLowerCase().contains(query) || (shelf.description?.toLowerCase().contains(query) ?? false);
       }).toList();
     }
+
+    switch (_contentsFilter) {
+      case ShelfContentsFilter.all:
+        break;
+      case ShelfContentsFilter.withBooks:
+        list = list.where((shelf) => _dataStore!.getBookCountForShelf(shelf.id) > 0).toList();
+      case ShelfContentsFilter.empty:
+        list = list.where((shelf) => _dataStore!.getBookCountForShelf(shelf.id) == 0).toList();
+    }
+
+    switch (_typeFilter) {
+      case ShelfTypeFilter.all:
+        break;
+      case ShelfTypeFilter.regular:
+        list = list.where((shelf) => !shelf.isSmart).toList();
+      case ShelfTypeFilter.smart:
+        list = list.where((shelf) => shelf.isSmart).toList();
+    }
+
     _applySorting(list);
     return list;
   }
 
   bool get hasShelves => shelves.isNotEmpty;
+  bool get hasAnyShelves => _dataStore?.shelves.isNotEmpty ?? false;
 
   Shelf? get selectedShelf => _selectedShelf;
 
@@ -166,21 +210,47 @@ class ShelvesProvider extends ChangeNotifier {
     }
   }
 
-  /// Toggles between grid and list view.
-  void toggleViewMode() {
-    _viewMode = _viewMode == ShelvesViewMode.grid ? ShelvesViewMode.list : ShelvesViewMode.grid;
+  /// Sets the shelf occupancy filter.
+  void setContentsFilter(ShelfContentsFilter filter) {
+    if (_contentsFilter != filter) {
+      _contentsFilter = filter;
+      notifyListeners();
+    }
+  }
+
+  /// Sets the shelf type filter.
+  void setTypeFilter(ShelfTypeFilter filter) {
+    if (_typeFilter != filter) {
+      _typeFilter = filter;
+      notifyListeners();
+    }
+  }
+
+  /// Sets the shelf sort option and its explicit direction.
+  void setShelfSortOption(ShelfSortOption option, {required bool ascending}) {
+    if (_shelfSortOption == option && _shelfSortAscending == ascending) return;
+
+    _shelfSortOption = option;
+    _shelfSortAscending = ascending;
     notifyListeners();
   }
 
-  /// Sets the shelf sort option. If the same option is selected, toggles direction.
-  void setShelfSortOption(ShelfSortOption option, {bool? ascending}) {
-    if (_shelfSortOption == option && ascending == null) {
-      _shelfSortAscending = !_shelfSortAscending;
-    } else {
-      _shelfSortOption = option;
-      if (ascending != null) _shelfSortAscending = ascending;
-    }
+  /// Resets shelf collection controls without changing text search.
+  void clearShelfControls() {
+    _contentsFilter = ShelfContentsFilter.all;
+    _typeFilter = ShelfTypeFilter.all;
+    _shelfSortOption = ShelfSortOption.name;
+    _shelfSortAscending = true;
+    _viewMode = ShelvesViewMode.smallGrid;
     notifyListeners();
+  }
+
+  /// Sets the grid/list view used for books within a shelf.
+  void setBookViewMode(bool isGrid) {
+    if (_isBookGridView != isGrid) {
+      _isBookGridView = isGrid;
+      notifyListeners();
+    }
   }
 
   /// Applies the current sorting to a shelves list.
