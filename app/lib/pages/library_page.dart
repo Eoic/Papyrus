@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/library_filter_options.dart';
+import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/acquisition_downloads_provider.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
@@ -33,7 +35,13 @@ import 'package:provider/provider.dart';
 /// - Mobile: AppBar with search, filter chips, 2-column grid, FAB
 /// - Desktop: Header row, filter chips, 5-column grid or list view
 class LibraryPage extends StatefulWidget {
-  const LibraryPage({super.key});
+  final Shelf? shelf;
+  final VoidCallback? onBack;
+  final VoidCallback? onEditShelf;
+
+  const LibraryPage({super.key, this.shelf, this.onBack, this.onEditShelf});
+
+  bool get isShelfView => shelf != null;
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
@@ -66,8 +74,29 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final provider = context.read<AcquisitionDownloadsProvider?>();
+    final provider = widget.isShelfView ? null : context.read<AcquisitionDownloadsProvider?>();
 
+    _updateVisibleDownloadsProvider(provider);
+  }
+
+  @override
+  void didUpdateWidget(LibraryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.isShelfView == widget.isShelfView) {
+      return;
+    }
+
+    final provider = widget.isShelfView ? null : context.read<AcquisitionDownloadsProvider?>();
+    _updateVisibleDownloadsProvider(provider);
+
+    if (widget.isShelfView) {
+      _presentationMode = _BooksPresentationMode.local;
+      _showDownloadingOnly = false;
+    }
+  }
+
+  void _updateVisibleDownloadsProvider(AcquisitionDownloadsProvider? provider) {
     if (!identical(provider, _visibleDownloadsProvider)) {
       _presentationGeneration += 1;
       _visibleDownloadsProvider?.setLibraryVisible(false);
@@ -86,22 +115,45 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     final libraryProvider = context.watch<LibraryProvider>();
-    final downloadsProvider = context.watch<AcquisitionDownloadsProvider?>();
+    final downloadsProvider = widget.isShelfView ? null : context.watch<AcquisitionDownloadsProvider?>();
     final dataStore = context.watch<DataStore>();
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
-    final books = _getFilteredBooks(libraryProvider, dataStore);
+    final sourceBooks = _sourceBooks(dataStore);
+    final filterOptions = LibraryFilterOptions.fromDataStore(dataStore, books: sourceBooks);
+    final books = _getFilteredBooks(libraryProvider, dataStore, sourceBooks);
     final isLoading = !dataStore.isLoaded;
 
     if (isDesktop) {
-      return _buildDesktopLayout(context, books, dataStore, libraryProvider, downloadsProvider, isLoading);
+      return _buildDesktopLayout(
+        context,
+        books,
+        sourceBooks,
+        filterOptions,
+        libraryProvider,
+        downloadsProvider,
+        isLoading,
+      );
     }
 
-    return _buildMobileLayout(context, books, dataStore, libraryProvider, downloadsProvider, isLoading);
+    return _buildMobileLayout(
+      context,
+      books,
+      sourceBooks,
+      filterOptions,
+      libraryProvider,
+      downloadsProvider,
+      isLoading,
+    );
   }
 
-  List<Book> _getFilteredBooks(LibraryProvider provider, DataStore dataStore) {
-    final books = provider.filterBooks(dataStore.books, dataStore: dataStore);
+  List<Book> _sourceBooks(DataStore dataStore) {
+    final shelf = widget.shelf;
+    return shelf == null ? dataStore.books : dataStore.getBooksInShelf(shelf.id);
+  }
+
+  List<Book> _getFilteredBooks(LibraryProvider provider, DataStore dataStore, List<Book> sourceBooks) {
+    final books = provider.filterBooks(sourceBooks, dataStore: dataStore);
     return provider.sortBooks(books);
   }
 
@@ -112,14 +164,19 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget _buildMobileLayout(
     BuildContext context,
     List<Book> books,
-    DataStore dataStore,
+    List<Book> sourceBooks,
+    LibraryFilterOptions filterOptions,
     LibraryProvider libraryProvider,
     AcquisitionDownloadsProvider? downloadsProvider,
     bool isLoading,
   ) {
-    final isOnline = _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
+    final isOnline =
+        !widget.isShelfView && _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
     final isBookSelection = libraryProvider.isSelectionMode;
-    final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
+    final localItems = buildAcquisitionLibraryItems(
+      books: sourceBooks,
+      jobs: widget.isShelfView ? const [] : downloadsProvider?.jobs ?? const [],
+    );
     final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
 
     final acquisitionView = _buildAcquisitionLibraryView(
@@ -137,7 +194,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const LibraryDrawer(),
+      drawer: widget.isShelfView ? null : const LibraryDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -159,17 +216,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       onSelectAll: () => libraryProvider.selectAll(books.map((b) => b.id).toList()),
                       onDeselectAll: libraryProvider.deselectAll,
                     )
-                  : Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.menu),
-                          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                          tooltip: 'Library sections',
-                        ),
-                        const SizedBox(width: Spacing.xs),
-                        Expanded(child: _buildSearchBar(libraryProvider)),
-                      ],
-                    ),
+                  : _buildMobileLocalHeader(libraryProvider),
             ),
 
             if (!isOnline)
@@ -177,7 +224,8 @@ class _LibraryPageState extends State<LibraryPage> {
                 children: [
                   SizedBox(height: Spacing.sm),
                   LibraryFilterChips(
-                    showDownloading: localItems.hasDownloadingItems,
+                    filterOptions: filterOptions,
+                    showDownloading: !widget.isShelfView && localItems.hasDownloadingItems,
                     isDownloadingSelected: showDownloadingOnly,
                     onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
                     onLibraryFilterTapped: () {
@@ -189,13 +237,26 @@ class _LibraryPageState extends State<LibraryPage> {
                 ],
               ),
 
-            Expanded(child: _buildBookContent(context, libraryProvider, downloadsProvider, isLoading, acquisitionView)),
+            Expanded(
+              child: _buildBookContent(
+                context,
+                libraryProvider,
+                downloadsProvider,
+                isLoading,
+                acquisitionView,
+                sourceBooks.length,
+              ),
+            ),
           ],
         ),
       ),
       floatingActionButton: hideLocalControls
           ? null
-          : FloatingActionButton(onPressed: () => _showAddBook(downloadsProvider), child: const Icon(Icons.add)),
+          : FloatingActionButton(
+              onPressed: widget.isShelfView ? () {} : () => _showAddBook(downloadsProvider),
+              tooltip: widget.isShelfView ? 'Add to shelf' : null,
+              child: const Icon(Icons.add),
+            ),
       bottomNavigationBar: isOnline && downloadsProvider.selectedReleaseTokens.isNotEmpty
           ? _buildMobileOnlineAction(downloadsProvider)
           : hasJobSelection
@@ -203,6 +264,30 @@ class _LibraryPageState extends State<LibraryPage> {
           : isBookSelection
           ? buildMobileBottomActionBar(context, libraryProvider)
           : null,
+    );
+  }
+
+  Widget _buildMobileLocalHeader(LibraryProvider libraryProvider) {
+    if (!widget.isShelfView) {
+      return Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            tooltip: 'Library sections',
+          ),
+          const SizedBox(width: Spacing.xs),
+          Expanded(child: _buildSearchBar(libraryProvider)),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        _buildShelfIdentity(context, showBack: true),
+        const SizedBox(height: Spacing.md),
+        SizedBox(width: double.infinity, child: _buildSearchBar(libraryProvider)),
+      ],
     );
   }
 
@@ -224,10 +309,13 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<void> _showAdvancedFilters() async {
     final libraryProvider = context.read<LibraryProvider>();
     final dataStore = context.read<DataStore>();
+    final sourceBooks = _sourceBooks(dataStore);
     final filters = await LibraryAdvancedFilterSheet.show(
       context,
       libraryProvider: libraryProvider,
       dataStore: dataStore,
+      sourceBooks: sourceBooks,
+      filterOptions: LibraryFilterOptions.fromDataStore(dataStore, books: sourceBooks),
     );
 
     if (filters != null && mounted) {
@@ -493,15 +581,20 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget _buildDesktopLayout(
     BuildContext context,
     List<Book> books,
-    DataStore dataStore,
+    List<Book> sourceBooks,
+    LibraryFilterOptions filterOptions,
     LibraryProvider libraryProvider,
     AcquisitionDownloadsProvider? downloadsProvider,
     bool isLoading,
   ) {
     const double controlHeight = 40.0;
-    final isOnline = _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
+    final isOnline =
+        !widget.isShelfView && _presentationMode == _BooksPresentationMode.online && downloadsProvider != null;
     final isBookSelection = libraryProvider.isSelectionMode;
-    final localItems = buildAcquisitionLibraryItems(books: dataStore.books, jobs: downloadsProvider?.jobs ?? const []);
+    final localItems = buildAcquisitionLibraryItems(
+      books: sourceBooks,
+      jobs: widget.isShelfView ? const [] : downloadsProvider?.jobs ?? const [],
+    );
     final showDownloadingOnly = _showDownloadingOnly && localItems.hasDownloadingItems;
     final acquisitionView = _buildAcquisitionLibraryView(
       books: books,
@@ -555,18 +648,7 @@ class _LibraryPageState extends State<LibraryPage> {
                         onDeselectAll: libraryProvider.deselectAll,
                         actions: buildBulkActionBar(context, libraryProvider),
                       )
-                    : Row(
-                        children: [
-                          Expanded(child: _buildSearchBar(libraryProvider)),
-                          const SizedBox(width: Spacing.md),
-                          FilledButton.icon(
-                            onPressed: () => _showAddBook(downloadsProvider),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add book'),
-                            style: FilledButton.styleFrom(minimumSize: Size(0, controlHeight)),
-                          ),
-                        ],
-                      ),
+                    : _buildDesktopLocalHeader(libraryProvider, downloadsProvider, controlHeight),
               ),
               if (!isOnline)
                 Column(
@@ -574,7 +656,8 @@ class _LibraryPageState extends State<LibraryPage> {
                     SizedBox(height: Spacing.sm),
                     LibraryFilterChips(
                       horizontalPadding: Spacing.lg,
-                      showDownloading: localItems.hasDownloadingItems,
+                      filterOptions: filterOptions,
+                      showDownloading: !widget.isShelfView && localItems.hasDownloadingItems,
                       isDownloadingSelected: showDownloadingOnly,
                       onDownloadingTapped: () => setState(() => _showDownloadingOnly = !_showDownloadingOnly),
                       onLibraryFilterTapped: () {
@@ -588,12 +671,88 @@ class _LibraryPageState extends State<LibraryPage> {
 
               // Book grid or list
               Expanded(
-                child: _buildBookContent(context, libraryProvider, downloadsProvider, isLoading, acquisitionView),
+                child: _buildBookContent(
+                  context,
+                  libraryProvider,
+                  downloadsProvider,
+                  isLoading,
+                  acquisitionView,
+                  sourceBooks.length,
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDesktopLocalHeader(
+    LibraryProvider libraryProvider,
+    AcquisitionDownloadsProvider? downloadsProvider,
+    double controlHeight,
+  ) {
+    final searchAndAction = Row(
+      children: [
+        Expanded(child: _buildSearchBar(libraryProvider)),
+        const SizedBox(width: Spacing.md),
+        FilledButton.icon(
+          onPressed: widget.isShelfView ? () {} : () => _showAddBook(downloadsProvider),
+          icon: const Icon(Icons.add),
+          label: Text(widget.isShelfView ? 'Add to shelf' : 'Add book'),
+          style: FilledButton.styleFrom(minimumSize: Size(0, controlHeight)),
+        ),
+      ],
+    );
+
+    if (!widget.isShelfView) {
+      return searchAndAction;
+    }
+
+    return Column(
+      children: [
+        _buildShelfIdentity(context, showBack: true),
+        const SizedBox(height: Spacing.md),
+        searchAndAction,
+      ],
+    );
+  }
+
+  Widget _buildShelfIdentity(BuildContext context, {required bool showBack}) {
+    final shelf = widget.shelf!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final description = shelf.description?.trim();
+
+    return Row(
+      children: [
+        if (showBack && widget.onBack != null)
+          IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back), tooltip: 'Back to shelves'),
+        Icon(shelf.displayIcon, size: IconSizes.medium, color: shelf.color ?? colorScheme.primary),
+        const SizedBox(width: Spacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                shelf.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: Spacing.xs),
+              Text(
+                description == null || description.isEmpty ? 'Add a description' : description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        if (widget.onEditShelf != null)
+          IconButton(onPressed: widget.onEditShelf, icon: const Icon(Icons.edit_outlined), tooltip: 'Edit shelf'),
+      ],
     );
   }
 
@@ -603,8 +762,9 @@ class _LibraryPageState extends State<LibraryPage> {
     AcquisitionDownloadsProvider? downloadsProvider,
     bool isLoading,
     _AcquisitionLibraryView acquisitionView,
+    int sourceBookCount,
   ) {
-    if (_presentationMode == _BooksPresentationMode.online && downloadsProvider != null) {
+    if (!widget.isShelfView && _presentationMode == _BooksPresentationMode.online && downloadsProvider != null) {
       return OnlineResultsView(
         hasSearched: downloadsProvider.remoteQuery != null,
         isSearching: downloadsProvider.isSearching,
@@ -626,7 +786,7 @@ class _LibraryPageState extends State<LibraryPage> {
     final visiblePlaceholderJobs = acquisitionView.placeholderJobs;
 
     if (visibleBooks.isEmpty && visiblePlaceholderJobs.isEmpty) {
-      return _buildEmptyState(libraryProvider, downloadsProvider);
+      return _buildEmptyState(libraryProvider, downloadsProvider, sourceBookCount);
     }
 
     void showJob(AcquisitionJob job) {
@@ -806,8 +966,29 @@ class _LibraryPageState extends State<LibraryPage> {
     context.go('/library/details/${book.id}');
   }
 
-  Widget _buildEmptyState(LibraryProvider libraryProvider, AcquisitionDownloadsProvider? downloadsProvider) {
+  Widget _buildEmptyState(
+    LibraryProvider libraryProvider,
+    AcquisitionDownloadsProvider? downloadsProvider,
+    int sourceBookCount,
+  ) {
     final query = libraryProvider.searchQuery.trim();
+
+    if (widget.isShelfView) {
+      if (sourceBookCount == 0) {
+        return EmptyState(
+          icon: Icons.menu_book_outlined,
+          title: 'No books in this shelf',
+          subtitle: 'Add books from your library to organize them here',
+          action: FilledButton(onPressed: () {}, child: const Text('Add to shelf')),
+        );
+      }
+
+      return const EmptyState(
+        icon: Icons.search_off,
+        title: 'No books found',
+        subtitle: 'Try adjusting your search or filters',
+      );
+    }
 
     if (query.isNotEmpty) {
       return EmptyState(
