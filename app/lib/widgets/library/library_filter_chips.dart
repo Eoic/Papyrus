@@ -261,6 +261,7 @@ Future<Set<T>?> _showMultiSelectionSheet<T>(
 
 class LibraryFilterChips extends StatelessWidget {
   final double? horizontalPadding;
+  final LibraryFilterOptions? filterOptions;
   final bool showDownloading;
   final bool isDownloadingSelected;
   final VoidCallback? onDownloadingTapped;
@@ -269,16 +270,12 @@ class LibraryFilterChips extends StatelessWidget {
   const LibraryFilterChips({
     super.key,
     this.horizontalPadding,
+    this.filterOptions,
     this.showDownloading = false,
     this.isDownloadingSelected = false,
     this.onDownloadingTapped,
     this.onLibraryFilterTapped,
   });
-
-  static final List<_SelectionOption<LibraryReadingStatus>> _statusOptions = [
-    for (final status in LibraryReadingStatus.values)
-      _SelectionOption<LibraryReadingStatus>(value: status, label: status.label, icon: status.icon),
-  ];
 
   static final List<_SelectionOption<LibrarySortOption>> _sortOptions = [
     for (final option in LibrarySortOption.values)
@@ -303,7 +300,11 @@ class LibraryFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<LibraryProvider>();
     final dataStore = context.watch<DataStore>();
-    final filterOptions = LibraryFilterOptions.fromDataStore(dataStore);
+    final filterOptions = this.filterOptions ?? LibraryFilterOptions.fromDataStore(dataStore);
+    final statusOptions = [
+      for (final option in filterOptions.readingStatuses)
+        _SelectionOption<LibraryReadingStatus>(value: option.value, label: option.label, icon: option.value.icon),
+    ];
     final authorOptions = _withIcon(filterOptions.authors, Icons.person_outline_rounded);
     final languageOptions = _withIcon(filterOptions.languages, Icons.language_rounded);
     final formatOptions = _withIcon(filterOptions.formats, Icons.description_outlined);
@@ -319,7 +320,7 @@ class LibraryFilterChips extends StatelessWidget {
         defaultOrder: 0,
         isActive: provider.selectedStatuses.isNotEmpty,
         child: _DropdownFilterChip(
-          label: _multiSelectionLabel('Status', provider.selectedStatuses, _statusOptions),
+          label: _multiSelectionLabel('Status', provider.selectedStatuses, statusOptions),
           semanticLabel: 'Reading status',
           icon: Icons.auto_stories_outlined,
           isSelected: provider.selectedStatuses.isNotEmpty,
@@ -327,7 +328,7 @@ class LibraryFilterChips extends StatelessWidget {
           onPressed: () => _selectMultiple<LibraryReadingStatus>(
             context: context,
             title: 'Reading status',
-            options: _statusOptions,
+            options: statusOptions,
             selectedValues: provider.selectedStatuses,
             onSelected: provider.setStatusFilters,
           ),

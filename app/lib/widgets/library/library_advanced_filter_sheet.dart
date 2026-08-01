@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/library_filter_options.dart';
 import 'package:papyrus/models/library_filters.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
@@ -18,18 +19,24 @@ class LibraryAdvancedFilterSheet extends StatefulWidget {
   final LibraryProvider libraryProvider;
   final DataStore dataStore;
   final ScrollController scrollController;
+  final List<Book>? sourceBooks;
+  final LibraryFilterOptions? filterOptions;
 
   const LibraryAdvancedFilterSheet({
     super.key,
     required this.libraryProvider,
     required this.dataStore,
     required this.scrollController,
+    this.sourceBooks,
+    this.filterOptions,
   });
 
   static Future<LibraryFilters?> show(
     BuildContext context, {
     required LibraryProvider libraryProvider,
     required DataStore dataStore,
+    List<Book>? sourceBooks,
+    LibraryFilterOptions? filterOptions,
   }) {
     final maxWidth = MediaQuery.sizeOf(context).width.clamp(0, 760).toDouble();
 
@@ -60,6 +67,8 @@ class LibraryAdvancedFilterSheet extends StatefulWidget {
                   libraryProvider: libraryProvider,
                   dataStore: dataStore,
                   scrollController: scrollController,
+                  sourceBooks: sourceBooks,
+                  filterOptions: filterOptions,
                 ),
               ),
             );
@@ -75,12 +84,12 @@ class LibraryAdvancedFilterSheet extends StatefulWidget {
 
 class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet> {
   late LibraryFilters _draft = widget.libraryProvider.filters;
-  late final LibraryFilterOptions _options = LibraryFilterOptions.fromDataStore(widget.dataStore);
+  late final List<Book> _sourceBooks = widget.sourceBooks ?? widget.dataStore.books;
+  late final LibraryFilterOptions _options =
+      widget.filterOptions ?? LibraryFilterOptions.fromDataStore(widget.dataStore, books: _sourceBooks);
 
   int get _matchingBookCount {
-    return widget.libraryProvider
-        .filterBooks(widget.dataStore.books, dataStore: widget.dataStore, filters: _draft)
-        .length;
+    return widget.libraryProvider.filterBooks(_sourceBooks, dataStore: widget.dataStore, filters: _draft).length;
   }
 
   void _updateDraft(LibraryFilters filters) {
@@ -104,6 +113,7 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
         _options.publishers.isNotEmpty ||
         _options.series.isNotEmpty;
     final hasOrganizationOptions = _options.shelves.isNotEmpty || _options.topics.isNotEmpty;
+    final hasRatingOptions = _options.ratings.isNotEmpty || _options.hasUnrated;
 
     return Column(
       children: [
@@ -172,16 +182,14 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
                     ),
                 ],
                 _SectionHeader(title: 'Reading', dividerBefore: hasMetadataOptions || hasOrganizationOptions),
-                _SmallFacet<LibraryReadingStatus>(
-                  label: 'Reading status',
-                  showSummary: false,
-                  options: [
-                    for (final status in LibraryReadingStatus.values)
-                      LibraryFilterOption(value: status, label: status.label),
-                  ],
-                  selectedValues: _draft.statuses,
-                  onChanged: (values) => _updateDraft(_draft.copyWith(statuses: values)),
-                ),
+                if (_options.readingStatuses.isNotEmpty)
+                  _SmallFacet<LibraryReadingStatus>(
+                    label: 'Reading status',
+                    showSummary: false,
+                    options: _options.readingStatuses,
+                    selectedValues: _draft.statuses,
+                    onChanged: (values) => _updateDraft(_draft.copyWith(statuses: values)),
+                  ),
                 _FavoriteFilterField(
                   value: _draft.favoriteFilter,
                   onChanged: (value) => _updateDraft(_draft.copyWith(favoriteFilter: value)),
@@ -190,13 +198,16 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
                   value: _draft.progressRange,
                   onChanged: (value) => _updateDraft(_draft.copyWith(progressRange: value)),
                 ),
-                _RatingFilterField(
-                  ratings: _draft.ratings,
-                  includeUnrated: _draft.includeUnrated,
-                  onChanged: (ratings, includeUnrated) {
-                    _updateDraft(_draft.copyWith(ratings: ratings, includeUnrated: includeUnrated));
-                  },
-                ),
+                if (hasRatingOptions)
+                  _RatingFilterField(
+                    ratings: _draft.ratings,
+                    includeUnrated: _draft.includeUnrated,
+                    availableRatings: _options.ratings,
+                    showUnrated: _options.hasUnrated,
+                    onChanged: (ratings, includeUnrated) {
+                      _updateDraft(_draft.copyWith(ratings: ratings, includeUnrated: includeUnrated));
+                    },
+                  ),
                 const _SectionHeader(title: 'Dates', dividerBefore: true),
                 _DateRangeField(
                   label: 'Publication date',
@@ -807,9 +818,17 @@ class _ProgressFilterFieldState extends State<_ProgressFilterField> {
 class _RatingFilterField extends StatelessWidget {
   final Set<int> ratings;
   final bool includeUnrated;
+  final List<int> availableRatings;
+  final bool showUnrated;
   final void Function(Set<int> ratings, bool includeUnrated) onChanged;
 
-  const _RatingFilterField({required this.ratings, required this.includeUnrated, required this.onChanged});
+  const _RatingFilterField({
+    required this.ratings,
+    required this.includeUnrated,
+    required this.availableRatings,
+    required this.showUnrated,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -819,13 +838,14 @@ class _RatingFilterField extends StatelessWidget {
         spacing: Spacing.xs,
         runSpacing: Spacing.xs,
         children: [
-          _selectionChip(
-            context,
-            label: 'Unrated',
-            isSelected: includeUnrated,
-            onSelected: () => onChanged(ratings, !includeUnrated),
-          ),
-          for (var rating = 1; rating <= 5; rating++)
+          if (showUnrated)
+            _selectionChip(
+              context,
+              label: 'Unrated',
+              isSelected: includeUnrated,
+              onSelected: () => onChanged(ratings, !includeUnrated),
+            ),
+          for (final rating in availableRatings)
             Builder(
               builder: (context) {
                 final isSelected = ratings.contains(rating);
