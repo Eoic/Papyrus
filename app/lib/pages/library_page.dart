@@ -734,13 +734,10 @@ class _LibraryPageState extends State<LibraryPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (showBack && widget.onBack != null)
+        if (showBack && widget.onBack != null) ...[
           IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back), tooltip: 'Back to shelves'),
-        Padding(
-          padding: const EdgeInsets.only(top: Spacing.sm),
-          child: Icon(shelf.displayIcon, size: IconSizes.medium, color: shelf.color ?? colorScheme.primary),
-        ),
-        const SizedBox(width: Spacing.md),
+          const SizedBox(width: Spacing.sm),
+        ],
         Flexible(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
