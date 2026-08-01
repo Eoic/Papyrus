@@ -18,7 +18,8 @@ Replace the dedicated shelf-contents presentation with the Books page presentati
 - Give every shelf page independent search, structured filters, sorting, view mode, and selection state.
 - Restrict a shelf page to books assigned directly to that shelf.
 - Derive quick-filter and advanced-filter choices from the shelf's complete, unfiltered book collection.
-- Show the shelf name and replace the primary action with `Add to shelf`.
+- Show an editable shelf identity containing its icon, color, name, and description.
+- Replace the primary action with `Add to shelf`.
 - Preserve the existing invalid-shelf experience.
 - Remove obsolete shelf-book presentation state and logic from `ShelvesProvider`.
 
@@ -44,7 +45,7 @@ Replace the dedicated shelf-contents presentation with the Books page presentati
 
 Make `LibraryPage` accept an optional shelf collection configuration. With no shelf configuration, it retains its current main-library behavior. With shelf configuration, it receives the shelf identity, shelf name, scoped source books, primary-action presentation, and back-navigation behavior.
 
-The reusable page continues to own the responsive header, search bar, filter chips, advanced-filter sheet, result presentation, selection mode, bulk actions, and book navigation. Shelf mode changes only context-specific inputs and excludes library-wide acquisition controls.
+The reusable page continues to own the responsive header, search bar, filter chips, advanced-filter sheet, result presentation, selection mode, bulk actions, and book navigation. Shelf mode changes only context-specific inputs, adds the shelf identity header, and excludes library-wide acquisition controls.
 
 ### Shelf Route Adapter
 
@@ -88,9 +89,13 @@ Shelf mode resolves visible books in this order:
 
 The current library-wide acquisition placeholders, downloading-only chip, online results mode, and online-search empty-state action are omitted in shelf mode. Normal book selection and bulk book actions remain available.
 
-### Responsive Header and Actions
+### Responsive Shelf Identity and Actions
 
-On mobile, shelf mode shows Back and the shelf name before the normal Books search and filter rows. On desktop, the shelf name appears above the normal search/action row.
+Shelf mode renders a flat identity row without a tinted card, shadow, or decorative background. The shelf's selected icon appears at the left in its selected color. Its name and description are stacked beside the icon, and an Edit icon button appears at the right. When the description is empty, the row shows a muted `Add a description` placeholder.
+
+The Edit action opens the existing `AddShelfSheet` in edit mode. The sheet continues to edit name, description, color, and icon, and saving updates the watched `DataStore` so every displayed value refreshes immediately. Saving an empty description must clear a previously stored description rather than preserving it through nullable `copyWith` behavior.
+
+On mobile, shelf mode places Back, the shelf identity, and Edit in one header row before the normal Books search and filter rows. On desktop, the identity row appears above the normal search/action row.
 
 The desktop `Add book` button becomes `Add to shelf`. The mobile FAB retains the Books page shape and plus icon with an `Add to shelf` tooltip and semantic label. Both controls use an empty callback so they remain visually enabled without changing data.
 
@@ -107,6 +112,8 @@ The desktop `Add book` button becomes `Add to shelf`. The mobile FAB retains the
 - `LibraryFilterChips` gains scoped filter options or source books supplied by `LibraryPage`.
 - `LibraryAdvancedFilterSheet.show` gains the source collection used for its options and preview count.
 - `ShelfContentsPage` owns a local `LibraryProvider` and delegates rendering to `LibraryPage`.
+- `ShelfContentsPage` opens the existing `AddShelfSheet` and persists all four editable shelf presentation fields through `DataStore`.
+- The shelf update path must explicitly support clearing a nullable description while preserving omitted fields in unrelated `copyWith` calls.
 - `DataStore.getBooksInShelf`, `getShelfIdsForBook`, and `getTagIdsForBook` remain the membership sources of truth.
 
 ## Risks and Mitigations
@@ -116,6 +123,7 @@ The desktop `Add book` button becomes `Add to shelf`. The mobile FAB retains the
 - **Preview counts disagreeing with visible results:** pass the identical source collection to the advanced sheet and the page filtering pipeline.
 - **State leaking between pages:** create and dispose a dedicated `LibraryProvider` in the shelf route adapter.
 - **Stale shelf data after store updates:** resolve the shelf and its direct books from the watched `DataStore` on rebuild.
+- **Empty descriptions cannot be persisted:** make clearing explicit in the shelf update path instead of relying on `description ?? this.description`.
 - **Existing selected values disappear after membership changes:** the scoped provider is page-local, and the UI must tolerate selected values that are temporarily absent from refreshed options until filters are cleared.
 
 ## Rollout and Rollback
@@ -129,7 +137,8 @@ This is a client-only presentation refactor with no persisted-data migration. Ro
 - Manually verify independent state between Books and shelf routes.
 - Verify direct shelf membership only; child shelves never appear.
 - Verify shelf-scoped option lists, preview counts, filtering, sorting, and all three view modes.
-- Verify mobile and desktop shelf headers and the enabled no-op `Add to shelf` actions.
+- Verify mobile and desktop identity layout with long names, present and absent descriptions, each shelf icon/color, and the enabled no-op `Add to shelf` actions.
+- Verify editing name, description, color, and icon refreshes the header immediately, including clearing an existing description.
 - Verify empty, no-results, missing-shelf, selection, bulk-action, and book-navigation states.
 
 ## Accepted Decisions
@@ -137,6 +146,8 @@ This is a client-only presentation refactor with no persisted-data migration. Ro
 - Shelf pages use separate state from the main Books page.
 - Filter choices are shelf-specific and derived from unfiltered direct shelf members.
 - Child shelves are omitted only from the contents route; hierarchy remains elsewhere.
+- The shelf identity is a flat row with a colored shelf icon, stacked name and description, and an Edit action.
+- Shelf editing reuses `AddShelfSheet` and supports clearing descriptions.
 - The reusable configurable `LibraryPage` approach is preferred over a second composed page or a larger shared-page extraction.
 - No automated tests are added in this task.
 
