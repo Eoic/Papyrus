@@ -75,15 +75,17 @@ class LibraryFilterOptions {
       }
     }
 
-    for (final relation in dataStore.bookTagRelations) {
-      if (sourceBookIds.contains(relation.bookId)) {
-        topicIds.add(relation.tagId);
+    if (isScoped) {
+      for (final relation in dataStore.bookTagRelations) {
+        if (sourceBookIds.contains(relation.bookId)) {
+          topicIds.add(relation.tagId);
+        }
       }
-    }
 
-    for (final relation in dataStore.bookShelfRelations) {
-      if (sourceBookIds.contains(relation.bookId)) {
-        shelfIds.add(relation.shelfId);
+      for (final relation in dataStore.bookShelfRelations) {
+        if (sourceBookIds.contains(relation.bookId)) {
+          shelfIds.add(relation.shelfId);
+        }
       }
     }
 
@@ -93,12 +95,12 @@ class LibraryFilterOptions {
       formats: _stringOptions(formats),
       topics: _sortedOptions(
         dataStore.tags
-            .where((topic) => topicIds.contains(topic.id))
+            .where((topic) => !isScoped || topicIds.contains(topic.id))
             .map((topic) => LibraryFilterOption(value: topic.id, label: topic.name)),
       ),
       shelves: _sortedOptions(
         dataStore.shelves
-            .where((shelf) => shelfIds.contains(shelf.id))
+            .where((shelf) => !isScoped || shelfIds.contains(shelf.id))
             .map((shelf) => LibraryFilterOption(value: shelf.id, label: shelf.name)),
       ),
       publishers: _stringOptions(publishers),
