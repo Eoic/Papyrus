@@ -609,4 +609,40 @@ void main() {
     expect(find.byType(BookImportResultsSheet), findsNothing);
     expect(find.text('Added 2 books to library'), findsOneWidget);
   });
+
+  testWidgets('empty results keep a Close-only footer usable at narrow scaled width', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 700);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await pumpResults(tester, files: const [], processor: (_, filename) async => resultFor(filename));
+
+    expect(tester.takeException(), isNull);
+    expect(find.widgetWithText(TextButton, 'Close').hitTestable(), findsOneWidget);
+    expect(find.byType(FilledButton), findsNothing);
+  });
+
+  testWidgets('ready results keep Close and counted Add usable at narrow scaled width', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 700);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await pumpResults(
+      tester,
+      files: [
+        SelectedBookFile(name: 'ready.epub', bytes: Uint8List.fromList([1])),
+      ],
+      processor: (_, filename) async => resultFor(filename),
+      committer: (result, _) async => bookFor(result),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.widgetWithText(TextButton, 'Close').hitTestable(), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Add 1 to library').hitTestable(), findsOneWidget);
+  });
 }

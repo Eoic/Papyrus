@@ -435,18 +435,21 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
             );
           },
         ),
-        footer: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        footer: OverflowBar(
+          alignment: MainAxisAlignment.end,
+          overflowAlignment: OverflowBarAlignment.end,
+          spacing: Spacing.sm,
+          overflowSpacing: Spacing.sm,
           children: [
             TextButton(
               onPressed: _isClosing || _isAdding ? null : () => unawaited(_requestClose()),
               child: const Text('Close'),
             ),
-            const SizedBox(width: Spacing.sm),
-            FilledButton(
-              onPressed: _canAdd ? () => unawaited(_addReadyBooks()) : null,
-              child: Text('Add $_readyCount to library'),
-            ),
+            if (_items.isNotEmpty)
+              FilledButton(
+                onPressed: _canAdd ? () => unawaited(_addReadyBooks()) : null,
+                child: Text('Add $_readyCount to library'),
+              ),
           ],
         ),
       ),
