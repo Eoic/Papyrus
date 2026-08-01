@@ -120,7 +120,7 @@ class _LibraryPageState extends State<LibraryPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
     final sourceBooks = _sourceBooks(dataStore);
-    final filterOptions = LibraryFilterOptions.fromDataStore(dataStore, books: sourceBooks);
+    final filterOptions = _filterOptions(dataStore, sourceBooks);
     final books = _getFilteredBooks(libraryProvider, dataStore, sourceBooks);
     final isLoading = !dataStore.isLoaded;
 
@@ -150,6 +150,12 @@ class _LibraryPageState extends State<LibraryPage> {
   List<Book> _sourceBooks(DataStore dataStore) {
     final shelf = widget.shelf;
     return shelf == null ? dataStore.books : dataStore.getBooksInShelf(shelf.id);
+  }
+
+  LibraryFilterOptions _filterOptions(DataStore dataStore, List<Book> sourceBooks) {
+    return widget.isShelfView
+        ? LibraryFilterOptions.fromDataStore(dataStore, books: sourceBooks)
+        : LibraryFilterOptions.fromDataStore(dataStore);
   }
 
   List<Book> _getFilteredBooks(LibraryProvider provider, DataStore dataStore, List<Book> sourceBooks) {
@@ -315,7 +321,7 @@ class _LibraryPageState extends State<LibraryPage> {
       libraryProvider: libraryProvider,
       dataStore: dataStore,
       sourceBooks: sourceBooks,
-      filterOptions: LibraryFilterOptions.fromDataStore(dataStore, books: sourceBooks),
+      filterOptions: _filterOptions(dataStore, sourceBooks),
     );
 
     if (filters != null && mounted) {
