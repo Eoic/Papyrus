@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/services/book_import_result.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
+import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
 import 'package:papyrus/widgets/add_book/import_book_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
@@ -175,7 +178,58 @@ void main() {
     );
   });
 
-  testWidgets('digital import transition preserves the modal backdrop', (tester) async {
+  testWidgets('digital selection and results use distinct modal routes', (tester) async {
+    final observer = _CountingNavigatorObserver();
+    final selected = SelectedBookFile(name: 'selected.epub', bytes: Uint8List.fromList([1]));
+    await pumpLauncher(
+      tester,
+      (context) =>
+          () => AddBookChoiceSheet.show(
+            context,
+            digitalFilePicker: () async => [selected],
+            bookImportProcessor: (_, filename) async => BookImportResult(
+              bookId: 'temporary-book',
+              title: filename,
+              author: 'Author',
+              fileSize: 1,
+              fileHash: 'hash',
+              fileExtension: 'epub',
+            ),
+            deleteImportedBookFile: (_) async {},
+          ),
+      navigatorObservers: [observer],
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final initialPushCount = observer.pushCount;
+
+    await tester.tap(find.text('Import digital books'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(OutlinedButton, 'Browse files'), findsOneWidget);
+    expect(find.text('Add book'), findsNothing);
+    expect(observer.pushCount, initialPushCount + 1);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Browse files'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Import 1 book'));
+    await tester.pump();
+
+    // The results route is not pushed until the selection route has finished
+    // its dismissal animation.
+    expect(find.text('Import results'), findsNothing);
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Import results'), findsOneWidget);
+    expect(find.text('selected.epub'), findsOneWidget);
+    expect(find.text('Ready'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Browse files'), findsNothing);
+    expect(observer.pushCount, initialPushCount + 2);
+  });
+
+  testWidgets('physical choice dismisses before opening its separate sheet', (tester) async {
     final observer = _CountingNavigatorObserver();
     await pumpLauncher(
       tester,
@@ -186,17 +240,15 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    final dimmingBarrier = find.byWidgetPredicate((widget) => widget is ModalBarrier && widget.color != null);
     final initialPushCount = observer.pushCount;
-    final initialBarrier = tester.element(dimmingBarrier);
 
-    await tester.tap(find.text('Import digital books'));
+    await tester.tap(find.text('Add physical book'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Import book'), findsOneWidget);
-    expect(dimmingBarrier, findsOneWidget);
-    expect(tester.element(dimmingBarrier), same(initialBarrier));
-    expect(observer.pushCount, initialPushCount);
+    expect(find.text('Add physical book'), findsOneWidget);
+    expect(find.byKey(const Key('add-book-sheet-header')), findsOneWidget);
+    expect(find.text('Add book'), findsNothing);
+    expect(observer.pushCount, initialPushCount + 1);
   });
 
   testWidgets('successful import actions can be rendered for widget verification', (tester) async {

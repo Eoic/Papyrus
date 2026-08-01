@@ -26,26 +26,32 @@ class DigitalBookImportSheet extends StatefulWidget {
   static const _nativeExtensions = ['epub', 'pdf', 'mobi', 'azw3', 'txt', 'cbr', 'cbz'];
 
   /// Opens the file-selection step as its own root-level modal sheet.
-  static Future<List<SelectedBookFile>?> show(BuildContext context, {DigitalBookFilePicker? pickFiles}) {
-    return showModalBottomSheet<List<SelectedBookFile>>(
+  static Future<List<SelectedBookFile>?> show(BuildContext context, {DigitalBookFilePicker? pickFiles}) async {
+    Future<List<SelectedBookFile>?>? sheetCompleted;
+    final files = await showModalBottomSheet<List<SelectedBookFile>>(
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
       useSafeArea: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
-      builder: (sheetContext) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => DigitalBookImportSheet(
-          pickFiles: pickFiles ?? _pickFiles,
-          scrollController: scrollController,
-          onCancel: () => Navigator.of(sheetContext).pop(),
-          onConfirm: (files) => Navigator.of(sheetContext).pop(files),
-        ),
-      ),
+      builder: (sheetContext) {
+        sheetCompleted = ModalRoute.of<List<SelectedBookFile>>(sheetContext)?.completed;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => DigitalBookImportSheet(
+            pickFiles: pickFiles ?? _pickFiles,
+            scrollController: scrollController,
+            onCancel: () => Navigator.of(sheetContext).pop(),
+            onConfirm: (files) => Navigator.of(sheetContext).pop(files),
+          ),
+        );
+      },
     );
+    await sheetCompleted;
+    return files;
   }
 
   static Future<List<SelectedBookFile>> _pickFiles() async {

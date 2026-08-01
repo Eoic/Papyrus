@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
-import 'package:papyrus/widgets/add_book/import_book_sheet.dart';
+import 'package:papyrus/widgets/add_book/book_import_results_sheet.dart';
+import 'package:papyrus/widgets/add_book/digital_book_import_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Choice sheet for selecting digital import, physical entry, or optional online search.
@@ -15,7 +16,13 @@ class AddBookChoiceSheet extends StatefulWidget {
   final VoidCallback? onFindOnline;
 
   /// Show the choice sheet as a modal bottom sheet.
-  static Future<void> show(BuildContext context, {VoidCallback? onFindOnline}) async {
+  static Future<void> show(
+    BuildContext context, {
+    VoidCallback? onFindOnline,
+    DigitalBookFilePicker? digitalFilePicker,
+    BookImportProcessor? bookImportProcessor,
+    ImportedBookFileDeleter? deleteImportedBookFile,
+  }) async {
     Future<_AddBookChoice?>? sheetCompleted;
     final choice = await showModalBottomSheet<_AddBookChoice>(
       context: context,
@@ -40,8 +47,19 @@ class AddBookChoiceSheet extends StatefulWidget {
     }
 
     switch (choice) {
+      case _AddBookChoice.importDigital:
+        final files = await DigitalBookImportSheet.show(context, pickFiles: digitalFilePicker);
+        if (!context.mounted || files == null || files.isEmpty) {
+          return;
+        }
+        await BookImportResultsSheet.show(
+          context,
+          files: files,
+          processor: bookImportProcessor,
+          deleteBookFile: deleteImportedBookFile,
+        );
       case _AddBookChoice.addPhysical:
-        AddPhysicalBookSheet.show(context);
+        await AddPhysicalBookSheet.show(context);
       case _AddBookChoice.findOnline:
         onFindOnline?.call();
     }
@@ -53,7 +71,6 @@ class AddBookChoiceSheet extends StatefulWidget {
 
 class _AddBookChoiceSheetState extends State<AddBookChoiceSheet> {
   bool _isSelecting = false;
-  bool _showImport = false;
 
   void _select(_AddBookChoice choice) {
     if (_isSelecting) {
@@ -66,10 +83,6 @@ class _AddBookChoiceSheetState extends State<AddBookChoiceSheet> {
 
   @override
   Widget build(BuildContext context) {
-    if (_showImport) {
-      return const ImportBookSheet();
-    }
-
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
@@ -84,7 +97,7 @@ class _AddBookChoiceSheetState extends State<AddBookChoiceSheet> {
           icon: Icons.upload_file,
           title: 'Import digital books',
           subtitle: 'EPUB, PDF, AZW3, MOBI, CBZ/CBR',
-          onTap: () => setState(() => _showImport = true),
+          onTap: () => _select(_AddBookChoice.importDigital),
         ),
         const SizedBox(height: Spacing.sm),
         _ChoiceOption(
@@ -107,7 +120,7 @@ class _AddBookChoiceSheetState extends State<AddBookChoiceSheet> {
   }
 }
 
-enum _AddBookChoice { addPhysical, findOnline }
+enum _AddBookChoice { importDigital, addPhysical, findOnline }
 
 class _ChoiceOption extends StatelessWidget {
   final IconData icon;
