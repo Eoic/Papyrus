@@ -71,6 +71,14 @@ Metadata options are derived from those source books:
 - publishers;
 - series.
 
+Reading choices are also scoped:
+
+- reading statuses present among source books;
+- integer ratings present among source books;
+- Unrated only when at least one source book has no rating.
+
+The main Books page retains its current complete reading-status and rating choices. Only shelf mode narrows these choices to values present in its unfiltered direct members.
+
 Organization options are restricted to records attached to at least one source book:
 
 - topic IDs from each source book's tag relations;
