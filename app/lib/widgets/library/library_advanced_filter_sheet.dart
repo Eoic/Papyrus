@@ -39,15 +39,12 @@ class LibraryAdvancedFilterSheet extends StatefulWidget {
     List<Book>? sourceBooks,
     LibraryFilterOptions? filterOptions,
   }) {
-    final maxWidth = MediaQuery.sizeOf(context).width.clamp(0, 760).toDouble();
-
     return showModalBottomSheet<LibraryFilters>(
       context: context,
       useRootNavigator: true,
       useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      constraints: BoxConstraints(maxWidth: maxWidth),
       builder: (context) {
         return DraggableScrollableSheet(
           expand: false,
@@ -204,7 +201,7 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
         Expanded(
           child: SingleChildScrollView(
             controller: widget.scrollController,
-            padding: const EdgeInsets.fromLTRB(Spacing.md, Spacing.sm, Spacing.md, Spacing.xl),
+            padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.sm, Spacing.lg, Spacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -317,7 +314,7 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.md, Spacing.sm, Spacing.md),
+      padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.md, Spacing.lg, Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -340,7 +337,7 @@ class _LibraryAdvancedFilterSheetState extends State<LibraryAdvancedFilterSheet>
     final count = _matchingBookCount;
 
     return Container(
-      padding: const EdgeInsets.all(Spacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.lg, vertical: Spacing.md),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
