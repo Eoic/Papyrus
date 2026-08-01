@@ -295,4 +295,39 @@ void main() {
 
     expect(scrollable.position.pixels, 1);
   });
+
+  testWidgets('physical import keeps scaled compact controls above the landscape keyboard', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 400);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 250);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(onPressed: () => AddPhysicalBookSheet.show(context), child: const Text('Open')),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(tester.getRect(find.byKey(const Key('add-book-sheet-footer'))).bottom, lessThanOrEqualTo(150));
+
+    final closeButton = find.descendant(
+      of: find.byKey(const Key('add-book-sheet-header')),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.getSize(closeButton).width, greaterThanOrEqualTo(44));
+    expect(tester.getSize(closeButton).height, greaterThanOrEqualTo(44));
+
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    expect(tester.getSize(find.byType(ListView)).height, greaterThan(0));
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+  });
 }

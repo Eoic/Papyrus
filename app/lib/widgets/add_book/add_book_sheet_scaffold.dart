@@ -27,7 +27,7 @@ class AddBookSheetScaffold extends StatelessWidget {
       builder: (context, constraints) {
         final isCompactHeight = constraints.maxHeight < 280;
         final verticalPadding = isCompactHeight ? 0.0 : Spacing.md;
-        final handleSpacing = isCompactHeight ? Spacing.xs : Spacing.lg;
+        final handleSpacing = isCompactHeight ? 0.0 : Spacing.lg;
 
         return Column(
           children: [
@@ -47,10 +47,11 @@ class AddBookSheetScaffold extends StatelessWidget {
                           maxLines: isCompactHeight ? 1 : 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.headlineSmall,
+                          textScaler: isCompactHeight ? TextScaler.noScaling : null,
                         ),
                       ),
                       IconButton(
-                        constraints: isCompactHeight ? const BoxConstraints.tightFor(width: 40, height: 40) : null,
+                        constraints: isCompactHeight ? const BoxConstraints.tightFor(width: 44, height: 44) : null,
                         icon: const Icon(Icons.close),
                         padding: isCompactHeight ? EdgeInsets.zero : null,
                         tooltip: 'Close',
