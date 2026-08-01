@@ -766,10 +766,20 @@ class _LibraryPageState extends State<LibraryPage> {
                           tooltip: 'Edit shelf',
                         )
                       else
-                        TextButton.icon(
-                          onPressed: widget.onEditShelf,
-                          icon: const Icon(Icons.edit_outlined, size: IconSizes.small),
-                          label: const Text('Edit'),
+                        Semantics(
+                          label: 'Edit shelf',
+                          button: true,
+                          enabled: true,
+                          onTap: widget.onEditShelf,
+                          excludeSemantics: true,
+                          child: Tooltip(
+                            message: 'Edit shelf',
+                            child: TextButton.icon(
+                              onPressed: widget.onEditShelf,
+                              icon: const Icon(Icons.edit_outlined, size: IconSizes.small),
+                              label: const Text('Edit'),
+                            ),
+                          ),
                         ),
                     ],
                   ],
