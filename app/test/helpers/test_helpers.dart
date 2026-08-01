@@ -6,6 +6,7 @@ import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/models/tag.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -153,7 +154,7 @@ Book buildTestBook({
   String title = 'Test Book',
   String author = 'Test Author',
   List<String> coAuthors = const [],
-  LibraryReadingStatus readingStatus = LibraryReadingStatus.notStarted,
+  LibraryReadingStatus readingStatus = LibraryReadingStatus.unread,
   double currentPosition = 0.0,
   int? currentPage,
   int? pageCount,

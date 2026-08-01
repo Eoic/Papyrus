@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/reader/reader_book_adapter.dart';
 import 'package:papyrus_reader/papyrus_reader.dart';

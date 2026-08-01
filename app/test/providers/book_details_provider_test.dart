@@ -6,6 +6,7 @@ import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 import '../helpers/test_helpers.dart';
 

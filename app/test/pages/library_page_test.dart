@@ -6,13 +6,17 @@ import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/library_filters.dart';
 import 'package:papyrus/pages/library_page.dart';
 import 'package:papyrus/providers/acquisition_downloads_provider.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
+import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_list_item.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
+import 'package:papyrus/widgets/library/book_grid.dart';
 import 'package:papyrus/widgets/library/book_list_item.dart';
 import 'package:papyrus/widgets/library/library_filter_chips.dart';
 import 'package:papyrus/widgets/library/online_books_header.dart';
@@ -20,8 +24,6 @@ import 'package:papyrus/widgets/library/online_results_view.dart';
 import 'package:papyrus/widgets/library/selection_header.dart';
 import 'package:papyrus/widgets/search/library_search_bar.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
-import 'package:papyrus/widgets/shared/quick_filter_chips.dart';
-import 'package:papyrus/widgets/shared/view_mode_toggle.dart';
 import 'package:provider/provider.dart';
 import '../helpers/test_helpers.dart';
 
@@ -58,6 +60,10 @@ void main() {
             ChangeNotifierProvider<AcquisitionDownloadsProvider>.value(value: downloadsProvider),
         ],
       );
+    }
+
+    List<Book> renderedGridBooks(WidgetTester tester) {
+      return tester.widget<BookGrid>(find.byType(BookGrid)).books;
     }
 
     // ========================================================================
@@ -180,7 +186,7 @@ void main() {
         await downloadsProvider.refreshConfiguration();
         libraryProvider
           ..setSearchQuery('Dune Messiah')
-          ..addFilter(LibraryFilterType.favorites)
+          ..setFavoriteFilter(FavoriteFilter.favorites)
           ..setViewMode(LibraryViewMode.list);
 
         await tester.pumpWidget(buildPage(screenSize: const Size(400, 1000), downloadsProvider: downloadsProvider));
@@ -199,7 +205,7 @@ void main() {
 
         expect(find.byType(OnlineBooksHeader), findsNothing);
         expect(libraryProvider.searchQuery, 'Dune Messiah');
-        expect(libraryProvider.isFilterActive(LibraryFilterType.favorites), isTrue);
+        expect(libraryProvider.favoriteFilter, FavoriteFilter.favorites);
         expect(libraryProvider.viewMode, LibraryViewMode.list);
         expect(gateway.searchQueries, hasLength(1));
 
@@ -783,59 +789,6 @@ void main() {
         downloadsProvider.dispose();
       });
 
-      testWidgets('Downloading is exclusive and toggles back to All', (tester) async {
-        final store = createTestDataStore(
-          books: [
-            Book(id: 'linked-book', title: 'Linked book', author: 'Author', addedAt: DateTime(2026)),
-            Book(id: 'ordinary-book', title: 'Ordinary book', author: 'Author', addedAt: DateTime(2026)),
-          ],
-        );
-        final downloadsProvider = AcquisitionDownloadsProvider(
-          gateway: _LibraryAcquisitionGateway(
-            jobs: [
-              _libraryJob(
-                AcquisitionJobStatus.downloading,
-                id: 'linked-job',
-                bookId: 'linked-book',
-                title: 'Linked book',
-              ),
-            ],
-          ),
-          pollingInterval: Duration.zero,
-        );
-        await downloadsProvider.refreshConfiguration();
-        await downloadsProvider.refreshJobs();
-
-        await tester.pumpWidget(
-          buildPage(screenSize: const Size(1200, 1000), store: store, downloadsProvider: downloadsProvider),
-        );
-        await tester.pumpAndSettle();
-
-        var chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
-        final downloadingIndex = chips.filters.indexWhere((filter) => filter.label == 'Downloading');
-
-        expect(downloadingIndex, isNonNegative);
-        chips.onFilterTapped(downloadingIndex);
-        await tester.pumpAndSettle();
-
-        chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
-
-        expect(chips.filters.singleWhere((filter) => filter.label == 'Downloading').isSelected, isTrue);
-        expect(chips.filters.singleWhere((filter) => filter.label == 'All').isSelected, isFalse);
-        expect(find.text('Ordinary book'), findsNothing);
-
-        chips.onFilterTapped(downloadingIndex);
-        await tester.pumpAndSettle();
-
-        chips = tester.widget<QuickFilterChips>(find.byType(QuickFilterChips));
-
-        expect(chips.filters.singleWhere((filter) => filter.label == 'Downloading').isSelected, isFalse);
-        expect(chips.filters.singleWhere((filter) => filter.label == 'All').isSelected, isTrue);
-        expect(find.text('Ordinary book'), findsWidgets);
-
-        downloadsProvider.dispose();
-      });
-
       testWidgets('list view integrates linked and orphan jobs without duplication', (tester) async {
         libraryProvider.setViewMode(LibraryViewMode.list);
         final store = createTestDataStore(
@@ -1029,7 +982,7 @@ void main() {
         await tester.pump();
         expect(downloadsProvider.selectedJobIds, {'linked-job'});
 
-        libraryProvider.addFilter(LibraryFilterType.finished);
+        libraryProvider.setStatusFilters({LibraryReadingStatus.completed});
         await tester.pump();
         await tester.pump();
 
@@ -1433,35 +1386,11 @@ void main() {
         expect(find.byIcon(Icons.add), findsOneWidget);
       });
 
-      testWidgets('displays book count', (tester) async {
-        await tester.pumpWidget(buildPage());
-        await tester.pumpAndSettle();
-
-        expect(find.text('5 books'), findsOneWidget);
-      });
-
-      testWidgets('displays singular "book" when only 1 book', (tester) async {
-        final singleBookStore = createTestDataStore(books: [createTestBooks().first]);
-        await tester.pumpWidget(buildPage(store: singleBookStore));
-        await tester.pumpAndSettle();
-
-        expect(find.text('1 book'), findsOneWidget);
-      });
-
       testWidgets('renders grid view by default', (tester) async {
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
         expect(find.byType(BookCard), findsWidgets);
-      });
-
-      testWidgets('renders view mode toggle', (tester) async {
-        await tester.pumpWidget(buildPage());
-        await tester.pumpAndSettle();
-
-        expect(find.byType(ViewModeToggle), findsOneWidget);
-        expect(find.byIcon(Icons.grid_view), findsOneWidget);
-        expect(find.byIcon(Icons.view_list), findsOneWidget);
       });
 
       testWidgets('switches to list view when list mode is selected', (tester) async {
@@ -1553,13 +1482,6 @@ void main() {
         expect(find.byIcon(Icons.menu), findsNothing);
       });
 
-      testWidgets('renders view toggle buttons', (tester) async {
-        await tester.pumpWidget(buildPage(screenSize: desktopSize));
-        await tester.pumpAndSettle();
-
-        expect(find.byType(ViewModeToggle), findsOneWidget);
-      });
-
       testWidgets('shows grid view by default on desktop', (tester) async {
         await tester.pumpWidget(buildPage(screenSize: desktopSize));
         await tester.pumpAndSettle();
@@ -1626,48 +1548,44 @@ void main() {
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.text('5 books'), findsOneWidget);
+        expect(renderedGridBooks(tester), hasLength(5));
       });
 
       testWidgets('filters to reading books', (tester) async {
-        libraryProvider.addFilter(LibraryFilterType.reading);
+        libraryProvider.setStatusFilters({LibraryReadingStatus.inProgress});
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        // 2 books are reading: The Hobbit and Neuromancer
-        expect(find.text('2 books'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), unorderedEquals(['The Hobbit', 'Neuromancer']));
       });
 
       testWidgets('filters to favorite books', (tester) async {
-        libraryProvider.addFilter(LibraryFilterType.favorites);
+        libraryProvider.setFavoriteFilter(FavoriteFilter.favorites);
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        // 2 books are favorites: The Hobbit and Foundation
-        expect(find.text('2 books'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), unorderedEquals(['The Hobbit', 'Foundation']));
       });
 
       testWidgets('filters to finished books', (tester) async {
-        libraryProvider.addFilter(LibraryFilterType.finished);
+        libraryProvider.setStatusFilters({LibraryReadingStatus.completed});
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        // 1 book is finished: Dune
-        expect(find.text('1 book'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), ['Dune']);
       });
 
       testWidgets('filters to unread books', (tester) async {
-        libraryProvider.addFilter(LibraryFilterType.unread);
+        libraryProvider.setStatusFilters({LibraryReadingStatus.unread});
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        // 2 books are unread: 1984 and Foundation
-        expect(find.text('2 books'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), unorderedEquals(['1984', 'Foundation']));
       });
 
       testWidgets('shows empty state when no books match filter', (tester) async {
         // Add a filter and clear all books
-        libraryProvider.addFilter(LibraryFilterType.reading);
+        libraryProvider.setStatusFilters({LibraryReadingStatus.inProgress});
         final storeWithNoReadingBooks = createTestDataStore(
           books: [
             Book(
@@ -1682,7 +1600,7 @@ void main() {
         await tester.pumpWidget(buildPage(store: storeWithNoReadingBooks));
         await tester.pumpAndSettle();
 
-        expect(find.text('0 books'), findsOneWidget);
+        expect(find.byType(BookGrid), findsNothing);
         expect(find.byType(EmptyState), findsOneWidget);
       });
 
@@ -1691,37 +1609,37 @@ void main() {
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.text('1 book'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), ['The Hobbit']);
       });
 
       testWidgets('search filter works with author field', (tester) async {
-        libraryProvider.setSearchQuery('author:Tolkien');
+        libraryProvider.setSearchQuery('Tolkien');
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.text('1 book'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), ['The Hobbit']);
       });
 
       testWidgets('filters by shelf', (tester) async {
         // Add a book-shelf relation
         dataStore.addBookToShelf('book-1', 'shelf-1');
-        libraryProvider.selectShelf('Fiction');
+        libraryProvider.setShelfFilters({'shelf-1'});
 
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.text('1 book'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.id), ['book-1']);
       });
 
       testWidgets('filters by topic', (tester) async {
         // Add a book-tag relation
         dataStore.addTagToBook('book-1', 'tag-1');
-        libraryProvider.selectTopic('Fantasy');
+        libraryProvider.setTopicFilters({'tag-1'});
 
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.text('1 book'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.id), ['book-1']);
       });
     });
 
@@ -1743,43 +1661,6 @@ void main() {
 
         expect(find.byType(BookListItem), findsWidgets);
         expect(find.byType(BookCard), findsNothing);
-      });
-
-      testWidgets('tapping grid segment on mobile selects grid view', (tester) async {
-        libraryProvider.setViewMode(LibraryViewMode.list);
-        await tester.pumpWidget(buildPage());
-        await tester.pumpAndSettle();
-
-        // Tap the grid view segment
-        await tester.tap(find.byIcon(Icons.grid_view));
-        await tester.pumpAndSettle();
-
-        expect(libraryProvider.viewMode, LibraryViewMode.largeGrid);
-      });
-
-      testWidgets('tapping list segment on mobile selects list view', (tester) async {
-        await tester.pumpWidget(buildPage());
-        await tester.pumpAndSettle();
-
-        // Tap the list view segment
-        await tester.tap(find.byIcon(Icons.view_list));
-        await tester.pumpAndSettle();
-
-        expect(libraryProvider.viewMode, LibraryViewMode.list);
-      });
-
-      testWidgets('tapping toggle on desktop switches view mode', (tester) async {
-        const desktopSize = Size(1200, 800);
-        await tester.pumpWidget(buildPage(screenSize: desktopSize));
-        await tester.pumpAndSettle();
-
-        // Tap the list view toggle
-        expect(find.byType(ViewModeToggle), findsOneWidget);
-
-        await tester.tap(find.byIcon(Icons.view_list));
-        await tester.pumpAndSettle();
-
-        expect(libraryProvider.viewMode, LibraryViewMode.list);
       });
     });
 
@@ -1870,13 +1751,12 @@ void main() {
 
     group('combined filters', () {
       testWidgets('reading + favorites shows intersection', (tester) async {
-        libraryProvider.addFilter(LibraryFilterType.reading);
-        libraryProvider.addFilter(LibraryFilterType.favorites);
+        libraryProvider.setStatusFilters({LibraryReadingStatus.inProgress});
+        libraryProvider.setFavoriteFilter(FavoriteFilter.favorites);
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        // Only The Hobbit is both reading and favorite
-        expect(find.text('1 book'), findsOneWidget);
+        expect(renderedGridBooks(tester).map((book) => book.title), ['The Hobbit']);
       });
 
       testWidgets('empty search query shows all books', (tester) async {
@@ -1884,7 +1764,7 @@ void main() {
         await tester.pumpWidget(buildPage());
         await tester.pumpAndSettle();
 
-        expect(find.text('5 books'), findsOneWidget);
+        expect(renderedGridBooks(tester), hasLength(5));
       });
     });
   });

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/media/media_upload_queue.dart';
-import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/services/book_delete_cleanup_service.dart';

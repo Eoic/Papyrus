@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
+import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
@@ -368,6 +370,7 @@ Widget _buildGrid({
             child: Scaffold(
               body: BookGrid(
                 books: books,
+                libraryViewMode: LibraryViewMode.smallGrid,
                 onBookTap: onBookTap,
                 acquisitionJobsByBookId: acquisitionJobsByBookId,
                 placeholderJobs: placeholderJobs,

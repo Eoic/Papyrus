@@ -6,6 +6,7 @@ import 'package:papyrus/models/book_tag_relation.dart';
 import 'package:papyrus/models/search_filter.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/models/tag.dart';
+import 'package:papyrus/providers/enums/library_reading_status.dart';
 
 void main() {
   final now = DateTime.now();

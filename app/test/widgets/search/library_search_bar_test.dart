@@ -36,8 +36,8 @@ void main() {
     });
 
     testWidgets('displays filter button', (tester) async {
-      await tester.pumpWidget(buildSearchBar());
-      expect(find.byIcon(Icons.tune), findsOneWidget);
+      await tester.pumpWidget(buildSearchBar(onFilterTap: () {}));
+      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
     });
 
     testWidgets('calls onQueryChanged when text is entered', (tester) async {
@@ -54,14 +54,14 @@ void main() {
       var filterTapped = false;
       await tester.pumpWidget(buildSearchBar(onFilterTap: () => filterTapped = true));
 
-      await tester.tap(find.byIcon(Icons.tune));
+      await tester.tap(find.byIcon(Icons.tune_rounded));
       await tester.pump();
 
       expect(filterTapped, true);
     });
 
     testWidgets('shows filter badge when activeFilterCount > 0', (tester) async {
-      await tester.pumpWidget(buildSearchBar(activeFilterCount: 3));
+      await tester.pumpWidget(buildSearchBar(activeFilterCount: 3, onFilterTap: () {}));
 
       expect(find.text('3'), findsOneWidget);
     });
@@ -101,136 +101,6 @@ void main() {
     testWidgets('contains a TextField', (tester) async {
       await tester.pumpWidget(buildSearchBar());
       expect(find.byType(TextField), findsOneWidget);
-    });
-
-    group('suggestions', () {
-      testWidgets('shows field suggestions when typing a field prefix', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        // Focus and type a field prefix
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'auth');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Should show 'author:' suggestion in the overlay
-        expect(find.text('author:'), findsOneWidget);
-      });
-
-      testWidgets('shows status suggestions when typing status:', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'status:');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Should show status value suggestions
-        expect(find.text('status:reading'), findsOneWidget);
-        expect(find.text('status:finished'), findsOneWidget);
-        expect(find.text('status:unread'), findsOneWidget);
-      });
-
-      testWidgets('shows format suggestions when typing format:', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'format:');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Should show format value suggestions
-        expect(find.text('format:epub'), findsOneWidget);
-        expect(find.text('format:pdf'), findsOneWidget);
-      });
-
-      testWidgets('applies suggestion when tapped', (tester) async {
-        String? lastQuery;
-        await tester.pumpWidget(buildSearchBar(onQueryChanged: (q) => lastQuery = q));
-
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'auth');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Tap the suggestion
-        await tester.tap(find.text('author:'));
-        await tester.pump();
-
-        expect(lastQuery, 'author:');
-      });
-
-      testWidgets('hides suggestions when text is cleared', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'auth');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Verify suggestions are showing
-        expect(find.text('author:'), findsOneWidget);
-
-        // Clear text
-        await tester.enterText(find.byType(TextField), '');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Suggestions should be gone
-        expect(find.text('author:'), findsNothing);
-      });
-
-      testWidgets('does not show suggestions for non-matching text', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'xyz');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // No field suggestions should match 'xyz'
-        expect(find.text('author:'), findsNothing);
-        expect(find.text('title:'), findsNothing);
-      });
-
-      testWidgets('shows multiple field suggestions for partial match', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        // 's' matches 'shelf:', 'status:'
-        await tester.enterText(find.byType(TextField), 's');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        expect(find.text('shelf:'), findsOneWidget);
-        expect(find.text('status:'), findsOneWidget);
-      });
-    });
-
-    group('focus behavior', () {
-      testWidgets('suggestions appear only when focused', (tester) async {
-        await tester.pumpWidget(buildSearchBar());
-
-        // Initially no suggestions
-        expect(find.text('author:'), findsNothing);
-
-        // Focus and type
-        await tester.tap(find.byType(TextField));
-        await tester.pump();
-        await tester.enterText(find.byType(TextField), 'auth');
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-
-        // Suggestions should appear
-        expect(find.text('author:'), findsOneWidget);
-      });
     });
 
     group('didUpdateWidget', () {
