@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
-import 'package:papyrus/widgets/add_book/book_import_results_sheet.dart';
-import 'package:papyrus/widgets/add_book/digital_book_import_sheet.dart';
+import 'package:papyrus/widgets/add_book/book_import_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 /// Choice sheet for selecting digital import, physical entry, or optional online search.
@@ -48,13 +47,9 @@ class AddBookChoiceSheet extends StatefulWidget {
 
     switch (choice) {
       case _AddBookChoice.importDigital:
-        final files = await DigitalBookImportSheet.show(context, pickFiles: digitalFilePicker);
-        if (!context.mounted || files == null || files.isEmpty) {
-          return;
-        }
-        await BookImportResultsSheet.show(
+        await BookImportSheet.show(
           context,
-          files: files,
+          pickFiles: digitalFilePicker,
           processor: bookImportProcessor,
           deleteBookFile: deleteImportedBookFile,
         );
