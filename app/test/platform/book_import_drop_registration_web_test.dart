@@ -1,3 +1,6 @@
+@TestOn('browser')
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/platform/book_import_drop_registration.dart';
 import 'package:web/web.dart' as web;
