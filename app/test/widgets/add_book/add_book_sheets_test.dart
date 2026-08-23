@@ -130,7 +130,7 @@ void main() {
     expect(find.text('Open page'), findsNothing);
   });
 
-  testWidgets('digital selection and results use distinct modal routes', (tester) async {
+  testWidgets('digital import uses one unified modal route', (tester) async {
     final observer = _CountingNavigatorObserver();
     final selected = SelectedBookFile(name: 'selected.epub', bytes: Uint8List.fromList([1]));
     await pumpLauncher(
@@ -159,26 +159,15 @@ void main() {
     await tester.tap(find.text('Import digital books'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(OutlinedButton, 'Browse files'), findsOneWidget);
+    expect(find.text('Browse files'), findsOneWidget);
     expect(find.text('Add book'), findsNothing);
     expect(observer.pushCount, initialPushCount + 1);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Browse files'));
+    await tester.tap(find.text('Browse files'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Import 1 book'));
-    await tester.pump();
-
-    // The results route is not pushed until the selection route has finished
-    // its dismissal animation.
-    expect(find.text('Import results'), findsNothing);
-
-    await tester.pumpAndSettle();
-
-    expect(find.text('Import results'), findsOneWidget);
     expect(find.text('selected.epub'), findsOneWidget);
-    expect(find.text('Ready'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Browse files'), findsNothing);
-    expect(observer.pushCount, initialPushCount + 2);
+    expect(find.widgetWithText(FilledButton, 'Import 1 book'), findsOneWidget);
+    expect(observer.pushCount, initialPushCount + 1);
   });
 
   testWidgets('physical choice dismisses before opening its separate sheet', (tester) async {
