@@ -8,6 +8,38 @@ import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
 import 'package:papyrus/widgets/add_book/book_import_controller.dart';
 
 void main() {
+  test('applies dropped files with feedback', () {
+    final controller = BookImportController(
+      pickFiles: () async => const [],
+      processor: (bytes, filename) async => _result(filename),
+      deleteBookFile: (_) async {},
+      committer: (result, filename) async => _book(filename),
+    );
+    addTearDown(controller.dispose);
+
+    controller.applyDroppedFiles([
+      SelectedBookFile(name: 'book.epub', bytes: Uint8List.fromList([1])),
+    ], feedback: 'Some files were skipped because their format is not supported.');
+
+    expect(controller.files.single.name, 'book.epub');
+    expect(controller.pickerError, contains('skipped'));
+  });
+
+  test('reports an unsupported drop without creating a selection', () {
+    final controller = BookImportController(
+      pickFiles: () async => const [],
+      processor: (bytes, filename) async => _result(filename),
+      deleteBookFile: (_) async {},
+      committer: (result, filename) async => _book(filename),
+    );
+    addTearDown(controller.dispose);
+
+    controller.applyDroppedFiles(const [], feedback: 'No supported book files were dropped.');
+
+    expect(controller.files, isEmpty);
+    expect(controller.pickerError, 'No supported book files were dropped.');
+  });
+
   test('imports selected files and reports completion once', () async {
     final completed = <List<Book>>[];
     final result = BookImportResult(

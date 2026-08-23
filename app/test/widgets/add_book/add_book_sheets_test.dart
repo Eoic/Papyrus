@@ -1,11 +1,14 @@
 import 'dart:typed_data';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/services/book_import_result.dart';
+import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
+import 'package:papyrus/widgets/add_book/book_import_drop_zone.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 
 class _CountingNavigatorObserver extends NavigatorObserver {
@@ -23,6 +26,8 @@ void main() {
     WidgetTester tester,
     VoidCallback Function(BuildContext) action, {
     List<NavigatorObserver> navigatorObservers = const [],
+    TargetPlatform? platform,
+    ThemeData? theme,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1400, 1000);
@@ -30,6 +35,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: theme ?? ThemeData(platform: platform),
         navigatorObservers: navigatorObservers,
         home: Builder(
           builder: (context) => Scaffold(
@@ -150,6 +156,7 @@ void main() {
             deleteImportedBookFile: (_) async {},
           ),
       navigatorObservers: [observer],
+      theme: AppTheme.dark.copyWith(platform: TargetPlatform.linux),
     );
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
@@ -160,9 +167,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Browse files'), findsOneWidget);
+    expect(find.byType(BookImportDropZone), findsOneWidget);
     expect(find.text('Add book'), findsNothing);
     expect(observer.pushCount, initialPushCount + 1);
 
+    final sheetRect = tester.getRect(find.byKey(const Key('add-book-sheet-header')));
+    final dropZoneRect = tester.getRect(
+      find.descendant(of: find.byType(BookImportDropZone), matching: find.byType(AnimatedContainer)),
+    );
+    expect(dropZoneRect.left, sheetRect.left + 24);
+    expect(dropZoneRect.right, sheetRect.right - 24);
+
+    final dropTarget = tester.widget<DropTarget>(find.byType(DropTarget));
+    dropTarget.onDragDone!(
+      DropDoneDetails(
+        files: [
+          DropItemFile.fromData(Uint8List.fromList([2]), path: 'dropped.epub'),
+        ],
+        localPosition: Offset.zero,
+        globalPosition: Offset.zero,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('dropped.epub'), findsOneWidget);
+    expect(find.byType(BookImportDropZone), findsNothing);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Reset'));
+    await tester.pump();
     await tester.tap(find.text('Browse files'));
     await tester.pump();
     expect(find.text('selected.epub'), findsOneWidget);

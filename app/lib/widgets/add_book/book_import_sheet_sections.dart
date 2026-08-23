@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_book_sheet_scaffold.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
-import 'package:papyrus/widgets/add_book/book_import_controller.dart';
+import 'package:papyrus/widgets/add_book/book_import_drop_zone.dart';
 import 'package:papyrus/widgets/add_book/book_import_item_card.dart';
 
 class BookImportSelectingSection extends StatelessWidget {
@@ -12,6 +12,7 @@ class BookImportSelectingSection extends StatelessWidget {
     required this.readableFiles,
     required this.isPicking,
     required this.onBrowse,
+    required this.onDroppedFiles,
     required this.onRemoveFile,
     required this.onClearSelection,
     required this.onStartImport,
@@ -26,6 +27,7 @@ class BookImportSelectingSection extends StatelessWidget {
   final String? pickerError;
   final ScrollController? scrollController;
   final VoidCallback onBrowse;
+  final DroppedBookFilesCallback onDroppedFiles;
   final ValueChanged<SelectedBookFile> onRemoveFile;
   final VoidCallback onClearSelection;
   final VoidCallback onStartImport;
@@ -57,16 +59,20 @@ class BookImportSelectingSection extends StatelessWidget {
   Widget _buildBrowseOnly(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+      padding: const EdgeInsets.all(Spacing.lg),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Spacer(flex: 2),
-          _BrowseArea(isPicking: isPicking, onTap: onBrowse),
+          Expanded(
+            child: BookImportDropZone(isPicking: isPicking, onBrowse: onBrowse, onDroppedFiles: onDroppedFiles),
+          ),
           if (pickerError case final message?) ...[
             const SizedBox(height: Spacing.sm),
-            Text(message, style: TextStyle(color: colorScheme.error, fontSize: 13)),
+            Semantics(
+              liveRegion: true,
+              child: Text(message, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.error)),
+            ),
           ],
-          const Spacer(flex: 3),
         ],
       ),
     );
@@ -197,58 +203,6 @@ class BookImportSummarySection extends StatelessWidget {
           if (hasFailures)
             OutlinedButton(onPressed: isClosing ? null : onRetryFailed, child: Text('Retry $failureCount failed')),
         ],
-      ),
-    );
-  }
-}
-
-class _BrowseArea extends StatelessWidget {
-  const _BrowseArea({required this.isPicking, required this.onTap});
-
-  final bool isPicking;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final formats = bookImportNativeExtensions.map((extension) => extension.toUpperCase()).join(', ');
-
-    return Material(
-      color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: isPicking ? null : onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 200),
-          padding: const EdgeInsets.symmetric(vertical: Spacing.xxl, horizontal: Spacing.lg),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.4),
-              strokeAlign: BorderSide.strokeAlignInside,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              if (isPicking)
-                const SizedBox.square(dimension: 48, child: CircularProgressIndicator(strokeWidth: 3))
-              else
-                Icon(Icons.cloud_upload_outlined, size: 48, color: colorScheme.primary),
-              const SizedBox(height: Spacing.md),
-              Text('Browse files', style: textTheme.titleLarge?.copyWith(color: colorScheme.primary)),
-              const SizedBox(height: Spacing.sm),
-              Text(
-                'Tap to select $formats',
-                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

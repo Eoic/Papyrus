@@ -13,6 +13,7 @@ import 'package:papyrus/media/media_cache_service.dart';
 import 'package:papyrus/media/media_models.dart';
 import 'package:papyrus/media/media_storage_scope.dart';
 import 'package:papyrus/media/media_upload_queue.dart';
+import 'package:papyrus/platform/book_import_drop_registration.dart';
 import 'package:papyrus/platform/hot_restart_cleanup.dart';
 import 'package:papyrus/powersync/powersync_service.dart';
 import 'package:papyrus/powersync/papyrus_powersync_connector.dart';
@@ -37,6 +38,7 @@ import 'config/app_router.dart';
 Future main() async {
   await runPreviousHotRestartCleanup();
   WidgetsFlutterBinding.ensureInitialized();
+  ensureBookImportDropPluginRegistered();
   usePathUrlStrategy();
 
   final prefs = await SharedPreferences.getInstance();

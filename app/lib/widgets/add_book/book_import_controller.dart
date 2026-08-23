@@ -106,6 +106,14 @@ class BookImportController extends ChangeNotifier {
     }
   }
 
+  void applyDroppedFiles(List<SelectedBookFile> files, {String? feedback}) {
+    if (_disposed) return;
+    _update(() {
+      if (files.isNotEmpty) _files = List.unmodifiable(files);
+      _pickerError = feedback;
+    });
+  }
+
   void removeFile(SelectedBookFile file) {
     if (_disposed) return;
     _update(() => _files = List.unmodifiable(_files.where((candidate) => !identical(candidate, file))));

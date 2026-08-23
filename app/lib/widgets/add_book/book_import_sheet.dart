@@ -182,6 +182,7 @@ class _BookImportSheetState extends State<BookImportSheet> {
             pickerError: _controller.pickerError,
             scrollController: widget.scrollController,
             onBrowse: () => unawaited(_controller.browse()),
+            onDroppedFiles: _controller.applyDroppedFiles,
             onRemoveFile: _controller.removeFile,
             onClearSelection: _controller.clearSelection,
             onStartImport: _controller.startImport,
