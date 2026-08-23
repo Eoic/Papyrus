@@ -30,15 +30,13 @@ class BookActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final buttonHeight = isDesktop ? ComponentSizes.buttonHeightDesktop : ComponentSizes.buttonHeightMobile;
-    final primaryButtonWidth = readingActionState == BookReadingActionState.ready ? 180.0 : 220.0;
+    final normalReadingLabel = book.progress > 0
+        ? 'Continue'
+        : isDesktop
+        ? 'Start reading'
+        : 'Read';
     final digitalLabel = switch (readingActionState) {
-      BookReadingActionState.ready =>
-        book.progress > 0
-            ? 'Continue'
-            : isDesktop
-            ? 'Start reading'
-            : 'Read',
-      BookReadingActionState.download => 'Download and read',
+      BookReadingActionState.ready || BookReadingActionState.download => normalReadingLabel,
       BookReadingActionState.checking => 'Checking file…',
       BookReadingActionState.syncing => 'Syncing book…',
       BookReadingActionState.failed => 'Sync failed',
@@ -66,7 +64,7 @@ class BookActionButtons extends StatelessWidget {
         // Primary action button
         if (isDesktop)
           SizedBox(
-            width: primaryButtonWidth,
+            width: 180,
             height: buttonHeight,
             child: book.isPhysical
                 ? FilledButton.icon(

@@ -23,6 +23,17 @@ Book _book(String id) {
 void main() {
   late Directory directory;
 
+  test('pending refresh does not supersede a transport status event', () {
+    final revisions = SyncStateRevisionCoordinator();
+    final transportRevision = revisions.beginTransportUpdate();
+
+    expect(revisions.observeForPendingRefresh(), transportRevision);
+    expect(revisions.isCurrent(transportRevision), isTrue);
+
+    revisions.beginTransportUpdate();
+    expect(revisions.isCurrent(transportRevision), isFalse);
+  });
+
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('papyrus-powersync-test-');
   });

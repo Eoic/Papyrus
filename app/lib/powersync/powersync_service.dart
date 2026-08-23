@@ -16,6 +16,18 @@ typedef PowerSyncConnectorFactory = PowerSyncBackendConnector Function();
 typedef LibraryDatabasePathResolver =
     Future<String> Function(LibraryDatabaseMode mode, String? profileKey, String? userId);
 
+class SyncStateRevisionCoordinator {
+  int _revision = 0;
+
+  int beginTransportUpdate() => ++_revision;
+
+  int observeForPendingRefresh() => _revision;
+
+  bool isCurrent(int revision) => revision == _revision;
+
+  void invalidate() => _revision++;
+}
+
 class PapyrusPowerSyncService implements BookRepository {
   final PowerSyncConnectorFactory connectorFactory;
   final LibraryDatabasePathResolver? pathResolver;
@@ -35,7 +47,7 @@ class PapyrusPowerSyncService implements BookRepository {
   String? _authenticatedProfileKey;
   SyncState _syncState = const SyncState();
   BookMetadataSyncState _bookMetadataSyncState = const BookMetadataSyncState();
-  int _syncStateRevision = 0;
+  final SyncStateRevisionCoordinator _syncStateRevisions = SyncStateRevisionCoordinator();
 
   PapyrusPowerSyncService({required this.connectorFactory, this.pathResolver, this.connectAuthenticated = true});
 
@@ -229,9 +241,9 @@ class PapyrusPowerSyncService implements BookRepository {
   }
 
   Future<void> _setStatusFromPowerSync(SyncStatus status) async {
-    final revision = ++_syncStateRevision;
+    final revision = _syncStateRevisions.beginTransportUpdate();
     final pending = await _readPendingWrites();
-    if (revision != _syncStateRevision) return;
+    if (!_syncStateRevisions.isCurrent(revision)) return;
 
     _setBookMetadataSyncState(
       BookMetadataSyncState(
@@ -254,9 +266,9 @@ class PapyrusPowerSyncService implements BookRepository {
   }
 
   Future<void> _refreshPendingWrites() async {
-    final revision = ++_syncStateRevision;
+    final revision = _syncStateRevisions.observeForPendingRefresh();
     final pending = await _readPendingWrites();
-    if (revision != _syncStateRevision) return;
+    if (!_syncStateRevisions.isCurrent(revision)) return;
 
     final current = _syncState;
     _setBookMetadataSyncState(
@@ -327,7 +339,7 @@ class PapyrusPowerSyncService implements BookRepository {
   }
 
   Future<void> _closeActive({required bool clearAuthenticated}) async {
-    _syncStateRevision++;
+    _syncStateRevisions.invalidate();
     await _booksSubscription?.cancel();
     await _statusSubscription?.cancel();
     _booksSubscription = null;

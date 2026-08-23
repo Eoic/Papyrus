@@ -31,24 +31,18 @@ class BookAccountStatusBadge extends StatelessWidget {
       ),
     };
 
-    return Tooltip(
-      message: label,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: background.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: foreground),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: foreground, fontWeight: FontWeight.w600),
-            ),
-          ],
+    return Semantics(
+      label: label,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: background.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+          child: Icon(icon, size: 14, color: foreground),
         ),
       ),
     );

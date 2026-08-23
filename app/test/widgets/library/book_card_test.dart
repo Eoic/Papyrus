@@ -96,13 +96,19 @@ void main() {
       expect(find.text('EPUB'), findsOneWidget);
     });
 
-    testWidgets('shows account status and dims a missing local file', (tester) async {
-      await tester.pumpWidget(
-        buildCard(accountStatus: BookAccountStatus.saved, deviceStatus: BookDeviceStatus.missing),
-      );
+    testWidgets('shows an accessible icon-only account status', (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await tester.pumpWidget(
+          buildCard(accountStatus: BookAccountStatus.saved, deviceStatus: BookDeviceStatus.missing),
+        );
 
-      expect(find.text('Saved'), findsOneWidget);
-      expect(find.byKey(const ValueKey('book-unavailable-tint-book-1')), findsOneWidget);
+        expect(find.text('Saved'), findsNothing);
+        expect(find.semantics.byPredicate((candidate) => candidate.label.contains('Saved')), findsOneWidget);
+        expect(find.byKey(const ValueKey('book-unavailable-tint-book-1')), findsOneWidget);
+      } finally {
+        semantics.dispose();
+      }
     });
 
     testWidgets('displays physical format label', (tester) async {

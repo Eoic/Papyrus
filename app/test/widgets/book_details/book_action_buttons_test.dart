@@ -72,7 +72,7 @@ void main() {
         expect(called, true);
       });
 
-      testWidgets('offers download and read when the local file is missing', (tester) async {
+      testWidgets('keeps the normal reading label when the local file is missing', (tester) async {
         await tester.pumpWidget(
           buildWidget(
             book: buildTestBook(fileFormat: BookFormat.epub),
@@ -80,7 +80,8 @@ void main() {
           ),
         );
 
-        expect(find.text('Download and read'), findsOneWidget);
+        expect(find.text('Read'), findsOneWidget);
+        expect(find.text('Download and read'), findsNothing);
         expect(find.byIcon(Icons.download_outlined), findsOneWidget);
       });
 
