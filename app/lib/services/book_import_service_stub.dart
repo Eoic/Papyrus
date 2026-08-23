@@ -93,6 +93,17 @@ class BookImportService {
     return null;
   }
 
+  /// Checks whether a stored book exists without reading its contents.
+  Future<bool> hasBookFile(String bookId) async {
+    final booksDir = await _getBooksDirectory();
+    await for (final entity in booksDir.list()) {
+      if (entity is File && p.basenameWithoutExtension(entity.path) == bookId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Stores raw book bytes under the app-local book cache for [bookId].
   ///
   /// Used when a signed-in device lazily downloads a book file from the

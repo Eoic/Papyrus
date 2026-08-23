@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/acquisition_placeholder_card.dart';
 import 'package:papyrus/widgets/library/book_card.dart';
@@ -60,6 +63,7 @@ class BookGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final layout = _resolveGridLayout(width: MediaQuery.sizeOf(context).width, viewMode: libraryViewMode);
     final libraryProvider = context.watch<LibraryProvider>();
+    final storageStatusController = context.watch<BookStorageStatusController?>();
     final bookIds = books.map((book) => book.id).toSet();
     final placeholderJobsByBookId = <String, AcquisitionJob>{};
 
@@ -137,6 +141,9 @@ class BookGrid extends StatelessWidget {
           final book = books[index];
           final job = linkedJobsByBookId[book.id];
           final isFavorite = libraryProvider.isBookFavorite(book.id, book.isFavorite);
+          if (job == null) {
+            unawaited(storageStatusController?.ensureDeviceStatus(book));
+          }
 
           return BookCard(
             book: book,
@@ -164,6 +171,8 @@ class BookGrid extends StatelessWidget {
                       : () => onAcquisitionSelectionToggle!(job)
                 : () => libraryProvider.enterSelectionMode(book.id),
             acquisitionJob: job,
+            accountStatus: job == null ? storageStatusController?.accountStatus(book) : null,
+            deviceStatus: job == null ? storageStatusController?.deviceStatus(book) : null,
           );
         },
       ),

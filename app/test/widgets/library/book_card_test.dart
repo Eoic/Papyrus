@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/app_theme.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
@@ -39,6 +40,8 @@ void main() {
       bool isSelectionMode = false,
       bool isSelected = false,
       AcquisitionJob? acquisitionJob,
+      BookAccountStatus? accountStatus,
+      BookDeviceStatus? deviceStatus,
       Size cardSize = const Size(200, 300),
       Size screenSize = const Size(400, 800),
       ThemeData? theme,
@@ -57,6 +60,8 @@ void main() {
           isSelectionMode: isSelectionMode,
           isSelected: isSelected,
           acquisitionJob: acquisitionJob,
+          accountStatus: accountStatus,
+          deviceStatus: deviceStatus,
         ),
       );
 
@@ -89,6 +94,15 @@ void main() {
     testWidgets('displays format badge', (tester) async {
       await tester.pumpWidget(buildCard());
       expect(find.text('EPUB'), findsOneWidget);
+    });
+
+    testWidgets('shows account status and dims a missing local file', (tester) async {
+      await tester.pumpWidget(
+        buildCard(accountStatus: BookAccountStatus.saved, deviceStatus: BookDeviceStatus.missing),
+      );
+
+      expect(find.text('Saved'), findsOneWidget);
+      expect(find.byKey(const ValueKey('book-unavailable-tint-book-1')), findsOneWidget);
     });
 
     testWidgets('displays physical format label', (tester) async {

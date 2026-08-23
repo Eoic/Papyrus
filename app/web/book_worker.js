@@ -8,6 +8,7 @@
  *     { type: 'process', format: 'epub', bookId, fileData: ArrayBuffer }
  *     { type: 'delete',  bookId }
  *     { type: 'getFile', bookId }
+ *     { type: 'hasFile', bookId }
  *     { type: 'storeFile', format, bookId, fileData: ArrayBuffer }
  *     { type: 'getCover', requestId, scopeKey, bucket, mediaId }
  *     { type: 'storeCover', requestId, scopeKey, bucket, mediaId, fileData: ArrayBuffer }
@@ -19,6 +20,7 @@
  *     { type: 'success', action: 'process', bookId, metadata, coverData, coverMimeType, fileSize, fileHash }
  *     { type: 'success', action: 'delete',  bookId }
  *     { type: 'success', action: 'getFile', bookId, fileData }
+ *     { type: 'success', action: 'hasFile', bookId, exists }
  *     { type: 'success', action: 'storeFile', bookId }
  *     { type: 'success', action: 'promoteCover', requestId, promoted }
  *     { type: 'error',   message }
@@ -42,6 +44,9 @@ self.onmessage = async (event) => {
         break;
       case 'getFile':
         await handleGetFile(msg);
+        break;
+      case 'hasFile':
+        await handleHasFile(msg);
         break;
       case 'storeFile':
         await handleStoreFile(msg);
@@ -117,6 +122,12 @@ async function handleGetFile(msg) {
     { type: 'success', action: 'getFile', bookId, fileData },
     fileData ? [fileData] : [],
   );
+}
+
+async function handleHasFile(msg) {
+  const { bookId } = msg;
+  const exists = await opfsExists(bookId);
+  postMessage({ type: 'success', action: 'hasFile', bookId, exists });
 }
 
 // ---------------------------------------------------------------------------
@@ -628,6 +639,29 @@ async function opfsRead(bookId) {
   }
 
   return null;
+}
+
+/**
+ * Checks for a book in OPFS without reading the file into memory.
+ */
+async function opfsExists(bookId) {
+  const root = await navigator.storage.getDirectory();
+  let booksDir;
+  try {
+    booksDir = await root.getDirectoryHandle('books', { create: false });
+  } catch (_) {
+    return false;
+  }
+
+  for (const ext of KNOWN_EXTENSIONS) {
+    try {
+      await booksDir.getFileHandle(`${bookId}.${ext}`, { create: false });
+      return true;
+    } catch (_) {
+      // Not found with this extension — try next
+    }
+  }
+  return false;
 }
 
 /**

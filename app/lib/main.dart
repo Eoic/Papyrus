@@ -22,6 +22,7 @@ import 'package:papyrus/powersync/sync_state.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/acquisition_availability_provider.dart';
 import 'package:papyrus/providers/acquisition_downloads_provider.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/providers/sync_settings_provider.dart';
@@ -162,6 +163,7 @@ class _PapyrusState extends State<Papyrus> {
   late final MediaUploadQueue _mediaUploadQueue;
   late final BookImportService _bookImportService;
   late final PapyrusPowerSyncService _powerSyncService;
+  late final BookStorageStatusController _bookStorageStatusController;
   late final PapyrusApiConfig _officialApiConfig;
   late AuthRepository _authRepository;
   late String _activeProfileKey;
@@ -203,8 +205,17 @@ class _PapyrusState extends State<Papyrus> {
       connectorFactory: () => PapyrusPowerSyncConnector(
         authRepository: _authRepository,
         config: _syncSettingsProvider.activeApiConfig,
-        onUploadComplete: _processMediaUploads,
+        onUploadComplete: () async {
+          await _powerSyncService.refreshBookMetadataSyncState();
+          await _processMediaUploads();
+        },
       ),
+    );
+    _bookStorageStatusController = BookStorageStatusController(
+      authProvider: _authProvider,
+      powerSyncService: _powerSyncService,
+      mediaUploadQueue: _mediaUploadQueue,
+      hasBookFile: _bookImportService.hasBookFile,
     );
     registerHotRestartCleanup(_disposeDataServices);
     unawaited(_dataStore.attachBookRepository(_powerSyncService));
@@ -224,6 +235,7 @@ class _PapyrusState extends State<Papyrus> {
     _authProvider.removeListener(_syncPowerSyncAuthState);
     _syncSettingsProvider.removeListener(_handleSyncSettingsChanged);
     unawaited(_disposeDataServices());
+    _bookStorageStatusController.dispose();
     _bookImportService.dispose();
     _acquisitionDownloadsComposition.dispose();
     _acquisitionAvailabilityProvider.dispose();
@@ -388,6 +400,7 @@ class _PapyrusState extends State<Papyrus> {
         ChangeNotifierProvider.value(value: _dataStore),
         ChangeNotifierProvider.value(value: _mediaUploadQueue),
         ChangeNotifierProvider.value(value: _syncSettingsProvider),
+        ChangeNotifierProvider.value(value: _bookStorageStatusController),
         Provider.value(value: _powerSyncService),
         Provider.value(value: _bookImportService),
         Provider(create: _createBookDownloadService),

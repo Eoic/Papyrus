@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/powersync/book_metadata_sync_state.dart';
 import 'package:papyrus/powersync/papyrus_schema.dart';
 import 'package:papyrus/powersync/powersync_book_mapper.dart';
 import 'package:papyrus/powersync/sync_state.dart';
@@ -21,6 +23,8 @@ class PapyrusPowerSyncService implements BookRepository {
 
   final StreamController<List<Book>> _booksController = StreamController<List<Book>>.broadcast();
   final StreamController<SyncState> _syncStateController = StreamController<SyncState>.broadcast();
+  final StreamController<BookMetadataSyncState> _bookMetadataSyncStateController =
+      StreamController<BookMetadataSyncState>.broadcast();
 
   PowerSyncDatabase? _database;
   StreamSubscription? _booksSubscription;
@@ -30,12 +34,16 @@ class PapyrusPowerSyncService implements BookRepository {
   String? _authenticatedUserId;
   String? _authenticatedProfileKey;
   SyncState _syncState = const SyncState();
+  BookMetadataSyncState _bookMetadataSyncState = const BookMetadataSyncState();
+  int _syncStateRevision = 0;
 
   PapyrusPowerSyncService({required this.connectorFactory, this.pathResolver, this.connectAuthenticated = true});
 
   LibraryDatabaseMode? get mode => _mode;
   SyncState get syncState => _syncState;
   Stream<SyncState> get syncStates => _syncStateController.stream;
+  BookMetadataSyncState get bookMetadataSyncState => _bookMetadataSyncState;
+  Stream<BookMetadataSyncState> get bookMetadataSyncStates => _bookMetadataSyncStateController.stream;
 
   Future<void> activateGuest() => _switchMode(LibraryDatabaseMode.guest);
 
@@ -80,6 +88,7 @@ class PapyrusPowerSyncService implements BookRepository {
     await database.execute('DELETE FROM books');
     _booksController.add(const []);
     _setSyncState(const SyncState());
+    _setBookMetadataSyncState(const BookMetadataSyncState());
   }
 
   Future<void> clearAuthenticatedCache() async {
@@ -99,6 +108,7 @@ class PapyrusPowerSyncService implements BookRepository {
     _authenticatedProfileKey = null;
     _booksController.add(const []);
     _setSyncState(const SyncState());
+    _setBookMetadataSyncState(const BookMetadataSyncState());
     await activateAuthenticated(userId, profileKey: profileKey);
   }
 
@@ -110,6 +120,7 @@ class PapyrusPowerSyncService implements BookRepository {
     _authenticatedProfileKey = null;
     _booksController.add(const []);
     _setSyncState(const SyncState());
+    _setBookMetadataSyncState(const BookMetadataSyncState());
   }
 
   @override
@@ -148,6 +159,7 @@ class PapyrusPowerSyncService implements BookRepository {
     await _closeActive(clearAuthenticated: false);
     await _booksController.close();
     await _syncStateController.close();
+    await _bookMetadataSyncStateController.close();
   }
 
   Future<void> _switchMode(LibraryDatabaseMode mode, {String? authenticatedUserId, String? authenticatedProfileKey}) {
@@ -176,6 +188,8 @@ class PapyrusPowerSyncService implements BookRepository {
     String? authenticatedProfileKey,
   ) async {
     await _closeActive(clearAuthenticated: false);
+    _setSyncState(const SyncState());
+    _setBookMetadataSyncState(const BookMetadataSyncState());
     _mode = mode;
     _authenticatedUserId = authenticatedUserId;
     _authenticatedProfileKey = authenticatedProfileKey;
@@ -193,6 +207,7 @@ class PapyrusPowerSyncService implements BookRepository {
       await database.connect(connector: connectorFactory());
     } else {
       _setSyncState(const SyncState());
+      _setBookMetadataSyncState(const BookMetadataSyncState());
     }
   }
 
@@ -214,14 +229,23 @@ class PapyrusPowerSyncService implements BookRepository {
   }
 
   Future<void> _setStatusFromPowerSync(SyncStatus status) async {
-    final pending = await _hasPendingWrites();
+    final revision = ++_syncStateRevision;
+    final pending = await _readPendingWrites();
+    if (revision != _syncStateRevision) return;
+
+    _setBookMetadataSyncState(
+      BookMetadataSyncState(
+        pendingBookIds: pending.bookIds,
+        failedBookIds: status.uploadError == null ? const {} : pending.bookIds,
+      ),
+    );
     _setSyncState(
       SyncState(
         connected: status.connected,
         connecting: status.connecting,
         uploading: status.uploading,
         downloading: status.downloading,
-        hasPendingWrites: pending,
+        hasPendingWrites: pending.any,
         lastSyncedAt: status.lastSyncedAt,
         uploadError: status.uploadError,
         downloadError: status.downloadError,
@@ -230,14 +254,24 @@ class PapyrusPowerSyncService implements BookRepository {
   }
 
   Future<void> _refreshPendingWrites() async {
+    final revision = ++_syncStateRevision;
+    final pending = await _readPendingWrites();
+    if (revision != _syncStateRevision) return;
+
     final current = _syncState;
+    _setBookMetadataSyncState(
+      BookMetadataSyncState(
+        pendingBookIds: pending.bookIds,
+        failedBookIds: current.uploadError == null ? const {} : pending.bookIds,
+      ),
+    );
     _setSyncState(
       SyncState(
         connected: current.connected,
         connecting: current.connecting,
         uploading: current.uploading,
         downloading: current.downloading,
-        hasPendingWrites: await _hasPendingWrites(),
+        hasPendingWrites: pending.any,
         lastSyncedAt: current.lastSyncedAt,
         uploadError: current.uploadError,
         downloadError: current.downloadError,
@@ -245,19 +279,42 @@ class PapyrusPowerSyncService implements BookRepository {
     );
   }
 
-  Future<bool> _hasPendingWrites() async {
+  Future<void> refreshBookMetadataSyncState() => _refreshPendingWrites();
+
+  Future<_PendingWrites> _readPendingWrites() async {
     final database = _database;
     if (database == null || _mode != LibraryDatabaseMode.authenticated) {
-      return false;
+      return const _PendingWrites();
     }
-    final row = await database.get('SELECT EXISTS(SELECT 1 FROM ps_crud) AS pending');
-    return row['pending'] == 1;
+    final rows = await database.getAll('SELECT data FROM ps_crud');
+    final bookIds = <String>{};
+    for (final row in rows) {
+      final rawData = row['data'];
+      if (rawData is! String) continue;
+      final Object? decoded;
+      try {
+        decoded = jsonDecode(rawData);
+      } on FormatException {
+        continue;
+      }
+      if (decoded case {'type': 'books', 'id': final String id}) {
+        bookIds.add(id);
+      }
+    }
+    return _PendingWrites(any: rows.isNotEmpty, bookIds: bookIds);
   }
 
   void _setSyncState(SyncState state) {
     _syncState = state;
     if (!_syncStateController.isClosed) {
       _syncStateController.add(state);
+    }
+  }
+
+  void _setBookMetadataSyncState(BookMetadataSyncState state) {
+    _bookMetadataSyncState = state;
+    if (!_bookMetadataSyncStateController.isClosed) {
+      _bookMetadataSyncStateController.add(state);
     }
   }
 
@@ -270,6 +327,7 @@ class PapyrusPowerSyncService implements BookRepository {
   }
 
   Future<void> _closeActive({required bool clearAuthenticated}) async {
+    _syncStateRevision++;
     await _booksSubscription?.cancel();
     await _statusSubscription?.cancel();
     _booksSubscription = null;
@@ -309,4 +367,11 @@ class PapyrusPowerSyncService implements BookRepository {
   String _safeFileComponent(String value) {
     return value.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
   }
+}
+
+class _PendingWrites {
+  final bool any;
+  final Set<String> bookIds;
+
+  const _PendingWrites({this.any = false, this.bookIds = const {}});
 }

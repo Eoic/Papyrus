@@ -9,6 +9,7 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/library_filter_options.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/providers/acquisition_downloads_provider.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -958,6 +959,7 @@ class _LibraryPageState extends State<LibraryPage> {
     required ValueChanged<AcquisitionJob> onAcquisitionSelectionToggle,
   }) {
     final libraryProvider = context.watch<LibraryProvider>();
+    final storageStatusController = context.watch<BookStorageStatusController?>();
     final isSelectionMode = libraryProvider.isSelectionMode;
 
     return ListView.builder(
@@ -981,6 +983,9 @@ class _LibraryPageState extends State<LibraryPage> {
         final book = books[index];
         final acquisitionJob = linkedJobsByBookId[book.id];
         final isFavorite = libraryProvider.isBookFavorite(book.id, book.isFavorite);
+        if (acquisitionJob == null) {
+          unawaited(storageStatusController?.ensureDeviceStatus(book));
+        }
 
         return BookListItem(
           book: book,
@@ -997,6 +1002,8 @@ class _LibraryPageState extends State<LibraryPage> {
           onAcquisitionSelectionToggle: acquisitionJob == null
               ? null
               : () => onAcquisitionSelectionToggle(acquisitionJob),
+          accountStatus: acquisitionJob == null ? storageStatusController?.accountStatus(book) : null,
+          deviceStatus: acquisitionJob == null ? storageStatusController?.deviceStatus(book) : null,
         );
       },
     );

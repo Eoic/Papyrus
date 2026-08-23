@@ -14,6 +14,9 @@ class BookHeader extends StatelessWidget {
   final VoidCallback? onUpdateProgress;
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onEdit;
+  final BookReadingActionState readingActionState;
+  final String? readingError;
+  final VoidCallback? onRetryReading;
 
   const BookHeader({
     super.key,
@@ -23,6 +26,9 @@ class BookHeader extends StatelessWidget {
     this.onUpdateProgress,
     this.onToggleFavorite,
     this.onEdit,
+    this.readingActionState = BookReadingActionState.ready,
+    this.readingError,
+    this.onRetryReading,
   });
 
   @override
@@ -99,7 +105,12 @@ class BookHeader extends StatelessWidget {
                 onUpdateProgress: onUpdateProgress,
                 onToggleFavorite: onToggleFavorite,
                 onEdit: onEdit,
+                readingActionState: readingActionState,
               ),
+              if (readingError case final error?) ...[
+                const SizedBox(height: Spacing.sm),
+                _ReadingError(message: error, onRetry: onRetryReading),
+              ],
             ],
           ),
         ),
@@ -176,7 +187,12 @@ class BookHeader extends StatelessWidget {
             onUpdateProgress: onUpdateProgress,
             onToggleFavorite: onToggleFavorite,
             onEdit: onEdit,
+            readingActionState: readingActionState,
           ),
+          if (readingError case final error?) ...[
+            const SizedBox(height: Spacing.sm),
+            _ReadingError(message: error, onRetry: onRetryReading),
+          ],
           const SizedBox(height: Spacing.md),
         ],
       ),
@@ -225,6 +241,27 @@ class BookHeader extends StatelessWidget {
           Text('  •  ', style: TextStyle(color: colorScheme.onSurfaceVariant)),
           Text('${book.totalPages} pages', style: Theme.of(context).textTheme.bodyMedium),
         ],
+      ],
+    );
+  }
+}
+
+class _ReadingError extends StatelessWidget {
+  final String message;
+  final VoidCallback? onRetry;
+
+  const _ReadingError({required this.message, this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: Spacing.xs,
+      children: [
+        Icon(Icons.error_outline, size: IconSizes.small, color: colorScheme.error),
+        Text(message, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.error)),
+        TextButton(onPressed: onRetry, child: const Text('Try again')),
       ],
     );
   }

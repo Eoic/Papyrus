@@ -15,6 +15,7 @@ void main() {
       VoidCallback? onToggleFavorite,
       VoidCallback? onEdit,
       bool isDesktop = false,
+      BookReadingActionState readingActionState = BookReadingActionState.ready,
     }) {
       return createTestApp(
         child: BookActionButtons(
@@ -30,6 +31,7 @@ void main() {
           onToggleFavorite: onToggleFavorite,
           onEdit: onEdit,
           isDesktop: isDesktop,
+          readingActionState: readingActionState,
         ),
       );
     }
@@ -68,6 +70,30 @@ void main() {
 
         await tester.tap(find.text('Continue'));
         expect(called, true);
+      });
+
+      testWidgets('offers download and read when the local file is missing', (tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            book: buildTestBook(fileFormat: BookFormat.epub),
+            readingActionState: BookReadingActionState.download,
+          ),
+        );
+
+        expect(find.text('Download and read'), findsOneWidget);
+        expect(find.byIcon(Icons.download_outlined), findsOneWidget);
+      });
+
+      testWidgets('shows disabled download progress', (tester) async {
+        await tester.pumpWidget(
+          buildWidget(
+            book: buildTestBook(fileFormat: BookFormat.epub),
+            readingActionState: BookReadingActionState.downloading,
+          ),
+        );
+
+        expect(find.text('Downloading…'), findsOneWidget);
+        expect(tester.widget<FilledButton>(find.byType(FilledButton).first).onPressed, isNull);
       });
     });
 

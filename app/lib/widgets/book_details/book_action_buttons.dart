@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
+enum BookReadingActionState { ready, download, checking, syncing, failed, downloading, unavailable }
+
 /// Action buttons for book details page.
 /// Shows Continue Reading (or Update Progress for physical books), Favorite, and Edit buttons.
 class BookActionButtons extends StatelessWidget {
@@ -11,6 +13,7 @@ class BookActionButtons extends StatelessWidget {
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onEdit;
   final bool isDesktop;
+  final BookReadingActionState readingActionState;
 
   const BookActionButtons({
     super.key,
@@ -20,12 +23,42 @@ class BookActionButtons extends StatelessWidget {
     this.onToggleFavorite,
     this.onEdit,
     this.isDesktop = false,
+    this.readingActionState = BookReadingActionState.ready,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final buttonHeight = isDesktop ? ComponentSizes.buttonHeightDesktop : ComponentSizes.buttonHeightMobile;
+    final primaryButtonWidth = readingActionState == BookReadingActionState.ready ? 180.0 : 220.0;
+    final digitalLabel = switch (readingActionState) {
+      BookReadingActionState.ready =>
+        book.progress > 0
+            ? 'Continue'
+            : isDesktop
+            ? 'Start reading'
+            : 'Read',
+      BookReadingActionState.download => 'Download and read',
+      BookReadingActionState.checking => 'Checking file…',
+      BookReadingActionState.syncing => 'Syncing book…',
+      BookReadingActionState.failed => 'Sync failed',
+      BookReadingActionState.downloading => 'Downloading…',
+      BookReadingActionState.unavailable => 'File unavailable',
+    };
+    final canUseDigitalAction =
+        readingActionState == BookReadingActionState.ready || readingActionState == BookReadingActionState.download;
+    final digitalIcon = switch (readingActionState) {
+      BookReadingActionState.ready => Icon(book.progress > 0 ? Icons.play_arrow : Icons.menu_book),
+      BookReadingActionState.download => const Icon(Icons.download_outlined),
+      BookReadingActionState.downloading => const SizedBox.square(
+        dimension: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      BookReadingActionState.checking => const Icon(Icons.hourglass_empty),
+      BookReadingActionState.syncing => const Icon(Icons.cloud_sync_outlined),
+      BookReadingActionState.failed => const Icon(Icons.cloud_off_outlined),
+      BookReadingActionState.unavailable => const Icon(Icons.file_download_off_outlined),
+    };
 
     return Row(
       mainAxisSize: isDesktop ? MainAxisSize.min : MainAxisSize.max,
@@ -33,7 +66,7 @@ class BookActionButtons extends StatelessWidget {
         // Primary action button
         if (isDesktop)
           SizedBox(
-            width: 180,
+            width: primaryButtonWidth,
             height: buttonHeight,
             child: book.isPhysical
                 ? FilledButton.icon(
@@ -42,9 +75,9 @@ class BookActionButtons extends StatelessWidget {
                     label: const Text('Update progress'),
                   )
                 : FilledButton.icon(
-                    onPressed: onContinueReading,
-                    icon: Icon(book.progress > 0 ? Icons.play_arrow : Icons.menu_book),
-                    label: Text(book.progress > 0 ? 'Continue' : 'Start reading'),
+                    onPressed: canUseDigitalAction ? onContinueReading : null,
+                    icon: digitalIcon,
+                    label: Text(digitalLabel),
                   ),
           )
         else
@@ -59,9 +92,9 @@ class BookActionButtons extends StatelessWidget {
                       label: const Text('Update progress'),
                     )
                   : FilledButton.icon(
-                      onPressed: onContinueReading,
-                      icon: Icon(book.progress > 0 ? Icons.play_arrow : Icons.menu_book),
-                      label: Text(book.progress > 0 ? 'Continue' : 'Read'),
+                      onPressed: canUseDigitalAction ? onContinueReading : null,
+                      icon: digitalIcon,
+                      label: Text(digitalLabel),
                     ),
             ),
           ),

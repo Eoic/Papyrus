@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/providers/book_details_provider.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/reader/reader_book_adapter.dart';
 import 'package:papyrus/services/book_delete_cleanup_service.dart';
 import 'package:papyrus/services/book_download_service.dart';
@@ -22,6 +24,7 @@ import 'package:papyrus/widgets/book/book_bookmarks.dart';
 import 'package:papyrus/widgets/book/book_details.dart';
 import 'package:papyrus/widgets/book/book_notes.dart';
 import 'package:papyrus/widgets/book_details/annotation_dialog.dart';
+import 'package:papyrus/widgets/book_details/book_action_buttons.dart';
 import 'package:papyrus/widgets/book_details/book_header.dart';
 import 'package:papyrus/widgets/book_details/bookmark_dialog.dart';
 import 'package:papyrus/widgets/book_details/annotation_action_sheet.dart';
@@ -45,6 +48,8 @@ class BookDetailsPage extends StatefulWidget {
 class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProviderStateMixin {
   late BookDetailsProvider _provider;
   late TabController _tabController;
+  bool _isPreparingReader = false;
+  String? _readingError;
 
   @override
   void initState() {
@@ -99,11 +104,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
 
           final screenWidth = MediaQuery.of(context).size.width;
           final isDesktop = screenWidth >= Breakpoints.desktopSmall;
+          final book = provider.book!;
+          final storageStatusController = context.watch<BookStorageStatusController?>();
+          unawaited(storageStatusController?.ensureDeviceStatus(book));
+          final readingActionState = _readingActionState(storageStatusController, book);
 
           if (isDesktop) {
-            return _buildDesktopLayout(context, provider);
+            return _buildDesktopLayout(context, provider, readingActionState);
           }
-          return _buildMobileLayout(context, provider);
+          return _buildMobileLayout(context, provider, readingActionState);
         },
       ),
     );
@@ -161,7 +170,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, BookDetailsProvider provider) {
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    BookDetailsProvider provider,
+    BookReadingActionState readingActionState,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -180,6 +193,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
                   onUpdateProgress: _onUpdateProgress,
                   onToggleFavorite: _provider.toggleFavorite,
                   onEdit: _onEdit,
+                  readingActionState: readingActionState,
+                  readingError: _readingError,
+                  onRetryReading: _onContinueReading,
                 ),
                 const SizedBox(height: Spacing.xl),
 
@@ -218,7 +234,11 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, BookDetailsProvider provider) {
+  Widget _buildMobileLayout(
+    BuildContext context,
+    BookDetailsProvider provider,
+    BookReadingActionState readingActionState,
+  ) {
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
@@ -244,6 +264,9 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
               onUpdateProgress: _onUpdateProgress,
               onToggleFavorite: _provider.toggleFavorite,
               onEdit: _onEdit,
+              readingActionState: readingActionState,
+              readingError: _readingError,
+              onRetryReading: _onContinueReading,
             ),
           ),
         ],
@@ -361,7 +384,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
 
   Future<void> _onContinueReading() async {
     final book = _provider.book;
-    if (book == null) return;
+    if (book == null || _isPreparingReader) return;
 
     final messenger = ScaffoldMessenger.of(context);
     if (ReaderBookAdapter.formatFor(book.fileFormat) == null) {
@@ -369,9 +392,19 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
       return;
     }
 
-    if (book.fileMediaId != null) {
-      messenger.showSnackBar(const SnackBar(content: Text('Preparing book file...')));
-
+    final storageStatusController = context.read<BookStorageStatusController?>();
+    final needsDownload = storageStatusController == null
+        ? book.fileMediaId != null
+        : storageStatusController.deviceStatus(book) != BookDeviceStatus.available;
+    if (needsDownload) {
+      if (book.fileMediaId == null) {
+        setState(() => _readingError = 'This book file is not available yet.');
+        return;
+      }
+      setState(() {
+        _isPreparingReader = true;
+        _readingError = null;
+      });
       try {
         final importService = context.read<BookImportService>();
         await context.read<MediaCacheService>().ensureBookFileCached(
@@ -380,16 +413,41 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
           writeLocalBookFile: importService.storeBookFile,
           downloadMedia: context.read<AuthProvider>().downloadMedia,
         );
+        storageStatusController?.markAvailable(book.id);
       } catch (_) {
         if (!mounted) return;
-        messenger.showSnackBar(const SnackBar(content: Text('Could not download this book file.')));
+        setState(() {
+          _isPreparingReader = false;
+          _readingError = 'Could not download this book file.';
+        });
         return;
       }
+      if (!mounted) return;
+      setState(() => _isPreparingReader = false);
     }
 
     if (!mounted) return;
-    messenger.hideCurrentSnackBar();
     await context.pushNamed('BOOK_READER', pathParameters: {'bookId': book.id});
+  }
+
+  BookReadingActionState _readingActionState(BookStorageStatusController? controller, Book book) {
+    if (_isPreparingReader) return BookReadingActionState.downloading;
+    if (book.isPhysical || controller == null) return BookReadingActionState.ready;
+
+    final accountStatus = controller.accountStatus(book);
+
+    return switch (controller.deviceStatus(book)) {
+      BookDeviceStatus.available => BookReadingActionState.ready,
+      BookDeviceStatus.checking => BookReadingActionState.checking,
+      BookDeviceStatus.missing when accountStatus != null && book.fileMediaId != null =>
+        BookReadingActionState.download,
+      BookDeviceStatus.missing => switch (accountStatus) {
+        BookAccountStatus.syncing => BookReadingActionState.syncing,
+        BookAccountStatus.failed => BookReadingActionState.failed,
+        _ => BookReadingActionState.unavailable,
+      },
+      null => BookReadingActionState.ready,
+    };
   }
 
   void _onEdit() {

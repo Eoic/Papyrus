@@ -118,6 +118,16 @@ void main() {
     await second.close();
   });
 
+  test('authenticated writes expose the affected book as pending', () async {
+    final first = service();
+    await first.activateAuthenticated('user-one');
+
+    await first.upsert(_book('account-book'));
+
+    expect(first.bookMetadataSyncState.pendingBookIds, contains('account-book'));
+    await first.close();
+  });
+
   test('clearGuestLibrary removes only guest-local books', () async {
     final first = service();
     await first.activateGuest();

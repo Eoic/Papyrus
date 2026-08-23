@@ -177,6 +177,16 @@ void main() {
       });
     });
 
+    group('hasBookFile', () {
+      test('checks file presence without loading file bytes', () async {
+        expect(await service.hasBookFile('cached-book'), isFalse);
+
+        await service.storeBookFile('cached-book', 'epub', Uint8List.fromList([1, 2, 3]));
+
+        expect(await service.hasBookFile('cached-book'), isTrue);
+      });
+    });
+
     group('storeBookFile', () {
       test('stores downloaded book bytes with the provided extension', () async {
         final bytes = Uint8List.fromList('downloaded epub bytes'.codeUnits);

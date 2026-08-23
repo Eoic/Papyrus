@@ -224,6 +224,32 @@ class BookImportService {
     return (fileDataJs as JSArrayBuffer).toDart.asUint8List();
   }
 
+  /// Checks whether a stored book exists without transferring its contents
+  /// out of OPFS.
+  Future<bool> hasBookFile(String bookId) async {
+    if (!kIsWeb) {
+      throw UnsupportedError('BookImportService is only supported on web.');
+    }
+
+    final completer = Completer<JSObject>();
+    final worker = _getWorker();
+    _pending['hasFile:$bookId'] = completer;
+
+    final message = JSObject();
+    message['type'] = 'hasFile'.toJS;
+    message['bookId'] = bookId.toJS;
+    worker.postMessage(message);
+
+    final obj = await completer.future.timeout(
+      _timeout,
+      onTimeout: () {
+        _pending.remove('hasFile:$bookId');
+        throw TimeoutException('File check timed out after ${_timeout.inSeconds}s', _timeout);
+      },
+    );
+    return (obj['exists'] as JSBoolean).toDart;
+  }
+
   /// Stores raw book bytes in OPFS for [bookId].
   ///
   /// Throws [UnsupportedError] when called on non-web platforms.

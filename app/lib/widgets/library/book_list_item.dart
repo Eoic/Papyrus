@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
+import 'package:papyrus/widgets/library/book_account_status_badge.dart';
 
 /// List row for displaying a book with cover thumbnail, title, author,
 /// progress, format badge, and favorite indicator.
@@ -23,6 +25,8 @@ class BookListItem extends StatefulWidget {
   final bool isAcquisitionSelectionMode;
   final bool isAcquisitionSelected;
   final VoidCallback? onAcquisitionSelectionToggle;
+  final BookAccountStatus? accountStatus;
+  final BookDeviceStatus? deviceStatus;
 
   const BookListItem({
     super.key,
@@ -38,6 +42,8 @@ class BookListItem extends StatefulWidget {
     this.isAcquisitionSelectionMode = false,
     this.isAcquisitionSelected = false,
     this.onAcquisitionSelectionToggle,
+    this.accountStatus,
+    this.deviceStatus,
   });
 
   @override
@@ -63,6 +69,7 @@ class _BookListItemState extends State<BookListItem> {
         : inSelection
         ? widget.onSelectToggle
         : widget.onTap;
+    final isUnavailable = !isAcquisition && !widget.book.isPhysical && widget.deviceStatus == BookDeviceStatus.missing;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -78,7 +85,11 @@ class _BookListItemState extends State<BookListItem> {
                 showBookContextMenu(context: context, book: widget.book, position: details.globalPosition);
               },
         child: Material(
-          color: inSelection && isSelected ? colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
+          color: inSelection && isSelected
+              ? colorScheme.primary.withValues(alpha: 0.08)
+              : isUnavailable
+              ? colorScheme.surfaceContainerLow
+              : Colors.transparent,
           child: InkWell(
             onTap: onTap,
             child: Container(
@@ -184,6 +195,10 @@ class _BookListItemState extends State<BookListItem> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (widget.accountStatus case final status?) ...[
+                          BookAccountStatusBadge(status: status),
+                          const SizedBox(width: Spacing.sm),
+                        ],
                         // Format badge
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -233,11 +248,40 @@ class _BookListItemState extends State<BookListItem> {
   }
 
   Widget _buildCover(BuildContext context) {
-    return CoverImage(
+    final cover = CoverImage(
       bookId: widget.book.id,
       imageUrl: widget.book.coverURL,
       mediaId: widget.book.coverMediaId,
       placeholder: _buildPlaceholder(context),
+    );
+    if (widget.book.isPhysical || widget.deviceStatus != BookDeviceStatus.missing) {
+      return cover;
+    }
+    return ColorFiltered(
+      key: ValueKey('book-unavailable-tint-${widget.book.id}'),
+      colorFilter: const ColorFilter.matrix([
+        0.2126,
+        0.7152,
+        0.0722,
+        0,
+        0,
+        0.2126,
+        0.7152,
+        0.0722,
+        0,
+        0,
+        0.2126,
+        0.7152,
+        0.0722,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.68,
+        0,
+      ]),
+      child: cover,
     );
   }
 

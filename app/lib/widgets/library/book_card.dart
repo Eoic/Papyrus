@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/providers/book_storage_status_controller.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
+import 'package:papyrus/widgets/library/book_account_status_badge.dart';
 
 /// Responsive book card for grid display.
 /// - Mobile: 171×256 with 8px gap
@@ -22,6 +24,8 @@ class BookCard extends StatefulWidget {
   final VoidCallback? onSelectToggle;
   final VoidCallback? onEnterSelectionMode;
   final AcquisitionJob? acquisitionJob;
+  final BookAccountStatus? accountStatus;
+  final BookDeviceStatus? deviceStatus;
 
   const BookCard({
     super.key,
@@ -35,6 +39,8 @@ class BookCard extends StatefulWidget {
     this.onSelectToggle,
     this.onEnterSelectionMode,
     this.acquisitionJob,
+    this.accountStatus,
+    this.deviceStatus,
   });
 
   @override
@@ -52,6 +58,8 @@ class _BookCardState extends State<BookCard> {
     final inSelection = widget.isSelectionMode;
     final effectiveTap = inSelection ? widget.onSelectToggle : widget.onTap;
     final effectiveLongPress = inSelection ? null : widget.onEnterSelectionMode;
+    final isUnavailable =
+        widget.acquisitionJob == null && !widget.book.isPhysical && widget.deviceStatus == BookDeviceStatus.missing;
 
     final card = MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -69,6 +77,7 @@ class _BookCardState extends State<BookCard> {
               },
         child: Card(
           clipBehavior: Clip.antiAlias,
+          color: isUnavailable ? colorScheme.surfaceContainerLow : null,
           child: InkWell(
             onTap: effectiveTap,
             child: Column(
@@ -149,6 +158,13 @@ class _BookCardState extends State<BookCard> {
                             ),
                           ),
                         ),
+                      if (widget.acquisitionJob == null)
+                        if (widget.accountStatus case final status?)
+                          Positioned(
+                            bottom: Spacing.xs,
+                            right: Spacing.xs,
+                            child: BookAccountStatusBadge(status: status),
+                          ),
                       if (widget.acquisitionJob case final job?)
                         Positioned(
                           bottom: Spacing.xs,
@@ -276,11 +292,40 @@ class _BookCardState extends State<BookCard> {
   }
 
   Widget _buildCover(BuildContext context) {
-    return CoverImage(
+    final cover = CoverImage(
       bookId: widget.book.id,
       imageUrl: widget.book.coverURL,
       mediaId: widget.book.coverMediaId,
       placeholder: _buildPlaceholder(context),
+    );
+    if (widget.book.isPhysical || widget.deviceStatus != BookDeviceStatus.missing) {
+      return cover;
+    }
+    return ColorFiltered(
+      key: ValueKey('book-unavailable-tint-${widget.book.id}'),
+      colorFilter: const ColorFilter.matrix([
+        0.2126,
+        0.7152,
+        0.0722,
+        0,
+        0,
+        0.2126,
+        0.7152,
+        0.0722,
+        0,
+        0,
+        0.2126,
+        0.7152,
+        0.0722,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.68,
+        0,
+      ]),
+      child: cover,
     );
   }
 
