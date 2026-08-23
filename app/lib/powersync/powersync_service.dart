@@ -16,6 +16,14 @@ typedef PowerSyncConnectorFactory = PowerSyncBackendConnector Function();
 typedef LibraryDatabasePathResolver =
     Future<String> Function(LibraryDatabaseMode mode, String? profileKey, String? userId);
 
+Stream<T> streamWithCurrentValue<T>({required T Function() currentValue, required Stream<T> updates}) {
+  return Stream<T>.multi((listener) {
+    final subscription = updates.listen(listener.addSync, onError: listener.addErrorSync, onDone: listener.closeSync);
+    listener.addSync(currentValue());
+    listener.onCancel = () => subscription.cancel();
+  }, isBroadcast: true);
+}
+
 class SyncStateRevisionCoordinator {
   int _revision = 0;
 
@@ -53,7 +61,8 @@ class PapyrusPowerSyncService implements BookRepository {
 
   LibraryDatabaseMode? get mode => _mode;
   SyncState get syncState => _syncState;
-  Stream<SyncState> get syncStates => _syncStateController.stream;
+  Stream<SyncState> get syncStates =>
+      streamWithCurrentValue(currentValue: () => _syncState, updates: _syncStateController.stream);
   BookMetadataSyncState get bookMetadataSyncState => _bookMetadataSyncState;
   Stream<BookMetadataSyncState> get bookMetadataSyncStates => _bookMetadataSyncStateController.stream;
 

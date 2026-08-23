@@ -34,6 +34,19 @@ void main() {
     expect(revisions.isCurrent(transportRevision), isFalse);
   });
 
+  test('late subscribers receive the current sync state', () async {
+    final updates = StreamController<SyncState>.broadcast(sync: true);
+    addTearDown(updates.close);
+    var current = const SyncState();
+
+    current = const SyncState(connected: true);
+    updates.add(current);
+
+    final received = await streamWithCurrentValue(currentValue: () => current, updates: updates.stream).first;
+
+    expect(received.connected, isTrue);
+  });
+
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('papyrus-powersync-test-');
   });
