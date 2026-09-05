@@ -8,6 +8,9 @@ import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
 import 'package:papyrus/widgets/library/book_account_status_badge.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// List row for displaying a book with cover thumbnail, title, author,
 /// progress, format badge, and favorite indicator.
@@ -101,7 +104,14 @@ class _BookListItemState extends State<BookListItem> {
                 children: [
                   // Selection checkbox (leading)
                   if (inSelection) ...[
-                    Checkbox(value: isSelected, onChanged: (_) => onSelectionToggle?.call()),
+                    AppMotionControl(
+                      value: isSelected,
+                      builder: (focusNode) => Checkbox(
+                        focusNode: focusNode,
+                        value: isSelected,
+                        onChanged: (_) => onSelectionToggle?.call(),
+                      ),
+                    ),
                     const SizedBox(width: Spacing.sm),
                   ],
                   // Cover thumbnail
@@ -155,7 +165,7 @@ class _BookListItemState extends State<BookListItem> {
                           ],
                           if (job.progress case final progress?) ...[
                             const SizedBox(height: Spacing.xs),
-                            LinearProgressIndicator(
+                            AppLinearProgressIndicator(
                               value: progress,
                               backgroundColor: colorScheme.surfaceContainerHighest,
                               color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
@@ -167,7 +177,7 @@ class _BookListItemState extends State<BookListItem> {
                           Row(
                             children: [
                               Expanded(
-                                child: LinearProgressIndicator(
+                                child: AppLinearProgressIndicator(
                                   value: widget.book.progress,
                                   backgroundColor: colorScheme.surfaceContainerHighest,
                                   color: widget.book.readingStatus == LibraryReadingStatus.completed
@@ -226,8 +236,9 @@ class _BookListItemState extends State<BookListItem> {
                         // Overflow menu - show on hover (desktop only)
                         if (_isDesktop && !isAcquisition)
                           AnimatedOpacity(
+                            key: ValueKey(AppMotion.disabled(context)),
                             opacity: _isHovered ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 150),
+                            duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
                             child: IconButton(
                               icon: const Icon(Icons.more_vert),
                               iconSize: IconSizes.action,

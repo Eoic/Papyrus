@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 class OAuthCallbackPage extends StatefulWidget {
   final Uri callbackUri;
@@ -54,7 +55,7 @@ class _OAuthCallbackPageState extends State<OAuthCallbackPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (_errorMessage == null) ...[
-                  const CircularProgressIndicator(),
+                  const AppCircularProgressIndicator(),
                   const SizedBox(height: Spacing.lg),
                   Text('Completing sign-in...', style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
                 ] else ...[

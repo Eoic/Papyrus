@@ -35,6 +35,8 @@ import 'package:papyrus/widgets/book_details/update_progress_sheet.dart';
 import 'package:papyrus/widgets/annotations/annotation_action_sheet.dart' as annotation_sheets;
 import 'package:papyrus/widgets/bookmarks/bookmark_action_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Book details page with responsive layouts for desktop and mobile.
 class BookDetailsPage extends StatefulWidget {
@@ -46,7 +48,7 @@ class BookDetailsPage extends StatefulWidget {
   State<BookDetailsPage> createState() => _BookDetailsPageState();
 }
 
-class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProviderStateMixin {
+class _BookDetailsPageState extends State<BookDetailsPage> with TickerProviderStateMixin {
   late BookDetailsProvider _provider;
   late TabController _tabController;
   bool _isPreparingReader = false;
@@ -63,6 +65,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final duration = AppMotion.duration(context, kTabScrollDuration);
+    if (_tabController.animationDuration != duration) {
+      final index = _tabController.index;
+      _tabController.removeListener(_onTabChanged);
+      _tabController.dispose();
+      _tabController = TabController(length: 4, vsync: this, initialIndex: index, animationDuration: duration);
+      _tabController.addListener(_onTabChanged);
+    }
     // Connect to DataStore for persistent storage
     final dataStore = context.read<DataStore>();
     _provider.setDataStore(dataStore);
@@ -122,7 +132,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   Widget _buildLoadingState(BuildContext context) {
     return Scaffold(
       appBar: AppBar(leading: const BackButton(), title: const Text('Loading...')),
-      body: const Center(child: CircularProgressIndicator()),
+      body: const Center(child: AppCircularProgressIndicator()),
     );
   }
 
@@ -246,6 +256,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
         title: Text(provider.book!.title, overflow: TextOverflow.ellipsis),
         actions: [
           PopupMenuButton<String>(
+            popUpAnimationStyle: AppMotion.animationStyle(context),
             icon: const Icon(Icons.more_vert),
             onSelected: _onMenuAction,
             itemBuilder: (context) => [
@@ -377,7 +388,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
       onSave: (page, position) {
         _provider.updatePageProgress(page, position);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Progress updated')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            snackBarAnimationStyle: AppMotion.animationStyle(context),
+            const SnackBar(content: Text('Progress updated')),
+          );
         }
       },
     );
@@ -389,7 +403,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
 
     final messenger = ScaffoldMessenger.of(context);
     if (ReaderBookAdapter.formatFor(book.fileFormat) == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('This book format is not supported yet.')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('This book format is not supported yet.')),
+      );
       return;
     }
 
@@ -466,7 +483,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     final mediaCacheService = context.read<MediaCacheService>();
     final downloadService = context.read<BookDownloadService>();
 
-    messenger.showSnackBar(const SnackBar(content: Text('Preparing download...')));
+    messenger.showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      const SnackBar(content: Text('Preparing download...')),
+    );
 
     try {
       final cached = await mediaCacheService.getValidCachedBookFile(book, readLocalBookFile: importService.getBookFile);
@@ -478,14 +498,23 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
       if (!mounted) return;
       messenger.hideCurrentSnackBar();
       if (result.saved) {
-        messenger.showSnackBar(SnackBar(content: Text('Downloaded "${book.title}"')));
+        messenger.showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
+          SnackBar(content: Text('Downloaded "${book.title}"')),
+        );
       } else {
-        messenger.showSnackBar(const SnackBar(content: Text('Download canceled')));
+        messenger.showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
+          const SnackBar(content: Text('Download canceled')),
+        );
       }
     } catch (_) {
       if (!mounted) return;
       messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(const SnackBar(content: Text('Could not download this book file.')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Could not download this book file.')),
+      );
     }
   }
 
@@ -514,7 +543,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     );
 
     if (note != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note added')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Note added')),
+      );
     }
   }
 
@@ -530,7 +562,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     );
 
     if (bookmark != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bookmark added')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Bookmark added')),
+      );
     }
   }
 
@@ -545,7 +580,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     );
 
     if (annotation != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Annotation added')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Annotation added')),
+      );
     }
   }
 
@@ -574,7 +612,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     );
 
     if (updatedNote != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note updated')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Note updated')),
+      );
     }
   }
 
@@ -587,14 +628,18 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
         await _provider.deleteNote(note.id, repository: repository);
       } catch (_) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            snackBarAnimationStyle: AppMotion.animationStyle(context),
+            const SnackBar(content: Text('Could not delete. Please try again.')),
+          );
         }
         return;
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Note deleted')),
+      );
     }
   }
 
@@ -634,9 +679,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
         await _provider.deleteAnnotation(annotation.id, repository: repository);
       } catch (_) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            snackBarAnimationStyle: AppMotion.animationStyle(context),
+            const SnackBar(content: Text('Could not delete. Please try again.')),
+          );
         }
         return;
       }
@@ -694,6 +740,7 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
     if (book == null) return;
 
     final confirmed = await showDialog<bool>(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete book?'),
@@ -735,7 +782,10 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
 
     if (!mounted) return;
     context.go('/library/books');
-    messenger.showSnackBar(SnackBar(content: Text('Deleted "${book.title}"')));
+    messenger.showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      SnackBar(content: Text('Deleted "${book.title}"')),
+    );
   }
 
   void _onMenuAction(String action) async {

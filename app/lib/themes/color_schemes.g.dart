@@ -87,8 +87,8 @@ const einkColorScheme = ColorScheme(
   // Primary elements: pure black
   primary: Color(0xFF000000),
   onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFFF5F5F5),
-  onPrimaryContainer: Color(0xFF000000),
+  primaryContainer: Color(0xFF000000),
+  onPrimaryContainer: Color(0xFFFFFFFF),
   // Secondary: dark gray
   secondary: Color(0xFF404040),
   onSecondary: Color(0xFFFFFFFF),
@@ -116,8 +116,8 @@ const einkColorScheme = ColorScheme(
   inversePrimary: Color(0xFF000000),
   // Shadows: none (use borders instead)
   shadow: Color(0x00000000),
-  surfaceTint: Color(0xFF000000),
-  outlineVariant: Color(0xFFC0C0C0),
+  surfaceTint: Color(0x00000000),
+  outlineVariant: Color(0xFF000000),
   scrim: Color(0xFF000000),
 );
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_motion.dart';
 import 'color_schemes.g.dart';
 import 'design_tokens.dart';
 
@@ -58,12 +59,86 @@ class AppTheme {
   static ThemeData get eink => ThemeData(
     useMaterial3: true,
     colorScheme: einkColorScheme,
-    // Typography - larger for e-ink
+    extensions: const [AppMotion(reduceAnimations: true)],
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: InstantPageTransitionsBuilder(),
+        TargetPlatform.iOS: InstantPageTransitionsBuilder(),
+        TargetPlatform.macOS: InstantPageTransitionsBuilder(),
+        TargetPlatform.windows: InstantPageTransitionsBuilder(),
+        TargetPlatform.linux: InstantPageTransitionsBuilder(),
+        TargetPlatform.fuchsia: InstantPageTransitionsBuilder(),
+      },
+    ),
     textTheme: _einkTextTheme,
     // Component themes - e-ink specific
     elevatedButtonTheme: _einkElevatedButtonTheme(),
     outlinedButtonTheme: _einkOutlinedButtonTheme(),
     textButtonTheme: _einkTextButtonTheme(),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: EinkColors.black,
+        foregroundColor: EinkColors.white,
+        disabledBackgroundColor: EinkColors.lightGray,
+        disabledForegroundColor: EinkColors.darkGray,
+        shape: const RoundedRectangleBorder(),
+        animationDuration: Duration.zero,
+      ),
+    ),
+    iconButtonTheme: const IconButtonThemeData(style: ButtonStyle(animationDuration: Duration.zero)),
+    navigationBarTheme: NavigationBarThemeData(
+      elevation: 0,
+      backgroundColor: EinkColors.white,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: EinkColors.black,
+      indicatorShape: const RoundedRectangleBorder(),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(color: states.contains(WidgetState.selected) ? EinkColors.white : EinkColors.black),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          color: EinkColors.black,
+          fontSize: 12,
+          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+    ),
+    chipTheme: const ChipThemeData(
+      backgroundColor: EinkColors.white,
+      selectedColor: EinkColors.lightGray,
+      secondarySelectedColor: EinkColors.lightGray,
+      labelStyle: TextStyle(color: EinkColors.black),
+      secondaryLabelStyle: TextStyle(color: EinkColors.black),
+      checkmarkColor: EinkColors.black,
+      side: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
+      elevation: 0,
+      pressElevation: 0,
+    ),
+    popupMenuTheme: const PopupMenuThemeData(
+      color: EinkColors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
+      ),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: EinkColors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      modalElevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
+      ),
+    ),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: EinkColors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
+      ),
+    ),
     inputDecorationTheme: _einkInputDecorationTheme(),
     cardTheme: _einkCardTheme(),
     appBarTheme: _einkAppBarTheme(),
@@ -98,24 +173,14 @@ class AppTheme {
     labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.5),
   );
 
-  // E-ink typography: larger minimum size, bolder weights
-  static const TextTheme _einkTextTheme = TextTheme(
-    displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w500, letterSpacing: -0.25),
-    displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w500, letterSpacing: 0),
-    displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w500, letterSpacing: 0),
-    headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w600, letterSpacing: 0),
-    headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, letterSpacing: 0),
-    headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, letterSpacing: 0),
-    titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: 0),
-    titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 0.15),
-    titleSmall: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.1),
-    bodyLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w400, letterSpacing: 0.5),
-    bodyMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.25),
-    bodySmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.4),
-    labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.1),
-    labelMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-    labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-  );
+  static TextTheme get _einkTextTheme => _textTheme
+      .copyWith(
+        bodyMedium: _textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.w500),
+        bodySmall: _textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500),
+        labelMedium: _textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+        labelSmall: _textTheme.labelSmall!.copyWith(fontWeight: FontWeight.w600),
+      )
+      .apply(bodyColor: EinkColors.black, displayColor: EinkColors.black);
 
   // ===========================================================================
   // STANDARD COMPONENT THEMES
@@ -251,7 +316,8 @@ class AppTheme {
   static ElevatedButtonThemeData _einkElevatedButtonTheme() {
     return ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size.fromHeight(ComponentSizes.buttonHeightEink),
+        minimumSize: const Size.fromHeight(ComponentSizes.buttonHeightMobile),
+        animationDuration: Duration.zero,
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.buttonPaddingHorizontal,
           vertical: Spacing.buttonPaddingVertical,
@@ -260,7 +326,7 @@ class AppTheme {
         elevation: 0,
         backgroundColor: EinkColors.black,
         foregroundColor: EinkColors.white,
-        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -268,7 +334,8 @@ class AppTheme {
   static OutlinedButtonThemeData _einkOutlinedButtonTheme() {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(ComponentSizes.buttonHeightEink),
+        minimumSize: const Size.fromHeight(ComponentSizes.buttonHeightMobile),
+        animationDuration: Duration.zero,
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.buttonPaddingHorizontal,
           vertical: Spacing.buttonPaddingVertical,
@@ -277,7 +344,7 @@ class AppTheme {
         side: const BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
         backgroundColor: EinkColors.white,
         foregroundColor: EinkColors.black,
-        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -285,9 +352,10 @@ class AppTheme {
   static TextButtonThemeData _einkTextButtonTheme() {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        animationDuration: Duration.zero,
         foregroundColor: EinkColors.black,
-        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -316,10 +384,9 @@ class AppTheme {
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: EinkColors.black, width: BorderWidths.einkError),
       ),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       labelStyle: TextStyle(color: EinkColors.black, fontSize: 16, fontWeight: FontWeight.w700),
-      hintStyle: TextStyle(color: EinkColors.mediumGray, fontSize: 20),
-      floatingLabelBehavior: FloatingLabelBehavior.always,
+      hintStyle: TextStyle(color: EinkColors.darkGray),
     );
   }
 
@@ -330,7 +397,7 @@ class AppTheme {
         borderRadius: BorderRadius.zero,
         side: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
       ),
-      margin: EdgeInsets.all(Spacing.md),
+      margin: EdgeInsets.all(Spacing.sm),
     );
   }
 
@@ -340,7 +407,7 @@ class AppTheme {
       scrolledUnderElevation: 0,
       backgroundColor: EinkColors.white,
       foregroundColor: EinkColors.black,
-      titleTextStyle: TextStyle(color: EinkColors.black, fontSize: 24, fontWeight: FontWeight.w700),
+      titleTextStyle: TextStyle(color: EinkColors.black, fontSize: 22, fontWeight: FontWeight.w700),
       shape: Border(
         bottom: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
       ),
@@ -360,16 +427,16 @@ class AppTheme {
   }
 
   static DividerThemeData _einkDividerTheme() {
-    return const DividerThemeData(color: EinkColors.lightGray, thickness: 2, space: Spacing.lg);
+    return const DividerThemeData(color: EinkColors.black, thickness: 2, space: Spacing.md);
   }
 
   static SnackBarThemeData _einkSnackBarTheme() {
     return const SnackBarThemeData(
       backgroundColor: EinkColors.black,
-      contentTextStyle: TextStyle(color: EinkColors.white, fontSize: 16),
+      contentTextStyle: TextStyle(color: EinkColors.white),
       actionTextColor: EinkColors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      behavior: SnackBarBehavior.fixed,
+      behavior: SnackBarBehavior.floating,
     );
   }
 }

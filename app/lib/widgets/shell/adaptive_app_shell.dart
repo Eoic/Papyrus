@@ -1,10 +1,9 @@
+import 'package:papyrus/themes/app_motion.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
-import 'package:papyrus/providers/preferences_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shell/desktop_sidebar.dart';
-import 'package:papyrus/widgets/shell/eink_bottom_nav.dart';
 import 'package:papyrus/widgets/shell/mobile_bottom_nav.dart';
 import 'package:provider/provider.dart';
 
@@ -27,10 +26,9 @@ class AppShellNavItem {
   });
 }
 
-/// Main app shell that adapts to platform and display mode.
+/// Main app shell that adapts to available screen width.
 /// - Desktop: Permanent collapsible sidebar
 /// - Mobile: Bottom navigation bar
-/// - E-ink: Text-based bottom navigation
 class AdaptiveAppShell extends StatelessWidget {
   final Widget child;
 
@@ -105,16 +103,10 @@ class AdaptiveAppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final prefs = context.watch<PreferencesProvider>();
     final dataStore = context.watch<DataStore>();
     final navItems = buildNavItems(dataStore);
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= Breakpoints.desktopSmall;
-
-    // E-ink mode uses special text-based navigation
-    if (prefs.isEinkMode) {
-      return _buildEinkShell(context, navItems);
-    }
 
     // Desktop uses sidebar, mobile uses bottom nav
     if (isDesktop) {
@@ -150,18 +142,8 @@ class AdaptiveAppShell extends StatelessWidget {
         currentPath: currentPath,
         onNavigate: (path) => context.go(path),
       ),
+      drawerEnableOpenDragGesture: !AppMotion.disabled(context),
       drawer: isInLibrary ? _buildLibraryDrawer(context, navItems) : null,
-    );
-  }
-
-  Widget _buildEinkShell(BuildContext context, List<AppShellNavItem> navItems) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: EinkBottomNav(
-        items: navItems,
-        currentPath: GoRouterState.of(context).uri.toString(),
-        onNavigate: (path) => context.go(path),
-      ),
     );
   }
 

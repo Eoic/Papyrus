@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 Future<bool> showAcquisitionConfirmationDialog({
   required BuildContext context,
@@ -7,6 +8,7 @@ Future<bool> showAcquisitionConfirmationDialog({
   required String actionLabel,
 }) async {
   return await showDialog<bool>(
+        animationStyle: AppMotion.animationStyle(context),
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(title),

@@ -5,6 +5,8 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/statistics/reading_charts.dart';
 import 'package:papyrus/widgets/statistics/stat_card.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
+import 'package:papyrus/widgets/shared/app_date_picker.dart';
 
 /// Statistics page displaying reading analytics and charts.
 ///
@@ -69,7 +71,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(body: Center(child: AppCircularProgressIndicator()));
   }
 
   // ============================================================================
@@ -381,7 +383,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: LinearProgressIndicator(
+                  child: AppLinearProgressIndicator(
                     value: genre.percentage.clamp(0.0, 1.0),
                     minHeight: 6,
                     backgroundColor: colorScheme.surfaceContainerHighest,
@@ -560,7 +562,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
         ? DateTimeRange(start: provider.customStartDate!, end: provider.customEndDate!)
         : DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now);
 
-    final picked = await showDateRangePicker(
+    final picked = await showAppDateRangePicker(
       context: context,
       useRootNavigator: false,
       initialDateRange: initialRange,

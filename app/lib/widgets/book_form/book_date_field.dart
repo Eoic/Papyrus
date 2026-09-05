@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_date_picker.dart';
 
 /// Reusable date picker field for book forms (add and edit).
 class BookDateField extends StatelessWidget {
@@ -45,7 +46,7 @@ class BookDateField extends StatelessWidget {
   }
 
   Future<void> _pickDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: value ?? DateTime.now(),
       firstDate: DateTime(1000),

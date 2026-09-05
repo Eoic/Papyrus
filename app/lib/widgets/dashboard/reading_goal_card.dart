@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Card displaying the user's reading goals progress.
 /// Supports multiple goals displayed in a compact list.
@@ -97,7 +98,7 @@ class ReadingGoalCard extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
+            child: AppLinearProgressIndicator(
               value: goal.progress,
               backgroundColor: colorScheme.surfaceContainerHighest,
               color: goal.isCompleted ? colorScheme.tertiary : colorScheme.primary,

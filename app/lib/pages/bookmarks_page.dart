@@ -1,3 +1,4 @@
+import 'package:papyrus/widgets/shared/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
@@ -11,6 +12,8 @@ import 'package:papyrus/widgets/bookmarks/bookmark_list_item.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Color name mapping for filter chip labels.
 const _colorNames = {
@@ -84,6 +87,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
   Widget _buildMobileLayout(BuildContext context, BookmarksProvider provider) {
     return Scaffold(
       key: _scaffoldKey,
+      drawerEnableOpenDragGesture: !AppMotion.disabled(context),
       drawer: const LibraryDrawer(currentPath: '/library/bookmarks'),
       body: SafeArea(
         child: Column(
@@ -96,7 +100,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
                   IconButton(
                     icon: const Icon(Icons.menu),
                     onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
+                      openAppDrawer(context, _scaffoldKey.currentState);
                     },
                     tooltip: 'Library sections',
                   ),
@@ -183,6 +187,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
 
   Widget _buildSortButton(BookmarksProvider provider) {
     return PopupMenuButton<BookmarkSortOption>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       icon: const Icon(Icons.sort),
       tooltip: 'Sort bookmarks',
       onSelected: provider.setSortOption,
@@ -220,10 +225,15 @@ class _BookmarksPageState extends State<BookmarksPage> {
         children: [
           // Clear chip (shown when filters are active)
           if (provider.activeColors.isNotEmpty) ...[
-            ActionChip(
-              label: const Text('Clear'),
-              onPressed: provider.clearColorFilters,
-              avatar: const Icon(Icons.clear, size: 16),
+            AppMotionControl(
+              value: null,
+              builder: (focusNode) => ActionChip(
+                focusNode: focusNode,
+                chipAnimationStyle: appChipAnimationStyle(context),
+                label: const Text('Clear'),
+                onPressed: provider.clearColorFilters,
+                avatar: const Icon(Icons.clear, size: 16),
+              ),
             ),
             const SizedBox(width: Spacing.sm),
           ],
@@ -235,15 +245,20 @@ class _BookmarksPageState extends State<BookmarksPage> {
 
             return Padding(
               padding: const EdgeInsets.only(right: Spacing.sm),
-              child: FilterChip(
-                selected: isSelected,
-                label: Text(name),
-                avatar: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: AppMotionControl(
+                value: null,
+                builder: (focusNode) => FilterChip(
+                  focusNode: focusNode,
+                  chipAnimationStyle: appChipAnimationStyle(context),
+                  selected: isSelected,
+                  label: Text(name),
+                  avatar: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  ),
+                  onSelected: (_) => provider.toggleColorFilter(hex),
                 ),
-                onSelected: (_) => provider.toggleColorFilter(hex),
               ),
             );
           }),

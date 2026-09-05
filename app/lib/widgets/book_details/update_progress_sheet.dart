@@ -4,6 +4,7 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Bottom sheet for manually updating reading progress of a physical book.
 class UpdateProgressSheet extends StatefulWidget {
@@ -19,6 +20,7 @@ class UpdateProgressSheet extends StatefulWidget {
     required void Function(int page, double position) onSave,
   }) {
     return showModalBottomSheet<void>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(

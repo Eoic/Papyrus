@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Result of annotation action sheet selection.
 enum AnnotationAction { edit, delete }
@@ -14,6 +15,7 @@ class AnnotationActionSheet extends StatelessWidget {
   /// Shows the action sheet and returns the selected action.
   static Future<AnnotationAction?> show(BuildContext context, {required Annotation annotation}) async {
     return showModalBottomSheet<AnnotationAction>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AnnotationActionSheet(annotation: annotation),
     );

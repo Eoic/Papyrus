@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// A card widget for displaying a single bookmark.
 ///
@@ -109,8 +110,9 @@ class _BookmarkListItemState extends State<BookmarkListItem> {
   /// Shown only on mouse hover with animated opacity.
   Widget _buildActionMenu(ColorScheme colorScheme) {
     return AnimatedOpacity(
+      key: ValueKey(AppMotion.disabled(context)),
       opacity: _isHovered ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 150),
+      duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
       child: IconButton(
         icon: const Icon(Icons.more_vert),
         iconSize: IconSizes.action,

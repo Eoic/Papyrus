@@ -15,6 +15,8 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Bottom sheet for moving a book (or multiple books) to one or more shelves.
 class MoveToShelfSheet extends StatefulWidget {
@@ -38,6 +40,7 @@ class MoveToShelfSheet extends StatefulWidget {
     FutureOr<void> Function(List<String> shelfIds)? onSave,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -53,6 +56,7 @@ class MoveToShelfSheet extends StatefulWidget {
     FutureOr<void> Function(List<String> shelfIds)? onSave,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
@@ -283,7 +287,15 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> with PersistentSave
                 ),
               ),
               // Checkbox
-              Checkbox(value: isSelected, onChanged: (_) => _toggleShelf(shelf.id), activeColor: shelfColor),
+              AppMotionControl(
+                value: isSelected,
+                builder: (focusNode) => Checkbox(
+                  focusNode: focusNode,
+                  value: isSelected,
+                  onChanged: (_) => _toggleShelf(shelf.id),
+                  activeColor: shelfColor,
+                ),
+              ),
             ],
           ),
         ),

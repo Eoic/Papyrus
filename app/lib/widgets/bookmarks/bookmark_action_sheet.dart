@@ -6,6 +6,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 import 'package:papyrus/widgets/shared/persistent_save.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 // =============================================================================
 // BOOKMARK ACTION SHEET (action chooser)
@@ -23,6 +24,7 @@ class BookmarkActionSheet extends StatelessWidget {
   /// Shows the action sheet and returns the selected action.
   static Future<BookmarkAction?> show(BuildContext context, {required Bookmark bookmark}) async {
     return showModalBottomSheet<BookmarkAction>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => BookmarkActionSheet(bookmark: bookmark),
     );
@@ -116,6 +118,7 @@ class BookmarkNoteSheet extends StatefulWidget {
     FutureOr<void> Function(String)? onSave,
   }) {
     return showModalBottomSheet<String>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -214,6 +217,7 @@ class BookmarkColorSheet extends StatefulWidget {
     FutureOr<void> Function(String)? onSave,
   }) {
     return showModalBottomSheet<String>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
@@ -321,6 +325,7 @@ class DeleteBookmarkDialog {
     FutureOr<void> Function()? onDelete,
   }) async {
     final result = await showDialog<bool>(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => _DeleteBookmarkConfirmation(bookmark: bookmark, bookTitle: bookTitle, onDelete: onDelete),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:papyrus/themes/app_motion.dart';
 import 'package:papyrus/utils/navigation_utils.dart';
 import 'package:papyrus/widgets/shell/adaptive_app_shell.dart';
 
@@ -17,6 +18,7 @@ class MobileBottomNav extends StatelessWidget {
     final currentIndex = _getCurrentIndex(mainItems);
 
     return NavigationBar(
+      animationDuration: AppMotion.duration(context, const Duration(milliseconds: 500)),
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
         final item = mainItems[index];

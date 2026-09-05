@@ -172,6 +172,7 @@ class DesktopSidebar extends StatelessWidget {
     final sidebarProvider = context.watch<SidebarProvider>();
     final isExpanded = item.path == '/library' && sidebarProvider.isLibraryExpanded;
     final isSelected = isNavItemSelected(currentPath, item);
+    final hasSelectedBackground = isSelected && !isExpanded;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,16 +194,14 @@ class DesktopSidebar extends StatelessWidget {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.md),
                 decoration: BoxDecoration(
-                  color: isSelected && !isExpanded
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : Colors.transparent,
+                  color: hasSelectedBackground ? Theme.of(context).colorScheme.primaryContainer : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       isSelected ? item.selectedIcon ?? item.icon : item.icon,
-                      color: isSelected
+                      color: hasSelectedBackground
                           ? Theme.of(context).colorScheme.onPrimaryContainer
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                       size: IconSizes.navigation,
@@ -212,7 +211,7 @@ class DesktopSidebar extends StatelessWidget {
                       child: Text(
                         item.label,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: isSelected
+                          color: hasSelectedBackground
                               ? Theme.of(context).colorScheme.onPrimaryContainer
                               : Theme.of(context).colorScheme.onSurfaceVariant,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -276,16 +275,20 @@ class DesktopSidebar extends StatelessWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      Text(
-                        item.label,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.onPrimaryContainer
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
                         ),
                       ),
-                      Spacer(),
+                      const SizedBox(width: Spacing.xs),
 
                       if (item.count != null)
                         Container(

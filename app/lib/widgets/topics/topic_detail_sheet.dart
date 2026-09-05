@@ -5,6 +5,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/topics/add_topic_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Bottom sheet showing topic details with edit and delete actions.
 ///
@@ -18,6 +19,7 @@ class TopicDetailSheet extends StatelessWidget {
   /// Shows the topic detail sheet.
   static Future<void> show(BuildContext context, {required Tag tag}) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (context) => TopicDetailSheet(tag: tag),
@@ -133,6 +135,7 @@ class TopicDetailSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete topic?'),
@@ -151,9 +154,10 @@ class TopicDetailSheet extends StatelessWidget {
                 if (dialogContext.mounted) Navigator.pop(dialogContext);
               } catch (_) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Could not delete topic. Please try again.')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    snackBarAnimationStyle: AppMotion.animationStyle(context),
+                    const SnackBar(content: Text('Could not delete topic. Please try again.')),
+                  );
                 }
               }
             },

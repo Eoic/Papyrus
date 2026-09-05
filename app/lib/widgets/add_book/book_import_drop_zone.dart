@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
 import 'package:papyrus/widgets/add_book/book_import_controller.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 typedef DroppedBookFilesCallback = void Function(List<SelectedBookFile> files, {String? feedback});
 
@@ -62,7 +64,8 @@ class _BookImportDropZoneState extends State<BookImportDropZone> {
       },
       onShowFocusHighlight: (value) => setState(() => _isFocused = value),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        key: ValueKey(AppMotion.disabled(context)),
+        duration: AppMotion.duration(context, const Duration(milliseconds: 180)),
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(AppRadius.xl)),
         child: CustomPaint(
@@ -90,7 +93,7 @@ class _BookImportDropZoneState extends State<BookImportDropZone> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (_isBusy)
-                              const SizedBox.square(dimension: 48, child: CircularProgressIndicator(strokeWidth: 3))
+                              const SizedBox.square(dimension: 48, child: AppCircularProgressIndicator(strokeWidth: 3))
                             else
                               Icon(Icons.cloud_upload_outlined, size: 48, color: colorScheme.primary),
                             const SizedBox(height: Spacing.md),

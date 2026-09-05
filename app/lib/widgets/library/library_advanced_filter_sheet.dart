@@ -8,6 +8,9 @@ import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/book_language.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_date_picker.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 bool _isEinkTheme(ThemeData theme) {
   final border = theme.inputDecorationTheme.border;
@@ -40,6 +43,7 @@ class LibraryAdvancedFilterSheet extends StatefulWidget {
     LibraryFilterOptions? filterOptions,
   }) {
     return showModalBottomSheet<LibraryFilters>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       useRootNavigator: true,
       useSafeArea: true,
@@ -525,7 +529,7 @@ class _SearchableFacetState<T> extends State<_SearchableFacet<T>> {
                 child: Column(
                   children: [
                     SizedBox(
-                      height: isEink ? ComponentSizes.inputHeightEink : TouchTargets.mobileRecommended,
+                      height: TouchTargets.mobileRecommended,
                       child: TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
@@ -538,9 +542,7 @@ class _SearchableFacetState<T> extends State<_SearchableFacet<T>> {
                           filled: true,
                           fillColor: isEink ? inputDecorationTheme.fillColor : colorScheme.surfaceContainerHighest,
                           isDense: true,
-                          contentPadding: isEink
-                              ? inputDecorationTheme.contentPadding
-                              : const EdgeInsets.symmetric(vertical: 12, horizontal: Spacing.md),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: Spacing.md),
                           border: isEink
                               ? inputDecorationTheme.border
                               : OutlineInputBorder(
@@ -642,7 +644,11 @@ class _FacetOptionRow extends StatelessWidget {
                   ExcludeFocus(
                     child: ExcludeSemantics(
                       child: IgnorePointer(
-                        child: Checkbox(value: isSelected, onChanged: (_) => toggleSelection()),
+                        child: AppMotionControl(
+                          value: isSelected,
+                          builder: (focusNode) =>
+                              Checkbox(focusNode: focusNode, value: isSelected, onChanged: (_) => toggleSelection()),
+                        ),
                       ),
                     ),
                   ),
@@ -702,24 +708,29 @@ Widget _selectionChip(
   final colorScheme = theme.colorScheme;
   final isEink = _isEinkTheme(theme);
 
-  return FilterChip(
-    label: Text(label),
-    selected: isSelected,
-    showCheckmark: true,
-    checkmarkColor: colorScheme.onSecondaryContainer,
-    side: BorderSide(
-      color: isSelected ? Colors.transparent : colorScheme.outlineVariant,
-      width: isEink ? BorderWidths.einkDefault : BorderWidths.thin,
+  return AppMotionControl(
+    value: null,
+    builder: (focusNode) => FilterChip(
+      focusNode: focusNode,
+      chipAnimationStyle: appChipAnimationStyle(context),
+      label: Text(label),
+      selected: isSelected,
+      showCheckmark: true,
+      checkmarkColor: colorScheme.onSecondaryContainer,
+      side: BorderSide(
+        color: isSelected ? Colors.transparent : colorScheme.outlineVariant,
+        width: isEink ? BorderWidths.einkDefault : BorderWidths.thin,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isEink ? AppRadius.none : AppRadius.md)),
+      backgroundColor: Colors.transparent,
+      selectedColor: colorScheme.secondaryContainer,
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
+      ),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      onSelected: (_) => onSelected(),
     ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isEink ? AppRadius.none : AppRadius.md)),
-    backgroundColor: Colors.transparent,
-    selectedColor: colorScheme.secondaryContainer,
-    labelStyle: theme.textTheme.labelLarge?.copyWith(
-      color: isSelected ? colorScheme.onSecondaryContainer : colorScheme.onSurfaceVariant,
-    ),
-    visualDensity: VisualDensity.compact,
-    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    onSelected: (_) => onSelected(),
   );
 }
 
@@ -863,7 +874,11 @@ class _ProgressFilterFieldState extends State<_ProgressFilterField> {
                       ExcludeFocus(
                         child: ExcludeSemantics(
                           child: IgnorePointer(
-                            child: Switch(value: isEnabled, onChanged: (_) => toggleEnabled()),
+                            child: AppMotionControl(
+                              value: isEnabled,
+                              builder: (focusNode) =>
+                                  Switch(focusNode: focusNode, value: isEnabled, onChanged: (_) => toggleEnabled()),
+                            ),
                           ),
                         ),
                       ),
@@ -957,7 +972,7 @@ class _DateRangeField extends StatelessWidget {
 
   Future<void> _pickRange(BuildContext context) async {
     final now = DateTime.now();
-    final selectedRange = await showDateRangePicker(
+    final selectedRange = await showAppDateRangePicker(
       context: context,
       firstDate: DateTime(1000),
       lastDate: DateTime(now.year + 10, 12, 31),

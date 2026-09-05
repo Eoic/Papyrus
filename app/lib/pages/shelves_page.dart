@@ -1,3 +1,4 @@
+import 'package:papyrus/widgets/shared/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
 import 'package:papyrus/models/shelf.dart';
@@ -11,6 +12,8 @@ import 'package:papyrus/widgets/shelves/add_shelf_sheet.dart';
 import 'package:papyrus/widgets/shelves/shelf_card.dart';
 import 'package:papyrus/widgets/shelves/shelves_filter_chips.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Shelves page for managing book collections.
 ///
@@ -78,7 +81,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(body: Center(child: AppCircularProgressIndicator()));
   }
 
   // ============================================================================
@@ -90,6 +93,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
 
     return Scaffold(
       key: _scaffoldKey,
+      drawerEnableOpenDragGesture: !AppMotion.disabled(context),
       drawer: const LibraryDrawer(currentPath: '/library/shelves'),
       body: SafeArea(
         child: Column(
@@ -101,7 +105,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
                   IconButton(
                     icon: const Icon(Icons.menu),
                     onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
+                      openAppDrawer(context, _scaffoldKey.currentState);
                     },
                     tooltip: 'Library sections',
                   ),
@@ -366,6 +370,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
@@ -416,6 +421,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete shelf'),
@@ -429,9 +435,10 @@ class _ShelvesPageState extends State<ShelvesPage> {
                 if (context.mounted) Navigator.of(context).pop();
               } catch (_) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Could not delete shelf. Please try again.')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    snackBarAnimationStyle: AppMotion.animationStyle(context),
+                    const SnackBar(content: Text('Could not delete shelf. Please try again.')),
+                  );
                 }
               }
             },

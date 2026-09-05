@@ -7,6 +7,8 @@ import 'package:papyrus/widgets/input/name_input.dart';
 import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -39,10 +41,11 @@ class _RegisterForm extends State<RegisterForm> {
     setState(() => isRegisterDisabled = true);
 
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       barrierDismissible: false,
       builder: (context) =>
-          const Center(child: SizedBox(width: 150, height: 150, child: CircularProgressIndicator(strokeWidth: 8))),
+          const Center(child: SizedBox(width: 150, height: 150, child: AppCircularProgressIndicator(strokeWidth: 8))),
     );
 
     try {
@@ -57,6 +60,7 @@ class _RegisterForm extends State<RegisterForm> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
         SnackBar(
           duration: const Duration(seconds: 5),
           content: Text(context.read<AuthProvider>().error ?? "Account creation failed."),
@@ -68,6 +72,7 @@ class _RegisterForm extends State<RegisterForm> {
       setState(() => isRegisterDisabled = false);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
         SnackBar(
           duration: const Duration(seconds: 5),
           content: const Text("Account creation failed."),

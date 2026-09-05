@@ -6,6 +6,7 @@ import 'package:papyrus/models/tag.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/color_utils.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Bottom sheet for creating or editing a topic.
 class AddTopicSheet extends StatefulWidget {
@@ -24,6 +25,7 @@ class AddTopicSheet extends StatefulWidget {
     FutureOr<void> Function(String name, String? description, String colorHex)? onSave,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),

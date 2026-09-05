@@ -3,6 +3,7 @@ import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/remote_release_list.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 class OnlineResultsView extends StatelessWidget {
   final bool hasSearched;
@@ -35,7 +36,7 @@ class OnlineResultsView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
+            const AppCircularProgressIndicator(),
             const SizedBox(height: Spacing.md),
             Text(
               query.trim().isEmpty

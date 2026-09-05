@@ -8,6 +8,7 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:uuid/uuid.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Bottom sheet for creating or editing a bookmark manually.
 class BookmarkDialog extends StatefulWidget {
@@ -27,6 +28,7 @@ class BookmarkDialog extends StatefulWidget {
     FutureOr<void> Function(Bookmark)? onSave,
   }) {
     return showModalBottomSheet<Bookmark>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,

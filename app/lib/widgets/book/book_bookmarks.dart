@@ -4,6 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/empty_bookmarks_state.dart';
 import 'package:papyrus/widgets/bookmarks/bookmark_list_item.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Sort options for bookmarks within a single book.
 enum _BookmarkSort { dateNewest, dateOldest, position }
@@ -189,6 +190,7 @@ class _BookBookmarksState extends State<BookBookmarks> {
 
   Widget _buildSortButton() {
     return PopupMenuButton<_BookmarkSort>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       icon: const Icon(Icons.sort),
       tooltip: 'Sort bookmarks',
       onSelected: (option) => setState(() => _sortOption = option),

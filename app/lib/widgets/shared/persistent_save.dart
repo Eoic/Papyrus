@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Keeps editors open until their local write succeeds.
 mixin PersistentSave<T extends StatefulWidget> on State<T> {
@@ -14,9 +15,10 @@ mixin PersistentSave<T extends StatefulWidget> on State<T> {
       return mounted;
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Could not save changes. Please try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
+          const SnackBar(content: Text('Could not save changes. Please try again.')),
+        );
       }
       return false;
     } finally {

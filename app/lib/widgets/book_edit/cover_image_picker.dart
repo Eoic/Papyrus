@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Widget for picking book cover images from file or URL.
 class CoverImagePicker extends StatefulWidget {
@@ -199,7 +200,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
 
   Widget _buildCoverImage(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppCircularProgressIndicator());
     }
 
     if (_imageBytes != null) {
@@ -222,7 +223,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
             errorBuilder: (_, e, s) => _buildPlaceholder(context),
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: AppCircularProgressIndicator());
             },
           ),
           Positioned(top: 8, right: 8, child: _buildRemoveButton(context)),

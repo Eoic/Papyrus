@@ -6,6 +6,7 @@ import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 // =============================================================================
 // ANNOTATION NOTE SHEET
@@ -25,6 +26,7 @@ class AnnotationNoteSheet extends StatefulWidget {
     FutureOr<void> Function(String)? onSave,
   }) {
     return showModalBottomSheet<String>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -113,6 +115,7 @@ class DeleteAnnotationDialog {
   /// Show the delete confirmation dialog. Returns true if confirmed.
   static Future<bool> show(BuildContext context, {required Annotation annotation, required String bookTitle}) async {
     final result = await showDialog<bool>(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete annotation'),

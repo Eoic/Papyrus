@@ -13,6 +13,7 @@ import 'package:papyrus/widgets/input/name_input.dart';
 import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:papyrus/widgets/titled_divider.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -93,6 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
       SnackBar(
         duration: const Duration(seconds: 5),
         content: Text(message),

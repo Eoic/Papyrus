@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/active_filter.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Horizontal scrolling bar showing active filters with remove buttons.
 /// Only visible when filters are active.
@@ -66,15 +67,20 @@ class _ActiveFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Chip(
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
-      backgroundColor: colorScheme.secondaryContainer,
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
-      label: _buildLabel(context),
-      deleteIcon: Icon(Icons.close, size: 18, color: colorScheme.onSecondaryContainer),
-      onDeleted: onRemoved,
+    return AppMotionControl(
+      value: null,
+      builder: (focusNode) => Chip(
+        focusNode: focusNode,
+        chipAnimationStyle: appChipAnimationStyle(context),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        backgroundColor: colorScheme.secondaryContainer,
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.sm)),
+        label: _buildLabel(context),
+        deleteIcon: Icon(Icons.close, size: 18, color: colorScheme.onSecondaryContainer),
+        onDeleted: onRemoved,
+      ),
     );
   }
 

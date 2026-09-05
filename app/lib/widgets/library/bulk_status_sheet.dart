@@ -3,6 +3,7 @@ import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/text_utils.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 final statusTiles = [
   (icon: Icons.auto_stories, status: LibraryReadingStatus.inProgress, title: "in progress"),
@@ -24,6 +25,7 @@ class BulkStatusSheet extends StatelessWidget {
     required void Function(LibraryReadingStatus status) onStatusSelected,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),

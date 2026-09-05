@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 enum BookImportItemCardPresentation { progress, summary }
 
@@ -45,8 +47,8 @@ class BookImportItemCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return AnimatedContainer(
-      key: ValueKey('${item.id}-${item.status}'),
-      duration: const Duration(milliseconds: 250),
+      key: ValueKey('${item.id}-${item.status}-${AppMotion.disabled(context)}'),
+      duration: AppMotion.duration(context, const Duration(milliseconds: 250)),
       margin: const EdgeInsets.only(bottom: Spacing.xs),
       decoration: BoxDecoration(
         color: _added
@@ -66,7 +68,11 @@ class BookImportItemCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: Spacing.sm),
       child: Row(
         children: [
-          AnimatedSwitcher(duration: const Duration(milliseconds: 200), child: _statusWidget(colorScheme)),
+          AnimatedSwitcher(
+            key: ValueKey(AppMotion.disabled(context)),
+            duration: AppMotion.duration(context, const Duration(milliseconds: 200)),
+            child: _statusWidget(colorScheme),
+          ),
           const SizedBox(width: Spacing.md),
           Expanded(
             child: Column(
@@ -197,19 +203,19 @@ class BookImportItemCard extends StatelessWidget {
       key: const ValueKey('queued-icon'),
       width: 24,
       height: 24,
-      child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onSurfaceVariant),
+      child: AppCircularProgressIndicator(strokeWidth: 2, color: colorScheme.onSurfaceVariant),
     ),
     BookImportBatchStatus.processing => const SizedBox(
       key: ValueKey('processing-icon'),
       width: 24,
       height: 24,
-      child: CircularProgressIndicator(strokeWidth: 2),
+      child: AppCircularProgressIndicator(strokeWidth: 2),
     ),
     BookImportBatchStatus.adding => const SizedBox(
       key: ValueKey('adding-icon'),
       width: 24,
       height: 24,
-      child: CircularProgressIndicator(strokeWidth: 2),
+      child: AppCircularProgressIndicator(strokeWidth: 2),
     ),
     BookImportBatchStatus.ready => Icon(
       Icons.check_circle_outline,

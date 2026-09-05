@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_book_sheet_scaffold.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 typedef DigitalBookFilePicker = Future<List<SelectedBookFile>> Function();
 
@@ -29,6 +31,7 @@ class DigitalBookImportSheet extends StatefulWidget {
   static Future<List<SelectedBookFile>?> show(BuildContext context, {DigitalBookFilePicker? pickFiles}) async {
     Future<List<SelectedBookFile>?>? sheetCompleted;
     final files = await showModalBottomSheet<List<SelectedBookFile>>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -122,7 +125,7 @@ class _DigitalBookImportSheetState extends State<DigitalBookImportSheet> {
             child: OutlinedButton.icon(
               onPressed: _isPicking ? null : _browse,
               icon: _isPicking
-                  ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox.square(dimension: 18, child: AppCircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.upload_file),
               label: const Text('Browse files'),
             ),

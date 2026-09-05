@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Continue/submit button with loading state for auth pages.
 class AuthContinueButton extends StatelessWidget {
@@ -32,10 +33,7 @@ class AuthContinueButton extends StatelessWidget {
           ? SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
-              ),
+              child: AppCircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.onPrimary),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,

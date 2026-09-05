@@ -18,6 +18,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:papyrus/widgets/settings/settings_section.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 enum _ProfileSection {
   account,
@@ -1314,6 +1315,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Log out'),
@@ -1342,6 +1344,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showManageSyncServersSheet(BuildContext context) {
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (sheetContext) => SafeArea(
         child: Consumer<SyncSettingsProvider>(
@@ -1378,6 +1381,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       Navigator.pop(sheetContext);
                     },
                     trailing: PopupMenuButton<String>(
+                      popUpAnimationStyle: AppMotion.animationStyle(context),
                       onSelected: (value) {
                         if (value == 'edit') {
                           Navigator.pop(sheetContext);
@@ -1412,9 +1416,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final settings = context.read<SyncSettingsProvider>();
     final urlController = TextEditingController(text: server?.url ?? '');
     final messenger = ScaffoldMessenger.of(context);
+    final snackBarAnimationStyle = AppMotion.animationStyle(context);
 
     try {
       await showDialog<void>(
+        animationStyle: AppMotion.animationStyle(context),
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(server == null ? 'Add custom server' : 'Edit custom server'),
@@ -1436,7 +1442,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   }
                   if (dialogContext.mounted) Navigator.pop(dialogContext);
                 } catch (error) {
-                  messenger.showSnackBar(SnackBar(content: Text('Could not save server: $error')));
+                  messenger.showSnackBar(
+                    snackBarAnimationStyle: snackBarAnimationStyle,
+                    SnackBar(content: Text('Could not save server: $error')),
+                  );
                 }
               },
               child: const Text('Save'),
@@ -1451,22 +1460,34 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _handleReconnectSync(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
+    final snackBarAnimationStyle = AppMotion.animationStyle(context);
     try {
       await context.read<PapyrusPowerSyncService>().reconnect();
-      messenger.showSnackBar(const SnackBar(content: Text('Sync reconnect requested.')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: snackBarAnimationStyle,
+        const SnackBar(content: Text('Sync reconnect requested.')),
+      );
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not reconnect sync: $error')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: snackBarAnimationStyle,
+        SnackBar(content: Text('Could not reconnect sync: $error')),
+      );
     }
   }
 
   Future<void> _retryFailedMediaUploads(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
+    final snackBarAnimationStyle = AppMotion.animationStyle(context);
     await context.read<MediaUploadQueue>().retryFailed();
-    messenger.showSnackBar(const SnackBar(content: Text('Media uploads will retry on the next sync.')));
+    messenger.showSnackBar(
+      snackBarAnimationStyle: snackBarAnimationStyle,
+      const SnackBar(content: Text('Media uploads will retry on the next sync.')),
+    );
   }
 
   void _showOfflineBackupActions(BuildContext context) {
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -1497,7 +1518,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showBackupUnavailable(BuildContext context, String action) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$action is not available yet.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      SnackBar(content: Text('$action is not available yet.')),
+    );
   }
 
   Future<void> _confirmClearLocalLibrary(BuildContext context) async {
@@ -1511,11 +1535,18 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!confirmed || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    final snackBarAnimationStyle = AppMotion.animationStyle(context);
     try {
       await context.read<PapyrusPowerSyncService>().clearGuestLibrary();
-      messenger.showSnackBar(const SnackBar(content: Text('Local library cleared.')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: snackBarAnimationStyle,
+        const SnackBar(content: Text('Local library cleared.')),
+      );
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not clear local library: $error')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: snackBarAnimationStyle,
+        SnackBar(content: Text('Could not clear local library: $error')),
+      );
     }
   }
 
@@ -1530,6 +1561,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!confirmed || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    final snackBarAnimationStyle = AppMotion.animationStyle(context);
     try {
       final scope = context.read<MediaUploadQueue>().activeScope;
       final powerSyncService = context.read<PapyrusPowerSyncService>();
@@ -1538,9 +1570,15 @@ class _ProfilePageState extends State<ProfilePage> {
       if (scope != null) {
         await importService.clearCoverFiles(scope);
       }
-      messenger.showSnackBar(const SnackBar(content: Text('Local copy cleared.')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: snackBarAnimationStyle,
+        const SnackBar(content: Text('Local copy cleared.')),
+      );
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text('Could not clear local copy: $error')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: snackBarAnimationStyle,
+        SnackBar(content: Text('Could not clear local copy: $error')),
+      );
     }
   }
 
@@ -1551,6 +1589,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required String actionLabel,
   }) async {
     return await showDialog<bool>(
+          animationStyle: AppMotion.animationStyle(context),
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: Text(title),
@@ -1774,6 +1813,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required ValueChanged<String> onSelected,
   }) {
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (sheetContext) => SafeArea(
         child: Column(

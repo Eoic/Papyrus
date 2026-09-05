@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Unified goal card widget displaying consistent linear progress.
 ///
@@ -187,7 +188,7 @@ class GoalCard extends StatelessWidget {
   Widget _buildProgressBar(ColorScheme colorScheme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: LinearProgressIndicator(
+      child: AppLinearProgressIndicator(
         value: goal.progress.clamp(0.0, 1.0),
         minHeight: 8,
         backgroundColor: colorScheme.surfaceContainerHighest,

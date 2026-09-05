@@ -7,6 +7,7 @@ import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:papyrus/widgets/topics/manage_topics_sheet.dart';
 import 'package:papyrus/widgets/topics/topic_detail_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Details tab content for book details page.
 /// Shows description, information grid, shelves, and topics.
@@ -166,20 +167,30 @@ class _BookDetailsState extends State<BookDetails> {
       runSpacing: Spacing.sm,
       children: [
         ...shelves.map((shelf) {
-          return ActionChip(
-            avatar: Icon(shelf.displayIcon, size: 16, color: shelf.color),
-            label: Text(shelf.name),
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            onPressed: () {},
+          return AppMotionControl(
+            value: null,
+            builder: (focusNode) => ActionChip(
+              focusNode: focusNode,
+              chipAnimationStyle: appChipAnimationStyle(context),
+              avatar: Icon(shelf.displayIcon, size: 16, color: shelf.color),
+              label: Text(shelf.name),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onPressed: () {},
+            ),
           );
         }),
-        ActionChip(
-          avatar: const Icon(Icons.add, size: 16),
-          label: Text(shelves.isEmpty ? 'Add to shelf' : 'Edit'),
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onPressed: () => _showMoveToShelfSheet(context),
+        AppMotionControl(
+          value: null,
+          builder: (focusNode) => ActionChip(
+            focusNode: focusNode,
+            chipAnimationStyle: appChipAnimationStyle(context),
+            avatar: const Icon(Icons.add, size: 16),
+            label: Text(shelves.isEmpty ? 'Add to shelf' : 'Edit'),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onPressed: () => _showMoveToShelfSheet(context),
+          ),
         ),
       ],
     );
@@ -194,24 +205,34 @@ class _BookDetailsState extends State<BookDetails> {
       runSpacing: Spacing.sm,
       children: [
         ...tags.map((tag) {
-          return ActionChip(
-            avatar: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: tag.color, shape: BoxShape.circle),
+          return AppMotionControl(
+            value: null,
+            builder: (focusNode) => ActionChip(
+              focusNode: focusNode,
+              chipAnimationStyle: appChipAnimationStyle(context),
+              avatar: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: tag.color, shape: BoxShape.circle),
+              ),
+              label: Text(tag.name),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onPressed: () => TopicDetailSheet.show(context, tag: tag),
             ),
-            label: Text(tag.name),
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            onPressed: () => TopicDetailSheet.show(context, tag: tag),
           );
         }),
-        ActionChip(
-          avatar: const Icon(Icons.add, size: 16),
-          label: Text(tags.isEmpty ? 'Add topics' : 'Edit'),
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onPressed: () => _showManageTopicsSheet(context),
+        AppMotionControl(
+          value: null,
+          builder: (focusNode) => ActionChip(
+            focusNode: focusNode,
+            chipAnimationStyle: appChipAnimationStyle(context),
+            avatar: const Icon(Icons.add, size: 16),
+            label: Text(tags.isEmpty ? 'Add topics' : 'Edit'),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onPressed: () => _showManageTopicsSheet(context),
+          ),
         ),
       ],
     );

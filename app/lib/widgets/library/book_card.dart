@@ -8,6 +8,8 @@ import 'package:papyrus/utils/book_actions.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
 import 'package:papyrus/widgets/library/book_account_status_badge.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Responsive book card for grid display.
 /// - Mobile: 171×256 with 8px gap
@@ -121,8 +123,9 @@ class _BookCardState extends State<BookCard> {
                           top: Spacing.xs,
                           right: Spacing.xs,
                           child: AnimatedOpacity(
+                            key: ValueKey(AppMotion.disabled(context)),
                             opacity: _isHovered ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 150),
+                            duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -196,14 +199,14 @@ class _BookCardState extends State<BookCard> {
                 // Progress bar
                 if (widget.acquisitionJob case final job?) ...[
                   if (job.progress case final progress?)
-                    LinearProgressIndicator(
+                    AppLinearProgressIndicator(
                       value: progress,
                       backgroundColor: colorScheme.surfaceContainerHighest,
                       color: job.requiresAttention ? colorScheme.error : colorScheme.primary,
                       minHeight: 3,
                     ),
                 ] else if (widget.showProgress && widget.book.progress > 0)
-                  LinearProgressIndicator(
+                  AppLinearProgressIndicator(
                     value: widget.book.progress,
                     backgroundColor: colorScheme.surfaceContainerHighest,
                     color: widget.book.readingStatus == LibraryReadingStatus.completed

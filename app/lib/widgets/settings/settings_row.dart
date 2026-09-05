@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// A row widget for displaying a setting with optional value and navigation.
 ///
@@ -138,7 +139,11 @@ class SettingsToggleRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(label, style: textTheme.bodyLarge)),
-          Switch(value: value, onChanged: onChanged),
+          AppMotionControl(
+            value: value,
+            enabled: onChanged != null,
+            builder: (focusNode) => Switch(focusNode: focusNode, value: value, onChanged: onChanged),
+          ),
         ],
       ),
     );

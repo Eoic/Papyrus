@@ -13,6 +13,7 @@ import 'package:papyrus/widgets/library/bulk_status_sheet.dart';
 import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:papyrus/widgets/topics/manage_topics_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 // =============================================================================
 // LOW-LEVEL BULK OPERATIONS
@@ -133,9 +134,10 @@ Future<void> handleBulkToggleFavorite(BuildContext context, LibraryProvider libr
     libraryProvider.exitSelectionMode();
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not save favorites. Please try again.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Could not save favorites. Please try again.')),
+      );
     }
   }
 }
@@ -146,6 +148,7 @@ void handleBulkDelete(BuildContext context, LibraryProvider libraryProvider) {
   final count = libraryProvider.selectedCount;
 
   showDialog(
+    animationStyle: AppMotion.animationStyle(context),
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Delete books?'),

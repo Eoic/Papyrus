@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// A card widget for displaying a note with title, content preview, and metadata.
 ///
@@ -122,8 +124,9 @@ class _NoteCardState extends State<NoteCard> {
         ),
         if (widget.showActionMenu)
           AnimatedOpacity(
+            key: ValueKey(AppMotion.disabled(context)),
             opacity: _isHovered ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 150),
+            duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
             child: IconButton(
               icon: const Icon(Icons.more_vert),
               iconSize: IconSizes.action,
@@ -154,12 +157,17 @@ class _NoteCardState extends State<NoteCard> {
         spacing: Spacing.xs,
         runSpacing: Spacing.xs,
         children: widget.note.tags.map((tag) {
-          return Chip(
-            label: Text(tag),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            labelPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
-            labelStyle: textTheme.labelSmall,
+          return AppMotionControl(
+            value: null,
+            builder: (focusNode) => Chip(
+              focusNode: focusNode,
+              chipAnimationStyle: appChipAnimationStyle(context),
+              label: Text(tag),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              labelPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+              labelStyle: textTheme.labelSmall,
+            ),
           );
         }).toList(),
       ),

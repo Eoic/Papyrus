@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Bottom sheet for viewing and editing an active goal.
 class ActiveGoalDetailsSheet extends StatefulWidget {
@@ -28,6 +30,7 @@ class ActiveGoalDetailsSheet extends StatefulWidget {
     VoidCallback? onDelete,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
@@ -280,7 +283,7 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
                           const SizedBox(height: Spacing.xs),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: LinearProgressIndicator(
+                            child: AppLinearProgressIndicator(
                               value: progress,
                               minHeight: 8,
                               backgroundColor: colorScheme.surfaceContainerHighest,
@@ -503,6 +506,7 @@ class _ActiveGoalDetailsSheetState extends State<ActiveGoalDetailsSheet> {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete goal?'),

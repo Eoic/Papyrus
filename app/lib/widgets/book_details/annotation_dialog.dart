@@ -8,6 +8,7 @@ import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Bottom sheet for creating or editing an annotation manually.
 class AnnotationDialog extends StatefulWidget {
@@ -25,6 +26,7 @@ class AnnotationDialog extends StatefulWidget {
     FutureOr<void> Function(Annotation)? onSave,
   }) {
     return showModalBottomSheet<Annotation>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,

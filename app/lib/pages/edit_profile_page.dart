@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Page for editing user profile information (display name and avatar).
 ///
@@ -68,7 +70,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: AppCircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Text('Save'),
             ),
@@ -255,6 +257,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void _showPhotoOptions(BuildContext context) {
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -297,7 +300,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open image picker')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
+          const SnackBar(content: Text('Could not open image picker')),
+        );
       }
     }
   }
@@ -355,6 +361,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void _handleBack(BuildContext context) {
     if (_hasChanges) {
       showDialog(
+        animationStyle: AppMotion.animationStyle(context),
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('Discard changes?'),

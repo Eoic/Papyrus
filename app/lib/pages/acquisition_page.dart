@@ -14,6 +14,8 @@ import 'package:papyrus/widgets/acquisition/acquisition_endpoint_editor.dart';
 import 'package:papyrus/widgets/acquisition/acquisition_settings_section.dart';
 import 'package:papyrus/widgets/settings/settings_row.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 typedef AcquisitionApiClientFactory = AcquisitionApiClient Function(PapyrusApiConfig config);
 
@@ -220,7 +222,10 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
       await downloadsProvider?.refreshConfiguration();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not remove this integration.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
+          const SnackBar(content: Text('Could not remove this integration.')),
+        );
       }
     }
   }
@@ -243,8 +248,8 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_loading) const LinearProgressIndicator(),
-                    if (_submittingKeys.isNotEmpty) const LinearProgressIndicator(),
+                    if (_loading) const AppLinearProgressIndicator(),
+                    if (_submittingKeys.isNotEmpty) const AppLinearProgressIndicator(),
                     if (_error != null) _ErrorBanner(message: _error!, onRetry: _load),
                     if (!_loading && _error == null && capabilities != null)
                       ..._buildSettingsSections(capabilities: capabilities, indexers: indexers),
@@ -325,6 +330,7 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
     final runEnabled = endpoint.enabled && !_submittingKeys.contains('arr:${endpoint.id}');
 
     return PopupMenuButton<String>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       tooltip: 'Actions for ${endpoint.name}',
       onSelected: (value) {
         if (value == 'edit') _showEndpointSheet(endpoint: endpoint);
@@ -347,7 +353,9 @@ class _AcquisitionPageState extends State<AcquisitionPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(snackBarAnimationStyle: AppMotion.animationStyle(context), SnackBar(content: Text(message)));
   }
 
   String _arrCommandLabel(String command) => switch (command) {

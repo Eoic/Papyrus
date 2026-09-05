@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:papyrus/themes/app_motion.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:papyrus/acquisition/acquisition_api_client.dart';
 import 'package:papyrus/auth/auth_api_client.dart';
@@ -423,6 +424,11 @@ class _PapyrusState extends State<Papyrus> {
             theme: isEink ? AppTheme.eink : AppTheme.light,
             darkTheme: isEink ? AppTheme.eink : AppTheme.dark,
             themeMode: isEink ? ThemeMode.light : preferencesProvider.themeMode,
+            themeAnimationDuration: isEink || preferencesProvider.reduceAnimations
+                ? Duration.zero
+                : kThemeAnimationDuration,
+            builder: (context, child) =>
+                AppMotionScope(reduceAnimations: isEink || preferencesProvider.reduceAnimations, child: child!),
             routerConfig: _appRouter.router,
           );
         },
