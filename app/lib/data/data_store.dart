@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/repositories/book_repository.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/book_shelf_relation.dart';
@@ -20,7 +21,7 @@ class DataStore extends ChangeNotifier {
   DataStore({BookRepository? bookRepository}) {
     final repository = bookRepository ?? InMemoryBookRepository();
     _bookRepository = repository;
-    _bookSubscription = repository.watchAll().listen(replaceBooksFromSync);
+    _listenRepository(repository);
   }
 
   // Primary data collections (keyed by ID)
@@ -41,6 +42,50 @@ class DataStore extends ChangeNotifier {
   bool _isLoaded = false;
   BookRepository? _bookRepository;
   StreamSubscription<List<Book>>? _bookSubscription;
+  StreamSubscription<LibrarySnapshot>? _librarySubscription;
+
+  LibraryRepository? get libraryRepository {
+    final repository = _bookRepository;
+    return repository is LibraryRepository ? repository as LibraryRepository : null;
+  }
+
+  void _listenRepository(BookRepository repository) {
+    if (repository is LibraryRepository) {
+      _librarySubscription = (repository as LibraryRepository).watchLibrary().listen(
+        _replaceLibrary,
+        onError: (Object error, StackTrace stack) =>
+            FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack, library: 'papyrus library')),
+      );
+    } else {
+      _bookSubscription = repository.watchAll().listen(replaceBooksFromSync);
+    }
+  }
+
+  void _replaceLibrary(LibrarySnapshot snapshot) {
+    _shelves
+      ..clear()
+      ..addEntries(snapshot.shelves.map((value) => MapEntry(value.id, value)));
+    _tags
+      ..clear()
+      ..addEntries(snapshot.tags.map((value) => MapEntry(value.id, value)));
+    _notes
+      ..clear()
+      ..addEntries(snapshot.notes.map((value) => MapEntry(value.id, value)));
+    _annotations
+      ..clear()
+      ..addEntries(snapshot.annotations.map((value) => MapEntry(value.id, value)));
+    _bookShelfRelations
+      ..clear()
+      ..addAll(snapshot.bookShelves);
+    _bookTagRelations
+      ..clear()
+      ..addAll(snapshot.bookTags);
+    if (snapshot.books.isEmpty) {
+      _series.clear();
+      _readingGoals.clear();
+    }
+    replaceBooksFromSync(snapshot.books);
+  }
 
   // ============================================================
   // Getters for read access
@@ -101,19 +146,15 @@ class DataStore extends ChangeNotifier {
     _isLoaded = false;
     if (wasLoaded) notifyListeners();
     await _bookSubscription?.cancel();
+    await _librarySubscription?.cancel();
+    clear();
     _bookRepository = repository;
-    _bookSubscription = repository.watchAll().listen(
-      replaceBooksFromSync,
-      onError: (Object error, StackTrace stackTrace) {
-        FlutterError.reportError(
-          FlutterErrorDetails(exception: error, stack: stackTrace, library: 'papyrus book repository'),
-        );
-      },
-    );
+    _listenRepository(repository);
   }
 
   Future<void> disposeBookRepository() async {
     await _bookSubscription?.cancel();
+    await _librarySubscription?.cancel();
     _bookSubscription = null;
     _bookRepository = null;
   }
@@ -123,19 +164,17 @@ class DataStore extends ChangeNotifier {
     if (repository == null) {
       throw StateError('Book repository is not initialized');
     }
-    return repository;
+    return repository is LibraryRepository ? (repository as LibraryRepository).scopedBooks : repository;
   }
 
-  bool isBookRepositoryCurrent(BookRepository repository) => identical(_bookRepository, repository);
+  bool isBookRepositoryCurrent(BookRepository repository) =>
+      repository is EditableBookRepository ? repository.isCurrent : identical(_bookRepository, repository);
 
   void addBook(Book book) {
-    final repository = _bookRepository;
-    if (repository == null) {
-      throw StateError('Book repository is not initialized');
-    }
+    final repository = requireBookRepository();
     _books[book.id] = book;
     notifyListeners();
-    unawaited(repository.upsert(book));
+    _reportWrite(repository.upsert(book));
   }
 
   Future<void> addBookAndWait(Book book) async {
@@ -152,26 +191,82 @@ class DataStore extends ChangeNotifier {
   }
 
   void updateBook(Book book) {
-    final repository = _bookRepository;
-    if (repository == null) {
-      throw StateError('Book repository is not initialized');
-    }
+    final repository = requireBookRepository();
+    final previous = _books[book.id];
     _books[book.id] = book;
     notifyListeners();
-    unawaited(repository.upsert(book));
+    _reportWrite(
+      repository is EditableBookRepository && previous != null
+          ? repository.update(book, previous: previous)
+          : repository.upsert(book),
+    );
   }
 
-  Future<void> updateBookAndWait(Book book) async {
-    final repository = requireBookRepository();
-    await addBookToRepositoryAndWait(repository, book);
+  void _reportWrite(Future<void> operation) {
+    unawaited(
+      operation.catchError((Object error, StackTrace stack) {
+        FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack, library: 'papyrus library write'));
+      }),
+    );
+  }
+
+  Future<void> updateBookAndWait(Book book, {Book? previous, BookRepository? repository}) async {
+    final target = repository ?? requireBookRepository();
+    final baseline = previous ?? _books[book.id];
+    if (target is EditableBookRepository && baseline != null) {
+      await target.update(book, previous: baseline);
+      final saved = await target.getById(book.id);
+      if (target.isCurrent && saved != null) {
+        _books[book.id] = saved;
+        notifyListeners();
+      }
+    } else {
+      await addBookToRepositoryAndWait(target, book);
+    }
+  }
+
+  Future<void> _saveEntity<T>(
+    EntityRepository<T>? repository,
+    T value,
+    String id,
+    T? previous,
+    void Function(T) apply,
+  ) {
+    if (repository == null) {
+      apply(value);
+      notifyListeners();
+      return Future.value();
+    }
+    final scope = requireBookRepository();
+    return (() async {
+      await repository.upsert(value, previous: previous);
+      final saved = await repository.getById(id);
+      if (isBookRepositoryCurrent(scope) && saved != null) {
+        apply(saved);
+        notifyListeners();
+      }
+    })();
+  }
+
+  Future<void> _deleteEntity<T>(EntityRepository<T>? repository, String id, void Function() apply) {
+    if (repository == null) {
+      apply();
+      notifyListeners();
+      return Future.value();
+    }
+    final scope = requireBookRepository();
+    return (() async {
+      await repository.delete(id);
+      if (isBookRepositoryCurrent(scope)) {
+        apply();
+        notifyListeners();
+      }
+    })();
   }
 
   void deleteBook(String id) {
-    final repository = _bookRepository;
-    if (repository == null) {
-      throw StateError('Book repository is not initialized');
-    }
-    unawaited(repository.delete(id));
+    final repository = requireBookRepository();
+    _reportWrite(repository.delete(id));
   }
 
   Future<void> deleteBookAndWait(String id) async {
@@ -190,7 +285,7 @@ class DataStore extends ChangeNotifier {
     final mergedBooks = books
         .map((book) {
           final localBook = _books[book.id];
-          if (book.coverMediaId == null && localBook?.coverMediaId != null) {
+          if (libraryRepository == null && book.coverMediaId == null && localBook?.coverMediaId != null) {
             // PowerSync can briefly emit the downloaded server row before its
             // pending local media-reference update is acknowledged. Keep the
             // established local reference through that transient null snapshot.
@@ -224,21 +319,27 @@ class DataStore extends ChangeNotifier {
     return shelf.copyWith(bookCount: getBookCountForShelf(id), coverPreviews: getCoverPreviewsForShelf(id));
   }
 
-  void addShelf(Shelf shelf) {
-    _shelves[shelf.id] = shelf;
-    notifyListeners();
-  }
+  Future<void> addShelf(Shelf shelf, {Shelf? previous, EntityRepository<Shelf>? repository}) => _saveEntity(
+    repository ?? libraryRepository?.shelves,
+    shelf,
+    shelf.id,
+    previous,
+    (saved) => _shelves[shelf.id] = saved,
+  );
 
-  void updateShelf(Shelf shelf) {
-    _shelves[shelf.id] = shelf;
-    notifyListeners();
-  }
+  Future<void> updateShelf(Shelf shelf, {Shelf? previous, EntityRepository<Shelf>? repository}) => _saveEntity(
+    repository ?? libraryRepository?.shelves,
+    shelf,
+    shelf.id,
+    previous ?? _shelves[shelf.id],
+    (saved) => _shelves[shelf.id] = saved,
+  );
 
-  void deleteShelf(String id) {
-    _shelves.remove(id);
-    _bookShelfRelations.removeWhere((r) => r.shelfId == id);
-    notifyListeners();
-  }
+  Future<void> deleteShelf(String id, {EntityRepository<Shelf>? repository}) =>
+      _deleteEntity(repository ?? libraryRepository?.shelves, id, () {
+        _shelves.remove(id);
+        _bookShelfRelations.removeWhere((r) => r.shelfId == id);
+      });
 
   /// Get all books in a shelf.
   List<Book> getBooksInShelf(String shelfId) {
@@ -279,21 +380,22 @@ class DataStore extends ChangeNotifier {
 
   Tag? getTag(String id) => _tags[id];
 
-  void addTag(Tag tag) {
-    _tags[tag.id] = tag;
-    notifyListeners();
-  }
+  Future<void> addTag(Tag tag, {Tag? previous, EntityRepository<Tag>? repository}) =>
+      _saveEntity(repository ?? libraryRepository?.tags, tag, tag.id, previous, (saved) => _tags[tag.id] = saved);
 
-  void updateTag(Tag tag) {
-    _tags[tag.id] = tag;
-    notifyListeners();
-  }
+  Future<void> updateTag(Tag tag, {Tag? previous, EntityRepository<Tag>? repository}) => _saveEntity(
+    repository ?? libraryRepository?.tags,
+    tag,
+    tag.id,
+    previous ?? _tags[tag.id],
+    (saved) => _tags[tag.id] = saved,
+  );
 
-  void deleteTag(String id) {
-    _tags.remove(id);
-    _bookTagRelations.removeWhere((r) => r.tagId == id);
-    notifyListeners();
-  }
+  Future<void> deleteTag(String id, {EntityRepository<Tag>? repository}) =>
+      _deleteEntity(repository ?? libraryRepository?.tags, id, () {
+        _tags.remove(id);
+        _bookTagRelations.removeWhere((r) => r.tagId == id);
+      });
 
   /// Get all books with a tag.
   List<Book> getBooksWithTag(String tagId) {
@@ -347,20 +449,31 @@ class DataStore extends ChangeNotifier {
     return _annotations.values.where((a) => a.bookId == bookId).toList();
   }
 
-  void addAnnotation(Annotation annotation) {
-    _annotations[annotation.id] = annotation;
-    notifyListeners();
-  }
+  Future<void> addAnnotation(Annotation annotation, {Annotation? previous, EntityRepository<Annotation>? repository}) =>
+      _saveEntity(
+        repository ?? libraryRepository?.annotations,
+        annotation,
+        annotation.id,
+        previous,
+        (saved) => _annotations[annotation.id] = saved,
+      );
 
-  void updateAnnotation(Annotation annotation) {
-    _annotations[annotation.id] = annotation;
-    notifyListeners();
-  }
+  Future<void> updateAnnotation(
+    Annotation annotation, {
+    Annotation? previous,
+    EntityRepository<Annotation>? repository,
+  }) => _saveEntity(
+    repository ?? libraryRepository?.annotations,
+    annotation,
+    annotation.id,
+    previous ?? _annotations[annotation.id],
+    (saved) => _annotations[annotation.id] = saved,
+  );
 
-  void deleteAnnotation(String id) {
-    _annotations.remove(id);
-    notifyListeners();
-  }
+  Future<void> deleteAnnotation(String id, {EntityRepository<Annotation>? repository}) =>
+      _deleteEntity(repository ?? libraryRepository?.annotations, id, () {
+        _annotations.remove(id);
+      });
 
   // ============================================================
   // Note CRUD
@@ -372,20 +485,21 @@ class DataStore extends ChangeNotifier {
     return _notes.values.where((n) => n.bookId == bookId).toList();
   }
 
-  void addNote(Note note) {
-    _notes[note.id] = note;
-    notifyListeners();
-  }
+  Future<void> addNote(Note note, {Note? previous, EntityRepository<Note>? repository}) =>
+      _saveEntity(repository ?? libraryRepository?.notes, note, note.id, previous, (saved) => _notes[note.id] = saved);
 
-  void updateNote(Note note) {
-    _notes[note.id] = note;
-    notifyListeners();
-  }
+  Future<void> updateNote(Note note, {Note? previous, EntityRepository<Note>? repository}) => _saveEntity(
+    repository ?? libraryRepository?.notes,
+    note,
+    note.id,
+    previous ?? _notes[note.id],
+    (saved) => _notes[note.id] = saved,
+  );
 
-  void deleteNote(String id) {
-    _notes.remove(id);
-    notifyListeners();
-  }
+  Future<void> deleteNote(String id, {EntityRepository<Note>? repository}) =>
+      _deleteEntity(repository ?? libraryRepository?.notes, id, () {
+        _notes.remove(id);
+      });
 
   // ============================================================
   // Bookmark CRUD
@@ -480,18 +594,66 @@ class DataStore extends ChangeNotifier {
   // Book-Shelf Relations
   // ============================================================
 
-  void addBookToShelf(String bookId, String shelfId) {
-    final exists = _bookShelfRelations.any((r) => r.bookId == bookId && r.shelfId == shelfId);
-    if (!exists) {
-      _bookShelfRelations.add(BookShelfRelation(bookId: bookId, shelfId: shelfId, addedAt: DateTime.now()));
-      notifyListeners();
+  Future<void> updateBookMemberships({
+    required Set<String> bookIds,
+    List<String>? shelfIds,
+    List<String>? tagIds,
+    Set<String>? previousShelfIds,
+    Set<String>? previousTagIds,
+    bool additive = false,
+    LibraryMembershipWriter? repository,
+  }) async {
+    final target = repository ?? libraryRepository?.memberships;
+    if (target != null) {
+      await target.updateMemberships(
+        bookIds: bookIds,
+        shelfIds: shelfIds,
+        tagIds: tagIds,
+        previousShelfIds: previousShelfIds,
+        previousTagIds: previousTagIds,
+        additive: additive,
+      );
+      return;
+    }
+    for (final bookId in bookIds) {
+      if (shelfIds != null) {
+        if (!additive) {
+          for (final id in (previousShelfIds ?? getShelfIdsForBook(bookId).toSet()).difference(shelfIds.toSet())) {
+            await removeBookFromShelf(bookId, id);
+          }
+        }
+        for (final id in shelfIds) {
+          await addBookToShelf(bookId, id);
+        }
+      }
+      if (tagIds != null) {
+        if (!additive) {
+          for (final id in (previousTagIds ?? getTagIdsForBook(bookId).toSet()).difference(tagIds.toSet())) {
+            await removeTagFromBook(bookId, id);
+          }
+        }
+        for (final id in tagIds) {
+          await addTagToBook(bookId, id);
+        }
+      }
     }
   }
 
-  void removeBookFromShelf(String bookId, String shelfId) {
-    _bookShelfRelations.removeWhere((r) => r.bookId == bookId && r.shelfId == shelfId);
-    notifyListeners();
+  Future<void> addBookToShelf(String bookId, String shelfId) {
+    final exists = _bookShelfRelations.any((r) => r.bookId == bookId && r.shelfId == shelfId);
+    if (exists) return Future.value();
+    final relation = BookShelfRelation(bookId: bookId, shelfId: shelfId, addedAt: DateTime.now().toUtc());
+    return _saveEntity<BookShelfRelation>(libraryRepository?.bookShelves, relation, '$bookId:$shelfId', null, (saved) {
+      _bookShelfRelations.removeWhere((r) => r.bookId == bookId && r.shelfId == shelfId);
+      _bookShelfRelations.add(saved);
+    });
   }
+
+  Future<void> removeBookFromShelf(String bookId, String shelfId) => _deleteEntity(
+    libraryRepository?.bookShelves,
+    '$bookId:$shelfId',
+    () => _bookShelfRelations.removeWhere((r) => r.bookId == bookId && r.shelfId == shelfId),
+  );
 
   List<String> getShelfIdsForBook(String bookId) {
     return _bookShelfRelations.where((r) => r.bookId == bookId).map((r) => r.shelfId).toList();
@@ -506,18 +668,21 @@ class DataStore extends ChangeNotifier {
   // Book-Tag Relations
   // ============================================================
 
-  void addTagToBook(String bookId, String tagId) {
+  Future<void> addTagToBook(String bookId, String tagId) {
     final exists = _bookTagRelations.any((r) => r.bookId == bookId && r.tagId == tagId);
-    if (!exists) {
-      _bookTagRelations.add(BookTagRelation(bookId: bookId, tagId: tagId, createdAt: DateTime.now()));
-      notifyListeners();
-    }
+    if (exists) return Future.value();
+    final relation = BookTagRelation(bookId: bookId, tagId: tagId, createdAt: DateTime.now().toUtc());
+    return _saveEntity<BookTagRelation>(libraryRepository?.bookTags, relation, '$bookId:$tagId', null, (saved) {
+      _bookTagRelations.removeWhere((r) => r.bookId == bookId && r.tagId == tagId);
+      _bookTagRelations.add(saved);
+    });
   }
 
-  void removeTagFromBook(String bookId, String tagId) {
-    _bookTagRelations.removeWhere((r) => r.bookId == bookId && r.tagId == tagId);
-    notifyListeners();
-  }
+  Future<void> removeTagFromBook(String bookId, String tagId) => _deleteEntity(
+    libraryRepository?.bookTags,
+    '$bookId:$tagId',
+    () => _bookTagRelations.removeWhere((r) => r.bookId == bookId && r.tagId == tagId),
+  );
 
   List<String> getTagIdsForBook(String bookId) {
     return _bookTagRelations.where((r) => r.bookId == bookId).map((r) => r.tagId).toList();

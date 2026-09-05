@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/note.dart';
 
 /// Sort options for notes.
@@ -144,18 +145,18 @@ class NotesProvider extends ChangeNotifier {
   // CRUD (delegated to DataStore)
   // ============================================================================
 
-  void updateNote(Note note) {
-    _dataStore?.updateNote(note);
+  Future<void> updateNote(Note note, {Note? previous, EntityRepository<Note>? repository}) async {
+    await _dataStore?.updateNote(note, previous: previous, repository: repository);
   }
 
-  void deleteNote(String noteId) {
-    _dataStore?.deleteNote(noteId);
+  Future<void> deleteNote(String noteId, {EntityRepository<Note>? repository}) async {
+    await _dataStore?.deleteNote(noteId, repository: repository);
   }
 
-  void togglePin(String noteId) {
+  Future<void> togglePin(String noteId) async {
     final note = _dataStore?.getNote(noteId);
     if (note == null || _dataStore == null) return;
-    _dataStore!.updateNote(note.copyWith(isPinned: !note.isPinned));
+    await _dataStore!.updateNote(note.copyWith(isPinned: !note.isPinned), previous: note);
   }
 
   // ============================================================================

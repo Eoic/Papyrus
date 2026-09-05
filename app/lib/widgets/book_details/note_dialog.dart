@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:uuid/uuid.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -8,19 +12,25 @@ import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 class NoteDialog extends StatelessWidget {
   final String bookId;
   final Note? existingNote;
+  final FutureOr<void> Function(Note)? onSave;
 
-  const NoteDialog({super.key, required this.bookId, this.existingNote});
+  const NoteDialog({super.key, required this.bookId, this.existingNote, this.onSave});
 
   bool get isEditing => existingNote != null;
 
   /// Shows the dialog and returns the created/updated note, or null if cancelled.
-  static Future<Note?> show(BuildContext context, {required String bookId, Note? existingNote}) async {
+  static Future<Note?> show(
+    BuildContext context, {
+    required String bookId,
+    Note? existingNote,
+    FutureOr<void> Function(Note)? onSave,
+  }) async {
     return showModalBottomSheet<Note>(
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
       useSafeArea: true,
-      builder: (context) => _BottomSheetNote(bookId: bookId, existingNote: existingNote),
+      builder: (context) => _BottomSheetNote(bookId: bookId, existingNote: existingNote, onSave: onSave),
     );
   }
 
@@ -34,14 +44,15 @@ class NoteDialog extends StatelessWidget {
 class _BottomSheetNote extends StatefulWidget {
   final String bookId;
   final Note? existingNote;
+  final FutureOr<void> Function(Note)? onSave;
 
-  const _BottomSheetNote({required this.bookId, this.existingNote});
+  const _BottomSheetNote({required this.bookId, this.existingNote, this.onSave});
 
   @override
   State<_BottomSheetNote> createState() => _BottomSheetNoteState();
 }
 
-class _BottomSheetNoteState extends State<_BottomSheetNote> {
+class _BottomSheetNoteState extends State<_BottomSheetNote> with PersistentSave<_BottomSheetNote> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
@@ -92,19 +103,22 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
     });
   }
 
-  void _save() {
+  Future<void> _save() async {
+    if (isSaving) return;
     if (_formKey.currentState?.validate() ?? false) {
       final note = Note(
-        id: widget.existingNote?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.existingNote?.id ?? const Uuid().v4(),
         bookId: widget.bookId,
         title: _titleController.text.trim(),
         content: _contentController.text.trim(),
         location: widget.existingNote?.location,
         tags: _tags,
+        isPinned: widget.existingNote?.isPinned ?? false,
         createdAt: widget.existingNote?.createdAt ?? DateTime.now(),
         updatedAt: isEditing ? DateTime.now() : null,
       );
-      Navigator.of(context).pop(note);
+      final saved = await persist(() => widget.onSave?.call(note));
+      if (saved && mounted) Navigator.of(context).pop(note);
     }
   }
 
@@ -136,6 +150,8 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> {
                       title: isEditing ? 'Edit note' : 'New note',
                       onCancel: () => Navigator.of(context).pop(),
                       onSave: _save,
+                      canSave: !isSaving,
+                      canCancel: !isSaving,
                     ),
                   ],
                 ),

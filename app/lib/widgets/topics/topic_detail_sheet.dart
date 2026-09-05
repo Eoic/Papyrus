@@ -112,18 +112,24 @@ class TopicDetailSheet extends StatelessWidget {
 
   void _editTag(BuildContext context) {
     final dataStore = context.read<DataStore>();
+    final repository = dataStore.libraryRepository?.tags;
 
     AddTopicSheet.show(
       context,
       topic: tag,
-      onSave: (name, description, colorHex) {
-        dataStore.updateTag(tag.copyWith(name: name, description: description, colorHex: colorHex));
+      onSave: (name, description, colorHex) async {
+        await dataStore.updateTag(
+          tag.copyWith(name: name, description: description, clearDescription: description == null, colorHex: colorHex),
+          previous: tag,
+          repository: repository,
+        );
       },
     );
   }
 
   void _confirmDeleteTag(BuildContext context, int bookCount) {
     final dataStore = context.read<DataStore>();
+    final repository = dataStore.libraryRepository?.tags;
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
@@ -139,9 +145,17 @@ class TopicDetailSheet extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           FilledButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              dataStore.deleteTag(tag.id);
+            onPressed: () async {
+              try {
+                await dataStore.deleteTag(tag.id, repository: repository);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Could not delete topic. Please try again.')));
+                }
+              }
             },
             style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Delete'),

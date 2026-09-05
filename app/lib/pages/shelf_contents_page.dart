@@ -56,11 +56,12 @@ class ShelfContentsPage extends StatelessWidget {
   }
 
   void _editShelf(BuildContext context, DataStore dataStore, Shelf shelf) {
+    final repository = dataStore.libraryRepository?.shelves;
     AddShelfSheet.show(
       context,
       shelf: shelf,
-      onSave: (name, description, colorHex, icon) {
-        dataStore.updateShelf(
+      onSave: (name, description, colorHex, icon) async {
+        await dataStore.updateShelf(
           shelf.copyWith(
             name: name,
             description: description,
@@ -69,6 +70,8 @@ class ShelfContentsPage extends StatelessWidget {
             icon: icon,
             updatedAt: DateTime.now(),
           ),
+          previous: shelf,
+          repository: repository,
         );
       },
     );

@@ -1,5 +1,10 @@
+import 'package:uuid/uuid.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/tag.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -20,14 +25,18 @@ class ManageTopicsSheet extends StatefulWidget {
   final List<String>? bulkBookIds;
 
   /// Called when topic assignments change.
-  final void Function(List<String> tagIds)? onSave;
+  final FutureOr<void> Function(List<String> tagIds)? onSave;
 
   const ManageTopicsSheet({super.key, this.book, this.bulkBookIds, this.onSave});
 
   bool get isBulkMode => bulkBookIds != null && bulkBookIds!.isNotEmpty;
 
   /// Shows the manage topics sheet for a single book.
-  static Future<void> show(BuildContext context, {required Book book, void Function(List<String> tagIds)? onSave}) {
+  static Future<void> show(
+    BuildContext context, {
+    required Book book,
+    FutureOr<void> Function(List<String> tagIds)? onSave,
+  }) {
     return showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -41,7 +50,7 @@ class ManageTopicsSheet extends StatefulWidget {
   static Future<void> showBulk(
     BuildContext context, {
     required List<String> bookIds,
-    void Function(List<String> tagIds)? onSave,
+    FutureOr<void> Function(List<String> tagIds)? onSave,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -55,14 +64,16 @@ class ManageTopicsSheet extends StatefulWidget {
   State<ManageTopicsSheet> createState() => _ManageTopicsSheetState();
 }
 
-class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
+class _ManageTopicsSheetState extends State<ManageTopicsSheet> with PersistentSave<ManageTopicsSheet> {
   late Set<String> _selectedTagIds;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  EntityRepository<Tag>? _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = context.read<DataStore>().libraryRepository?.tags;
     if (widget.isBulkMode) {
       _selectedTagIds = {};
     } else {
@@ -186,7 +197,7 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
                 children: [
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                   const SizedBox(width: Spacing.md),
-                  FilledButton(onPressed: _onSave, child: const Text('Save')),
+                  FilledButton(onPressed: isSaving ? null : _onSave, child: const Text('Save')),
                 ],
               ),
             ),
@@ -293,19 +304,21 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
 
   void _showCreateTopicSheet() {
     final dataStore = context.read<DataStore>();
+    final repository = _repository;
 
     AddTopicSheet.show(
       context,
-      onSave: (name, description, colorHex) {
+      onSave: (name, description, colorHex) async {
         final now = DateTime.now();
         final newTag = Tag(
-          id: 'tag-${now.millisecondsSinceEpoch}',
+          id: const Uuid().v4(),
           name: name,
           colorHex: colorHex,
           description: description,
           createdAt: now,
         );
-        dataStore.addTag(newTag);
+        await dataStore.addTag(newTag, repository: repository);
+        if (!mounted) return;
 
         // Auto-select the newly created topic
         setState(() {
@@ -315,8 +328,8 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
     );
   }
 
-  void _onSave() {
-    widget.onSave?.call(_selectedTagIds.toList());
-    Navigator.pop(context);
+  Future<void> _onSave() async {
+    final saved = await persist(() => widget.onSave?.call(_selectedTagIds.toList()));
+    if (saved && mounted) Navigator.pop(context);
   }
 }

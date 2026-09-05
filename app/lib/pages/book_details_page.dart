@@ -505,10 +505,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   void _onAddNote() async {
     if (_provider.book == null) return;
 
-    final note = await NoteDialog.show(context, bookId: _provider.book!.id);
+    final repository = context.read<DataStore>().libraryRepository?.notes;
+    final note = await NoteDialog.show(
+      context,
+      bookId: _provider.book!.id,
+      onSave: (note) => _provider.addNote(note, repository: repository),
+    );
 
     if (note != null && mounted) {
-      _provider.addNote(note);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note added')));
     }
   }
@@ -531,10 +535,14 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   void _onAddAnnotation() async {
     if (_provider.book == null) return;
 
-    final annotation = await AnnotationDialog.show(context, bookId: _provider.book!.id);
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
+    final annotation = await AnnotationDialog.show(
+      context,
+      bookId: _provider.book!.id,
+      onSave: (annotation) => _provider.addAnnotation(annotation, repository: repository),
+    );
 
     if (annotation != null && mounted) {
-      _provider.addAnnotation(annotation);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Annotation added')));
     }
   }
@@ -555,19 +563,35 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   void _onEditNote(Note note) async {
     if (_provider.book == null) return;
 
-    final updatedNote = await NoteDialog.show(context, bookId: _provider.book!.id, existingNote: note);
+    final repository = context.read<DataStore>().libraryRepository?.notes;
+    final updatedNote = await NoteDialog.show(
+      context,
+      bookId: _provider.book!.id,
+      existingNote: note,
+      onSave: (updated) => _provider.updateNote(note.id, updated, previous: note, repository: repository),
+    );
 
     if (updatedNote != null && mounted) {
-      _provider.updateNote(note.id, updatedNote);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note updated')));
     }
   }
 
   void _onDeleteNote(Note note) async {
+    final repository = context.read<DataStore>().libraryRepository?.notes;
     final confirmed = await DeleteNoteDialog.show(context, note: note);
 
     if (confirmed && mounted) {
-      _provider.deleteNote(note.id);
+      try {
+        await _provider.deleteNote(note.id, repository: repository);
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+        }
+        return;
+      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note deleted')));
     }
   }
@@ -586,22 +610,38 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   }
 
   void _onEditAnnotationNote(Annotation annotation) async {
-    final note = await annotation_sheets.AnnotationNoteSheet.show(context, annotation: annotation);
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
+    await annotation_sheets.AnnotationNoteSheet.show(
+      context,
+      annotation: annotation,
+      onSave: (note) => _provider.updateAnnotationNote(
+        annotation.id,
+        note.isEmpty ? null : note,
+        previous: annotation,
+        repository: repository,
+      ),
+    );
     if (!mounted) return;
-
-    if (note != null) {
-      _provider.updateAnnotationNote(annotation.id, note.isEmpty ? null : note);
-    }
   }
 
   void _onDeleteAnnotation(Annotation annotation) async {
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
     final confirmed = await annotation_sheets.DeleteAnnotationDialog.show(
       context,
       annotation: annotation,
       bookTitle: _provider.book?.title ?? '',
     );
     if (confirmed && mounted) {
-      _provider.deleteAnnotation(annotation.id);
+      try {
+        await _provider.deleteAnnotation(annotation.id, repository: repository);
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+        }
+        return;
+      }
     }
   }
 

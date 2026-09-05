@@ -250,18 +250,27 @@ void main() {
       });
     });
 
+    test('remote note-only changes notify the details view', () async {
+      await provider.loadBook('book-1');
+      var notified = false;
+      provider.addListener(() => notified = true);
+      await dataStore.updateNote(dataStore.getNote('note-1')!.copyWith(content: 'Remote content'));
+      expect(notified, isTrue);
+      expect(provider.notes.single.content, 'Remote content');
+    });
+
     group('note CRUD', () {
       setUp(() async {
         await provider.loadBook('book-1');
       });
 
-      test('addNote persists to DataStore and notifies', () {
+      test('addNote persists to DataStore and notifies', () async {
         final note = buildTestNote(id: 'new-note', bookId: 'book-1', title: 'New Note', content: 'New content');
 
         var notified = false;
         provider.addListener(() => notified = true);
 
-        provider.addNote(note);
+        await provider.addNote(note);
 
         expect(provider.notes.length, 2);
         expect(provider.notes.any((n) => n.id == 'new-note'), true);
@@ -269,7 +278,7 @@ void main() {
         expect(notified, true);
       });
 
-      test('updateNote persists updated note to DataStore', () {
+      test('updateNote persists updated note to DataStore', () async {
         final updatedNote = buildTestNote(
           id: 'note-1',
           bookId: 'book-1',
@@ -277,13 +286,13 @@ void main() {
           content: 'Updated content',
         );
 
-        provider.updateNote('note-1', updatedNote);
+        await provider.updateNote('note-1', updatedNote);
 
         expect(dataStore.getNote('note-1')!.title, 'Updated Title');
       });
 
-      test('deleteNote removes from DataStore', () {
-        provider.deleteNote('note-1');
+      test('deleteNote removes from DataStore', () async {
+        await provider.deleteNote('note-1');
 
         expect(provider.notes, isEmpty);
         expect(dataStore.getNote('note-1'), isNull);
@@ -348,22 +357,22 @@ void main() {
         await provider.loadBook('book-1');
       });
 
-      test('addAnnotation persists to DataStore', () {
+      test('addAnnotation persists to DataStore', () async {
         final annotation = buildTestAnnotation(id: 'new-ann', bookId: 'book-1', selectedText: 'New highlight');
 
-        provider.addAnnotation(annotation);
+        await provider.addAnnotation(annotation);
 
         expect(provider.annotations.length, 2);
         expect(dataStore.getAnnotation('new-ann'), isNotNull);
       });
 
-      test('updateAnnotationNote updates the annotation note', () {
-        provider.updateAnnotationNote('ann-1', 'Updated note');
+      test('updateAnnotationNote updates the annotation note', () async {
+        await provider.updateAnnotationNote('ann-1', 'Updated note');
 
         expect(dataStore.getAnnotation('ann-1')!.note, 'Updated note');
       });
 
-      test('updateAnnotation replaces entire annotation', () {
+      test('updateAnnotation replaces entire annotation', () async {
         final updated = buildTestAnnotation(
           id: 'ann-1',
           bookId: 'book-1',
@@ -371,24 +380,24 @@ void main() {
           color: HighlightColor.pink,
         );
 
-        provider.updateAnnotation('ann-1', updated);
+        await provider.updateAnnotation('ann-1', updated);
 
         expect(dataStore.getAnnotation('ann-1')!.selectedText, 'Replaced text');
         expect(dataStore.getAnnotation('ann-1')!.color, HighlightColor.pink);
       });
 
-      test('deleteAnnotation removes from DataStore', () {
-        provider.deleteAnnotation('ann-1');
+      test('deleteAnnotation removes from DataStore', () async {
+        await provider.deleteAnnotation('ann-1');
 
         expect(provider.annotations, isEmpty);
         expect(dataStore.getAnnotation('ann-1'), isNull);
       });
 
-      test('updateAnnotationNote does nothing for nonexistent annotation', () {
+      test('updateAnnotationNote does nothing for nonexistent annotation', () async {
         var notified = false;
         provider.addListener(() => notified = true);
 
-        provider.updateAnnotationNote('nonexistent', 'A note');
+        await provider.updateAnnotationNote('nonexistent', 'A note');
 
         expect(notified, false);
       });

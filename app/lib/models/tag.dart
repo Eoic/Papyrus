@@ -21,12 +21,19 @@ class Tag {
   }
 
   /// Create a copy with updated fields.
-  Tag copyWith({String? id, String? name, String? colorHex, String? description, DateTime? createdAt}) {
+  Tag copyWith({
+    String? id,
+    String? name,
+    String? colorHex,
+    String? description,
+    bool clearDescription = false,
+    DateTime? createdAt,
+  }) {
     return Tag(
       id: id ?? this.id,
       name: name ?? this.name,
       colorHex: colorHex ?? this.colorHex,
-      description: description ?? this.description,
+      description: clearDescription ? null : description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
     );
   }

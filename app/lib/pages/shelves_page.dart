@@ -323,20 +323,30 @@ class _ShelvesPageState extends State<ShelvesPage> {
   // ============================================================================
 
   void _showAddShelfSheet(BuildContext context) {
+    final repository = context.read<DataStore>().libraryRepository?.shelves;
     AddShelfSheet.show(
       context,
-      onSave: (name, description, colorHex, icon) {
-        _provider.createShelf(name: name, description: description, colorHex: colorHex, icon: icon);
+      onSave: (name, description, colorHex, icon) async {
+        await _provider.createShelf(
+          name: name,
+          description: description,
+          colorHex: colorHex,
+          icon: icon,
+          repository: repository,
+        );
       },
     );
   }
 
   void _showEditShelfSheet(BuildContext context, ShelfData shelf) {
+    final repository = context.read<DataStore>().libraryRepository?.shelves;
     AddShelfSheet.show(
       context,
       shelf: shelf,
-      onSave: (name, description, colorHex, icon) {
-        _provider.updateShelf(
+      onSave: (name, description, colorHex, icon) async {
+        await _provider.updateShelf(
+          previous: shelf,
+          repository: repository,
           shelfId: shelf.id,
           name: name,
           description: description,
@@ -402,6 +412,7 @@ class _ShelvesPageState extends State<ShelvesPage> {
   }
 
   void _confirmDeleteShelf(BuildContext context, ShelfData shelf) {
+    final repository = context.read<DataStore>().libraryRepository?.shelves;
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
@@ -412,9 +423,17 @@ class _ShelvesPageState extends State<ShelvesPage> {
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
           FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _provider.deleteShelf(shelf.id);
+            onPressed: () async {
+              try {
+                await _provider.deleteShelf(shelf.id, repository: repository);
+                if (context.mounted) Navigator.of(context).pop();
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Could not delete shelf. Please try again.')));
+                }
+              }
             },
             style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
             child: const Text('Delete'),

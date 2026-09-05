@@ -220,50 +220,36 @@ class _BookDetailsState extends State<BookDetails> {
   void _showMoveToShelfSheet(BuildContext context) {
     final dataStore = context.read<DataStore>();
     final currentShelfIds = dataStore.getShelfIdsForBook(widget.book.id).toSet();
+    final repository = dataStore.libraryRepository?.memberships;
+    final bookId = widget.book.id;
 
     MoveToShelfSheet.show(
       context,
       book: widget.book,
-      onSave: (newShelfIds) {
-        final newShelfSet = newShelfIds.toSet();
-
-        for (final shelfId in currentShelfIds) {
-          if (!newShelfSet.contains(shelfId)) {
-            dataStore.removeBookFromShelf(widget.book.id, shelfId);
-          }
-        }
-
-        for (final shelfId in newShelfIds) {
-          if (!currentShelfIds.contains(shelfId)) {
-            dataStore.addBookToShelf(widget.book.id, shelfId);
-          }
-        }
-      },
+      onSave: (newShelfIds) => dataStore.updateBookMemberships(
+        bookIds: {bookId},
+        shelfIds: newShelfIds,
+        previousShelfIds: currentShelfIds,
+        repository: repository,
+      ),
     );
   }
 
   void _showManageTopicsSheet(BuildContext context) {
     final dataStore = context.read<DataStore>();
     final currentTagIds = dataStore.getTagIdsForBook(widget.book.id).toSet();
+    final repository = dataStore.libraryRepository?.memberships;
+    final bookId = widget.book.id;
 
     ManageTopicsSheet.show(
       context,
       book: widget.book,
-      onSave: (newTagIds) {
-        final newTagSet = newTagIds.toSet();
-
-        for (final tagId in currentTagIds) {
-          if (!newTagSet.contains(tagId)) {
-            dataStore.removeTagFromBook(widget.book.id, tagId);
-          }
-        }
-
-        for (final tagId in newTagIds) {
-          if (!currentTagIds.contains(tagId)) {
-            dataStore.addTagToBook(widget.book.id, tagId);
-          }
-        }
-      },
+      onSave: (newTagIds) => dataStore.updateBookMemberships(
+        bookIds: {bookId},
+        tagIds: newTagIds,
+        previousTagIds: currentTagIds,
+        repository: repository,
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/annotation.dart';
 
 /// Sort options for annotations.
@@ -134,14 +135,23 @@ class AnnotationsProvider extends ChangeNotifier {
   // CRUD (delegated to DataStore)
   // ============================================================================
 
-  void updateAnnotationNote(String annotationId, String? note) {
-    final annotation = _dataStore?.getAnnotation(annotationId);
+  Future<void> updateAnnotationNote(
+    String annotationId,
+    String? note, {
+    Annotation? previous,
+    EntityRepository<Annotation>? repository,
+  }) async {
+    final annotation = previous ?? _dataStore?.getAnnotation(annotationId);
     if (annotation == null || _dataStore == null) return;
-    _dataStore!.updateAnnotation(annotation.copyWith(note: note));
+    await _dataStore!.updateAnnotation(
+      annotation.copyWith(note: note, clearNote: note == null),
+      previous: annotation,
+      repository: repository,
+    );
   }
 
-  void deleteAnnotation(String annotationId) {
-    _dataStore?.deleteAnnotation(annotationId);
+  Future<void> deleteAnnotation(String annotationId, {EntityRepository<Annotation>? repository}) async {
+    await _dataStore?.deleteAnnotation(annotationId, repository: repository);
   }
 
   // ============================================================================
