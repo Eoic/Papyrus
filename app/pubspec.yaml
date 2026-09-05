@@ -59,6 +59,9 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.8
 
 flutter:
+  config:
+    enable-swift-package-manager: false
+
   uses-material-design: true
 
   assets:
