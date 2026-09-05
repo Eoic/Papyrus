@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/data/sample_data.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
@@ -35,11 +36,9 @@ class BookDetailsProvider extends ChangeNotifier {
   /// Called when DataStore changes - refresh current book if it was updated.
   void _onDataStoreChanged() {
     if (_currentBookId != null && _dataStore != null) {
-      final updatedBook = _dataStore!.getBook(_currentBookId!);
-      if (updatedBook != null && updatedBook != _book) {
-        _book = updatedBook;
-        notifyListeners();
-      }
+      _book = _dataStore!.getBook(_currentBookId!);
+      // Child records can change independently of the book metadata.
+      notifyListeners();
     }
   }
 
@@ -167,27 +166,24 @@ class BookDetailsProvider extends ChangeNotifier {
   }
 
   /// Add a new note. Persists to DataStore.
-  void addNote(Note note) {
+  Future<void> addNote(Note note, {EntityRepository<Note>? repository}) async {
     if (_dataStore != null) {
-      _dataStore!.addNote(note);
+      await _dataStore!.addNote(note, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Update an existing note. Persists to DataStore.
-  void updateNote(String noteId, Note updatedNote) {
+  Future<void> updateNote(String noteId, Note updatedNote, {Note? previous, EntityRepository<Note>? repository}) async {
     if (_dataStore != null) {
-      _dataStore!.updateNote(updatedNote);
+      await _dataStore!.updateNote(updatedNote, previous: previous, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Delete a note. Persists to DataStore.
-  void deleteNote(String noteId) {
+  Future<void> deleteNote(String noteId, {EntityRepository<Note>? repository}) async {
     if (_dataStore != null) {
-      _dataStore!.deleteNote(noteId);
+      await _dataStore!.deleteNote(noteId, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Update a bookmark's note. Persists to DataStore.
@@ -213,35 +209,45 @@ class BookDetailsProvider extends ChangeNotifier {
   }
 
   /// Add a new annotation. Persists to DataStore.
-  void addAnnotation(Annotation annotation) {
+  Future<void> addAnnotation(Annotation annotation, {EntityRepository<Annotation>? repository}) async {
     if (_dataStore != null) {
-      _dataStore!.addAnnotation(annotation);
+      await _dataStore!.addAnnotation(annotation, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Update an annotation's note. Persists to DataStore.
-  void updateAnnotationNote(String annotationId, String? note) {
-    final annotation = _dataStore?.getAnnotation(annotationId);
+  Future<void> updateAnnotationNote(
+    String annotationId,
+    String? note, {
+    Annotation? previous,
+    EntityRepository<Annotation>? repository,
+  }) async {
+    final annotation = previous ?? _dataStore?.getAnnotation(annotationId);
     if (annotation == null || _dataStore == null) return;
-    _dataStore!.updateAnnotation(annotation.copyWith(note: note));
-    notifyListeners();
+    await _dataStore!.updateAnnotation(
+      annotation.copyWith(note: note, clearNote: note == null),
+      previous: annotation,
+      repository: repository,
+    );
   }
 
   /// Update an existing annotation. Persists to DataStore.
-  void updateAnnotation(String annotationId, Annotation updatedAnnotation) {
+  Future<void> updateAnnotation(
+    String annotationId,
+    Annotation updatedAnnotation, {
+    Annotation? previous,
+    EntityRepository<Annotation>? repository,
+  }) async {
     if (_dataStore != null) {
-      _dataStore!.updateAnnotation(updatedAnnotation);
+      await _dataStore!.updateAnnotation(updatedAnnotation, previous: previous, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Delete an annotation. Persists to DataStore.
-  void deleteAnnotation(String annotationId) {
+  Future<void> deleteAnnotation(String annotationId, {EntityRepository<Annotation>? repository}) async {
     if (_dataStore != null) {
-      _dataStore!.deleteAnnotation(annotationId);
+      await _dataStore!.deleteAnnotation(annotationId, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Toggle favorite status. Persists to DataStore.

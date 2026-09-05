@@ -133,6 +133,7 @@ class Annotation {
     HighlightColor? color,
     BookLocation? location,
     String? note,
+    bool clearNote = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -142,7 +143,7 @@ class Annotation {
       selectedText: selectedText ?? this.selectedText,
       color: color ?? this.color,
       location: location ?? this.location,
-      note: note ?? this.note,
+      note: clearNote ? null : note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

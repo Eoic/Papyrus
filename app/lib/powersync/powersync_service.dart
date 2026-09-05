@@ -3,6 +3,15 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/repositories/book_repository.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
+import 'package:papyrus/models/annotation.dart';
+import 'package:papyrus/models/book_shelf_relation.dart';
+import 'package:papyrus/models/book_tag_relation.dart';
+import 'package:papyrus/models/note.dart';
+import 'package:papyrus/models/shelf.dart';
+import 'package:papyrus/models/tag.dart';
+import 'package:papyrus/powersync/library_database.dart';
+import 'package:papyrus/powersync/library_row_mapper.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/powersync/book_metadata_sync_state.dart';
 import 'package:papyrus/powersync/papyrus_schema.dart';
@@ -36,7 +45,7 @@ class SyncStateRevisionCoordinator {
   void invalidate() => _revision++;
 }
 
-class PapyrusPowerSyncService implements BookRepository {
+class PapyrusPowerSyncService implements BookRepository, LibraryRepository {
   final PowerSyncConnectorFactory connectorFactory;
   final LibraryDatabasePathResolver? pathResolver;
   final bool connectAuthenticated;
@@ -47,6 +56,40 @@ class PapyrusPowerSyncService implements BookRepository {
       StreamController<BookMetadataSyncState>.broadcast();
 
   PowerSyncDatabase? _database;
+  LibraryDatabase? _library;
+  LibrarySnapshot? _snapshot;
+  final _libraryController = StreamController<LibrarySnapshot>.broadcast();
+
+  LibraryDatabase get _activeLibrary {
+    final library = _library;
+    if (library == null) throw StateError('Library database is not active');
+    return library;
+  }
+
+  @override
+  EditableBookRepository get scopedBooks => _activeLibrary.books;
+  @override
+  EntityRepository<Shelf> get shelves => _activeLibrary.shelves;
+  @override
+  EntityRepository<Tag> get tags => _activeLibrary.tags;
+  @override
+  EntityRepository<Note> get notes => _activeLibrary.notes;
+  @override
+  EntityRepository<Annotation> get annotations => _activeLibrary.annotations;
+  @override
+  EntityRepository<BookShelfRelation> get bookShelves => _activeLibrary.bookShelves;
+  @override
+  EntityRepository<BookTagRelation> get bookTags => _activeLibrary.bookTags;
+  @override
+  LibraryMembershipWriter get memberships => _activeLibrary;
+
+  @override
+  Stream<LibrarySnapshot> watchLibrary() => Stream<LibrarySnapshot>.multi((listener) {
+    final subscription = _libraryController.stream.listen(listener.addSync, onError: listener.addErrorSync);
+    final current = _snapshot;
+    if (current != null) listener.addSync(current);
+    listener.onCancel = subscription.cancel;
+  }, isBroadcast: true);
   StreamSubscription? _booksSubscription;
   StreamSubscription? _statusSubscription;
   Future<void>? _modeOperation;
@@ -106,7 +149,11 @@ class PapyrusPowerSyncService implements BookRepository {
       throw StateError('Only guest libraries can be cleared with clearGuestLibrary');
     }
     final database = _requireDatabase();
-    await database.execute('DELETE FROM books');
+    await database.writeTransaction((tx) async {
+      for (final table in libraryTableNames.reversed) {
+        await tx.execute('DELETE FROM $table');
+      }
+    });
     _booksController.add(const []);
     _setSyncState(const SyncState());
     _setBookMetadataSyncState(const BookMetadataSyncState());
@@ -157,28 +204,19 @@ class PapyrusPowerSyncService implements BookRepository {
 
   @override
   Future<void> upsert(Book book) async {
-    final database = _requireDatabase();
-    final row = PowerSyncBookMapper.toRow(book);
-    final existing = await database.getOptional('SELECT id FROM books WHERE id = ?', [book.id]);
-    if (existing == null) {
-      await database.execute(PowerSyncBookMapper.insertSql(), PowerSyncBookMapper.rowParameters(row));
-    } else {
-      await database.execute(PowerSyncBookMapper.updateSql(), PowerSyncBookMapper.updateParameters(row));
-    }
-    await _refreshPendingWrites();
+    await scopedBooks.upsert(book);
   }
 
   @override
   Future<void> delete(String id) async {
-    final database = _requireDatabase();
-    await database.execute('DELETE FROM books WHERE id = ?', [id]);
-    await _refreshPendingWrites();
+    await scopedBooks.delete(id);
   }
 
   Future<void> close() async {
     await _modeOperation;
     await _closeActive(clearAuthenticated: false);
     await _booksController.close();
+    await _libraryController.close();
     await _syncStateController.close();
     await _bookMetadataSyncStateController.close();
   }
@@ -221,6 +259,8 @@ class PapyrusPowerSyncService implements BookRepository {
     );
     await database.initialize();
     _database = database;
+    _library = LibraryDatabase(database, _refreshPendingWrites);
+    await _library!.migrateLegacyBooks();
     _watchBooks(database);
 
     if (mode == LibraryDatabaseMode.authenticated && connectAuthenticated) {
@@ -234,11 +274,21 @@ class PapyrusPowerSyncService implements BookRepository {
 
   void _watchBooks(PowerSyncDatabase database) {
     unawaited(_booksSubscription?.cancel());
+    final library = _activeLibrary;
     _booksSubscription = database
-        .watch('SELECT * FROM books ORDER BY added_at DESC', triggerOnTables: ['books'])
-        .listen((rows) {
-          _booksController.add(rows.map((row) => PowerSyncBookMapper.fromRow(Map<String, Object?>.from(row))).toList());
-        });
+        .watch('SELECT count(*) FROM books', triggerOnTables: libraryTableNames)
+        .asyncMap((_) => library.snapshot())
+        .listen(
+          (snapshot) {
+            if (!library.active) return;
+            _snapshot = snapshot;
+            _booksController.add(snapshot.books);
+            _libraryController.add(snapshot);
+          },
+          onError: (Object error, StackTrace stack) {
+            if (library.active) _libraryController.addError(error, stack);
+          },
+        );
   }
 
   void _watchStatus(PowerSyncDatabase database) {
@@ -349,6 +399,14 @@ class PapyrusPowerSyncService implements BookRepository {
 
   Future<void> _closeActive({required bool clearAuthenticated}) async {
     _syncStateRevisions.invalidate();
+    final library = _library;
+    if (library != null) {
+      library.active = false;
+      _library = null;
+      _snapshot = const LibrarySnapshot();
+      _booksController.add(const []);
+      _libraryController.add(_snapshot!);
+    }
     await _booksSubscription?.cancel();
     await _statusSubscription?.cancel();
     _booksSubscription = null;

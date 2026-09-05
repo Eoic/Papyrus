@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:uuid/uuid.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:papyrus/models/annotation.dart';
@@ -9,17 +13,23 @@ import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 class AnnotationDialog extends StatefulWidget {
   final String bookId;
   final Annotation? existingAnnotation;
+  final FutureOr<void> Function(Annotation)? onSave;
 
-  const AnnotationDialog({super.key, required this.bookId, this.existingAnnotation});
+  const AnnotationDialog({super.key, required this.bookId, this.existingAnnotation, this.onSave});
 
   /// Shows the dialog and returns the created/updated annotation, or null if cancelled.
-  static Future<Annotation?> show(BuildContext context, {required String bookId, Annotation? existingAnnotation}) {
+  static Future<Annotation?> show(
+    BuildContext context, {
+    required String bookId,
+    Annotation? existingAnnotation,
+    FutureOr<void> Function(Annotation)? onSave,
+  }) {
     return showModalBottomSheet<Annotation>(
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
       useSafeArea: true,
-      builder: (context) => AnnotationDialog(bookId: bookId, existingAnnotation: existingAnnotation),
+      builder: (context) => AnnotationDialog(bookId: bookId, existingAnnotation: existingAnnotation, onSave: onSave),
     );
   }
 
@@ -27,7 +37,7 @@ class AnnotationDialog extends StatefulWidget {
   State<AnnotationDialog> createState() => _AnnotationDialogState();
 }
 
-class _AnnotationDialogState extends State<AnnotationDialog> {
+class _AnnotationDialogState extends State<AnnotationDialog> with PersistentSave<AnnotationDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _textController;
   late final TextEditingController _pageController;
@@ -56,7 +66,8 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
+    if (isSaving) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final page = int.parse(_pageController.text);
@@ -64,7 +75,7 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
     final note = _noteController.text.trim();
 
     final annotation = Annotation(
-      id: widget.existingAnnotation?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.existingAnnotation?.id ?? const Uuid().v4(),
       bookId: widget.bookId,
       selectedText: _textController.text.trim(),
       color: _selectedColor,
@@ -73,7 +84,8 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
       createdAt: widget.existingAnnotation?.createdAt ?? DateTime.now(),
       updatedAt: _isEditing ? DateTime.now() : null,
     );
-    Navigator.of(context).pop(annotation);
+    final saved = await persist(() => widget.onSave?.call(annotation));
+    if (saved && mounted) Navigator.of(context).pop(annotation);
   }
 
   @override
@@ -103,6 +115,8 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
                       title: _isEditing ? 'Edit annotation' : 'New annotation',
                       onCancel: () => Navigator.of(context).pop(),
                       onSave: _save,
+                      canSave: !isSaving,
+                      canCancel: !isSaving,
                     ),
                   ],
                 ),

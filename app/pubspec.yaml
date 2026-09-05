@@ -41,6 +41,7 @@ dependencies:
   crypto: ^3.0.6
   path_provider: ^2.1.5
   powersync: ^2.3.0
+  sqlite_async: ^0.14.3
   web: ^1.1.1
   mobile_scanner: ^7.0.1
   shared_preferences: ^2.5.4

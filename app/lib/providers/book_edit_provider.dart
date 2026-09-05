@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/services/metadata_service.dart';
 
@@ -9,6 +10,7 @@ enum MetadataFetchState { idle, loading, success, error }
 /// Provider for book edit page state management.
 class BookEditProvider extends ChangeNotifier {
   DataStore? _dataStore;
+  BookRepository? _repository;
   final MetadataService _metadataService;
 
   // Book state
@@ -83,6 +85,7 @@ class BookEditProvider extends ChangeNotifier {
     try {
       final dataStore = _dataStore!;
       final repository = dataStore.requireBookRepository();
+      _repository = repository;
       var book = dataStore.getBook(bookId) ?? await repository.getById(bookId);
       if (book == null && !dataStore.isLoaded) {
         await dataStore.waitUntilLoaded();
@@ -112,7 +115,7 @@ class BookEditProvider extends ChangeNotifier {
 
     try {
       final bookToSave = _editedBook!;
-      await _dataStore!.updateBookAndWait(bookToSave);
+      await _dataStore!.updateBookAndWait(bookToSave, previous: _originalBook, repository: _repository);
       _originalBook = bookToSave;
       _coverImageBytes = null;
       _isSaving = false;

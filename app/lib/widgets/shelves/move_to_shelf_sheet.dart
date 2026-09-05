@@ -1,5 +1,10 @@
+import 'package:uuid/uuid.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -20,14 +25,18 @@ class MoveToShelfSheet extends StatefulWidget {
   final List<String>? bulkBookIds;
 
   /// Called when shelf assignments change.
-  final void Function(List<String> shelfIds)? onSave;
+  final FutureOr<void> Function(List<String> shelfIds)? onSave;
 
   const MoveToShelfSheet({super.key, this.book, this.bulkBookIds, this.onSave});
 
   bool get isBulkMode => bulkBookIds != null && bulkBookIds!.isNotEmpty;
 
   /// Shows the move to shelf sheet for a single book.
-  static Future<void> show(BuildContext context, {required Book book, void Function(List<String> shelfIds)? onSave}) {
+  static Future<void> show(
+    BuildContext context, {
+    required Book book,
+    FutureOr<void> Function(List<String> shelfIds)? onSave,
+  }) {
     return showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -41,7 +50,7 @@ class MoveToShelfSheet extends StatefulWidget {
   static Future<void> showBulk(
     BuildContext context, {
     required List<String> bookIds,
-    void Function(List<String> shelfIds)? onSave,
+    FutureOr<void> Function(List<String> shelfIds)? onSave,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -55,14 +64,16 @@ class MoveToShelfSheet extends StatefulWidget {
   State<MoveToShelfSheet> createState() => _MoveToShelfSheetState();
 }
 
-class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
+class _MoveToShelfSheetState extends State<MoveToShelfSheet> with PersistentSave<MoveToShelfSheet> {
   late Set<String> _selectedShelfIds;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  EntityRepository<Shelf>? _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = context.read<DataStore>().libraryRepository?.shelves;
     if (widget.isBulkMode) {
       _selectedShelfIds = {};
     } else {
@@ -193,7 +204,7 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
                 children: [
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                   const SizedBox(width: Spacing.md),
-                  FilledButton(onPressed: _onSave, child: const Text('Save')),
+                  FilledButton(onPressed: isSaving ? null : _onSave, child: const Text('Save')),
                 ],
               ),
             ),
@@ -292,13 +303,14 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
 
   void _showCreateShelfSheet() {
     final dataStore = context.read<DataStore>();
+    final repository = _repository;
 
     AddShelfSheet.show(
       context,
-      onSave: (name, description, colorHex, icon) {
+      onSave: (name, description, colorHex, icon) async {
         final now = DateTime.now();
         final newShelf = Shelf(
-          id: 'shelf-${now.millisecondsSinceEpoch}',
+          id: const Uuid().v4(),
           name: name,
           description: description,
           colorHex: colorHex,
@@ -307,7 +319,8 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
           createdAt: now,
           updatedAt: now,
         );
-        dataStore.addShelf(newShelf);
+        await dataStore.addShelf(newShelf, repository: repository);
+        if (!mounted) return;
 
         // Auto-select the newly created shelf
         setState(() {
@@ -317,8 +330,8 @@ class _MoveToShelfSheetState extends State<MoveToShelfSheet> {
     );
   }
 
-  void _onSave() {
-    widget.onSave?.call(_selectedShelfIds.toList());
-    Navigator.pop(context);
+  Future<void> _onSave() async {
+    final saved = await persist(() => widget.onSave?.call(_selectedShelfIds.toList()));
+    if (saved && mounted) Navigator.pop(context);
   }
 }

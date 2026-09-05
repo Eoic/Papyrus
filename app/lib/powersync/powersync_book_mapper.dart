@@ -26,11 +26,26 @@ const syncedBookColumns = [
   'custom_metadata',
   'added_at',
   'updated_at',
+  'publication_date',
+  'file_format',
+  'file_size',
+  'file_hash',
+  'is_physical',
+  'physical_location',
+  'lent_to',
+  'lent_at',
+  'series_id',
+  'series_name',
+  'series_number',
+  'started_at',
+  'completed_at',
+  'last_read_at',
 ];
 
 class PowerSyncBookMapper {
   static Book fromRow(Map<String, Object?> row) {
     final metadata = _decodeObject(row['custom_metadata']);
+    Object? field(String key) => row.containsKey(key) ? row[key] : metadata[key];
 
     return Book(
       id: row['id'] as String,
@@ -40,7 +55,7 @@ class PowerSyncBookMapper {
       coAuthors: _decodeStringList(row['co_authors']),
       isbn: row['isbn'] as String?,
       isbn13: row['isbn13'] as String?,
-      publicationDate: _parseDate(metadata['publication_date']),
+      publicationDate: _parseDate(field('publication_date')),
       publisher: row['publisher'] as String?,
       language: row['language'] as String?,
       pageCount: _toInt(row['page_count']),
@@ -48,13 +63,13 @@ class PowerSyncBookMapper {
       coverUrl: row['cover_image_url'] as String?,
       fileMediaId: row['file_media_id'] as String?,
       coverMediaId: row['cover_media_id'] as String?,
-      fileFormat: _bookFormat(metadata['file_format']),
-      fileSize: _toInt(metadata['file_size']),
-      fileHash: metadata['file_hash'] as String?,
-      isPhysical: _toBool(metadata['is_physical']),
-      physicalLocation: metadata['physical_location'] as String?,
-      lentTo: metadata['lent_to'] as String?,
-      lentAt: _parseDate(metadata['lent_at']),
+      fileFormat: _bookFormat(field('file_format')),
+      fileSize: _toInt(field('file_size')),
+      fileHash: field('file_hash') as String?,
+      isPhysical: _toBool(field('is_physical')),
+      physicalLocation: field('physical_location') as String?,
+      lentTo: field('lent_to') as String?,
+      lentAt: _parseDate(field('lent_at')),
       readingStatus: _readingStatus(row['reading_status']),
       currentPage: _toInt(row['current_page']),
       currentPosition: _toDouble(row['current_position']) ?? 0.0,
@@ -62,34 +77,18 @@ class PowerSyncBookMapper {
       isFavorite: _toBool(row['is_favorite']),
       rating: _toInt(row['rating']),
       customMetadata: _decodeNestedMetadata(metadata['custom_metadata']),
-      seriesId: metadata['series_id'] as String?,
-      seriesName: metadata['series_name'] as String?,
-      seriesNumber: _toDouble(metadata['series_number']),
+      seriesId: field('series_id') as String?,
+      seriesName: field('series_name') as String?,
+      seriesNumber: _toDouble(field('series_number')),
       addedAt: _parseDate(row['added_at']) ?? DateTime.now(),
-      startedAt: _parseDate(metadata['started_at']),
-      completedAt: _parseDate(metadata['completed_at']),
-      lastReadAt: _parseDate(metadata['last_read_at']),
+      startedAt: _parseDate(field('started_at')),
+      completedAt: _parseDate(field('completed_at')),
+      lastReadAt: _parseDate(field('last_read_at')),
     );
   }
 
   static Map<String, Object?> toRow(Book book) {
-    final metadata = <String, Object?>{
-      if (book.publicationDate != null) 'publication_date': book.publicationDate!.toIso8601String(),
-      if (book.fileFormat != null) 'file_format': book.fileFormat!.name,
-      if (book.fileSize != null) 'file_size': book.fileSize,
-      if (book.fileHash != null) 'file_hash': book.fileHash,
-      'is_physical': book.isPhysical,
-      if (book.physicalLocation != null) 'physical_location': book.physicalLocation,
-      if (book.lentTo != null) 'lent_to': book.lentTo,
-      if (book.lentAt != null) 'lent_at': book.lentAt!.toIso8601String(),
-      if (book.customMetadata != null) 'custom_metadata': book.customMetadata,
-      if (book.seriesId != null) 'series_id': book.seriesId,
-      if (book.seriesName != null) 'series_name': book.seriesName,
-      if (book.seriesNumber != null) 'series_number': book.seriesNumber,
-      if (book.startedAt != null) 'started_at': book.startedAt!.toIso8601String(),
-      if (book.completedAt != null) 'completed_at': book.completedAt!.toIso8601String(),
-      if (book.lastReadAt != null) 'last_read_at': book.lastReadAt!.toIso8601String(),
-    };
+    final metadata = <String, Object?>{'custom_metadata': book.customMetadata};
     final now = DateTime.now().toIso8601String();
 
     return {
@@ -116,6 +115,20 @@ class PowerSyncBookMapper {
       'custom_metadata': jsonEncode(metadata),
       'added_at': book.addedAt.toIso8601String(),
       'updated_at': now,
+      'publication_date': book.publicationDate?.toUtc().toIso8601String(),
+      'file_format': book.fileFormat?.name,
+      'file_size': book.fileSize,
+      'file_hash': book.fileHash,
+      'is_physical': book.isPhysical ? 1 : 0,
+      'physical_location': book.physicalLocation,
+      'lent_to': book.lentTo,
+      'lent_at': book.lentAt?.toUtc().toIso8601String(),
+      'series_id': book.seriesId,
+      'series_name': book.seriesName,
+      'series_number': book.seriesNumber,
+      'started_at': book.startedAt?.toUtc().toIso8601String(),
+      'completed_at': book.completedAt?.toUtc().toIso8601String(),
+      'last_read_at': book.lastReadAt?.toUtc().toIso8601String(),
     };
   }
 
@@ -125,8 +138,12 @@ class PowerSyncBookMapper {
     }
 
     final decoded = Map<String, dynamic>.from(data);
-    decoded['co_authors'] = _decodeStringList(decoded['co_authors']);
-    decoded['custom_metadata'] = _decodeObject(decoded['custom_metadata']);
+    if (decoded.containsKey('co_authors') && decoded['co_authors'] != null) {
+      decoded['co_authors'] = _decodeStringList(decoded['co_authors']);
+    }
+    if (decoded.containsKey('custom_metadata') && decoded['custom_metadata'] != null) {
+      decoded['custom_metadata'] = _decodeObject(decoded['custom_metadata']);
+    }
     return decoded;
   }
 
@@ -154,7 +171,8 @@ WHERE id = ?
   }
 
   static String? _remoteCoverUrl(String? coverUrl) {
-    if (coverUrl == null || coverUrl.startsWith('data:')) {
+    final uri = coverUrl == null ? null : Uri.tryParse(coverUrl);
+    if (uri == null || !{'http', 'https'}.contains(uri.scheme) || uri.host.isEmpty) {
       return null;
     }
 

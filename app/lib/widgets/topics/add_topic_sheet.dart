@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:papyrus/models/tag.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/color_utils.dart';
@@ -10,7 +13,7 @@ class AddTopicSheet extends StatefulWidget {
   final Tag? topic;
 
   /// Called when the topic is saved.
-  final void Function(String name, String? description, String colorHex)? onSave;
+  final FutureOr<void> Function(String name, String? description, String colorHex)? onSave;
 
   const AddTopicSheet({super.key, this.topic, this.onSave});
 
@@ -18,7 +21,7 @@ class AddTopicSheet extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     Tag? topic,
-    void Function(String name, String? description, String colorHex)? onSave,
+    FutureOr<void> Function(String name, String? description, String colorHex)? onSave,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -32,7 +35,7 @@ class AddTopicSheet extends StatefulWidget {
   State<AddTopicSheet> createState() => _AddTopicSheetState();
 }
 
-class _AddTopicSheetState extends State<AddTopicSheet> {
+class _AddTopicSheetState extends State<AddTopicSheet> with PersistentSave<AddTopicSheet> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late String _selectedColorHex;
@@ -138,7 +141,7 @@ class _AddTopicSheetState extends State<AddTopicSheet> {
     );
   }
 
-  bool get _canSave => _nameController.text.trim().isNotEmpty;
+  bool get _canSave => !isSaving && _nameController.text.trim().isNotEmpty;
 
   Widget _buildColorPicker(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -231,15 +234,17 @@ class _AddTopicSheetState extends State<AddTopicSheet> {
     );
   }
 
-  void _onSave() {
+  Future<void> _onSave() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
-    widget.onSave?.call(
-      name,
-      _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-      _selectedColorHex,
+    final saved = await persist(
+      () => widget.onSave?.call(
+        name,
+        _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+        _selectedColorHex,
+      ),
     );
-    Navigator.of(context).pop();
+    if (saved && mounted) Navigator.of(context).pop();
   }
 }

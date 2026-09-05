@@ -113,27 +113,18 @@ Future<void> _downloadBookFile(BuildContext context, Book book) async {
 void _showManageTopicsSheet(BuildContext context, Book book) {
   final dataStore = context.read<DataStore>();
   final currentTagIds = dataStore.getTagIdsForBook(book.id).toSet();
+  final repository = dataStore.libraryRepository?.memberships;
+  final bookId = book.id;
 
   ManageTopicsSheet.show(
     context,
     book: book,
-    onSave: (newTagIds) {
-      final newTagSet = newTagIds.toSet();
-
-      // Remove book from topics it was removed from
-      for (final tagId in currentTagIds) {
-        if (!newTagSet.contains(tagId)) {
-          dataStore.removeTagFromBook(book.id, tagId);
-        }
-      }
-
-      // Add book to new topics
-      for (final tagId in newTagIds) {
-        if (!currentTagIds.contains(tagId)) {
-          dataStore.addTagToBook(book.id, tagId);
-        }
-      }
-    },
+    onSave: (newTagIds) => dataStore.updateBookMemberships(
+      bookIds: {bookId},
+      tagIds: newTagIds,
+      previousTagIds: currentTagIds,
+      repository: repository,
+    ),
   );
 }
 
@@ -141,26 +132,17 @@ void _showManageTopicsSheet(BuildContext context, Book book) {
 void _showMoveToShelfSheet(BuildContext context, Book book) {
   final dataStore = context.read<DataStore>();
   final currentShelfIds = dataStore.getShelfIdsForBook(book.id).toSet();
+  final repository = dataStore.libraryRepository?.memberships;
+  final bookId = book.id;
 
   MoveToShelfSheet.show(
     context,
     book: book,
-    onSave: (newShelfIds) {
-      final newShelfSet = newShelfIds.toSet();
-
-      // Remove book from shelves it was removed from
-      for (final shelfId in currentShelfIds) {
-        if (!newShelfSet.contains(shelfId)) {
-          dataStore.removeBookFromShelf(book.id, shelfId);
-        }
-      }
-
-      // Add book to new shelves
-      for (final shelfId in newShelfIds) {
-        if (!currentShelfIds.contains(shelfId)) {
-          dataStore.addBookToShelf(book.id, shelfId);
-        }
-      }
-    },
+    onSave: (newShelfIds) => dataStore.updateBookMemberships(
+      bookIds: {bookId},
+      shelfIds: newShelfIds,
+      previousShelfIds: currentShelfIds,
+      repository: repository,
+    ),
   );
 }

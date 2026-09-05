@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -11,18 +14,23 @@ import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
 /// Bottom sheet for editing an annotation's attached note.
 class AnnotationNoteSheet extends StatefulWidget {
   final Annotation annotation;
+  final FutureOr<void> Function(String)? onSave;
 
-  const AnnotationNoteSheet({super.key, required this.annotation});
+  const AnnotationNoteSheet({super.key, required this.annotation, this.onSave});
 
   /// Show the note editing sheet. Returns the new note text, or null if cancelled.
-  static Future<String?> show(BuildContext context, {required Annotation annotation}) {
+  static Future<String?> show(
+    BuildContext context, {
+    required Annotation annotation,
+    FutureOr<void> Function(String)? onSave,
+  }) {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
       ),
-      builder: (context) => AnnotationNoteSheet(annotation: annotation),
+      builder: (context) => AnnotationNoteSheet(annotation: annotation, onSave: onSave),
     );
   }
 
@@ -30,7 +38,7 @@ class AnnotationNoteSheet extends StatefulWidget {
   State<AnnotationNoteSheet> createState() => _AnnotationNoteSheetState();
 }
 
-class _AnnotationNoteSheetState extends State<AnnotationNoteSheet> {
+class _AnnotationNoteSheetState extends State<AnnotationNoteSheet> with PersistentSave<AnnotationNoteSheet> {
   late TextEditingController _controller;
 
   @override
@@ -63,9 +71,12 @@ class _AnnotationNoteSheetState extends State<AnnotationNoteSheet> {
               BottomSheetHeader(
                 title: 'Edit note',
                 onCancel: () => Navigator.pop(context),
-                onSave: () {
+                canSave: !isSaving,
+                canCancel: !isSaving,
+                onSave: () async {
                   final text = _controller.text.trim();
-                  Navigator.pop(context, text.isEmpty ? '' : text);
+                  final saved = await persist(() => widget.onSave?.call(text));
+                  if (saved && context.mounted) Navigator.pop(context, text);
                 },
               ),
               const SizedBox(height: Spacing.md),

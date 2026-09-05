@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/media/media_upload_queue.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/providers/library_provider.dart';
@@ -18,22 +19,20 @@ import 'package:provider/provider.dart';
 // =============================================================================
 
 /// Add all selected books to the given shelves.
-void bulkAddToShelves(DataStore dataStore, Set<String> bookIds, List<String> shelfIds) {
-  for (final bookId in bookIds) {
-    for (final shelfId in shelfIds) {
-      dataStore.addBookToShelf(bookId, shelfId);
-    }
-  }
-}
+Future<void> bulkAddToShelves(
+  DataStore dataStore,
+  Set<String> bookIds,
+  List<String> shelfIds, {
+  LibraryMembershipWriter? repository,
+}) => dataStore.updateBookMemberships(bookIds: bookIds, shelfIds: shelfIds, additive: true, repository: repository);
 
 /// Set topics for all selected books (additive — does not remove existing).
-void bulkAddTopics(DataStore dataStore, Set<String> bookIds, List<String> tagIds) {
-  for (final bookId in bookIds) {
-    for (final tagId in tagIds) {
-      dataStore.addTagToBook(bookId, tagId);
-    }
-  }
-}
+Future<void> bulkAddTopics(
+  DataStore dataStore,
+  Set<String> bookIds,
+  List<String> tagIds, {
+  LibraryMembershipWriter? repository,
+}) => dataStore.updateBookMemberships(bookIds: bookIds, tagIds: tagIds, additive: true, repository: repository);
 
 /// Change reading status for all selected books.
 void bulkChangeStatus(DataStore dataStore, Set<String> bookIds, LibraryReadingStatus status) {
@@ -82,12 +81,13 @@ void bulkDelete(DataStore dataStore, Set<String> bookIds) {
 void handleBulkAddToShelf(BuildContext context, LibraryProvider libraryProvider) {
   final dataStore = context.read<DataStore>();
   final selectedIds = libraryProvider.selectedBookIds.toList();
+  final repository = dataStore.libraryRepository?.memberships;
 
   MoveToShelfSheet.showBulk(
     context,
     bookIds: selectedIds,
-    onSave: (shelfIds) {
-      bulkAddToShelves(dataStore, libraryProvider.selectedBookIds, shelfIds);
+    onSave: (shelfIds) async {
+      await bulkAddToShelves(dataStore, selectedIds.toSet(), shelfIds, repository: repository);
       libraryProvider.exitSelectionMode();
     },
   );
@@ -97,12 +97,13 @@ void handleBulkAddToShelf(BuildContext context, LibraryProvider libraryProvider)
 void handleBulkManageTopics(BuildContext context, LibraryProvider libraryProvider) {
   final dataStore = context.read<DataStore>();
   final selectedIds = libraryProvider.selectedBookIds.toList();
+  final repository = dataStore.libraryRepository?.memberships;
 
   ManageTopicsSheet.showBulk(
     context,
     bookIds: selectedIds,
-    onSave: (tagIds) {
-      bulkAddTopics(dataStore, libraryProvider.selectedBookIds, tagIds);
+    onSave: (tagIds) async {
+      await bulkAddTopics(dataStore, selectedIds.toSet(), tagIds, repository: repository);
       libraryProvider.exitSelectionMode();
     },
   );

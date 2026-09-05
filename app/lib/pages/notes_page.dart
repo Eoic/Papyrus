@@ -313,19 +313,31 @@ class _NotesPageState extends State<NotesPage> {
   }
 
   void _showNoteActions(BuildContext context, NotesProvider provider, Note note) async {
+    final repository = context.read<DataStore>().libraryRepository?.notes;
     final action = await NoteActionSheet.show(context, note: note);
     if (!mounted || action == null) return;
 
     switch (action) {
       case NoteAction.edit:
-        final updatedNote = await NoteDialog.show(this.context, bookId: note.bookId, existingNote: note);
-        if (updatedNote != null && mounted) {
-          provider.updateNote(updatedNote);
-        }
+        await NoteDialog.show(
+          this.context,
+          bookId: note.bookId,
+          existingNote: note,
+          onSave: (updated) => provider.updateNote(updated, previous: note, repository: repository),
+        );
       case NoteAction.delete:
         final confirmed = await DeleteNoteDialog.show(this.context, note: note);
         if (confirmed && mounted) {
-          provider.deleteNote(note.id);
+          try {
+            await provider.deleteNote(note.id, repository: repository);
+          } catch (_) {
+            if (mounted) {
+              ScaffoldMessenger.of(
+                this.context,
+              ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+            }
+            return;
+          }
         }
     }
   }

@@ -336,19 +336,35 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
   }
 
   void _onEditAnnotationNote(AnnotationsProvider provider, Annotation annotation) async {
-    final note = await AnnotationNoteSheet.show(context, annotation: annotation);
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
+    await AnnotationNoteSheet.show(
+      context,
+      annotation: annotation,
+      onSave: (note) => provider.updateAnnotationNote(
+        annotation.id,
+        note.isEmpty ? null : note,
+        previous: annotation,
+        repository: repository,
+      ),
+    );
     if (!mounted) return;
-
-    if (note != null) {
-      provider.updateAnnotationNote(annotation.id, note.isEmpty ? null : note);
-    }
   }
 
   void _onDeleteAnnotation(AnnotationsProvider provider, Annotation annotation) async {
     final bookTitle = provider.getBookTitle(annotation.bookId);
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
     final confirmed = await DeleteAnnotationDialog.show(context, annotation: annotation, bookTitle: bookTitle);
     if (confirmed && mounted) {
-      provider.deleteAnnotation(annotation.id);
+      try {
+        await provider.deleteAnnotation(annotation.id, repository: repository);
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+        }
+        return;
+      }
     }
   }
 }

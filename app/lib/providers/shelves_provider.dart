@@ -1,5 +1,7 @@
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/shelf.dart';
 
 /// View mode for displaying shelves.
@@ -247,14 +249,20 @@ class ShelvesProvider extends ChangeNotifier {
   }
 
   /// Creates a new shelf.
-  Future<Shelf> createShelf({required String name, String? description, String? colorHex, IconData? icon}) async {
+  Future<Shelf> createShelf({
+    required String name,
+    String? description,
+    String? colorHex,
+    IconData? icon,
+    EntityRepository<Shelf>? repository,
+  }) async {
     if (_dataStore == null) {
       throw Exception('DataStore not attached');
     }
 
     final now = DateTime.now();
     final newShelf = Shelf(
-      id: 'shelf-${now.millisecondsSinceEpoch}',
+      id: const Uuid().v4(),
       name: name,
       description: description,
       colorHex: colorHex,
@@ -264,13 +272,15 @@ class ShelvesProvider extends ChangeNotifier {
       updatedAt: now,
     );
 
-    _dataStore!.addShelf(newShelf);
+    await _dataStore!.addShelf(newShelf, repository: repository);
     return newShelf;
   }
 
   /// Updates an existing shelf.
   Future<void> updateShelf({
     required String shelfId,
+    Shelf? previous,
+    EntityRepository<Shelf>? repository,
     String? name,
     String? description,
     bool clearDescription = false,
@@ -281,7 +291,7 @@ class ShelvesProvider extends ChangeNotifier {
       throw Exception('DataStore not attached');
     }
 
-    final shelf = _dataStore!.getShelf(shelfId);
+    final shelf = previous ?? _dataStore!.getShelf(shelfId);
     if (shelf == null) {
       throw Exception('Shelf not found');
     }
@@ -295,7 +305,7 @@ class ShelvesProvider extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
 
-    _dataStore!.updateShelf(updatedShelf);
+    await _dataStore!.updateShelf(updatedShelf, previous: shelf, repository: repository);
 
     // Update selected shelf if it's the one being edited
     if (_selectedShelf?.id == shelfId) {
@@ -304,7 +314,7 @@ class ShelvesProvider extends ChangeNotifier {
   }
 
   /// Deletes a shelf by ID.
-  Future<void> deleteShelf(String shelfId) async {
+  Future<void> deleteShelf(String shelfId, {EntityRepository<Shelf>? repository}) async {
     if (_dataStore == null) {
       throw Exception('DataStore not attached');
     }
@@ -314,7 +324,7 @@ class ShelvesProvider extends ChangeNotifier {
       throw Exception('Shelf not found');
     }
 
-    _dataStore!.deleteShelf(shelfId);
+    await _dataStore!.deleteShelf(shelfId, repository: repository);
 
     // Clear selected shelf if it was deleted
     if (_selectedShelf?.id == shelfId) {
@@ -328,12 +338,12 @@ class ShelvesProvider extends ChangeNotifier {
       throw Exception('DataStore not attached');
     }
 
-    _dataStore!.addBookToShelf(bookId, shelfId);
+    await _dataStore!.addBookToShelf(bookId, shelfId);
 
     // Update the shelf's updatedAt timestamp
     final shelf = _dataStore!.getShelf(shelfId);
     if (shelf != null) {
-      _dataStore!.updateShelf(shelf.copyWith(updatedAt: DateTime.now()));
+      await _dataStore!.updateShelf(shelf.copyWith(updatedAt: DateTime.now()), previous: shelf);
     }
   }
 
@@ -343,17 +353,17 @@ class ShelvesProvider extends ChangeNotifier {
       throw Exception('DataStore not attached');
     }
 
-    _dataStore!.removeBookFromShelf(bookId, shelfId);
+    await _dataStore!.removeBookFromShelf(bookId, shelfId);
 
     // Update the shelf's updatedAt timestamp
     final shelf = _dataStore!.getShelf(shelfId);
     if (shelf != null) {
-      _dataStore!.updateShelf(shelf.copyWith(updatedAt: DateTime.now()));
+      await _dataStore!.updateShelf(shelf.copyWith(updatedAt: DateTime.now()), previous: shelf);
     }
   }
 
   /// Reorders shelves (drag and drop).
-  void reorderShelves(int oldIndex, int newIndex) {
+  Future<void> reorderShelves(int oldIndex, int newIndex) async {
     if (_dataStore == null) return;
 
     final shelfList = List<Shelf>.from(_dataStore!.shelves);
@@ -367,7 +377,7 @@ class ShelvesProvider extends ChangeNotifier {
 
     // Update sort orders in DataStore
     for (var i = 0; i < shelfList.length; i++) {
-      _dataStore!.updateShelf(shelfList[i].copyWith(sortOrder: i));
+      await _dataStore!.updateShelf(shelfList[i].copyWith(sortOrder: i), previous: shelfList[i]);
     }
   }
 
