@@ -304,49 +304,49 @@ void main() {
         await provider.loadBook('book-1');
       });
 
-      test('addBookmark persists to DataStore', () {
+      test('addBookmark persists to DataStore', () async {
         final bookmark = buildTestBookmark(id: 'new-bm', bookId: 'book-1', position: 0.8);
 
-        provider.addBookmark(bookmark);
+        await provider.addBookmark(bookmark);
 
         expect(provider.bookmarks.length, 3);
         expect(dataStore.getBookmark('new-bm'), isNotNull);
       });
 
-      test('updateBookmarkNote updates the bookmark note', () {
-        provider.updateBookmarkNote('bm-1', 'Updated note');
+      test('updateBookmarkNote updates the bookmark note', () async {
+        await provider.updateBookmarkNote('bm-1', 'Updated note');
 
         expect(dataStore.getBookmark('bm-1')!.note, 'Updated note');
       });
 
-      test('updateBookmarkNote clears note when null', () {
+      test('updateBookmarkNote clears note when null', () async {
         // First set a note
-        provider.updateBookmarkNote('bm-1', 'A note');
+        await provider.updateBookmarkNote('bm-1', 'A note');
         expect(dataStore.getBookmark('bm-1')!.note, 'A note');
 
         // Then clear it
-        provider.updateBookmarkNote('bm-1', null);
+        await provider.updateBookmarkNote('bm-1', null);
         expect(dataStore.getBookmark('bm-1')!.note, isNull);
       });
 
-      test('updateBookmarkColor updates the bookmark color', () {
-        provider.updateBookmarkColor('bm-1', '#FF0000');
+      test('updateBookmarkColor updates the bookmark color', () async {
+        await provider.updateBookmarkColor('bm-1', '#FF0000');
 
         expect(dataStore.getBookmark('bm-1')!.colorHex, '#FF0000');
       });
 
-      test('deleteBookmark removes from DataStore', () {
-        provider.deleteBookmark('bm-1');
+      test('deleteBookmark removes from DataStore', () async {
+        await provider.deleteBookmark('bm-1');
 
         expect(provider.bookmarks.length, 1);
         expect(dataStore.getBookmark('bm-1'), isNull);
       });
 
-      test('updateBookmarkNote does nothing for nonexistent bookmark', () {
+      test('updateBookmarkNote does nothing for nonexistent bookmark', () async {
         var notified = false;
         provider.addListener(() => notified = true);
 
-        provider.updateBookmarkNote('nonexistent', 'A note');
+        await provider.updateBookmarkNote('nonexistent', 'A note');
 
         expect(notified, false);
       });

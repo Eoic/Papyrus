@@ -1,6 +1,7 @@
 import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/book_shelf_relation.dart';
 import 'package:papyrus/models/book_tag_relation.dart';
 import 'package:papyrus/models/note.dart';
@@ -25,6 +26,7 @@ abstract interface class LibraryRepository {
   EntityRepository<Tag> get tags;
   EntityRepository<Note> get notes;
   EntityRepository<Annotation> get annotations;
+  EntityRepository<Bookmark> get bookmarks;
   EntityRepository<BookShelfRelation> get bookShelves;
   EntityRepository<BookTagRelation> get bookTags;
   LibraryMembershipWriter get memberships;
@@ -47,6 +49,7 @@ class LibrarySnapshot {
   final List<Tag> tags;
   final List<Note> notes;
   final List<Annotation> annotations;
+  final List<Bookmark> bookmarks;
   final List<BookShelfRelation> bookShelves;
   final List<BookTagRelation> bookTags;
 
@@ -56,6 +59,7 @@ class LibrarySnapshot {
     this.tags = const [],
     this.notes = const [],
     this.annotations = const [],
+    this.bookmarks = const [],
     this.bookShelves = const [],
     this.bookTags = const [],
   });

@@ -79,7 +79,12 @@ class _AnnotationDialogState extends State<AnnotationDialog> with PersistentSave
       bookId: widget.bookId,
       selectedText: _textController.text.trim(),
       color: _selectedColor,
-      location: BookLocation(pageNumber: page, chapterTitle: chapter.isNotEmpty ? chapter : null),
+      location: BookLocation(
+        pageNumber: page,
+        chapterTitle: chapter.isNotEmpty ? chapter : null,
+        chapter: widget.existingAnnotation?.location.chapter,
+        percentage: widget.existingAnnotation?.location.percentage,
+      ),
       note: note.isNotEmpty ? note : null,
       createdAt: widget.existingAnnotation?.createdAt ?? DateTime.now(),
       updatedAt: _isEditing ? DateTime.now() : null,
@@ -207,6 +212,7 @@ class _AnnotationDialogState extends State<AnnotationDialog> with PersistentSave
                         children: HighlightColor.values.map((color) {
                           final isSelected = color == _selectedColor;
                           return GestureDetector(
+                            key: Key('annotation-color-${color.name}'),
                             onTap: () => setState(() => _selectedColor = color),
                             child: Container(
                               width: 36,

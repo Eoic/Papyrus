@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
 
 // =============================================================================
 // BOOKMARK ACTION SHEET (action chooser)
@@ -102,11 +105,16 @@ const _colorNames = {
 /// Bottom sheet for editing a bookmark's note.
 class BookmarkNoteSheet extends StatefulWidget {
   final Bookmark bookmark;
+  final FutureOr<void> Function(String)? onSave;
 
-  const BookmarkNoteSheet({super.key, required this.bookmark});
+  const BookmarkNoteSheet({super.key, required this.bookmark, this.onSave});
 
   /// Show the note editing sheet. Returns the new note text, or null if cancelled.
-  static Future<String?> show(BuildContext context, {required Bookmark bookmark}) {
+  static Future<String?> show(
+    BuildContext context, {
+    required Bookmark bookmark,
+    FutureOr<void> Function(String)? onSave,
+  }) {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -114,7 +122,7 @@ class BookmarkNoteSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
       ),
-      builder: (context) => BookmarkNoteSheet(bookmark: bookmark),
+      builder: (context) => BookmarkNoteSheet(bookmark: bookmark, onSave: onSave),
     );
   }
 
@@ -122,7 +130,7 @@ class BookmarkNoteSheet extends StatefulWidget {
   State<BookmarkNoteSheet> createState() => _BookmarkNoteSheetState();
 }
 
-class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
+class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> with PersistentSave<BookmarkNoteSheet> {
   late TextEditingController _controller;
 
   @override
@@ -155,9 +163,12 @@ class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
               BottomSheetHeader(
                 title: 'Edit note',
                 onCancel: () => Navigator.pop(context),
-                onSave: () {
+                canSave: !isSaving,
+                canCancel: !isSaving,
+                onSave: () async {
                   final text = _controller.text.trim();
-                  Navigator.pop(context, text.isEmpty ? '' : text);
+                  final saved = await persist(() => widget.onSave?.call(text));
+                  if (saved && context.mounted) Navigator.pop(context, text);
                 },
               ),
               const SizedBox(height: Spacing.md),
@@ -190,22 +201,32 @@ class _BookmarkNoteSheetState extends State<BookmarkNoteSheet> {
 // =============================================================================
 
 /// Bottom sheet for selecting a bookmark color.
-class BookmarkColorSheet extends StatelessWidget {
+class BookmarkColorSheet extends StatefulWidget {
   final Bookmark bookmark;
+  final FutureOr<void> Function(String)? onSave;
 
-  const BookmarkColorSheet({super.key, required this.bookmark});
+  const BookmarkColorSheet({super.key, required this.bookmark, this.onSave});
 
   /// Show the color picker sheet. Returns the selected color hex, or null.
-  static Future<String?> show(BuildContext context, {required Bookmark bookmark}) {
+  static Future<String?> show(
+    BuildContext context, {
+    required Bookmark bookmark,
+    FutureOr<void> Function(String)? onSave,
+  }) {
     return showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
       ),
-      builder: (context) => BookmarkColorSheet(bookmark: bookmark),
+      builder: (context) => BookmarkColorSheet(bookmark: bookmark, onSave: onSave),
     );
   }
 
+  @override
+  State<BookmarkColorSheet> createState() => _BookmarkColorSheetState();
+}
+
+class _BookmarkColorSheetState extends State<BookmarkColorSheet> with PersistentSave<BookmarkColorSheet> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -228,11 +249,16 @@ class BookmarkColorSheet extends StatelessWidget {
               spacing: Spacing.md,
               runSpacing: Spacing.md,
               children: Bookmark.availableColors.map((hex) {
-                final isSelected = hex == bookmark.colorHex;
+                final isSelected = hex == widget.bookmark.colorHex;
                 final color = Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
 
                 return GestureDetector(
-                  onTap: () => Navigator.pop(context, hex),
+                  onTap: isSaving
+                      ? null
+                      : () async {
+                          final saved = await persist(() => widget.onSave?.call(hex));
+                          if (saved && context.mounted) Navigator.pop(context, hex);
+                        },
                   child: Container(
                     width: 48,
                     height: 48,
@@ -288,22 +314,51 @@ class BookmarkColorSheet extends StatelessWidget {
 /// Confirmation dialog for deleting a bookmark.
 class DeleteBookmarkDialog {
   /// Show the delete confirmation dialog. Returns true if confirmed.
-  static Future<bool> show(BuildContext context, {required Bookmark bookmark, required String bookTitle}) async {
+  static Future<bool> show(
+    BuildContext context, {
+    required Bookmark bookmark,
+    required String bookTitle,
+    FutureOr<void> Function()? onDelete,
+  }) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete bookmark'),
-        content: Text('Delete bookmark at ${bookmark.displayLocation} in "$bookTitle"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (context) => _DeleteBookmarkConfirmation(bookmark: bookmark, bookTitle: bookTitle, onDelete: onDelete),
     );
     return result ?? false;
+  }
+}
+
+class _DeleteBookmarkConfirmation extends StatefulWidget {
+  final Bookmark bookmark;
+  final String bookTitle;
+  final FutureOr<void> Function()? onDelete;
+
+  const _DeleteBookmarkConfirmation({required this.bookmark, required this.bookTitle, this.onDelete});
+
+  @override
+  State<_DeleteBookmarkConfirmation> createState() => _DeleteBookmarkConfirmationState();
+}
+
+class _DeleteBookmarkConfirmationState extends State<_DeleteBookmarkConfirmation>
+    with PersistentSave<_DeleteBookmarkConfirmation> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Delete bookmark'),
+      content: Text('Delete bookmark at ${widget.bookmark.displayLocation} in "${widget.bookTitle}"?'),
+      actions: [
+        TextButton(onPressed: isSaving ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
+        FilledButton(
+          onPressed: isSaving
+              ? null
+              : () async {
+                  final saved = await persist(() => widget.onDelete?.call());
+                  if (saved && context.mounted) Navigator.pop(context, true);
+                },
+          style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+          child: const Text('Delete'),
+        ),
+      ],
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:papyrus/models/annotation.dart';
+import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/book_shelf_relation.dart';
 import 'package:papyrus/models/book_tag_relation.dart';
 import 'package:papyrus/models/note.dart';
@@ -15,7 +16,22 @@ class LibraryRowMapper<T> {
   const LibraryRowMapper(this.table, this.toRow, this.fromRow);
 }
 
-const libraryTableNames = ['books', 'shelves', 'tags', 'notes', 'annotations', 'book_shelves', 'book_tags'];
+const libraryTableNames = [
+  'books',
+  'shelves',
+  'tags',
+  'notes',
+  'annotations',
+  'bookmarks',
+  'book_shelves',
+  'book_tags',
+];
+
+final bookmarkRowMapper = LibraryRowMapper<Bookmark>(
+  'bookmarks',
+  (value) => encodeLibraryRow(value.toJson()),
+  (row) => Bookmark.fromJson(decodeLibraryRow(row)),
+);
 
 final shelfRowMapper = LibraryRowMapper<Shelf>('shelves', (shelf) {
   final row = Map<String, Object?>.from(shelf.toJson());

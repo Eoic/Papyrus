@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/bookmark.dart';
 
 /// Sort options for bookmarks.
@@ -134,20 +135,38 @@ class BookmarksProvider extends ChangeNotifier {
   // CRUD (delegated to DataStore)
   // ============================================================================
 
-  void updateBookmarkNote(String bookmarkId, String? note) {
-    final bookmark = _dataStore?.getBookmark(bookmarkId);
+  Future<void> updateBookmarkNote(
+    String bookmarkId,
+    String? note, {
+    Bookmark? previous,
+    EntityRepository<Bookmark>? repository,
+  }) async {
+    final bookmark = previous ?? _dataStore?.getBookmark(bookmarkId);
     if (bookmark == null || _dataStore == null) return;
-    _dataStore!.updateBookmark(bookmark.copyWith(note: note));
+    await _dataStore!.updateBookmark(
+      bookmark.copyWith(note: note),
+      previous: bookmark,
+      repository: repository,
+    );
   }
 
-  void updateBookmarkColor(String bookmarkId, String colorHex) {
-    final bookmark = _dataStore?.getBookmark(bookmarkId);
+  Future<void> updateBookmarkColor(
+    String bookmarkId,
+    String colorHex, {
+    Bookmark? previous,
+    EntityRepository<Bookmark>? repository,
+  }) async {
+    final bookmark = previous ?? _dataStore?.getBookmark(bookmarkId);
     if (bookmark == null || _dataStore == null) return;
-    _dataStore!.updateBookmark(bookmark.copyWith(colorHex: colorHex));
+    await _dataStore!.updateBookmark(
+      bookmark.copyWith(colorHex: colorHex),
+      previous: bookmark,
+      repository: repository,
+    );
   }
 
-  void deleteBookmark(String bookmarkId) {
-    _dataStore?.deleteBookmark(bookmarkId);
+  Future<void> deleteBookmark(String bookmarkId, {EntityRepository<Bookmark>? repository}) async {
+    await _dataStore?.deleteBookmark(bookmarkId, repository: repository);
   }
 
   // ============================================================================

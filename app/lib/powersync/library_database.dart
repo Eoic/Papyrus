@@ -19,6 +19,7 @@ class LibraryDatabase implements LibraryMembershipWriter {
   late final tags = SqlEntityRepository(this, tagRowMapper);
   late final notes = SqlEntityRepository(this, noteRowMapper);
   late final annotations = SqlEntityRepository(this, annotationRowMapper);
+  late final bookmarks = SqlEntityRepository(this, bookmarkRowMapper);
   late final bookShelves = SqlEntityRepository(this, bookShelfRowMapper);
   late final bookTags = SqlEntityRepository(this, bookTagRowMapper);
   late final books = ScopedBooks(this);
@@ -94,7 +95,7 @@ class LibraryDatabase implements LibraryMembershipWriter {
 
   Future<void> delete(String table, String id) => write((tx) async {
     if (table == 'books') {
-      for (final dependent in ['notes', 'annotations', 'book_shelves', 'book_tags']) {
+      for (final dependent in ['notes', 'annotations', 'bookmarks', 'book_shelves', 'book_tags']) {
         await tx.execute('DELETE FROM $dependent WHERE book_id = ?', [id]);
       }
     } else if (table == 'shelves') {
@@ -159,6 +160,7 @@ class LibraryDatabase implements LibraryMembershipWriter {
       tags: await rows(tagRowMapper),
       notes: await rows(noteRowMapper),
       annotations: await rows(annotationRowMapper),
+      bookmarks: await rows(bookmarkRowMapper),
       bookShelves: await rows(bookShelfRowMapper),
       bookTags: await rows(bookTagRowMapper),
     );

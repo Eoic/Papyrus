@@ -9,6 +9,7 @@ import 'package:papyrus/auth/papyrus_api_config.dart';
 import 'package:papyrus/auth/token_store.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/models/book.dart';
+import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/models/tag.dart';
@@ -26,8 +27,24 @@ class _MemoryRefreshStorage implements RefreshTokenStorage {
   Future<void> delete() async => token = null;
 }
 
+class _DiagnosticClient extends http.BaseClient {
+  final http.Client _client = http.Client();
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final response = await _client.send(request);
+    if (response.statusCode < 400 || !request.url.path.endsWith('/powersync-upload')) return response;
+    final body = await response.stream.toBytes();
+    stderr.writeln('Sync upload failed (${response.statusCode}): ${utf8.decode(body)}');
+    return http.StreamedResponse(Stream.value(body), response.statusCode, headers: response.headers, request: request);
+  }
+
+  @override
+  void close() => _client.close();
+}
+
 Future<void> _eventually(Future<bool> Function() condition, String description) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 30));
+  final deadline = DateTime.now().add(const Duration(seconds: 90));
   while (DateTime.now().isBefore(deadline)) {
     if (await condition()) return;
     await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -40,7 +57,7 @@ void main() {
     'live devices converge after offline restart and isolate another account',
     () async {
       final directory = await Directory.systemTemp.createTemp('papyrus-live-library-');
-      final client = http.Client();
+      final client = _DiagnosticClient();
       final config = PapyrusApiConfig(serverBaseUri: Uri.parse('http://localhost:8080'));
       AuthRepository auth() => AuthRepository(
         apiClient: AuthApiClient(config: config, httpClient: client),
@@ -88,6 +105,7 @@ void main() {
       final tagId = const Uuid().v4();
       final noteId = const Uuid().v4();
       final annotationId = const Uuid().v4();
+      final bookmarkId = const Uuid().v4();
       final now = DateTime.now().toUtc();
       try {
         await first.activateAuthenticated(owner.user.userId);
@@ -107,6 +125,17 @@ void main() {
         await first.shelves.upsert(Shelf(id: shelfId, name: 'Shelf', createdAt: now, updatedAt: now));
         await first.tags.upsert(Tag(id: tagId, name: 'Topic', colorHex: '#123456', createdAt: now));
         await first.notes.upsert(Note(id: noteId, bookId: bookId, title: 'Note', content: 'Original', createdAt: now));
+        await first.bookmarks.upsert(
+          Bookmark(
+            id: bookmarkId,
+            bookId: bookId,
+            position: 0.15,
+            pageNumber: 15,
+            chapterTitle: 'Chapter',
+            note: 'Original bookmark',
+            createdAt: now,
+          ),
+        );
         await first.annotations.upsert(
           Annotation(
             id: annotationId,
@@ -128,20 +157,34 @@ void main() {
         expect((await second.annotations.getById(annotationId))?.note, 'Attached');
         expect((await second.getById(bookId))?.publicationDate, DateTime.utc(2020));
         expect(await second.bookShelves.getById('$bookId:$shelfId'), isNotNull);
+        await _eventually(
+          () async => await second.bookmarks.getById(bookmarkId) != null,
+          'bookmark reaches device two',
+        );
+        expect((await second.bookmarks.getById(bookmarkId))?.pageNumber, 15);
 
         await second.setOnline(false);
         final baselineNote = (await second.notes.getById(noteId))!;
         final baselineBook = (await second.getById(bookId))!;
+        final baselineBookmark = (await second.bookmarks.getById(bookmarkId))!;
+        await second.bookmarks.upsert(baselineBookmark.copyWith(note: null), previous: baselineBookmark);
         await second.notes.upsert(baselineNote.copyWith(content: 'Offline edit'), previous: baselineNote);
-        await second.scopedBooks.update(baselineBook.copyWith(physicalLocation: 'Room B'), previous: baselineBook);
+        await second.scopedBooks.update(
+          baselineBook.copyWith(physicalLocation: 'Room B', isFavorite: true),
+          previous: baselineBook,
+        );
         await second.close();
         second = device('two', secondAuth, connect: false);
         await second.activateAuthenticated(owner.user.userId);
         expect((await second.notes.getById(noteId))?.content, 'Offline edit');
+        expect((await second.bookmarks.getById(bookmarkId))?.note, isNull);
+        expect((await second.getById(bookId))?.isFavorite, isTrue);
         final currentNote = (await first.notes.getById(noteId))!;
         final currentBook = (await first.getById(bookId))!;
         await first.notes.upsert(currentNote.copyWith(title: 'Remote title'), previous: currentNote);
         await first.scopedBooks.update(currentBook.copyWith(lentTo: 'Reader'), previous: currentBook);
+        final onlineBookmark = (await first.bookmarks.getById(bookmarkId))!;
+        await first.bookmarks.upsert(onlineBookmark.copyWith(colorHex: '#2196F3'), previous: onlineBookmark);
         await _eventually(() async => !first.syncState.hasPendingWrites, 'online writes upload');
         await second.setOnline(true);
         await _eventually(
@@ -154,6 +197,16 @@ void main() {
         );
         expect((await first.getById(bookId))?.physicalLocation, 'Room B');
         await _eventually(() async => (await second.getById(bookId))?.lentTo == 'Reader', 'promoted book fields merge');
+        await _eventually(
+          () async => (await first.getById(bookId))?.isFavorite == true,
+          'favorite syncs after restart',
+        );
+        await _eventually(
+          () async =>
+              (await first.bookmarks.getById(bookmarkId))?.note == null &&
+              (await second.bookmarks.getById(bookmarkId))?.colorHex == '#2196F3',
+          'bookmark fields merge after restart',
+        );
 
         await second.setOnline(false);
         final offlineNote = (await second.notes.getById(noteId))!;
@@ -189,12 +242,15 @@ void main() {
         expect(await outsider.shelves.getById(shelfId), isNull);
         expect(await outsider.tags.getById(tagId), isNull);
         expect(await outsider.annotations.getById(annotationId), isNull);
+        expect(await outsider.bookmarks.getById(bookmarkId), isNull);
         expect(await outsider.bookShelves.getById('$bookId:$shelfId'), isNull);
         expect(await outsider.bookTags.getById('$bookId:$tagId'), isNull);
 
         await second.setOnline(false);
         final stale = (await second.notes.getById(noteId))!;
         await second.notes.upsert(stale.copyWith(content: 'Stale after deletion'), previous: stale);
+        final staleBookmark = (await second.bookmarks.getById(bookmarkId))!;
+        await second.bookmarks.upsert(staleBookmark.copyWith(note: 'Stale bookmark'), previous: staleBookmark);
         await first.delete(bookId);
         await _eventually(() async => !first.syncState.hasPendingWrites, 'book deletion uploads');
         await second.setOnline(true);
@@ -203,6 +259,10 @@ void main() {
           'deletion wins against offline edit',
         );
         expect(await second.annotations.getById(annotationId), isNull);
+        await _eventually(
+          () async => await second.bookmarks.getById(bookmarkId) == null,
+          'bookmark deletion defeats stale edits',
+        );
         expect(await second.bookShelves.getById('$bookId:$shelfId'), isNull);
         expect(await second.bookTags.getById('$bookId:$tagId'), isNull);
         await _eventually(() async => !second.syncState.hasPendingWrites, 'stale write queue drains');
@@ -229,6 +289,6 @@ void main() {
       }
     },
     skip: Platform.environment['PAPYRUS_LIVE_SYNC'] != '1',
-    timeout: const Timeout(Duration(minutes: 3)),
+    timeout: const Timeout(Duration(minutes: 4)),
   );
 }

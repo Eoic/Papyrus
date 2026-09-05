@@ -3,9 +3,9 @@ import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 
 /// Result of annotation action sheet selection.
-enum AnnotationAction { editNote, delete }
+enum AnnotationAction { edit, delete }
 
-/// Bottom sheet for annotation actions (edit note, delete).
+/// Bottom sheet for annotation actions (edit, delete).
 class AnnotationActionSheet extends StatelessWidget {
   final Annotation annotation;
 
@@ -50,11 +50,11 @@ class AnnotationActionSheet extends StatelessWidget {
             const SizedBox(height: Spacing.sm),
             const Divider(),
 
-            // Edit note action
+            // Edit annotation action
             ListTile(
               leading: Icon(Icons.edit_outlined, color: colorScheme.onSurface),
-              title: const Text('Edit note'),
-              onTap: () => Navigator.of(context).pop(AnnotationAction.editNote),
+              title: const Text('Edit annotation'),
+              onTap: () => Navigator.of(context).pop(AnnotationAction.edit),
             ),
 
             // Delete action
