@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:papyrus/utils/book_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/models/book.dart';
@@ -148,7 +149,7 @@ class BookGrid extends StatelessWidget {
           return BookCard(
             book: book,
             isFavorite: isFavorite,
-            onToggleFavorite: job == null ? (current) => libraryProvider.toggleFavorite(book.id, current) : null,
+            onToggleFavorite: job == null ? (current) => toggleBookFavorite(context, book.id, current) : null,
             onTap: job != null
                 ? onAcquisitionTap == null
                       ? null

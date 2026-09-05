@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:papyrus/data/repositories/book_repository.dart';
 import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/annotation.dart';
+import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/models/book_shelf_relation.dart';
 import 'package:papyrus/models/book_tag_relation.dart';
 import 'package:papyrus/models/note.dart';
@@ -76,6 +77,8 @@ class PapyrusPowerSyncService implements BookRepository, LibraryRepository {
   EntityRepository<Note> get notes => _activeLibrary.notes;
   @override
   EntityRepository<Annotation> get annotations => _activeLibrary.annotations;
+  @override
+  EntityRepository<Bookmark> get bookmarks => _activeLibrary.bookmarks;
   @override
   EntityRepository<BookShelfRelation> get bookShelves => _activeLibrary.bookShelves;
   @override
@@ -270,6 +273,7 @@ class PapyrusPowerSyncService implements BookRepository, LibraryRepository {
       _setSyncState(const SyncState());
       _setBookMetadataSyncState(const BookMetadataSyncState());
     }
+    await _refreshPendingWrites();
   }
 
   void _watchBooks(PowerSyncDatabase database) {

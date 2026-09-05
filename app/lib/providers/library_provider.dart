@@ -9,9 +9,13 @@ import 'package:papyrus/utils/book_language.dart';
 
 class LibraryProvider extends ChangeNotifier {
   final LibraryProvider? _favoriteDelegate;
+  final DataStore? _dataStore;
 
-  LibraryProvider({LibraryProvider? favoriteDelegate}) : _favoriteDelegate = favoriteDelegate {
+  LibraryProvider({LibraryProvider? favoriteDelegate, DataStore? dataStore})
+    : _favoriteDelegate = favoriteDelegate,
+      _dataStore = dataStore {
     _favoriteDelegate?.addListener(_onFavoriteDelegateChanged);
+    _dataStore?.addListener(_onFavoriteDelegateChanged);
   }
 
   String _searchQuery = '';
@@ -303,14 +307,23 @@ class LibraryProvider extends ChangeNotifier {
       return favoriteDelegate.isBookFavorite(bookId, originalFavorite);
     }
 
+    if (_dataStore != null) return _dataStore.getBook(bookId)?.isFavorite ?? originalFavorite;
     return _favoriteOverrides[bookId] ?? originalFavorite;
   }
 
   /// Toggle the favorite status of a book.
-  void toggleFavorite(String bookId, bool currentFavorite) {
+  Future<void> toggleFavorite(String bookId, bool currentFavorite) async {
     final favoriteDelegate = _favoriteDelegate;
     if (favoriteDelegate != null) {
-      favoriteDelegate.toggleFavorite(bookId, currentFavorite);
+      await favoriteDelegate.toggleFavorite(bookId, currentFavorite);
+      return;
+    }
+
+    final store = _dataStore;
+    if (store != null) {
+      final book = store.getBook(bookId);
+      if (book == null) return;
+      await store.updateBookAndWait(book.copyWith(isFavorite: !currentFavorite), previous: book);
       return;
     }
 
@@ -389,6 +402,7 @@ class LibraryProvider extends ChangeNotifier {
   @override
   void dispose() {
     _favoriteDelegate?.removeListener(_onFavoriteDelegateChanged);
+    _dataStore?.removeListener(_onFavoriteDelegateChanged);
     super.dispose();
   }
 }

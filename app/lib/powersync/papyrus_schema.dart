@@ -93,6 +93,22 @@ const _annotationsColumns = [
   Column.text('updated_at'),
 ];
 
+const _bookmarkColumns = [
+  Column.text('owner_user_id'),
+  Column.text('book_id'),
+  Column.real('position'),
+  Column.integer('page_number'),
+  Column.text('chapter_title'),
+  Column.text('note'),
+  Column.text('color_hex'),
+  Column.text('created_at'),
+  Column.text('updated_at'),
+];
+
+const _bookmarkIndexes = [
+  Index('bookmarks_book_id', [IndexedColumn('book_id')]),
+];
+
 const _bookShelvesColumns = [
   Column.text('owner_user_id'),
   Column.text('book_id'),
@@ -114,6 +130,7 @@ const papyrusAccountSchema = Schema([
   Table('tags', _tagsColumns),
   Table('notes', _notesColumns),
   Table('annotations', _annotationsColumns),
+  Table('bookmarks', _bookmarkColumns, indexes: _bookmarkIndexes),
   Table('book_shelves', _bookShelvesColumns),
   Table('book_tags', _bookTagsColumns),
   Table.localOnly('library_migrations', [Column.integer('version')]),
@@ -125,6 +142,7 @@ const papyrusGuestSchema = Schema([
   Table.localOnly('tags', _tagsColumns),
   Table.localOnly('notes', _notesColumns),
   Table.localOnly('annotations', _annotationsColumns),
+  Table.localOnly('bookmarks', _bookmarkColumns, indexes: _bookmarkIndexes),
   Table.localOnly('book_shelves', _bookShelvesColumns),
   Table.localOnly('book_tags', _bookTagsColumns),
   Table.localOnly('library_migrations', [Column.integer('version')]),

@@ -74,6 +74,9 @@ class DataStore extends ChangeNotifier {
     _annotations
       ..clear()
       ..addEntries(snapshot.annotations.map((value) => MapEntry(value.id, value)));
+    _bookmarks
+      ..clear()
+      ..addEntries(snapshot.bookmarks.map((value) => MapEntry(value.id, value)));
     _bookShelfRelations
       ..clear()
       ..addAll(snapshot.bookShelves);
@@ -511,20 +514,28 @@ class DataStore extends ChangeNotifier {
     return _bookmarks.values.where((b) => b.bookId == bookId).toList();
   }
 
-  void addBookmark(Bookmark bookmark) {
-    _bookmarks[bookmark.id] = bookmark;
-    notifyListeners();
-  }
+  Future<void> addBookmark(Bookmark bookmark, {Bookmark? previous, EntityRepository<Bookmark>? repository}) =>
+      _saveEntity(
+        repository ?? libraryRepository?.bookmarks,
+        bookmark,
+        bookmark.id,
+        previous,
+        (saved) => _bookmarks[bookmark.id] = saved,
+      );
 
-  void updateBookmark(Bookmark bookmark) {
-    _bookmarks[bookmark.id] = bookmark;
-    notifyListeners();
-  }
+  Future<void> updateBookmark(Bookmark bookmark, {Bookmark? previous, EntityRepository<Bookmark>? repository}) =>
+      _saveEntity(
+        repository ?? libraryRepository?.bookmarks,
+        bookmark,
+        bookmark.id,
+        previous ?? _bookmarks[bookmark.id],
+        (saved) => _bookmarks[bookmark.id] = saved,
+      );
 
-  void deleteBookmark(String id) {
-    _bookmarks.remove(id);
-    notifyListeners();
-  }
+  Future<void> deleteBookmark(String id, {EntityRepository<Bookmark>? repository}) =>
+      _deleteEntity(repository ?? libraryRepository?.bookmarks, id, () {
+        _bookmarks.remove(id);
+      });
 
   // ============================================================
   // Reading Session CRUD

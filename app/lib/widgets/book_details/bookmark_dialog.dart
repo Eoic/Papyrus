@@ -1,17 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/widgets/shared/persistent_save.dart';
+import 'package:uuid/uuid.dart';
 
 /// Bottom sheet for creating or editing a bookmark manually.
 class BookmarkDialog extends StatefulWidget {
   final String bookId;
   final int? pageCount;
   final Bookmark? existingBookmark;
+  final FutureOr<void> Function(Bookmark)? onSave;
 
-  const BookmarkDialog({super.key, required this.bookId, this.pageCount, this.existingBookmark});
+  const BookmarkDialog({super.key, required this.bookId, this.pageCount, this.existingBookmark, this.onSave});
 
   /// Shows the dialog and returns the created/updated bookmark, or null if cancelled.
   static Future<Bookmark?> show(
@@ -19,6 +24,7 @@ class BookmarkDialog extends StatefulWidget {
     required String bookId,
     int? pageCount,
     Bookmark? existingBookmark,
+    FutureOr<void> Function(Bookmark)? onSave,
   }) {
     return showModalBottomSheet<Bookmark>(
       context: context,
@@ -27,7 +33,8 @@ class BookmarkDialog extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.bottomSheet)),
       ),
-      builder: (context) => BookmarkDialog(bookId: bookId, pageCount: pageCount, existingBookmark: existingBookmark),
+      builder: (context) =>
+          BookmarkDialog(bookId: bookId, pageCount: pageCount, existingBookmark: existingBookmark, onSave: onSave),
     );
   }
 
@@ -35,7 +42,7 @@ class BookmarkDialog extends StatefulWidget {
   State<BookmarkDialog> createState() => _BookmarkDialogState();
 }
 
-class _BookmarkDialogState extends State<BookmarkDialog> {
+class _BookmarkDialogState extends State<BookmarkDialog> with PersistentSave<BookmarkDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _pageController;
   late final TextEditingController _chapterController;
@@ -61,7 +68,8 @@ class _BookmarkDialogState extends State<BookmarkDialog> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
+    if (isSaving) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final page = int.parse(_pageController.text);
@@ -70,7 +78,7 @@ class _BookmarkDialogState extends State<BookmarkDialog> {
     final note = _noteController.text.trim();
 
     final bookmark = Bookmark(
-      id: widget.existingBookmark?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.existingBookmark?.id ?? const Uuid().v4(),
       bookId: widget.bookId,
       position: position,
       pageNumber: page,
@@ -79,7 +87,8 @@ class _BookmarkDialogState extends State<BookmarkDialog> {
       colorHex: _selectedColor,
       createdAt: widget.existingBookmark?.createdAt ?? DateTime.now(),
     );
-    Navigator.of(context).pop(bookmark);
+    final saved = await persist(() => widget.onSave?.call(bookmark));
+    if (saved && mounted) Navigator.of(context).pop(bookmark);
   }
 
   @override
@@ -104,6 +113,8 @@ class _BookmarkDialogState extends State<BookmarkDialog> {
                   title: _isEditing ? 'Edit bookmark' : 'New bookmark',
                   onCancel: () => Navigator.of(context).pop(),
                   onSave: _save,
+                  canSave: !isSaving,
+                  canCancel: !isSaving,
                 ),
                 const SizedBox(height: Spacing.md),
                 const Divider(height: 1),

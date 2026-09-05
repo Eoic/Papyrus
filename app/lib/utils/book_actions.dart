@@ -35,7 +35,7 @@ void showBookContextMenu({required BuildContext context, required Book book, Off
       libraryProvider.enterSelectionMode(book.id);
     },
     onFavoriteToggle: () {
-      libraryProvider.toggleFavorite(book.id, isFavorite);
+      toggleBookFavorite(context, book.id, isFavorite);
     },
     onEdit: () {
       context.goNamed('BOOK_EDIT', pathParameters: {'bookId': book.id});
@@ -71,6 +71,18 @@ void showBookContextMenu({required BuildContext context, required Book book, Off
       );
     },
   );
+}
+
+Future<void> toggleBookFavorite(BuildContext context, String bookId, bool currentFavorite) async {
+  try {
+    await context.read<LibraryProvider>().toggleFavorite(bookId, currentFavorite);
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not save favorite. Please try again.')));
+    }
+  }
 }
 
 Future<void> _downloadBookFile(BuildContext context, Book book) async {

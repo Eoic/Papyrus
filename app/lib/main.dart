@@ -411,7 +411,7 @@ class _PapyrusState extends State<Papyrus> {
         ChangeNotifierProvider.value(value: _acquisitionAvailabilityProvider),
         _acquisitionDownloadsComposition.providerRegistration(),
         ChangeNotifierProvider(create: (_) => SidebarProvider()),
-        ChangeNotifierProvider(create: (_) => LibraryProvider()),
+        ChangeNotifierProvider(create: (_) => LibraryProvider(dataStore: _dataStore)),
         ChangeNotifierProvider.value(value: _preferencesProvider),
       ],
       child: Consumer<PreferencesProvider>(

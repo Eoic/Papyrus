@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/bookmark.dart';
 import 'package:papyrus/providers/bookmarks_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -336,41 +337,57 @@ class _BookmarksPageState extends State<BookmarksPage> {
   }
 
   void _onBookmarkActions(BuildContext context, BookmarksProvider provider, Bookmark bookmark) async {
+    final repository = context.read<DataStore>().libraryRepository?.bookmarks;
     final action = await BookmarkActionSheet.show(context, bookmark: bookmark);
 
     if (action == null || !mounted) return;
 
     switch (action) {
       case BookmarkAction.editNote:
-        _onEditBookmarkNote(provider, bookmark);
+        _onEditBookmarkNote(provider, bookmark, repository);
       case BookmarkAction.changeColor:
-        _onChangeBookmarkColor(provider, bookmark);
+        _onChangeBookmarkColor(provider, bookmark, repository);
       case BookmarkAction.delete:
-        _onDeleteBookmark(provider, bookmark);
+        _onDeleteBookmark(provider, bookmark, repository);
     }
   }
 
-  void _onEditBookmarkNote(BookmarksProvider provider, Bookmark bookmark) async {
-    final note = await BookmarkNoteSheet.show(context, bookmark: bookmark);
-    if (!mounted) return;
-
-    if (note != null) {
-      provider.updateBookmarkNote(bookmark.id, note.isEmpty ? null : note);
-    }
+  void _onEditBookmarkNote(
+    BookmarksProvider provider,
+    Bookmark bookmark,
+    EntityRepository<Bookmark>? repository,
+  ) async {
+    await BookmarkNoteSheet.show(
+      context,
+      bookmark: bookmark,
+      onSave: (note) => provider.updateBookmarkNote(
+        bookmark.id,
+        note.isEmpty ? null : note,
+        previous: bookmark,
+        repository: repository,
+      ),
+    );
   }
 
-  void _onChangeBookmarkColor(BookmarksProvider provider, Bookmark bookmark) async {
-    final colorHex = await BookmarkColorSheet.show(context, bookmark: bookmark);
-    if (colorHex != null && mounted) {
-      provider.updateBookmarkColor(bookmark.id, colorHex);
-    }
+  void _onChangeBookmarkColor(
+    BookmarksProvider provider,
+    Bookmark bookmark,
+    EntityRepository<Bookmark>? repository,
+  ) async {
+    await BookmarkColorSheet.show(
+      context,
+      bookmark: bookmark,
+      onSave: (color) => provider.updateBookmarkColor(bookmark.id, color, previous: bookmark, repository: repository),
+    );
   }
 
-  void _onDeleteBookmark(BookmarksProvider provider, Bookmark bookmark) async {
+  void _onDeleteBookmark(BookmarksProvider provider, Bookmark bookmark, EntityRepository<Bookmark>? repository) async {
     final bookTitle = provider.getBookTitle(bookmark.bookId);
-    final confirmed = await DeleteBookmarkDialog.show(context, bookmark: bookmark, bookTitle: bookTitle);
-    if (confirmed && mounted) {
-      provider.deleteBookmark(bookmark.id);
-    }
+    await DeleteBookmarkDialog.show(
+      context,
+      bookmark: bookmark,
+      bookTitle: bookTitle,
+      onDelete: () => provider.deleteBookmark(bookmark.id, repository: repository),
+    );
   }
 }

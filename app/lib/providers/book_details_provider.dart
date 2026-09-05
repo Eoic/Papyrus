@@ -187,25 +187,40 @@ class BookDetailsProvider extends ChangeNotifier {
   }
 
   /// Update a bookmark's note. Persists to DataStore.
-  void updateBookmarkNote(String bookmarkId, String? note) {
-    final bookmark = _dataStore?.getBookmark(bookmarkId);
+  Future<void> updateBookmarkNote(
+    String bookmarkId,
+    String? note, {
+    Bookmark? previous,
+    EntityRepository<Bookmark>? repository,
+  }) async {
+    final bookmark = previous ?? _dataStore?.getBookmark(bookmarkId);
     if (bookmark == null || _dataStore == null) return;
-    _dataStore!.updateBookmark(bookmark.copyWith(note: note));
-    notifyListeners();
+    await _dataStore!.updateBookmark(
+      bookmark.copyWith(note: note),
+      previous: bookmark,
+      repository: repository,
+    );
   }
 
   /// Update a bookmark's color. Persists to DataStore.
-  void updateBookmarkColor(String bookmarkId, String colorHex) {
-    final bookmark = _dataStore?.getBookmark(bookmarkId);
+  Future<void> updateBookmarkColor(
+    String bookmarkId,
+    String colorHex, {
+    Bookmark? previous,
+    EntityRepository<Bookmark>? repository,
+  }) async {
+    final bookmark = previous ?? _dataStore?.getBookmark(bookmarkId);
     if (bookmark == null || _dataStore == null) return;
-    _dataStore!.updateBookmark(bookmark.copyWith(colorHex: colorHex));
-    notifyListeners();
+    await _dataStore!.updateBookmark(
+      bookmark.copyWith(colorHex: colorHex),
+      previous: bookmark,
+      repository: repository,
+    );
   }
 
   /// Delete a bookmark. Persists to DataStore.
-  void deleteBookmark(String bookmarkId) {
-    _dataStore?.deleteBookmark(bookmarkId);
-    notifyListeners();
+  Future<void> deleteBookmark(String bookmarkId, {EntityRepository<Bookmark>? repository}) async {
+    await _dataStore?.deleteBookmark(bookmarkId, repository: repository);
   }
 
   /// Add a new annotation. Persists to DataStore.
@@ -293,11 +308,10 @@ class BookDetailsProvider extends ChangeNotifier {
   }
 
   /// Add a new bookmark. Persists to DataStore.
-  void addBookmark(Bookmark bookmark) {
+  Future<void> addBookmark(Bookmark bookmark, {EntityRepository<Bookmark>? repository}) async {
     if (_dataStore != null) {
-      _dataStore!.addBookmark(bookmark);
+      await _dataStore!.addBookmark(bookmark, repository: repository);
     }
-    notifyListeners();
   }
 
   /// Clear the current book state.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/models/annotation.dart';
 import 'package:papyrus/providers/annotations_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -8,6 +9,7 @@ import 'package:papyrus/widgets/shared/book_group_header.dart';
 import 'package:papyrus/widgets/annotations/annotation_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/annotation_action_sheet.dart';
 import 'package:papyrus/widgets/book_details/annotation_card.dart';
+import 'package:papyrus/widgets/book_details/annotation_dialog.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
@@ -323,36 +325,36 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
   }
 
   void _onAnnotationActions(BuildContext context, AnnotationsProvider provider, Annotation annotation) async {
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
     final action = await AnnotationActionSheet.show(context, annotation: annotation);
 
     if (action == null || !mounted) return;
 
     switch (action) {
-      case AnnotationAction.editNote:
-        _onEditAnnotationNote(provider, annotation);
+      case AnnotationAction.edit:
+        _onEditAnnotation(annotation, repository);
       case AnnotationAction.delete:
-        _onDeleteAnnotation(provider, annotation);
+        _onDeleteAnnotation(provider, annotation, repository);
     }
   }
 
-  void _onEditAnnotationNote(AnnotationsProvider provider, Annotation annotation) async {
-    final repository = context.read<DataStore>().libraryRepository?.annotations;
-    await AnnotationNoteSheet.show(
+  void _onEditAnnotation(Annotation annotation, EntityRepository<Annotation>? repository) async {
+    final store = context.read<DataStore>();
+    await AnnotationDialog.show(
       context,
-      annotation: annotation,
-      onSave: (note) => provider.updateAnnotationNote(
-        annotation.id,
-        note.isEmpty ? null : note,
-        previous: annotation,
-        repository: repository,
-      ),
+      bookId: annotation.bookId,
+      existingAnnotation: annotation,
+      onSave: (updated) => store.updateAnnotation(updated, previous: annotation, repository: repository),
     );
     if (!mounted) return;
   }
 
-  void _onDeleteAnnotation(AnnotationsProvider provider, Annotation annotation) async {
+  void _onDeleteAnnotation(
+    AnnotationsProvider provider,
+    Annotation annotation,
+    EntityRepository<Annotation>? repository,
+  ) async {
     final bookTitle = provider.getBookTitle(annotation.bookId);
-    final repository = context.read<DataStore>().libraryRepository?.annotations;
     final confirmed = await DeleteAnnotationDialog.show(context, annotation: annotation, bookTitle: bookTitle);
     if (confirmed && mounted) {
       try {

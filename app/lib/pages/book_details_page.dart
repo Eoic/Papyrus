@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
+import 'package:papyrus/data/repositories/library_repository.dart';
 import 'package:papyrus/media/media_cache_service.dart';
 import 'package:papyrus/media/media_upload_queue.dart';
 import 'package:papyrus/models/annotation.dart';
@@ -520,14 +521,15 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   void _onAddBookmark() async {
     if (_provider.book == null) return;
 
+    final repository = context.read<DataStore>().libraryRepository?.bookmarks;
     final bookmark = await BookmarkDialog.show(
       context,
       bookId: _provider.book!.id,
       pageCount: _provider.book!.pageCount,
+      onSave: (bookmark) => _provider.addBookmark(bookmark, repository: repository),
     );
 
     if (bookmark != null && mounted) {
-      _provider.addBookmark(bookmark);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bookmark added')));
     }
   }
@@ -597,35 +599,31 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   }
 
   void _onAnnotationActions(Annotation annotation) async {
+    final repository = context.read<DataStore>().libraryRepository?.annotations;
     final action = await AnnotationActionSheet.show(context, annotation: annotation);
 
     if (action == null || !mounted) return;
 
     switch (action) {
-      case AnnotationAction.editNote:
-        _onEditAnnotationNote(annotation);
+      case AnnotationAction.edit:
+        _onEditAnnotation(annotation, repository);
       case AnnotationAction.delete:
-        _onDeleteAnnotation(annotation);
+        _onDeleteAnnotation(annotation, repository);
     }
   }
 
-  void _onEditAnnotationNote(Annotation annotation) async {
-    final repository = context.read<DataStore>().libraryRepository?.annotations;
-    await annotation_sheets.AnnotationNoteSheet.show(
+  void _onEditAnnotation(Annotation annotation, EntityRepository<Annotation>? repository) async {
+    await AnnotationDialog.show(
       context,
-      annotation: annotation,
-      onSave: (note) => _provider.updateAnnotationNote(
-        annotation.id,
-        note.isEmpty ? null : note,
-        previous: annotation,
-        repository: repository,
-      ),
+      bookId: annotation.bookId,
+      existingAnnotation: annotation,
+      onSave: (updated) =>
+          _provider.updateAnnotation(annotation.id, updated, previous: annotation, repository: repository),
     );
     if (!mounted) return;
   }
 
-  void _onDeleteAnnotation(Annotation annotation) async {
-    final repository = context.read<DataStore>().libraryRepository?.annotations;
+  void _onDeleteAnnotation(Annotation annotation, EntityRepository<Annotation>? repository) async {
     final confirmed = await annotation_sheets.DeleteAnnotationDialog.show(
       context,
       annotation: annotation,
@@ -646,45 +644,49 @@ class _BookDetailsPageState extends State<BookDetailsPage> with SingleTickerProv
   }
 
   void _onBookmarkActions(Bookmark bookmark) async {
+    final repository = context.read<DataStore>().libraryRepository?.bookmarks;
     final action = await BookmarkActionSheet.show(context, bookmark: bookmark);
 
     if (action == null || !mounted) return;
 
     switch (action) {
       case BookmarkAction.editNote:
-        _onEditBookmarkNote(bookmark);
+        _onEditBookmarkNote(bookmark, repository);
       case BookmarkAction.changeColor:
-        _onChangeBookmarkColor(bookmark);
+        _onChangeBookmarkColor(bookmark, repository);
       case BookmarkAction.delete:
-        _onDeleteBookmark(bookmark);
+        _onDeleteBookmark(bookmark, repository);
     }
   }
 
-  void _onEditBookmarkNote(Bookmark bookmark) async {
-    final note = await BookmarkNoteSheet.show(context, bookmark: bookmark);
-    if (!mounted) return;
-
-    if (note != null) {
-      _provider.updateBookmarkNote(bookmark.id, note.isEmpty ? null : note);
-    }
+  void _onEditBookmarkNote(Bookmark bookmark, EntityRepository<Bookmark>? repository) async {
+    await BookmarkNoteSheet.show(
+      context,
+      bookmark: bookmark,
+      onSave: (note) => _provider.updateBookmarkNote(
+        bookmark.id,
+        note.isEmpty ? null : note,
+        previous: bookmark,
+        repository: repository,
+      ),
+    );
   }
 
-  void _onChangeBookmarkColor(Bookmark bookmark) async {
-    final colorHex = await BookmarkColorSheet.show(context, bookmark: bookmark);
-    if (colorHex != null && mounted) {
-      _provider.updateBookmarkColor(bookmark.id, colorHex);
-    }
+  void _onChangeBookmarkColor(Bookmark bookmark, EntityRepository<Bookmark>? repository) async {
+    await BookmarkColorSheet.show(
+      context,
+      bookmark: bookmark,
+      onSave: (color) => _provider.updateBookmarkColor(bookmark.id, color, previous: bookmark, repository: repository),
+    );
   }
 
-  void _onDeleteBookmark(Bookmark bookmark) async {
-    final confirmed = await DeleteBookmarkDialog.show(
+  void _onDeleteBookmark(Bookmark bookmark, EntityRepository<Bookmark>? repository) async {
+    await DeleteBookmarkDialog.show(
       context,
       bookmark: bookmark,
       bookTitle: _provider.book?.title ?? '',
+      onDelete: () => _provider.deleteBookmark(bookmark.id, repository: repository),
     );
-    if (confirmed && mounted) {
-      _provider.deleteBookmark(bookmark.id);
-    }
   }
 
   Future<void> _confirmDeleteBook() async {

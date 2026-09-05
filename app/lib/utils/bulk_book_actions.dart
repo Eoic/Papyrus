@@ -46,24 +46,26 @@ void bulkChangeStatus(DataStore dataStore, Set<String> bookIds, LibraryReadingSt
 
 /// Toggle favorite for all selected books.
 /// If any are not favorited, sets all to favorite; otherwise un-favorites all.
-void bulkToggleFavorite(LibraryProvider libraryProvider, DataStore dataStore, Set<String> bookIds) {
+Future<void> bulkToggleFavorite(LibraryProvider libraryProvider, DataStore dataStore, Set<String> bookIds) async {
   final allFavorite = bookIds.every((id) {
     final book = dataStore.getBook(id);
     return book != null && libraryProvider.isBookFavorite(id, book.isFavorite);
   });
 
+  final writes = <Future<void>>[];
   for (final bookId in bookIds) {
     final book = dataStore.getBook(bookId);
     if (book == null) continue;
     final currentFav = libraryProvider.isBookFavorite(bookId, book.isFavorite);
     if (allFavorite) {
       // Un-favorite all
-      if (currentFav) libraryProvider.toggleFavorite(bookId, true);
+      if (currentFav) writes.add(libraryProvider.toggleFavorite(bookId, true));
     } else {
       // Favorite all
-      if (!currentFav) libraryProvider.toggleFavorite(bookId, false);
+      if (!currentFav) writes.add(libraryProvider.toggleFavorite(bookId, false));
     }
   }
+  await Future.wait(writes);
 }
 
 /// Delete all selected books.
@@ -124,10 +126,18 @@ void handleBulkChangeStatus(BuildContext context, LibraryProvider libraryProvide
 }
 
 /// Toggle favorite status for all selected books.
-void handleBulkToggleFavorite(BuildContext context, LibraryProvider libraryProvider) {
+Future<void> handleBulkToggleFavorite(BuildContext context, LibraryProvider libraryProvider) async {
   final dataStore = context.read<DataStore>();
-  bulkToggleFavorite(libraryProvider, dataStore, libraryProvider.selectedBookIds);
-  libraryProvider.exitSelectionMode();
+  try {
+    await bulkToggleFavorite(libraryProvider, dataStore, libraryProvider.selectedBookIds);
+    libraryProvider.exitSelectionMode();
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not save favorites. Please try again.')));
+    }
+  }
 }
 
 /// Show a confirmation dialog and delete all selected books.
