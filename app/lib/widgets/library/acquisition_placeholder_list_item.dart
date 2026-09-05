@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 class AcquisitionPlaceholderListItem extends StatelessWidget {
   final AcquisitionJob job;
@@ -54,7 +56,11 @@ class AcquisitionPlaceholderListItem extends StatelessWidget {
                 child: Row(
                   children: [
                     if (isSelectionMode) ...[
-                      Checkbox(value: isSelected, onChanged: (_) => onSelectToggle?.call()),
+                      AppMotionControl(
+                        value: isSelected,
+                        builder: (focusNode) =>
+                            Checkbox(focusNode: focusNode, value: isSelected, onChanged: (_) => onSelectToggle?.call()),
+                      ),
                       const SizedBox(width: Spacing.sm),
                     ],
                     SizedBox(
@@ -107,7 +113,7 @@ class AcquisitionPlaceholderListItem extends StatelessWidget {
                           ],
                           if (job.progress case final progress?) ...[
                             const SizedBox(height: Spacing.xs),
-                            LinearProgressIndicator(
+                            AppLinearProgressIndicator(
                               value: progress,
                               backgroundColor: colorScheme.surfaceContainerHighest,
                               color: job.requiresAttention ? colorScheme.error : colorScheme.primary,

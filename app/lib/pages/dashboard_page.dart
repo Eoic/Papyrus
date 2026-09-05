@@ -9,6 +9,7 @@ import 'package:papyrus/widgets/dashboard/reading_goal_card.dart';
 import 'package:papyrus/widgets/dashboard/recently_added_section.dart';
 import 'package:papyrus/widgets/dashboard/weekly_activity_chart.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Dashboard page displaying reading activity, current books, and quick actions.
 ///
@@ -54,7 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
           final isDesktop = screenWidth >= Breakpoints.desktopSmall;
 
           if (provider.isLoading) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(body: Center(child: AppCircularProgressIndicator()));
           }
 
           if (isDesktop) {

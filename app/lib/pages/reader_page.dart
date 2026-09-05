@@ -13,6 +13,7 @@ import 'package:papyrus/services/book_import_service_stub.dart'
     if (dart.library.js_interop) 'package:papyrus/services/book_import_service.dart';
 import 'package:papyrus_reader/papyrus_reader.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 class ReaderPage extends StatefulWidget {
   const ReaderPage({super.key, required this.bookId});
@@ -123,7 +124,7 @@ class _ReaderPageState extends State<ReaderPage> {
     final format = _format;
     final preferences = _initialPreferences;
     if (book == null || bytes == null || format == null || preferences == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: Center(child: AppCircularProgressIndicator()));
     }
 
     return PapyrusReader(

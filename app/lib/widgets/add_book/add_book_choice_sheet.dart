@@ -3,6 +3,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_physical_book_sheet.dart';
 import 'package:papyrus/widgets/add_book/book_import_sheet.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Choice sheet for selecting digital import, physical entry, or optional online search.
 class AddBookChoiceSheet extends StatefulWidget {
@@ -24,6 +25,7 @@ class AddBookChoiceSheet extends StatefulWidget {
   }) async {
     Future<_AddBookChoice?>? sheetCompleted;
     final choice = await showModalBottomSheet<_AddBookChoice>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,

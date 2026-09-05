@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 class RemoteReleaseList extends StatelessWidget {
   final List<TorrentRelease> releases;
@@ -57,7 +58,14 @@ class RemoteReleaseList extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
                   child: Row(
                     children: [
-                      Checkbox(value: selected, onChanged: (_) => onToggleSelection(release.releaseToken)),
+                      AppMotionControl(
+                        value: selected,
+                        builder: (focusNode) => Checkbox(
+                          focusNode: focusNode,
+                          value: selected,
+                          onChanged: (_) => onToggleSelection(release.releaseToken),
+                        ),
+                      ),
                       const SizedBox(width: Spacing.sm),
                       Expanded(
                         child: Column(

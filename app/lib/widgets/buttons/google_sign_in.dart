@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:papyrus/providers/auth_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// A Google Sign-in button with loading state and error handling.
 class GoogleSignInButton extends StatefulWidget {
@@ -42,6 +44,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
       } else if (provider.error != null) {
         widget.onError?.call();
         ScaffoldMessenger.of(context).showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
           SnackBar(
             duration: const Duration(seconds: 5),
             content: Text(provider.error!),
@@ -54,6 +57,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
 
       widget.onError?.call();
       ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
         SnackBar(
           duration: const Duration(seconds: 5),
           content: const Text('Failed to sign in with Google account.'),
@@ -78,10 +82,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
           child: SizedBox(
             width: 24,
             height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-            ),
+            child: AppCircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
           ),
         ),
       );

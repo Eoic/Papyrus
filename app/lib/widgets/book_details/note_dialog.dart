@@ -7,6 +7,8 @@ import 'package:papyrus/models/note.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Dialog for adding or editing a note.
 class NoteDialog extends StatelessWidget {
@@ -26,6 +28,7 @@ class NoteDialog extends StatelessWidget {
     FutureOr<void> Function(Note)? onSave,
   }) async {
     return showModalBottomSheet<Note>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -253,11 +256,16 @@ class _BottomSheetNoteState extends State<_BottomSheetNote> with PersistentSave<
                                   spacing: Spacing.xs,
                                   runSpacing: Spacing.xs,
                                   children: _tags.map((tag) {
-                                    return Chip(
-                                      label: Text(tag),
-                                      deleteIcon: const Icon(Icons.close, size: 18),
-                                      onDeleted: () => _removeTag(tag),
-                                      visualDensity: VisualDensity.compact,
+                                    return AppMotionControl(
+                                      value: null,
+                                      builder: (focusNode) => Chip(
+                                        focusNode: focusNode,
+                                        chipAnimationStyle: appChipAnimationStyle(context),
+                                        label: Text(tag),
+                                        deleteIcon: const Icon(Icons.close, size: 18),
+                                        onDeleted: () => _removeTag(tag),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
                                     );
                                   }).toList(),
                                 )

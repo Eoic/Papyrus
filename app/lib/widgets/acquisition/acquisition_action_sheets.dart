@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 typedef AcquisitionCommandLabel = String Function(String command);
 
@@ -13,6 +14,7 @@ Future<String?> showAcquisitionCommandSheet({
   required AcquisitionCommandLabel commandLabel,
 }) {
   return showModalBottomSheet<String>(
+    sheetAnimationStyle: AppMotion.animationStyle(context),
     context: context,
     useSafeArea: true,
     showDragHandle: false,
@@ -57,6 +59,7 @@ Future<List<int>?> showAcquisitionIdsSheet({required BuildContext context, requi
   var enteredIds = '';
 
   return showModalBottomSheet<List<int>>(
+    sheetAnimationStyle: AppMotion.animationStyle(context),
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -68,7 +71,8 @@ Future<List<int>?> showAcquisitionIdsSheet({required BuildContext context, requi
       key: const Key('acquisition-arr-ids-sheet'),
       padding: EdgeInsets.zero,
       child: AnimatedPadding(
-        duration: const Duration(milliseconds: 150),
+        key: ValueKey(AppMotion.disabled(context)),
+        duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
         curve: Curves.easeOut,
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetContext).bottom),
         child: SingleChildScrollView(
@@ -113,6 +117,7 @@ Future<List<int>?> showAcquisitionIdsSheet({required BuildContext context, requi
 
 Future<bool?> showAcquisitionRemoveDialog({required BuildContext context, required String endpointName}) {
   return showDialog<bool>(
+    animationStyle: AppMotion.animationStyle(context),
     context: context,
     builder: (dialogContext) {
       final colorScheme = Theme.of(dialogContext).colorScheme;

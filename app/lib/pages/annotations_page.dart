@@ -1,3 +1,4 @@
+import 'package:papyrus/widgets/shared/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
@@ -13,6 +14,8 @@ import 'package:papyrus/widgets/book_details/annotation_dialog.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Annotations page showing all annotations across all books.
 ///
@@ -75,6 +78,7 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
   Widget _buildMobileLayout(BuildContext context, AnnotationsProvider provider) {
     return Scaffold(
       key: _scaffoldKey,
+      drawerEnableOpenDragGesture: !AppMotion.disabled(context),
       drawer: const LibraryDrawer(currentPath: '/library/annotations'),
       body: SafeArea(
         child: Column(
@@ -87,7 +91,7 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
                   IconButton(
                     icon: const Icon(Icons.menu),
                     onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
+                      openAppDrawer(context, _scaffoldKey.currentState);
                     },
                     tooltip: 'Library sections',
                   ),
@@ -174,6 +178,7 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
 
   Widget _buildSortButton(AnnotationsProvider provider) {
     return PopupMenuButton<AnnotationSortOption>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       icon: const Icon(Icons.sort),
       tooltip: 'Sort annotations',
       onSelected: provider.setSortOption,
@@ -211,10 +216,15 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
         children: [
           // Clear chip (shown when filters are active)
           if (provider.activeColors.isNotEmpty) ...[
-            ActionChip(
-              label: const Text('Clear'),
-              onPressed: provider.clearColorFilters,
-              avatar: const Icon(Icons.clear, size: 16),
+            AppMotionControl(
+              value: null,
+              builder: (focusNode) => ActionChip(
+                focusNode: focusNode,
+                chipAnimationStyle: appChipAnimationStyle(context),
+                label: const Text('Clear'),
+                onPressed: provider.clearColorFilters,
+                avatar: const Icon(Icons.clear, size: 16),
+              ),
             ),
             const SizedBox(width: Spacing.sm),
           ],
@@ -224,15 +234,20 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
 
             return Padding(
               padding: const EdgeInsets.only(right: Spacing.sm),
-              child: FilterChip(
-                selected: isSelected,
-                label: Text(highlightColor.displayName),
-                avatar: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(color: highlightColor.accentColor, shape: BoxShape.circle),
+              child: AppMotionControl(
+                value: null,
+                builder: (focusNode) => FilterChip(
+                  focusNode: focusNode,
+                  chipAnimationStyle: appChipAnimationStyle(context),
+                  selected: isSelected,
+                  label: Text(highlightColor.displayName),
+                  avatar: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(color: highlightColor.accentColor, shape: BoxShape.circle),
+                  ),
+                  onSelected: (_) => provider.toggleColorFilter(highlightColor),
                 ),
-                onSelected: (_) => provider.toggleColorFilter(highlightColor),
               ),
             );
           }),
@@ -361,9 +376,10 @@ class _AnnotationsPageState extends State<AnnotationsPage> {
         await provider.deleteAnnotation(annotation.id, repository: repository);
       } catch (_) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            snackBarAnimationStyle: AppMotion.animationStyle(context),
+            const SnackBar(content: Text('Could not delete. Please try again.')),
+          );
         }
         return;
       }

@@ -5,6 +5,8 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/acquisition_confirmation_dialog.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 Future<void> showAcquisitionJobDetailsSheet({
   required BuildContext context,
@@ -12,6 +14,7 @@ Future<void> showAcquisitionJobDetailsSheet({
   required AcquisitionJob job,
 }) async {
   final action = await showModalBottomSheet<_AcquisitionJobAction>(
+    sheetAnimationStyle: AppMotion.animationStyle(context),
     context: context,
     useRootNavigator: true,
     useSafeArea: true,
@@ -102,7 +105,7 @@ Future<void> _handleActionOutcome({
 
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+    ..showSnackBar(snackBarAnimationStyle: AppMotion.animationStyle(context), SnackBar(content: Text(message)));
 
   final currentJob = provider.jobById(job.id);
 
@@ -184,7 +187,7 @@ class _AcquisitionJobDetailsContent extends StatelessWidget {
         Text(acquisitionStatusLabel(job), style: textTheme.bodyMedium),
         if (job.progress case final progress?) ...[
           const SizedBox(height: Spacing.md),
-          LinearProgressIndicator(value: progress),
+          AppLinearProgressIndicator(value: progress),
         ],
         if (job.downloadedBytes != null || job.totalBytes != null) ...[
           const SizedBox(height: Spacing.sm),
@@ -267,7 +270,7 @@ class _AcquisitionFileChoicesState extends State<_AcquisitionFileChoices> {
         if (snapshot.connectionState != ConnectionState.done) {
           return Row(
             children: [
-              const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox.square(dimension: 20, child: AppCircularProgressIndicator(strokeWidth: 2)),
               const SizedBox(width: Spacing.sm),
               Text('Loading files…', style: textTheme.bodyMedium),
             ],

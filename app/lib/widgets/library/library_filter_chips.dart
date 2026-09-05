@@ -10,6 +10,8 @@ import 'package:papyrus/providers/enums/library_view_mode.dart';
 import 'package:papyrus/providers/library_provider.dart';
 import 'package:papyrus/utils/book_language.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 class _ChipEntry {
   final String id;
@@ -54,22 +56,27 @@ class _DropdownFilterChip extends StatelessWidget {
       button: true,
       selected: isSelected,
       label: '$semanticLabel: $label',
-      child: ActionChip(
-        tooltip: tooltip,
-        avatar: Icon(icon, size: 18, color: foregroundColor),
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label),
-            const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: foregroundColor),
-          ],
+      child: AppMotionControl(
+        value: null,
+        builder: (focusNode) => ActionChip(
+          focusNode: focusNode,
+          chipAnimationStyle: appChipAnimationStyle(context),
+          tooltip: tooltip,
+          avatar: Icon(icon, size: 18, color: foregroundColor),
+          label: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label),
+              const SizedBox(width: 2),
+              Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: foregroundColor),
+            ],
+          ),
+          labelStyle: TextStyle(color: foregroundColor, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal),
+          backgroundColor: isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerLow,
+          side: BorderSide(color: isSelected ? colorScheme.secondaryContainer : colorScheme.outlineVariant),
+          shape: const StadiumBorder(),
+          onPressed: onPressed,
         ),
-        labelStyle: TextStyle(color: foregroundColor, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal),
-        backgroundColor: isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerLow,
-        side: BorderSide(color: isSelected ? colorScheme.secondaryContainer : colorScheme.outlineVariant),
-        shape: const StadiumBorder(),
-        onPressed: onPressed,
       ),
     );
   }
@@ -169,20 +176,24 @@ class _MultiSelectionSheetState<T> extends State<_MultiSelectionSheet<T>> {
                     final option = visibleOptions[index];
                     final isSelected = _selectedValues.contains(option.value);
 
-                    return CheckboxListTile(
+                    return AppMotionControl(
                       value: isSelected,
-                      secondary: option.icon == null ? null : Icon(option.icon),
-                      title: Text(option.label),
-                      controlAffinity: ListTileControlAffinity.trailing,
-                      onChanged: (_) {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedValues.remove(option.value);
-                          } else {
-                            _selectedValues.add(option.value);
-                          }
-                        });
-                      },
+                      builder: (focusNode) => CheckboxListTile(
+                        focusNode: focusNode,
+                        value: isSelected,
+                        secondary: option.icon == null ? null : Icon(option.icon),
+                        title: Text(option.label),
+                        controlAffinity: ListTileControlAffinity.trailing,
+                        onChanged: (_) {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedValues.remove(option.value);
+                            } else {
+                              _selectedValues.add(option.value);
+                            }
+                          });
+                        },
+                      ),
                     );
                   },
                 ),
@@ -234,6 +245,7 @@ Future<T?> _showSingleSelectionSheet<T>(
   required T selectedValue,
 }) {
   return showModalBottomSheet<T>(
+    sheetAnimationStyle: AppMotion.animationStyle(context),
     context: context,
     useSafeArea: true,
     useRootNavigator: true,
@@ -251,6 +263,7 @@ Future<Set<T>?> _showMultiSelectionSheet<T>(
   bool searchable = false,
 }) {
   return showModalBottomSheet<Set<T>>(
+    sheetAnimationStyle: AppMotion.animationStyle(context),
     context: context,
     useSafeArea: true,
     useRootNavigator: true,
@@ -547,7 +560,8 @@ class LibraryFilterChips extends StatelessWidget {
     return SizedBox(
       height: 48,
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
+        key: ValueKey(AppMotion.disabled(context)),
+        duration: AppMotion.duration(context, const Duration(milliseconds: 200)),
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
         transitionBuilder: (child, animation) {

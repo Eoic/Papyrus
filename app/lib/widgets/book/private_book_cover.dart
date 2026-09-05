@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:papyrus/themes/app_motion.dart';
 import 'package:papyrus/media/cover_storage_bucket.dart';
 import 'package:papyrus/media/local_cover_image_provider.dart';
 import 'package:papyrus/media/media_cache_service.dart';
@@ -266,6 +267,8 @@ class _PrivateBookCoverState extends State<CoverImage> {
 
     if (_hasPublicUrl) {
       return CachedNetworkImage(
+        fadeInDuration: AppMotion.duration(context, const Duration(milliseconds: 500)),
+        fadeOutDuration: AppMotion.duration(context, const Duration(milliseconds: 1000)),
         imageUrl: widget.imageUrl!,
         fit: widget.fit,
         placeholder: (_, _) => _buildLoadingPlaceholder(context),

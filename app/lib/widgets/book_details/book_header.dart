@@ -4,6 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/book_action_buttons.dart';
 import 'package:papyrus/widgets/book_details/book_cover_image.dart';
 import 'package:papyrus/widgets/book_details/book_progress_bar.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Header section for book details page.
 /// Contains cover image, title, author, metadata, progress bar, and action buttons.
@@ -221,11 +222,16 @@ class BookHeader extends StatelessWidget {
         ...book.topics
             .take(2)
             .map(
-              (topic) => Chip(
-                label: Text(topic),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                labelPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+              (topic) => AppMotionControl(
+                value: null,
+                builder: (focusNode) => Chip(
+                  focusNode: focusNode,
+                  chipAnimationStyle: appChipAnimationStyle(context),
+                  label: Text(topic),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: Spacing.sm),
+                ),
               ),
             ),
       ],

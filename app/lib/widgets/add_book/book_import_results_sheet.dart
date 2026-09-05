@@ -15,6 +15,8 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/add_book/add_book_sheet_scaffold.dart';
 import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 typedef BookImportProcessor = Future<BookImportResult> Function(Uint8List bytes, String filename);
 typedef ImportedBookFileDeleter = Future<void> Function(String bookId);
@@ -98,6 +100,7 @@ class BookImportResultsSheet extends StatefulWidget {
     final messenger = ScaffoldMessenger.maybeOf(context);
 
     return showModalBottomSheet<void>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -119,6 +122,7 @@ class BookImportResultsSheet extends StatefulWidget {
           onCompleted: (books) {
             final count = books.length;
             messenger?.showSnackBar(
+              snackBarAnimationStyle: AppMotion.animationStyle(context),
               SnackBar(content: Text('Added $count ${count == 1 ? 'book' : 'books'} to library')),
             );
           },
@@ -355,9 +359,10 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
     }
     if (!deleted) {
       setState(() {});
-      ScaffoldMessenger.maybeOf(
-        context,
-      )?.showSnackBar(const SnackBar(content: Text('Could not remove the imported file. Please try again.')));
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Could not remove the imported file. Please try again.')),
+      );
       return;
     }
     final currentIndex = _indexOf(id);
@@ -439,9 +444,10 @@ class _BookImportResultsSheetState extends State<BookImportResultsSheet> {
   void _restoreAfterCloseFailure() {
     if (!mounted) return;
     setState(() => _isClosing = false);
-    ScaffoldMessenger.maybeOf(
-      context,
-    )?.showSnackBar(const SnackBar(content: Text('Could not remove temporary files. Please try again.')));
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      const SnackBar(content: Text('Could not remove temporary files. Please try again.')),
+    );
   }
 
   @override
@@ -539,7 +545,7 @@ class _ImportResultRow extends StatelessWidget {
                 if (isRemoving)
                   const Padding(
                     padding: EdgeInsets.all(Spacing.sm),
-                    child: SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: SizedBox.square(dimension: 20, child: AppCircularProgressIndicator(strokeWidth: 2)),
                   )
                 else
                   IconButton(tooltip: 'Remove ${item.file.name}', onPressed: onRemove, icon: const Icon(Icons.close)),
@@ -554,13 +560,13 @@ class _ImportResultRow extends StatelessWidget {
       BookImportBatchStatus.queued => const Icon(Icons.schedule_outlined),
       BookImportBatchStatus.processing => const SizedBox.square(
         dimension: 24,
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: AppCircularProgressIndicator(strokeWidth: 2),
       ),
       BookImportBatchStatus.ready => Icon(Icons.check_circle_outline, color: colorScheme.primary),
       BookImportBatchStatus.processingFailed => Icon(Icons.error_outline, color: colorScheme.error),
       BookImportBatchStatus.adding => const SizedBox.square(
         dimension: 24,
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: AppCircularProgressIndicator(strokeWidth: 2),
       ),
       BookImportBatchStatus.added => Icon(Icons.check_circle, color: colorScheme.primary),
       BookImportBatchStatus.commitFailed => Icon(Icons.error_outline, color: colorScheme.error),

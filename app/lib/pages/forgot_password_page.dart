@@ -9,6 +9,7 @@ import 'package:papyrus/widgets/auth/auth_switch_link.dart';
 import 'package:papyrus/widgets/input/email_input.dart';
 import 'package:papyrus/widgets/input/password_input.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Forgot password page for the Papyrus book management application.
 /// Provides responsive layouts for mobile and desktop displays.
@@ -139,6 +140,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
       SnackBar(
         duration: const Duration(seconds: 5),
         content: Text(message),
@@ -149,6 +151,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
       SnackBar(
         duration: const Duration(seconds: 5),
         content: Text(message),

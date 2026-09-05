@@ -4,6 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/annotation_card.dart';
 import 'package:papyrus/widgets/book_details/empty_annotations_state.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Sort options for annotations within a single book.
 enum _AnnotationSort { dateNewest, dateOldest, position, color }
@@ -201,6 +202,7 @@ class _BookAnnotationsState extends State<BookAnnotations> {
 
   Widget _buildSortButton() {
     return PopupMenuButton<_AnnotationSort>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       icon: const Icon(Icons.sort),
       tooltip: 'Sort annotations',
       onSelected: (option) => setState(() => _sortOption = option),

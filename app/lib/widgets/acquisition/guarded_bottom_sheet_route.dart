@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 Future<T?> showGuardedModalBottomSheet<T>({
   required BuildContext context,
@@ -22,6 +23,7 @@ Future<T?> showGuardedModalBottomSheet<T>({
       barrierOnTapHint: localizations.scrimOnTapHint(localizations.bottomSheetLabel),
       modalBarrierColor: Theme.of(context).bottomSheetTheme.modalBarrierColor,
       shape: shape,
+      sheetAnimationStyle: AppMotion.animationStyle(context),
     ),
   );
 }
@@ -35,6 +37,7 @@ class _GuardedModalBottomSheetRoute<T> extends ModalBottomSheetRoute<T> {
     required super.barrierOnTapHint,
     required super.modalBarrierColor,
     required super.shape,
+    super.sheetAnimationStyle,
   }) : _busy = busy,
        super(
          isScrollControlled: true,

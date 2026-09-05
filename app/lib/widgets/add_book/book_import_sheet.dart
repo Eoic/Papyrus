@@ -17,6 +17,7 @@ import 'package:papyrus/widgets/add_book/book_import_batch_item.dart';
 import 'package:papyrus/widgets/add_book/book_import_controller.dart';
 import 'package:papyrus/widgets/add_book/book_import_sheet_sections.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 export 'package:papyrus/widgets/add_book/book_import_controller.dart'
     show BookImportProcessor, DigitalBookFilePicker, ImportedBookCommitter, ImportedBookFileDeleter;
@@ -68,6 +69,7 @@ class BookImportSheet extends StatefulWidget {
         committer ?? (BookImportResult result, String filename) => _commitResult(context, result, filename);
 
     return showModalBottomSheet<void>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -89,9 +91,10 @@ class BookImportSheet extends StatefulWidget {
             onClose: () => Navigator.of(sheetContext).pop(),
             onCompleted: (books) {
               final count = books.length;
-              ScaffoldMessenger.maybeOf(
-                context,
-              )?.showSnackBar(SnackBar(content: Text('$count ${count == 1 ? 'book' : 'books'} added to library')));
+              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                snackBarAnimationStyle: AppMotion.animationStyle(context),
+                SnackBar(content: Text('$count ${count == 1 ? 'book' : 'books'} added to library')),
+              );
             },
           ),
         );
@@ -220,9 +223,10 @@ class _BookImportSheetState extends State<BookImportSheet> {
   Future<void> _removeItem(String id) async {
     final result = await _controller.removeItem(id);
     if (!mounted || result != BookImportRemoveResult.cleanupFailed) return;
-    ScaffoldMessenger.maybeOf(
-      context,
-    )?.showSnackBar(const SnackBar(content: Text('Could not remove the imported file.')));
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      const SnackBar(content: Text('Could not remove the imported file.')),
+    );
   }
 
   Future<void> _requestClose() {
@@ -246,9 +250,10 @@ class _BookImportSheetState extends State<BookImportSheet> {
         widget.onClose();
       case BookImportCloseResult.cleanupFailed:
       case BookImportCloseResult.processingCleanupFailed:
-        ScaffoldMessenger.maybeOf(
-          context,
-        )?.showSnackBar(const SnackBar(content: Text('Could not remove temporary files. Please try again.')));
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          snackBarAnimationStyle: AppMotion.animationStyle(context),
+          const SnackBar(content: Text('Could not remove temporary files. Please try again.')),
+        );
     }
   }
 }

@@ -7,6 +7,9 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/acquisition/guarded_bottom_sheet_route.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_header.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 typedef AcquisitionEndpointTestCallback =
     Future<void> Function({
@@ -62,7 +65,8 @@ Future<bool?> showAcquisitionEndpointEditor({
         final maxEditorHeight = math.max(0.0, availableHeight * .92);
 
         return AnimatedPadding(
-          duration: const Duration(milliseconds: 150),
+          key: ValueKey(AppMotion.disabled(sheetContext)),
+          duration: AppMotion.duration(sheetContext, const Duration(milliseconds: 150)),
           curve: Curves.easeOut,
           padding: EdgeInsets.only(bottom: viewInsets.bottom),
           child: ConstrainedBox(
@@ -293,11 +297,16 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
                     ],
                     if (widget.endpoint != null) ...[
                       const SizedBox(height: Spacing.formFieldSpacing),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Enabled'),
+                      AppMotionControl(
                         value: _enabled,
-                        onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
+                        enabled: !_busy,
+                        builder: (focusNode) => SwitchListTile(
+                          focusNode: focusNode,
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Enabled'),
+                          value: _enabled,
+                          onChanged: _busy ? null : (enabled) => setState(() => _enabled = enabled),
+                        ),
                       ),
                     ],
                     const SizedBox(height: Spacing.formFieldSpacing),
@@ -307,7 +316,7 @@ class _AcquisitionEndpointEditorState extends State<AcquisitionEndpointEditor> {
                         key: const Key('acquisition-test-connection'),
                         onPressed: _busy ? null : _testConnection,
                         icon: _testing
-                            ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox.square(dimension: 18, child: AppCircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.cable_outlined),
                         label: const Text('Test connection'),
                       ),

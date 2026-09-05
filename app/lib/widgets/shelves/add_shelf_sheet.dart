@@ -6,6 +6,7 @@ import 'package:papyrus/models/shelf.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/utils/color_utils.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Bottom sheet for creating or editing a shelf.
 class AddShelfSheet extends StatefulWidget {
@@ -24,6 +25,7 @@ class AddShelfSheet extends StatefulWidget {
     FutureOr<void> Function(String name, String? description, String? colorHex, IconData? icon)? onSave,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Progress bar widget for book reading progress.
 /// Shows a linear progress bar with an optional label.
@@ -35,7 +36,7 @@ class BookProgressBar extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(barHeight / 2),
-                child: LinearProgressIndicator(
+                child: AppLinearProgressIndicator(
                   value: progress,
                   backgroundColor: colorScheme.surfaceContainerHighest,
                   color: progress >= 1.0 ? colorScheme.tertiary : colorScheme.primary,

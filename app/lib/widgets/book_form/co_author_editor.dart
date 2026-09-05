@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Editable co-author chips with add dialog. Used in book forms.
 class CoAuthorEditor extends StatelessWidget {
@@ -22,18 +24,28 @@ class CoAuthorEditor extends StatelessWidget {
           runSpacing: Spacing.xs,
           children: [
             ...coAuthors.map(
-              (author) => Chip(
-                label: Text(author),
-                onDeleted: () {
-                  final updated = List<String>.from(coAuthors)..remove(author);
-                  onChanged(updated);
-                },
+              (author) => AppMotionControl(
+                value: null,
+                builder: (focusNode) => Chip(
+                  focusNode: focusNode,
+                  chipAnimationStyle: appChipAnimationStyle(context),
+                  label: Text(author),
+                  onDeleted: () {
+                    final updated = List<String>.from(coAuthors)..remove(author);
+                    onChanged(updated);
+                  },
+                ),
               ),
             ),
-            ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
-              label: const Text('Add'),
-              onPressed: () => _showAddDialog(context),
+            AppMotionControl(
+              value: null,
+              builder: (focusNode) => ActionChip(
+                focusNode: focusNode,
+                chipAnimationStyle: appChipAnimationStyle(context),
+                avatar: const Icon(Icons.add, size: 18),
+                label: const Text('Add'),
+                onPressed: () => _showAddDialog(context),
+              ),
             ),
           ],
         ),
@@ -45,6 +57,7 @@ class CoAuthorEditor extends StatelessWidget {
     final controller = TextEditingController();
 
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Add co-author'),

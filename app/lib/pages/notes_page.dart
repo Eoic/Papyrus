@@ -1,3 +1,4 @@
+import 'package:papyrus/widgets/shared/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/data/data_store.dart';
@@ -11,6 +12,8 @@ import 'package:papyrus/widgets/book_details/note_dialog.dart';
 import 'package:papyrus/widgets/library/library_drawer.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Notes page showing all notes across all books.
 ///
@@ -73,6 +76,7 @@ class _NotesPageState extends State<NotesPage> {
   Widget _buildMobileLayout(BuildContext context, NotesProvider provider) {
     return Scaffold(
       key: _scaffoldKey,
+      drawerEnableOpenDragGesture: !AppMotion.disabled(context),
       drawer: const LibraryDrawer(currentPath: '/library/notes'),
       body: SafeArea(
         child: Column(
@@ -85,7 +89,7 @@ class _NotesPageState extends State<NotesPage> {
                   IconButton(
                     icon: const Icon(Icons.menu),
                     onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
+                      openAppDrawer(context, _scaffoldKey.currentState);
                     },
                     tooltip: 'Library sections',
                   ),
@@ -172,6 +176,7 @@ class _NotesPageState extends State<NotesPage> {
 
   Widget _buildSortButton(NotesProvider provider) {
     return PopupMenuButton<NoteSortOption>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       icon: const Icon(Icons.sort),
       tooltip: 'Sort notes',
       onSelected: provider.setSortOption,
@@ -207,10 +212,15 @@ class _NotesPageState extends State<NotesPage> {
         children: [
           // Clear chip (shown when filters are active)
           if (provider.activeTags.isNotEmpty) ...[
-            ActionChip(
-              label: const Text('Clear'),
-              onPressed: provider.clearTagFilters,
-              avatar: const Icon(Icons.clear, size: 16),
+            AppMotionControl(
+              value: null,
+              builder: (focusNode) => ActionChip(
+                focusNode: focusNode,
+                chipAnimationStyle: appChipAnimationStyle(context),
+                label: const Text('Clear'),
+                onPressed: provider.clearTagFilters,
+                avatar: const Icon(Icons.clear, size: 16),
+              ),
             ),
             const SizedBox(width: Spacing.sm),
           ],
@@ -220,10 +230,15 @@ class _NotesPageState extends State<NotesPage> {
 
             return Padding(
               padding: const EdgeInsets.only(right: Spacing.sm),
-              child: FilterChip(
-                selected: isSelected,
-                label: Text(tag),
-                onSelected: (_) => provider.toggleTagFilter(tag),
+              child: AppMotionControl(
+                value: null,
+                builder: (focusNode) => FilterChip(
+                  focusNode: focusNode,
+                  chipAnimationStyle: appChipAnimationStyle(context),
+                  selected: isSelected,
+                  label: Text(tag),
+                  onSelected: (_) => provider.toggleTagFilter(tag),
+                ),
               ),
             );
           }),
@@ -332,9 +347,10 @@ class _NotesPageState extends State<NotesPage> {
             await provider.deleteNote(note.id, repository: repository);
           } catch (_) {
             if (mounted) {
-              ScaffoldMessenger.of(
-                this.context,
-              ).showSnackBar(const SnackBar(content: Text('Could not delete. Please try again.')));
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                snackBarAnimationStyle: AppMotion.animationStyle(this.context),
+                const SnackBar(content: Text('Could not delete. Please try again.')),
+              );
             }
             return;
           }

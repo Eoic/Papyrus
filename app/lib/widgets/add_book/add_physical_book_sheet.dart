@@ -15,6 +15,8 @@ import 'package:papyrus/widgets/book_form/book_text_field.dart';
 import 'package:papyrus/widgets/book_form/co_author_editor.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// ISBN lookup states.
 enum _IsbnLookupState { idle, fetching, found, notFound, error }
@@ -26,6 +28,7 @@ class AddPhysicalBookSheet extends StatelessWidget {
   /// Show the sheet as a bottom sheet.
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -246,7 +249,10 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
     final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).pop();
 
-    messenger.showSnackBar(SnackBar(content: Text('Added "${book.title}" to library')));
+    messenger.showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      SnackBar(content: Text('Added "${book.title}" to library')),
+    );
   }
 
   // ============================================================================
@@ -465,7 +471,7 @@ class _PhysicalBookContentState extends State<_PhysicalBookContent> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: AppCircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.search),
             ),

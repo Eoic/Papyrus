@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/daily_activity.dart';
 import 'package:papyrus/providers/statistics_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 // =============================================================================
 // DATA AGGREGATION
@@ -226,6 +227,7 @@ class ReadingTimeBarChart extends StatelessWidget {
           final barWidth = (availableWidth / activities.length * 0.6).clamp(4.0, isDesktop ? 20.0 : 16.0);
 
           return BarChart(
+            key: ValueKey(AppMotion.disabled(context)),
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
               maxY: yAxis.maxY,
@@ -288,7 +290,7 @@ class ReadingTimeBarChart extends StatelessWidget {
                 );
               }).toList(),
             ),
-            duration: AnimationDurations.standard,
+            duration: AppMotion.duration(context, AnimationDurations.standard),
           );
         },
       ),
@@ -310,6 +312,7 @@ class ReadingTimeBarChart extends StatelessWidget {
           final barWidth = (availableWidth / buckets.length * 0.6).clamp(6.0, isDesktop ? 24.0 : 18.0);
 
           return BarChart(
+            key: ValueKey(AppMotion.disabled(context)),
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
               maxY: yAxis.maxY,
@@ -374,7 +377,7 @@ class ReadingTimeBarChart extends StatelessWidget {
                 );
               }).toList(),
             ),
-            duration: AnimationDurations.standard,
+            duration: AppMotion.duration(context, AnimationDurations.standard),
           );
         },
       ),
@@ -435,6 +438,7 @@ class PagesReadLineChart extends StatelessWidget {
     return SizedBox(
       height: chartHeight,
       child: LineChart(
+        key: ValueKey(AppMotion.disabled(context)),
         LineChartData(
           minY: 0,
           maxY: yAxis.maxY,
@@ -506,7 +510,7 @@ class PagesReadLineChart extends StatelessWidget {
             ),
           ],
         ),
-        duration: AnimationDurations.standard,
+        duration: AppMotion.duration(context, AnimationDurations.standard),
       ),
     );
   }
@@ -527,6 +531,7 @@ class PagesReadLineChart extends StatelessWidget {
     return SizedBox(
       height: chartHeight,
       child: LineChart(
+        key: ValueKey(AppMotion.disabled(context)),
         LineChartData(
           minY: 0,
           maxY: yAxis.maxY,
@@ -598,7 +603,7 @@ class PagesReadLineChart extends StatelessWidget {
             ),
           ],
         ),
-        duration: AnimationDurations.standard,
+        duration: AppMotion.duration(context, AnimationDurations.standard),
       ),
     );
   }
@@ -649,6 +654,7 @@ class BooksPerMonthChart extends StatelessWidget {
           final barWidth = (availableWidth / displayStats.length * 0.5).clamp(8.0, isDesktop ? 28.0 : 22.0);
 
           return BarChart(
+            key: ValueKey(AppMotion.disabled(context)),
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
               maxY: maxBooks > 0 ? maxBooks * 1.2 : 5,
@@ -737,7 +743,7 @@ class BooksPerMonthChart extends StatelessWidget {
                 );
               }).toList(),
             ),
-            duration: AnimationDurations.standard,
+            duration: AppMotion.duration(context, AnimationDurations.standard),
           );
         },
       ),

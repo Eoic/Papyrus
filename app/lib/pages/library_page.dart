@@ -1,3 +1,4 @@
+import 'package:papyrus/widgets/shared/app_drawer.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -31,6 +32,8 @@ import 'package:papyrus/widgets/add_book/add_book_choice_sheet.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Main library page with responsive layouts for all platforms.
 /// - Mobile: AppBar with search, filter chips, 2-column grid, FAB
@@ -201,6 +204,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return Scaffold(
       key: _scaffoldKey,
+      drawerEnableOpenDragGesture: !AppMotion.disabled(context),
       drawer: widget.isShelfView ? null : const LibraryDrawer(),
       body: SafeArea(
         child: Column(
@@ -280,7 +284,7 @@ class _LibraryPageState extends State<LibraryPage> {
         children: [
           IconButton(
             icon: const Icon(Icons.menu),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            onPressed: () => openAppDrawer(context, _scaffoldKey.currentState),
             tooltip: 'Library sections',
           ),
           const SizedBox(width: Spacing.xs),
@@ -435,6 +439,7 @@ class _LibraryPageState extends State<LibraryPage> {
     }
 
     return showModalBottomSheet<AcquisitionEndpoint>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       useSafeArea: true,
       showDragHandle: false,
@@ -578,7 +583,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(snackBarAnimationStyle: AppMotion.animationStyle(context), SnackBar(content: Text(message)));
   }
 
   // ============================================================================
@@ -820,7 +825,7 @@ class _LibraryPageState extends State<LibraryPage> {
     }
 
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppCircularProgressIndicator());
     }
 
     final visibleBooks = acquisitionView.books;

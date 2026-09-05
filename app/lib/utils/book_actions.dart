@@ -16,6 +16,7 @@ import 'package:papyrus/widgets/context_menu/book_context_menu.dart';
 import 'package:papyrus/widgets/shelves/move_to_shelf_sheet.dart';
 import 'package:papyrus/widgets/topics/manage_topics_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Show the book context menu with standard actions.
 ///
@@ -78,9 +79,10 @@ Future<void> toggleBookFavorite(BuildContext context, String bookId, bool curren
     await context.read<LibraryProvider>().toggleFavorite(bookId, currentFavorite);
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not save favorite. Please try again.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Could not save favorite. Please try again.')),
+      );
     }
   }
 }
@@ -91,7 +93,10 @@ Future<void> _downloadBookFile(BuildContext context, Book book) async {
   final mediaCacheService = context.read<MediaCacheService>();
   final downloadService = context.read<BookDownloadService>();
 
-  messenger.showSnackBar(const SnackBar(content: Text('Preparing download...')));
+  messenger.showSnackBar(
+    snackBarAnimationStyle: AppMotion.animationStyle(context),
+    const SnackBar(content: Text('Preparing download...')),
+  );
 
   try {
     final cached = await mediaCacheService.getValidCachedBookFile(book, readLocalBookFile: importService.getBookFile);
@@ -110,14 +115,23 @@ Future<void> _downloadBookFile(BuildContext context, Book book) async {
     if (!context.mounted) return;
     messenger.hideCurrentSnackBar();
     if (result.saved) {
-      messenger.showSnackBar(SnackBar(content: Text('Downloaded "${book.title}"')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        SnackBar(content: Text('Downloaded "${book.title}"')),
+      );
     } else {
-      messenger.showSnackBar(const SnackBar(content: Text('Download canceled')));
+      messenger.showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
+        const SnackBar(content: Text('Download canceled')),
+      );
     }
   } catch (_) {
     if (!context.mounted) return;
     messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(const SnackBar(content: Text('Could not download this book file.')));
+    messenger.showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      const SnackBar(content: Text('Could not download this book file.')),
+    );
   }
 }
 

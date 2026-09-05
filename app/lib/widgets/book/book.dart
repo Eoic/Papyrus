@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/models/book.dart' as models;
 import 'package:papyrus/providers/enums/library_reading_status.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 class Book extends StatefulWidget {
   final String id;
@@ -33,13 +34,24 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (isFinished) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateAnimation();
+  }
+
+  void _updateAnimation() {
+    animationController.duration = AppMotion.duration(context, const Duration(milliseconds: 250));
+    if (AppMotion.disabled(context)) {
+      animationController.value = isFinished ? 1 : 0;
+    } else if (isFinished) {
       animationController.forward();
     } else {
       animationController.reverse();
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return GridTile(
       child: InkWell(
         borderRadius: BorderRadius.circular(8.0),
@@ -48,6 +60,7 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
         },
         onLongPress: () {
           showModalBottomSheet(
+            sheetAnimationStyle: AppMotion.animationStyle(context),
             isScrollControlled: true,
             shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18.0))),
             context: context,
@@ -66,6 +79,7 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
                       onPressed: () {
                         setState(() {
                           isFinished = !isFinished;
+                          _updateAnimation();
                           context.pop();
                         });
                       },
@@ -149,7 +163,7 @@ class _BookState extends State<Book> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    super.dispose();
     animationController.dispose();
+    super.dispose();
   }
 }

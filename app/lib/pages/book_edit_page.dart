@@ -21,6 +21,9 @@ import 'package:papyrus/widgets/book_form/book_text_field.dart';
 import 'package:papyrus/widgets/book_form/co_author_editor.dart';
 import 'package:papyrus/widgets/book_form/responsive_form_row.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Page for editing book metadata.
 class BookEditPage extends StatefulWidget {
@@ -141,7 +144,7 @@ class _BookEditPageState extends State<BookEditPage> {
           if (provider.isLoading) {
             return Scaffold(
               appBar: AppBar(title: const Text('Edit book')),
-              body: const Center(child: CircularProgressIndicator()),
+              body: const Center(child: AppCircularProgressIndicator()),
             );
           }
 
@@ -524,11 +527,15 @@ class _BookEditPageState extends State<BookEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SwitchListTile(
-          title: const Text('Physical book'),
+        AppMotionControl(
           value: isPhysical,
-          onChanged: (value) => _provider.updateIsPhysical(value),
-          contentPadding: EdgeInsets.zero,
+          builder: (focusNode) => SwitchListTile(
+            focusNode: focusNode,
+            title: const Text('Physical book'),
+            value: isPhysical,
+            onChanged: (value) => _provider.updateIsPhysical(value),
+            contentPadding: EdgeInsets.zero,
+          ),
         ),
         if (isPhysical) ...[
           const SizedBox(height: Spacing.sm),
@@ -599,7 +606,7 @@ class _BookEditPageState extends State<BookEditPage> {
         prefixIcon: const Icon(Icons.search),
         suffixIcon: IconButton(
           icon: provider.isFetching
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(width: 20, height: 20, child: AppCircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.arrow_forward),
           onPressed: provider.isFetching ? null : () => _searchMetadata(provider),
         ),
@@ -779,12 +786,14 @@ class _BookEditPageState extends State<BookEditPage> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
       SnackBar(content: Text('Applied metadata from ${result.sourceLabel}'), behavior: SnackBarBehavior.floating),
     );
   }
 
   Future<bool> _showDiscardDialog() async {
     final result = await showDialog<bool>(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Discard changes?'),
@@ -819,6 +828,7 @@ class _BookEditPageState extends State<BookEditPage> {
   Future<void> _handleSave(BuildContext context) async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
+        snackBarAnimationStyle: AppMotion.animationStyle(context),
         const SnackBar(content: Text('Please fix the errors before saving'), behavior: SnackBarBehavior.floating),
       );
       return;
@@ -882,14 +892,16 @@ class _BookEditPageState extends State<BookEditPage> {
 
     if (!mounted || !context.mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Book updated'), behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
+      const SnackBar(content: Text('Book updated'), behavior: SnackBarBehavior.floating),
+    );
     _navigateToBookDetails(context);
   }
 
   void _showSaveError(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
+      snackBarAnimationStyle: AppMotion.animationStyle(context),
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/shelf.dart' show CoverPreview, ShelfData;
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Card widget for displaying a shelf in grid or list view.
 ///
@@ -79,8 +80,9 @@ class _ShelfCardState extends State<ShelfCard> {
                       top: Spacing.xs,
                       right: Spacing.xs,
                       child: AnimatedOpacity(
+                        key: ValueKey(AppMotion.disabled(context)),
                         opacity: _isHovered ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 150),
+                        duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
                         child: _buildMoreButton(context),
                       ),
                     ),
@@ -333,8 +335,9 @@ class _ShelfCardState extends State<ShelfCard> {
               // More button (desktop hover only)
               if (_isDesktop && widget.onMoreTap != null)
                 AnimatedOpacity(
+                  key: ValueKey(AppMotion.disabled(context)),
                   opacity: _isHovered ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 150),
+                  duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
                   child: IconButton(
                     icon: const Icon(Icons.more_vert),
                     iconSize: IconSizes.action,

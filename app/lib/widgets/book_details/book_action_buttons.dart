@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:papyrus/models/book.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 enum BookReadingActionState { ready, download, checking, syncing, failed, downloading, unavailable }
 
@@ -50,7 +51,7 @@ class BookActionButtons extends StatelessWidget {
       BookReadingActionState.download => const Icon(Icons.download_outlined),
       BookReadingActionState.downloading => const SizedBox.square(
         dimension: 18,
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: AppCircularProgressIndicator(strokeWidth: 2),
       ),
       BookReadingActionState.checking => const Icon(Icons.hourglass_empty),
       BookReadingActionState.syncing => const Icon(Icons.cloud_sync_outlined),

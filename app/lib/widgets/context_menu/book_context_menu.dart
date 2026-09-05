@@ -3,6 +3,7 @@ import 'package:papyrus/models/book.dart';
 import 'package:papyrus/providers/enums/library_reading_status.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book/private_book_cover.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Context menu for book actions.
 class BookContextMenu {
@@ -21,6 +22,7 @@ class BookContextMenu {
     VoidCallback? onDelete,
   }) {
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -44,6 +46,7 @@ class BookContextMenu {
 
   static void _confirmDelete(BuildContext context, Book book, VoidCallback? onDelete) {
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete book?'),

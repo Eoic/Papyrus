@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/acquisition/acquisition_models.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/library/acquisition_status_text.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 class AcquisitionPlaceholderCard extends StatefulWidget {
   final AcquisitionJob job;
@@ -91,8 +93,9 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
                                   top: Spacing.xs,
                                   right: Spacing.xs,
                                   child: AnimatedOpacity(
+                                    key: ValueKey(AppMotion.disabled(context)),
                                     opacity: _isHovered ? 1 : 0,
-                                    duration: const Duration(milliseconds: 150),
+                                    duration: AppMotion.duration(context, const Duration(milliseconds: 150)),
                                     child: _SelectionIconButton(selected: false, onTap: widget.onEnterSelectionMode),
                                   ),
                                 ),
@@ -100,7 +103,7 @@ class _AcquisitionPlaceholderCardState extends State<AcquisitionPlaceholderCard>
                           ),
                         ),
                         if (widget.job.progress case final progress?)
-                          LinearProgressIndicator(
+                          AppLinearProgressIndicator(
                             value: progress,
                             backgroundColor: colorScheme.surfaceContainerHighest,
                             color: widget.job.requiresAttention ? colorScheme.error : colorScheme.primary,

@@ -4,6 +4,7 @@ import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/book_details/empty_notes_state.dart';
 import 'package:papyrus/widgets/book_details/note_card.dart';
 import 'package:papyrus/widgets/input/search_field.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Sort options for notes within a single book.
 enum _NoteSort { dateNewest, dateOldest, title }
@@ -202,6 +203,7 @@ class _BookNotesState extends State<BookNotes> {
 
   Widget _buildSortButton() {
     return PopupMenuButton<_NoteSort>(
+      popUpAnimationStyle: AppMotion.animationStyle(context),
       icon: const Icon(Icons.sort),
       tooltip: 'Sort notes',
       onSelected: (option) => setState(() => _sortOption = option),

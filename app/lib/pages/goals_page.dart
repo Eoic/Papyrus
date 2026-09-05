@@ -10,6 +10,7 @@ import 'package:papyrus/widgets/goals/goal_card.dart';
 import 'package:papyrus/widgets/statistics/stat_card.dart';
 import 'package:provider/provider.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
+import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Goals page displaying reading goals with progress tracking.
 ///
@@ -74,7 +75,7 @@ class _GoalsPageState extends State<GoalsPage> {
   // ============================================================================
 
   Widget _buildLoadingState(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(body: Center(child: AppCircularProgressIndicator()));
   }
 
   // ============================================================================

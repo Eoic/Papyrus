@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/providers/shelves_provider.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 typedef _ShelfSortSelection = ({ShelfSortOption option, bool ascending});
 
@@ -58,27 +60,34 @@ class _DropdownFilterChip extends StatelessWidget {
       selected: isSelected,
       label: '$semanticLabel: $label',
       child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: isEink ? TouchTargets.einkMin : 0),
-        child: ActionChip(
-          tooltip: tooltip,
-          avatar: Icon(icon, size: 18, color: foregroundColor),
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(label),
-              const SizedBox(width: 2),
-              Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: foregroundColor),
-            ],
+        constraints: const BoxConstraints(minHeight: 0),
+        child: AppMotionControl(
+          value: null,
+          builder: (focusNode) => ActionChip(
+            focusNode: focusNode,
+            chipAnimationStyle: appChipAnimationStyle(context),
+            tooltip: tooltip,
+            avatar: Icon(icon, size: 18, color: foregroundColor),
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label),
+                const SizedBox(width: 2),
+                Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: foregroundColor),
+              ],
+            ),
+            labelStyle: TextStyle(color: foregroundColor, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal),
+            backgroundColor: isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerLow,
+            side: BorderSide(
+              color: isSelected ? Colors.transparent : colorScheme.outlineVariant,
+              width: isEink ? BorderWidths.einkDefault : BorderWidths.thin,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(isEink ? AppRadius.none : AppRadius.full),
+            ),
+            visualDensity: VisualDensity.compact,
+            onPressed: onPressed,
           ),
-          labelStyle: TextStyle(color: foregroundColor, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal),
-          backgroundColor: isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerLow,
-          side: BorderSide(
-            color: isSelected ? Colors.transparent : colorScheme.outlineVariant,
-            width: isEink ? BorderWidths.einkDefault : BorderWidths.thin,
-          ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isEink ? AppRadius.none : AppRadius.full)),
-          visualDensity: isEink ? VisualDensity.standard : VisualDensity.compact,
-          onPressed: onPressed,
         ),
       ),
     );
@@ -139,6 +148,7 @@ Future<T?> _showSingleSelectionSheet<T>(
   required T selectedValue,
 }) {
   return showModalBottomSheet<T>(
+    sheetAnimationStyle: AppMotion.animationStyle(context),
     context: context,
     useSafeArea: true,
     useRootNavigator: true,
@@ -279,9 +289,10 @@ class ShelvesFilterChips extends StatelessWidget {
     final orderKey = [...chips.map((chip) => chip.id), if (provider.hasActiveShelfControls) 'clear-all'].join('-');
 
     return SizedBox(
-      height: isEink ? TouchTargets.einkMin : TouchTargets.mobileRecommended,
+      height: TouchTargets.mobileRecommended,
       child: AnimatedSwitcher(
-        duration: isEink ? AnimationDurations.eink : AnimationDurations.standard,
+        key: ValueKey(AppMotion.disabled(context)),
+        duration: AppMotion.duration(context, AnimationDurations.standard),
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
         transitionBuilder: (child, animation) {
@@ -313,9 +324,9 @@ class ShelvesFilterChips extends StatelessWidget {
                 onPressed: provider.clearShelfControls,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  minimumSize: Size(0, isEink ? TouchTargets.einkMin : TouchTargets.mobileMin),
+                  minimumSize: const Size(0, TouchTargets.mobileMin),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: isEink ? VisualDensity.standard : VisualDensity.compact,
+                  visualDensity: VisualDensity.compact,
                   shape: isEink ? const RoundedRectangleBorder(borderRadius: BorderRadius.zero) : null,
                 ),
                 child: const Text('Clear all'),

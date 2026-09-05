@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_date_picker.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// The type of goal scheduling.
 enum GoalScheduleType {
@@ -39,6 +42,7 @@ class AddGoalSheet extends StatefulWidget {
     onCreate,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
@@ -256,12 +260,17 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
         Wrap(
           spacing: Spacing.sm,
           children: List.generate(presets.length, (i) {
-            return ChoiceChip(
-              label: Text(presetLabels[i]),
-              selected: _durationMinutes == presets[i],
-              onSelected: (_) {
-                setState(() => _durationMinutes = presets[i]);
-              },
+            return AppMotionControl(
+              value: null,
+              builder: (focusNode) => ChoiceChip(
+                focusNode: focusNode,
+                chipAnimationStyle: appChipAnimationStyle(context),
+                label: Text(presetLabels[i]),
+                selected: _durationMinutes == presets[i],
+                onSelected: (_) {
+                  setState(() => _durationMinutes = presets[i]);
+                },
+              ),
             );
           }),
         ),
@@ -346,7 +355,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   }
 
   Future<void> _pickStartDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: _startDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
@@ -364,7 +373,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   }
 
   Future<void> _pickEndDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: _endDate,
       firstDate: _startDate,

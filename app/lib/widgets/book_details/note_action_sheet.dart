@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/note.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Result of note action sheet selection.
 enum NoteAction { edit, delete }
@@ -15,6 +16,7 @@ class NoteActionSheet extends StatelessWidget {
   /// Shows the action sheet and returns the selected action.
   static Future<NoteAction?> show(BuildContext context, {required Note note}) async {
     return showModalBottomSheet<NoteAction>(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => NoteActionSheet(note: note),
     );
@@ -77,6 +79,7 @@ class DeleteNoteDialog extends StatelessWidget {
   /// Shows the delete confirmation dialog.
   static Future<bool> show(BuildContext context, {required Note note}) async {
     final result = await showDialog<bool>(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => DeleteNoteDialog(note: note),
     );

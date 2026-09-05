@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:papyrus/models/reading_goal.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
+import 'package:papyrus/themes/app_motion.dart';
 
 /// Card displaying a completed goal with details.
 class CompletedGoalChip extends StatelessWidget {
@@ -203,6 +204,7 @@ class CompletedGoalChip extends StatelessWidget {
   /// without needing a [CompletedGoalChip] instance.
   static void showDetailsSheet(BuildContext context, {required ReadingGoal goal, VoidCallback? onDelete}) {
     showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
       builder: (context) => _CompletedGoalDetailsSheet(goal: goal, onDelete: onDelete),
@@ -401,6 +403,7 @@ class _CompletedGoalDetailsSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     showDialog(
+      animationStyle: AppMotion.animationStyle(context),
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete goal?'),

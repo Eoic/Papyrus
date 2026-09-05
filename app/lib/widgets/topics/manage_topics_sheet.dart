@@ -15,6 +15,8 @@ import 'package:papyrus/widgets/shared/bottom_sheet_handle.dart';
 import 'package:papyrus/widgets/shared/empty_state.dart';
 import 'package:papyrus/widgets/topics/add_topic_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:papyrus/themes/app_motion.dart';
+import 'package:papyrus/widgets/shared/app_motion_control.dart';
 
 /// Bottom sheet for managing topic assignments for a book or multiple books.
 class ManageTopicsSheet extends StatefulWidget {
@@ -38,6 +40,7 @@ class ManageTopicsSheet extends StatefulWidget {
     FutureOr<void> Function(List<String> tagIds)? onSave,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -53,6 +56,7 @@ class ManageTopicsSheet extends StatefulWidget {
     FutureOr<void> Function(List<String> tagIds)? onSave,
   }) {
     return showModalBottomSheet(
+      sheetAnimationStyle: AppMotion.animationStyle(context),
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
@@ -284,7 +288,15 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> with PersistentSa
                 ),
               ),
               // Checkbox
-              Checkbox(value: isSelected, onChanged: (_) => _toggleTag(tag.id), activeColor: tagColor),
+              AppMotionControl(
+                value: isSelected,
+                builder: (focusNode) => Checkbox(
+                  focusNode: focusNode,
+                  value: isSelected,
+                  onChanged: (_) => _toggleTag(tag.id),
+                  activeColor: tagColor,
+                ),
+              ),
             ],
           ),
         ),
