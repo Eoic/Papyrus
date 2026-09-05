@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_motion.dart';
+import 'instant_outline_input_border.dart';
 import 'color_schemes.g.dart';
 import 'design_tokens.dart';
 
@@ -362,25 +363,29 @@ class AppTheme {
 
   static InputDecorationTheme _einkInputDecorationTheme() {
     return const InputDecorationTheme(
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      floatingLabelStyle: TextStyle(color: EinkColors.black, fontSize: 16, fontWeight: FontWeight.w700),
+      hintFadeDuration: Duration.zero,
+      hoverColor: Colors.transparent,
       filled: true,
       fillColor: EinkColors.container,
-      border: OutlineInputBorder(
+      border: InstantOutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
       ),
-      enabledBorder: OutlineInputBorder(
+      enabledBorder: InstantOutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: EinkColors.black, width: BorderWidths.einkDefault),
       ),
-      focusedBorder: OutlineInputBorder(
+      focusedBorder: InstantOutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: EinkColors.black, width: BorderWidths.einkFocused),
       ),
-      errorBorder: OutlineInputBorder(
+      errorBorder: InstantOutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: EinkColors.black, width: BorderWidths.einkError),
       ),
-      focusedErrorBorder: OutlineInputBorder(
+      focusedErrorBorder: InstantOutlineInputBorder(
         borderRadius: BorderRadius.zero,
         borderSide: BorderSide(color: EinkColors.black, width: BorderWidths.einkError),
       ),
