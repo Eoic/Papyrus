@@ -6,6 +6,13 @@ breakpoints. Typography sizes, control dimensions, card margins, and spacing
 match the regular themes. Black/white selection states, stronger borders, and
 opaque surfaces keep controls legible without shadows or color alone.
 
+Input labels stay above their fields in e-ink, and focus borders snap to their
+target thickness instead of interpolating. Hints appear without fading. These
+changes use the input theme and preserve the native field's text, selection,
+keyboard focus, and validation. Light and dark retain floating-label and border
+animations. Pixel comparisons in `test/themes/eink_input_focus_test.dart` cover
+focus and blur, explicit form borders, and switching themes while editing.
+
 `AppMotion` carries the motion policy independently of layout. E-ink enables it
 through its theme extension; the existing reduced-animation preference and the
 system reduced-motion setting are also respected by app-controlled transitions.
@@ -33,6 +40,6 @@ Regression coverage lives in `test/widgets/shell/eink_layout_test.dart`,
 `test/widgets/static_date_picker_test.dart`.
 
 Validated on `feature/eink-theme`, based on this repository's default `master`
-branch: `flutter test --no-pub` passed 1,140 tests (10 skipped),
+branch: `flutter test --no-pub` passed 1,145 tests (10 skipped),
 `flutter analyze --no-pub` reported no issues, and
 `flutter build web --release --no-pub` succeeded.
