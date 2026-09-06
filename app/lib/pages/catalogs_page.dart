@@ -10,7 +10,8 @@ import 'package:papyrus/opds/opds_models.dart';
 import 'package:papyrus/themes/app_motion.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/opds/catalog_editor.dart';
-import 'package:papyrus/widgets/opds/opds_publication_tile.dart';
+import 'package:papyrus/widgets/opds/opds_feed_view.dart';
+import 'package:papyrus/widgets/opds/opds_download_panel.dart';
 import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 import 'package:provider/provider.dart';
 
@@ -30,6 +31,7 @@ class _CatalogsPageState extends State<CatalogsPage> {
   OpdsCredentials? _credentials;
   String? _loadKey;
   bool _searching = false;
+  bool _isGridView = true;
 
   @override
   void didUpdateWidget(covariant CatalogsPage oldWidget) {
@@ -153,78 +155,90 @@ class _CatalogsPageState extends State<CatalogsPage> {
     final downloads = context.watch<OpdsDownloads>();
     _scheduleLoad(catalogs);
     final catalog = widget.catalogId == null ? null : catalogs.find(widget.catalogId!);
+    final compact = MediaQuery.sizeOf(context).width < Breakpoints.tablet;
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
           children: [
-            Row(
-              children: [
-                if (MediaQuery.sizeOf(context).width < Breakpoints.desktopSmall)
-                  IconButton(
-                    tooltip: 'Library sections',
-                    icon: const Icon(Icons.menu),
-                    onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
-                  ),
-                if (widget.catalogId != null)
-                  IconButton(
-                    tooltip: 'All catalogs',
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.go('/library/catalogs'),
-                  ),
-                Expanded(
-                  child: Text(
-                    catalog?.name ?? 'Catalogs',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (catalog == null && widget.catalogId == null)
-                  IconButton(
-                    tooltip: 'Add catalog',
-                    onPressed: catalogs.scope == null ? null : () => _edit(catalogs),
-                    icon: const Icon(Icons.add),
-                  ),
-                if (catalog != null) ...[
-                  IconButton(
-                    tooltip: 'Catalog home',
-                    onPressed: () => _navigate(catalog, catalog.uri),
-                    icon: const Icon(Icons.home_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Edit catalog',
-                    onPressed: () => _edit(catalogs, catalog),
-                    icon: const Icon(Icons.settings_outlined),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: Spacing.md),
-            if (downloads.jobs.isNotEmpty) _downloadsPanel(downloads),
-            if (catalog != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: Spacing.md),
-                child: TextField(
-                  controller: _search,
-                  onSubmitted: (_) => _submitSearch(catalog),
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'Search this catalog',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      tooltip: 'Search catalog',
-                      onPressed: _searching ? null : () => _submitSearch(catalog),
-                      icon: const Icon(Icons.arrow_forward),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1344),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      compact ? Spacing.md : Spacing.xl,
+                      compact ? Spacing.md : Spacing.lg,
+                      compact ? Spacing.md : Spacing.xl,
+                      0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _header(catalogs, catalog),
+                        const SizedBox(height: Spacing.lg),
+                        if (catalog != null)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 640),
+                              child: TextField(
+                                controller: _search,
+                                onSubmitted: (_) => _submitSearch(catalog),
+                                onChanged: (_) => setState(() {}),
+                                textInputAction: TextInputAction.search,
+                                decoration: InputDecoration(
+                                  hintText: 'Search this catalog',
+                                  prefixIcon: const Icon(Icons.search),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: Spacing.md,
+                                    vertical: Spacing.sm,
+                                  ),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (_search.text.isNotEmpty)
+                                        IconButton(
+                                          tooltip: 'Clear search',
+                                          icon: const Icon(Icons.clear),
+                                          onPressed: () {
+                                            setState(() => _search.clear());
+                                            if (widget.query.isNotEmpty) _navigate(catalog, catalog.uri);
+                                          },
+                                        ),
+                                      IconButton(
+                                        tooltip: 'Search catalog',
+                                        onPressed: _searching ? null : () => _submitSearch(catalog),
+                                        icon: _searching
+                                            ? const SizedBox.square(
+                                                dimension: 20,
+                                                child: AppCircularProgressIndicator(),
+                                              )
+                                            : const Icon(Icons.arrow_forward),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        Expanded(
+                          child: catalog == null
+                              ? _catalogList(catalogs)
+                              : AnimatedBuilder(animation: _browser, builder: (_, _) => _feedView(catalog)),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            Expanded(
-              child: catalog == null
-                  ? _catalogList(catalogs)
-                  : AnimatedBuilder(animation: _browser, builder: (_, _) => _feedView(catalog)),
+            ),
+            OpdsDownloadPanel(
+              downloads: downloads,
+              allowExpansion: constraints.maxHeight >= 480,
+              maxExpandedHeight: constraints.maxHeight * 0.28,
+              onRetry: (job) => unawaited(_download(job.catalog, job.publication, job.link)),
             ),
           ],
         ),
@@ -232,12 +246,89 @@ class _CatalogsPageState extends State<CatalogsPage> {
     );
   }
 
+  Widget _header(OpdsCatalogs catalogs, OpdsCatalog? catalog) {
+    final theme = Theme.of(context);
+    final mobile = MediaQuery.sizeOf(context).width < Breakpoints.desktopSmall;
+    return Row(
+      children: [
+        if (mobile)
+          IconButton(
+            tooltip: 'Library sections',
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
+          ),
+        if (widget.catalogId != null)
+          IconButton(
+            tooltip: 'All catalogs',
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/library/catalogs'),
+          ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                catalog?.name ?? 'Catalogs',
+                style: theme.textTheme.headlineSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: Spacing.xs),
+              Text(
+                catalog?.uri.host ?? 'Discover books from your favorite libraries.',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: Spacing.sm),
+        if (catalog == null && widget.catalogId == null)
+          if (mobile)
+            IconButton(
+              tooltip: 'Add catalog',
+              onPressed: catalogs.scope == null ? null : () => _edit(catalogs),
+              icon: const Icon(Icons.add),
+            )
+          else
+            FilledButton.icon(
+              onPressed: catalogs.scope == null ? null : () => _edit(catalogs),
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+              icon: const Icon(Icons.add),
+              label: const Text('Add catalog'),
+            ),
+        if (catalog != null) ...[
+          IconButton(
+            tooltip: 'Catalog home',
+            onPressed: () => _navigate(catalog, catalog.uri),
+            icon: const Icon(Icons.home_outlined),
+          ),
+          IconButton(
+            tooltip: 'Edit catalog',
+            onPressed: () => _edit(catalogs, catalog),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _catalogList(OpdsCatalogs catalogs) {
-    if (catalogs.error != null) return _empty(catalogs.error!, action: 'Retry', onAction: catalogs.reload);
+    if (catalogs.error != null) {
+      return _empty(
+        'Could not load catalogs',
+        detail: catalogs.error,
+        action: 'Retry',
+        onAction: catalogs.reload,
+        icon: Icons.cloud_off_outlined,
+      );
+    }
     if (catalogs.scope == null) return const Center(child: Text('Waiting for your library…'));
     if (widget.catalogId != null) {
       return _empty(
-        'This catalog is not saved for the active account.',
+        'Catalog unavailable',
+        detail: 'This catalog is not saved for the active account.',
         action: 'All catalogs',
         onAction: () => context.go('/library/catalogs'),
       );
@@ -245,187 +336,146 @@ class _CatalogsPageState extends State<CatalogsPage> {
     if (catalogs.catalogs.isEmpty) {
       return _empty(
         'No catalogs yet',
-        detail: 'Add an OPDS catalog to browse and download books.',
+        detail: 'Connect an OPDS catalog to explore its collection and add books to your library.',
         action: 'Add catalog',
         onAction: () => _edit(catalogs),
       );
     }
-    return ListView.builder(
-      itemCount: catalogs.catalogs.length,
-      itemBuilder: (_, index) {
-        final catalog = catalogs.catalogs[index];
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.public),
-            title: Text(catalog.name),
-            subtitle: Text(catalog.uri.toString(), maxLines: 2, overflow: TextOverflow.ellipsis),
-            onTap: () => context.go('/library/catalogs/${Uri.encodeComponent(catalog.id)}'),
-            trailing: PopupMenuButton<String>(
-              tooltip: 'Catalog options',
-              onSelected: (value) => value == 'edit' ? _edit(catalogs, catalog) : _remove(catalogs, catalog),
-              itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'remove', child: Text('Remove')),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) => GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: (constraints.maxWidth / 360).floor().clamp(1, 3),
+          mainAxisExtent: 176 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
+          crossAxisSpacing: Spacing.md,
+          mainAxisSpacing: Spacing.md,
+        ),
+        padding: const EdgeInsets.only(bottom: Spacing.lg),
+        itemCount: catalogs.catalogs.length,
+        itemBuilder: (_, index) {
+          final catalog = catalogs.catalogs[index];
+          return Card(
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => context.go('/library/catalogs/${Uri.encodeComponent(catalog.id)}'),
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.public, color: Theme.of(context).colorScheme.primary, size: 28),
+                        const Spacer(),
+                        PopupMenuButton<String>(
+                          tooltip: 'Catalog options',
+                          onSelected: (value) =>
+                              value == 'edit' ? _edit(catalogs, catalog) : _remove(catalogs, catalog),
+                          itemBuilder: (_) => [
+                            const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            const PopupMenuItem(value: 'remove', child: Text('Remove')),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      catalog.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: Spacing.xs),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            catalog.uri.host,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward, size: IconSizes.small),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Widget _feedView(OpdsCatalog catalog) {
     if (_browser.loading) return const Center(child: AppCircularProgressIndicator());
     if (_browser.error != null) {
-      return _empty(_browser.error!, action: 'Retry', onAction: () => setState(() => _loadKey = null));
+      return _empty(
+        'Could not open this catalog',
+        detail: _browser.error,
+        action: 'Retry',
+        onAction: () => setState(() => _loadKey = null),
+        icon: Icons.cloud_off_outlined,
+      );
     }
     final feed = _browser.feed;
     if (feed == null) return const SizedBox.shrink();
-    final items = <Widget>[
-      Row(
-        children: [
-          Expanded(child: Text(feed.title, style: Theme.of(context).textTheme.titleLarge)),
-          IconButton(
-            tooltip: 'Refresh catalog',
-            onPressed: () => setState(() => _loadKey = null),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      for (final facet in feed.facets)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-          child: Wrap(
-            spacing: Spacing.sm,
-            runSpacing: Spacing.xs,
-            children: [
-              Text('${facet.title}:'),
-              for (final link in facet.links)
-                ActionChip(label: Text(link.title ?? 'Filter'), onPressed: () => _navigate(catalog, link.uri)),
-            ],
-          ),
-        ),
-      ..._entries(catalog, feed.navigation, feed.publications),
-      for (final group in feed.groups) ...[
-        Padding(
-          padding: const EdgeInsets.only(top: Spacing.lg, bottom: Spacing.sm),
-          child: Text(group.title, style: Theme.of(context).textTheme.titleMedium),
-        ),
-        ..._entries(catalog, group.navigation, group.publications),
-        for (final link in group.links.where((link) => link.hasRel('self') || link.hasRel('collection')))
-          TextButton(onPressed: () => _navigate(catalog, link.uri), child: const Text('View all')),
-      ],
-      if (feed.navigation.isEmpty && feed.publications.isEmpty && feed.groups.isEmpty)
-        const Padding(padding: EdgeInsets.all(Spacing.lg), child: Text('No books or sections found.')),
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: Spacing.md),
-        child: Wrap(
-          spacing: Spacing.md,
-          children: [
-            if (feed.previousLink != null)
-              OutlinedButton.icon(
-                onPressed: () => _navigate(catalog, feed.previousLink!.uri, query: widget.query),
-                icon: const Icon(Icons.chevron_left),
-                label: const Text('Previous'),
-              ),
-            if (feed.nextLink != null)
-              OutlinedButton.icon(
-                onPressed: () => _navigate(catalog, feed.nextLink!.uri, query: widget.query),
-                icon: const Icon(Icons.chevron_right),
-                label: const Text('Next'),
-              ),
-          ],
-        ),
-      ),
-    ];
-    return ListView.builder(key: ValueKey(feed.uri), itemCount: items.length, itemBuilder: (_, index) => items[index]);
+    return OpdsFeedView(
+      catalog: catalog,
+      feed: feed,
+      credentials: _credentials,
+      httpClient: _browser.httpClient,
+      query: widget.query,
+      isGridView: _isGridView,
+      onViewChanged: (value) => setState(() => _isGridView = value),
+      onNavigate: (uri) => _navigate(catalog, uri),
+      onPage: (uri) => _navigate(catalog, uri, query: widget.query),
+      onRefresh: () => setState(() => _loadKey = null),
+      onDownload: (publication, link) => unawaited(_download(catalog, publication, link)),
+    );
   }
 
-  List<Widget> _entries(OpdsCatalog catalog, List<OpdsLink> navigation, List<OpdsPublication> publications) => [
-    for (final link in navigation)
-      ListTile(
-        leading: const Icon(Icons.folder_outlined),
-        title: Text(link.title ?? 'Browse section'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => _navigate(catalog, link.uri),
-      ),
-    for (final publication in publications)
-      OpdsPublicationTile(
-        catalog: catalog,
-        publication: publication,
-        credentials: _credentials,
-        httpClient: _browser.httpClient,
-        onNavigate: (uri) => _navigate(catalog, uri),
-        onDownload: (link) => unawaited(_download(catalog, publication, link)),
-      ),
-  ];
-
-  Widget _downloadsPanel(OpdsDownloads downloads) => ConstrainedBox(
-    constraints: const BoxConstraints(maxHeight: 180),
-    child: SingleChildScrollView(
-      child: Column(
-        children: [
-          for (final job in downloads.jobs)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(job.publication.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-              subtitle: Text(
-                job.error ??
-                    switch (job.status) {
-                      OpdsDownloadStatus.downloading =>
-                        job.total == null
-                            ? 'Downloading · ${job.received ~/ 1024} KB'
-                            : 'Downloading · ${(100 * (job.progress ?? 0)).round()}%',
-                      OpdsDownloadStatus.importing => 'Importing…',
-                      OpdsDownloadStatus.committing => 'Adding to library…',
-                      OpdsDownloadStatus.complete => 'Added to library',
-                      OpdsDownloadStatus.failed => 'Download failed',
-                      OpdsDownloadStatus.cancelled => 'Cancelled',
-                    },
-              ),
-              trailing: job.isCancellable
-                  ? IconButton(
-                      tooltip: 'Cancel download',
-                      onPressed: () => downloads.cancel(job.key),
-                      icon: const Icon(Icons.close),
-                    )
-                  : job.status == OpdsDownloadStatus.committing
-                  ? const SizedBox.shrink()
-                  : job.status == OpdsDownloadStatus.complete
-                  ? IconButton(
-                      tooltip: 'Open book',
-                      onPressed: () => context.go('/library/details/${job.bookId}'),
-                      icon: const Icon(Icons.menu_book),
-                    )
-                  : TextButton(
-                      onPressed: () => _download(job.catalog, job.publication, job.link),
-                      child: const Text('Retry'),
-                    ),
-            ),
-        ],
-      ),
-    ),
-  );
-
-  Widget _empty(String title, {String? detail, required String action, required VoidCallback onAction}) => Center(
+  Widget _empty(
+    String title, {
+    String? detail,
+    required String action,
+    required VoidCallback onAction,
+    IconData icon = Icons.local_library_outlined,
+  }) => Center(
     child: SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(Spacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.public, size: 48),
-            const SizedBox(height: Spacing.md),
-            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
-            if (detail != null)
-              Padding(
-                padding: const EdgeInsets.only(top: Spacing.sm),
-                child: Text(detail, textAlign: TextAlign.center),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(height: Spacing.lg),
+              Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+              if (detail != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: Spacing.sm),
+                  child: Text(
+                    detail,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              const SizedBox(height: Spacing.lg),
+              FilledButton(
+                onPressed: onAction,
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+                child: Text(action),
               ),
-            const SizedBox(height: Spacing.md),
-            FilledButton(onPressed: onAction, child: Text(action)),
-          ],
+            ],
+          ),
         ),
       ),
     ),

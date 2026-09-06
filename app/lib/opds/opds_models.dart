@@ -23,6 +23,8 @@ class OpdsLink {
   OpdsLink({
     required this.uri,
     this.title,
+    this.description,
+    this.imageUri,
     this.type,
     List<String> rels = const [],
     this.templated = false,
@@ -31,6 +33,8 @@ class OpdsLink {
 
   final Uri uri;
   final String? title;
+  final String? description;
+  final Uri? imageUri;
   final String? type;
   final List<String> rels;
   final bool templated;
@@ -117,6 +121,19 @@ class OpdsPublication {
         return link;
       }
     }
+    // Some catalogs represent a book's editions in an acquisition feed rather
+    // than a standalone entry. Author metadata distinguishes these partial
+    // publications from category links with decorative thumbnails.
+    if (authors.isNotEmpty) {
+      for (final link in links) {
+        final type = link.type?.toLowerCase() ?? '';
+        if (link.hasRel('alternate') &&
+            type.split(';').first.trim() == 'application/atom+xml' &&
+            RegExp(r';\s*kind\s*=\s*"?acquisition"?\s*(?:;|$)').hasMatch(type)) {
+          return link;
+        }
+      }
+    }
     return null;
   }
 }
@@ -183,22 +200,67 @@ class OpdsFeed {
   OpdsLink? get previousLink => _link('previous') ?? _link('prev');
 }
 
-/// Descriptions are displayed as plain text rather than executing catalog HTML.
-String opdsPlainText(String input) => input
-    .replaceAll(RegExp(r'<(script|style)\b[^>]*>[\s\S]*?</\1\s*>', caseSensitive: false), '')
-    .replaceAll(RegExp(r'</?(?:p|div|br|li|h[1-6])\b[^>]*>', caseSensitive: false), ' ')
-    .replaceAll(RegExp(r'<[^>]*>'), '')
-    .replaceAllMapped(RegExp(r'&(#x[\da-fA-F]+|#\d+|amp|lt|gt|quot|apos|nbsp);'), (match) {
-      const named = {'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' '};
-      final entity = match[1]!;
-      if (named.containsKey(entity)) return named[entity]!;
-      final code = entity.startsWith('#x')
-          ? int.tryParse(entity.substring(2), radix: 16)
-          : int.tryParse(entity.substring(1));
-      return code != null && code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : match[0]!;
-    })
-    .replaceAll(RegExp(r'\s+'), ' ')
-    .trim();
+/// Convert catalog markup to readable text, retaining paragraph and line breaks.
+String opdsPlainText(String input) {
+  var text = input.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  final hasMarkup = RegExp(r'</?[a-zA-Z][\w:.-]*(?:\s[^>]*|/?)>').hasMatch(text);
+  text = text
+      .replaceAll(RegExp(r'<!--[\s\S]*?-->'), '')
+      .replaceAll(
+        RegExp(r'<(?:[\w.-]+:)?(script|style)\b[^>]*>[\s\S]*?</(?:[\w.-]+:)?\1\s*>', caseSensitive: false),
+        '',
+      );
+  if (hasMarkup) {
+    // Indentation and wrapped source lines are not visual paragraph breaks.
+    text = text.replaceAll(RegExp(r'\s+'), ' ');
+    text = text.replaceAllMapped(RegExp(r'<(/?)(?:[\w.-]+:)?([a-zA-Z][\w.-]*)\b[^>]*>', caseSensitive: false), (match) {
+      final closing = match[1] == '/';
+      final tag = match[2]!.toLowerCase();
+      if (tag == 'br') return '\n';
+      if ({
+        'p',
+        'div',
+        'section',
+        'article',
+        'header',
+        'footer',
+        'aside',
+        'blockquote',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'pre',
+        'ul',
+        'ol',
+        'dl',
+        'table',
+        'hr',
+      }.contains(tag)) {
+        return '\n\n';
+      }
+      if ({'li', 'dt', 'dd', 'tr'}.contains(tag)) return closing ? '\n' : '';
+      if (tag == 'td' || tag == 'th') return closing ? ' ' : '';
+      return '';
+    });
+  }
+  text = text.replaceAllMapped(RegExp(r'&(#x[\da-fA-F]+|#\d+|amp|lt|gt|quot|apos|nbsp);'), (match) {
+    const named = {'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' '};
+    final entity = match[1]!;
+    if (named.containsKey(entity)) return named[entity]!;
+    final code = entity.startsWith('#x')
+        ? int.tryParse(entity.substring(2), radix: 16)
+        : int.tryParse(entity.substring(1));
+    return code != null && code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : match[0]!;
+  });
+  return text
+      .replaceAll(RegExp(r'[^\S\n]+'), ' ')
+      .replaceAll(RegExp(r' *\n *'), '\n')
+      .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+      .trim();
+}
 
 String? opdsIsbn(String? identifier) {
   if (identifier == null) return null;

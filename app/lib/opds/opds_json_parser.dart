@@ -68,10 +68,15 @@ class OpdsJsonParser {
       if (href is! String || href.trim().isEmpty) continue;
       final properties = _object(json['properties']);
       final indirect = properties['indirectAcquisition'];
+      final images = json['images'];
+      final image = images is List && images.isNotEmpty ? images.first : json['image'];
+      final imageHref = image is String ? image : _object(image)['href'];
       result.add(
         OpdsLink(
           uri: uri.resolve(href),
           title: _text(json['title']),
+          description: _text(json['description']),
+          imageUri: imageHref is String && imageHref.isNotEmpty ? uri.resolve(imageHref) : null,
           type: json['type'] is String ? json['type'] as String : null,
           rels: json['rel'] is String
               ? (json['rel'] as String).split(RegExp(r'\s+'))

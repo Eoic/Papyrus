@@ -258,7 +258,7 @@ void main() {
     ]) {
       final feed = OpdsParser.parse('''<entry xmlns="http://www.w3.org/2005/Atom">
         <title>Book</title>$content</entry>''', uri);
-      expect(feed.publications.single.description, 'One Two & three');
+      expect(feed.publications.single.description, 'One\n\nTwo & three');
     }
   });
 

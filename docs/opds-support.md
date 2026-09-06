@@ -6,8 +6,8 @@ Papyrus can browse OPDS 1.2 (Atom/XML) and OPDS 2.0 (JSON) catalogs and import d
 
 1. Open **Library → Catalogs**. On a narrow screen, open **Library sections** first.
 2. Select **Add catalog** and enter a name and the catalog's HTTP or HTTPS URL. Enter a username and password if the catalog uses HTTP Basic authentication.
-3. Open the catalog, browse its sections or use keyword search, and select a publication to see details and available downloads.
-4. Select a supported format. Progress appears above the catalog. Downloads continue when you navigate elsewhere in Papyrus. Use **Open book** after the import finishes.
+3. Open the catalog, browse its sections or use keyword search, and select a publication to see details and available downloads. Switch between cover grids and lists using the view control. Descriptions keep their paragraphs; select **Read more** to expand longer descriptions.
+4. Select a supported format. Open the **Downloads** panel at the bottom of the catalog to see progress, cancel, retry, or dismiss a finished transfer. Downloads continue when you navigate elsewhere in Papyrus. Use **Open book** after the import finishes.
 
 Web imports support EPUB. Native imports support EPUB, PDF, MOBI, AZW3, TXT, CBZ, and CBR, matching the existing file importer. The short final **Adding to library** step cannot be cancelled; earlier download and processing steps can. Failed downloads offer Retry.
 
@@ -39,7 +39,7 @@ From `client/app`, run:
 
 ```sh
 flutter test --coverage
-flutter analyze --no-fatal-warnings --no-fatal-infos
+flutter analyze --no-pub
 dart format --output=none --set-exit-if-changed lib test
 flutter build web --no-pub
 flutter build linux --no-pub
@@ -60,11 +60,13 @@ flutter test test/opds/network_smoke_test.dart --no-pub --platform chrome --dart
 
 The fixtures cover public and Basic-auth catalogs in both formats, browsing, details, search, pagination, EPUB bytes, redirect URL resolution, authentication failures, and cross-origin credential stripping. They use the test credentials `reader` / `secret` and bind only to localhost.
 
+For visual checks, add `http://127.0.0.1:8766/public/v2/showcase.json` as a catalog. This fixture includes multiple books, simple test covers, sections, edition labels, and long descriptions. Its EPUB action returns the fixture book; other formats are illustrative. Replace `public` with `protected` to check the same layout with Basic authentication.
+
 ### Implementation verification — 2026-09-06
 
-- Full Flutter suite: 1,200 passed, 18 skipped (including the eight opt-in network smoke tests).
+- Full Flutter suite: 1,222 passed, 18 skipped (including the eight opt-in network smoke tests).
 - Real HTTP smoke suite: eight passed on the Linux Dart VM and eight passed in Chrome.
-- Flutter analysis: no issues. Formatting verification: 402 Dart files checked, no changes. Git whitespace check passed.
+- Flutter analysis: no issues. Formatting verification: 406 Dart files checked, no changes. Git whitespace check passed.
 - Web and Linux production builds passed.
-- Built web application: verified guest catalog browsing and EPUB download/import into the library, then entered Basic credentials through the catalog editor and browsed the protected catalog. Checked the desktop layout visually; responsive/e-ink widget tests cover narrow and wide screens.
+- Built web application: verified guest catalog browsing and EPUB download/import into the library, then entered Basic credentials through the catalog editor and browsed the protected catalog. Visually checked the redesigned desktop and phone layouts. Regression tests cover light, dark, and e-ink themes, grid/list switching, aligned covers, pagination, expandable descriptions, transfer controls, and opening the keyboard while transfers are expanded.
 - Independent specification and code reviews completed; their credential, account-transition, facet, search, response-validation, and cancellation findings were fixed and covered by regression tests.

@@ -157,6 +157,13 @@ class OpdsDownloads extends ChangeNotifier {
     _notify();
   }
 
+  void dismiss(String key) {
+    final job = _jobs[key];
+    if (job == null || job.isActive) return;
+    _jobs.remove(key);
+    _notify();
+  }
+
   void reset() {
     for (final job in _jobs.values) {
       job.cancellation.cancel();

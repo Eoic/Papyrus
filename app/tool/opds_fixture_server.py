@@ -12,6 +12,8 @@ import argparse
 import base64
 import io
 import json
+import struct
+import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 from xml.sax.saxutils import escape
@@ -75,6 +77,15 @@ def make_epub():
 
 
 EPUB_BYTES = make_epub()
+
+
+def cover_png():
+    """A small solid cover fixture for exercising image decoding and layout."""
+    def chunk(kind, payload):
+        return struct.pack('!I', len(payload)) + kind + payload + struct.pack('!I', zlib.crc32(kind + payload))
+    pixels = b''.join(b'\x00' + bytes((70, 80, 105)) * 96 for _ in range(144))
+    return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('!2I5B', 96, 144, 8, 2, 0, 0, 0))
+            + chunk(b'IDAT', zlib.compress(pixels)) + chunk(b'IEND', b''))
 
 
 def xml_publication(detail=False):
@@ -215,7 +226,43 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.respond(404, "Unknown XML fixture route.")
 
     def serve_json(self, resource, query):
-        if resource == "catalog.json":
+        if resource == "cover.png":
+            self.respond(200, cover_png(), "image/png")
+        elif resource == "showcase.json":
+            titles = [("Pride and Prejudice", "Jane Austen"), ("Crime and Punishment", "Fyodor Dostoyevsky"),
+                      ("The Odyssey", "Homer"), ("Alice’s Adventures in Wonderland", "Lewis Carroll"),
+                      ("A Room with a View", "E. M. Forster"), ("The Adventures of Sherlock Holmes", "Arthur Conan Doyle")]
+            books = []
+            for index, (title, author) in enumerate(titles):
+                book = json_publication()
+                book['metadata'].update(identifier=f'preview-{index}', title=title, author=author,
+                    publisher='Fixture Library', description=(
+                        '<p>A classic story from the catalog, ready to add to your personal library.</p>'
+                        '<p>This preview includes a longer catalog description to check reading comfort on small screens. '
+                        'The description keeps its paragraphs, while download options stay easy to find.</p>'
+                        '<p>Edition notes: this copy includes the original text. Catalogs can provide multiple editions '
+                        'of the same work, with different illustrations and file formats.</p>'
+                        '<p>Source: local OPDS fixture. Rights: demonstration metadata.</p>'))
+                book['links'] = [
+                    {'rel': 'download', 'type': 'application/epub+zip', 'href': 'book.epub', 'title': 'EPUB with illustrations'},
+                    {'rel': 'download', 'type': 'application/pdf', 'href': 'book.pdf', 'title': 'PDF'},
+                    {'rel': 'http://opds-spec.org/acquisition/buy', 'type': 'text/html', 'href': 'purchase', 'title': 'Purchase edition'},
+                ]
+                if index % 2 == 0:
+                    book['images'] = [{'href': 'cover.png', 'type': 'image/png'}]
+                books.append(book)
+            self.json_response({'metadata': {'title': 'Popular classics'},
+                'navigation': [{'title': 'Browse by author', 'description': 'Find your favorite writers', 'href': 'sections.json'},
+                               {'title': 'Recently added', 'description': 'New books in the collection', 'href': 'sections.json'}],
+                'links': [{'rel': 'search', 'href': 'search{?query}', 'templated': True},
+                          {'rel': 'next', 'href': 'sections.json'}],
+                'publications': books})
+        elif resource == 'sections.json':
+            self.json_response({'metadata': {'title': 'Browse the collection'},
+                'navigation': [{'title': f'Collected works, volume {index + 1}',
+                    'description': 'By a catalog author', 'href': 'showcase.json'} for index in range(24)],
+                'links': [{'rel': 'previous', 'href': 'showcase.json'}]})
+        elif resource == "catalog.json":
             self.json_response({
                 "metadata": {"title": "Fixture catalog"},
                 "links": [{"rel": "search", "href": "search{?query}", "templated": True, "type": JSON_TYPE}],

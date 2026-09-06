@@ -143,6 +143,32 @@ Map<String, dynamic> _book() => {
 };
 
 void main() {
+  testWidgets('expanded transfers leave room for catalog search when the keyboard opens', (tester) async {
+    final harness = await _CatalogPageHarness.mount(tester, (_) => _feedResponse('Books'));
+    tester.view.physicalSize = const Size(360, 640);
+    addTearDown(tester.view.resetViewInsets);
+    for (var index = 0; index < 3; index++) {
+      await harness.downloads.start(
+        harness.catalogs.catalogs.single,
+        OpdsPublication(id: 'download-$index', title: 'A failed download $index'),
+        OpdsLink(uri: Uri.parse('https://books.test/book.epub'), type: 'application/epub+zip', rels: ['download']),
+      );
+    }
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Downloads ·'));
+    await tester.pumpAndSettle();
+    expect(find.text('Retry'), findsWidgets);
+    await tester.tap(find.byType(TextField));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    expect(find.text('Retry'), findsNothing);
+    expect(tester.getBottomLeft(find.byType(TextField)).dy, lessThan(340));
+    expect(tester.takeException(), isNull);
+    tester.view.resetViewInsets();
+    await tester.pumpAndSettle();
+    expect(find.text('Retry'), findsWidgets);
+  });
+
   testWidgets('facet choices and collection View all links navigate to their feeds', (tester) async {
     final harness = await _CatalogPageHarness.mount(tester, (uri) {
       if (uri.path == '/filtered') return _feedResponse('Filtered books');

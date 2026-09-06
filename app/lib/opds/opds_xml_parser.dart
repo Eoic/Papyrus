@@ -37,6 +37,8 @@ class OpdsXmlParser {
                   (link) => OpdsLink(
                     uri: link.uri,
                     title: link.title ?? book.title,
+                    description: book.description,
+                    imageUri: book.images.isEmpty ? null : book.images.first.uri,
                     type: link.type,
                     rels: link.rels,
                     templated: link.templated,
