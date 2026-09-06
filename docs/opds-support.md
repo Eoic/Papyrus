@@ -25,6 +25,12 @@ Imported books use the existing local file storage, metadata persistence, cover 
 - Feed, search-description, and image responses are limited to 8 MiB; book downloads to 256 MiB. A request or stalled stream times out after 30 seconds. These limits protect the current in-memory import pipeline.
 - Authentication errors offer guidance to edit credentials. Network errors offer retry and browser-policy guidance without claiming to distinguish a CORS failure from other browser network failures.
 
+### When a website download works but importing from a catalog fails
+
+A catalog can allow browsing while its book files or redirects omit the CORS headers required by a web app. For example, on 2026-09-06 both Project Gutenberg's `/ebooks/1342.epub.noimages` redirect and its final `/cache/epub/1342/pg1342.epub` response omitted `Access-Control-Allow-Origin`. Requesting the final URL directly does not resolve this restriction.
+
+After a web connection failure, select **Download in browser** in the book details or expanded Downloads panel. Save the EPUB, then use **Library → Add book** to import it. This opens the catalog link in a separate browser tab without forwarding saved Basic credentials; sign in on the catalog website if necessary. It does not automatically import the file or mark the failed job complete. Native Papyrus downloads are not subject to browser CORS restrictions.
+
 ## Implementation
 
 The `lib/opds` module separates normalized models, XML/JSON parsing, search expansion, scoped persistence, HTTP transport, browsing state, and application-scoped downloads. `BookImportSession` captures the existing import destination and supplies the shared `BookImportCommitService` composition used by OPDS and file-import widgets.
@@ -59,6 +65,10 @@ flutter test test/opds/network_smoke_test.dart --no-pub --platform chrome --dart
 ```
 
 The fixtures cover public and Basic-auth catalogs in both formats, browsing, details, search, pagination, EPUB bytes, redirect URL resolution, authentication failures, and cross-origin credential stripping. They use the test credentials `reader` / `secret` and bind only to localhost.
+
+The smoke suite also checks missing CORS headers on redirects and book responses: Chrome must report a connection failure, while native downloads succeed. The catalog at `/public/v2/blocked.json` exercises the manual browser-download recovery flow.
+
+The recovery change was verified with 78 focused OPDS tests, ten native network smoke tests, and twelve Chrome network/widget tests. Analysis, formatting, and the web build passed. The built web app saved a valid EPUB through **Download in browser** after its in-app request failed against the missing-CORS fixture.
 
 For visual checks, add `http://127.0.0.1:8766/public/v2/showcase.json` as a catalog. This fixture includes multiple books, simple test covers, sections, edition labels, and long descriptions. Its EPUB action returns the fixture book; other formats are illustrative. Replace `public` with `protected` to check the same layout with Basic authentication.
 

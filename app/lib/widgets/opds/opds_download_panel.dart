@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:papyrus/opds/opds_downloads.dart';
 import 'package:papyrus/themes/design_tokens.dart';
+import 'package:papyrus/widgets/opds/opds_browser_download.dart';
 import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 
 /// Keeps transfers visible without pushing catalog content down the page.
@@ -116,6 +117,7 @@ class _OpdsDownloadPanelState extends State<OpdsDownloadPanel> {
           const SizedBox(height: Spacing.sm),
           AppLinearProgressIndicator(value: job.status == OpdsDownloadStatus.downloading ? job.progress : null),
         ],
+        OpdsBrowserDownload(job: job),
       ],
     );
   }

@@ -28,6 +28,31 @@ void main() {
     fileExtension: 'epub',
   );
 
+  test('network failure offers manual recovery without processing or committing a book', () async {
+    var processes = 0;
+    final downloads = OpdsDownloads(
+      httpClient: OpdsHttpClient(
+        clientFactory: () => MockClient((_) async {
+          throw http.ClientException('Failed to fetch');
+        }),
+      ),
+      captureImport: () => BookImportSession(
+        process: (_, _) async {
+          processes++;
+          return result();
+        },
+        deleteFile: (_) async {},
+        isCurrent: () => true,
+        commit: (_, _) async => throw StateError('must not commit'),
+      ),
+    );
+    await downloads.start(catalog, publication, link);
+    expect(downloads.jobs.single.status, OpdsDownloadStatus.failed);
+    expect(downloads.jobs.single.networkFailure, isTrue);
+    expect(processes, 0);
+    downloads.dispose();
+  });
+
   test('rejects a disguised login page before importing a text download', () async {
     var processed = false;
     final textLink = OpdsLink(
@@ -53,6 +78,7 @@ void main() {
     await downloads.start(catalog, publication, textLink);
     expect(processed, isFalse);
     expect(downloads.jobs.single.status, OpdsDownloadStatus.failed);
+    expect(downloads.jobs.single.networkFailure, isFalse);
     downloads.dispose();
   });
 

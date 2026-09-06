@@ -17,6 +17,16 @@ class OpdsCancelled extends OpdsException {
   const OpdsCancelled() : super('Download cancelled.');
 }
 
+/// Browser transport errors do not reveal whether CORS or connectivity failed.
+class OpdsConnectionException extends OpdsException {
+  const OpdsConnectionException()
+    : super(
+        kIsWeb
+            ? 'The browser could not read this catalog resource. Check your connection; the catalog or a redirect may not allow browser access (CORS).'
+            : 'Could not connect. Check the catalog URL and your connection, then retry.',
+      );
+}
+
 class OpdsCancellation {
   bool _cancelled = false;
   final Set<void Function()> _listeners = {};
@@ -122,11 +132,7 @@ class OpdsHttpClient {
       rethrow;
     } catch (_) {
       cancellation?.check();
-      throw OpdsException(
-        kIsWeb
-            ? 'Could not connect. Check the URL and connection. Browser security or catalog CORS settings may prevent access.'
-            : 'Could not connect. Check the catalog URL and your connection, then retry.',
-      );
+      throw const OpdsConnectionException();
     } finally {
       cancellation?.removeListener(client.close);
       client.close();

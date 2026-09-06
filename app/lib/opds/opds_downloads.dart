@@ -20,6 +20,7 @@ class OpdsDownloadJob {
   int received = 0;
   int? total;
   String? error;
+  bool networkFailure = false;
   String? bookId;
   bool get isCancellable => status == OpdsDownloadStatus.downloading || status == OpdsDownloadStatus.importing;
   bool get isActive => isCancellable || status == OpdsDownloadStatus.committing;
@@ -137,6 +138,7 @@ class OpdsDownloads extends ChangeNotifier {
       job.status = OpdsDownloadStatus.cancelled;
     } catch (error) {
       job.status = OpdsDownloadStatus.failed;
+      job.networkFailure = error is OpdsConnectionException;
       job.error = error is OpdsException ? error.message : 'Could not import this book. Please retry.';
     } finally {
       if (!committed && imported != null && session != null) {

@@ -7,6 +7,7 @@ import 'package:papyrus/opds/opds_models.dart';
 import 'package:papyrus/themes/app_motion.dart';
 import 'package:papyrus/themes/design_tokens.dart';
 import 'package:papyrus/widgets/opds/opds_download_panel.dart';
+import 'package:papyrus/widgets/opds/opds_browser_download.dart';
 import 'package:papyrus/widgets/shared/app_progress_indicator.dart';
 import 'package:provider/provider.dart';
 
@@ -412,6 +413,7 @@ class _PublicationDetailsState extends State<_PublicationDetails> {
                 padding: const EdgeInsets.only(top: Spacing.sm),
                 child: Text(job!.error!, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error)),
               ),
+            if (job != null) OpdsBrowserDownload(job: job),
           ],
         ),
       ),

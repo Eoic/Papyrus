@@ -139,17 +139,18 @@ def json_publication(detail=False):
 
 
 class FixtureHandler(BaseHTTPRequestHandler):
-    def respond(self, status, body=b"", content_type="text/plain; charset=utf-8", **headers):
+    def respond(self, status, body=b"", content_type="text/plain; charset=utf-8", cors=True, **headers):
         if isinstance(body, str):
             body = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
-        self.send_header("Access-Control-Expose-Headers", "Content-Type, Content-Length, Location")
-        self.send_header("Access-Control-Allow-Private-Network", "true")
+        if cors:
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+            self.send_header("Access-Control-Expose-Headers", "Content-Type, Content-Length, Location")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
         self.send_header("Cache-Control", "no-store")
         for name, value in headers.items():
             self.send_header(name.replace("_", "-"), value)
@@ -165,6 +166,12 @@ class FixtureHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         request = urlsplit(self.path)
         path = request.path
+        if path == '/no-cors/redirect':
+            self.respond(302, cors=False, Location='/no-cors/book.epub')
+            return
+        if path == '/no-cors/book.epub':
+            self.respond(200, EPUB_BYTES, 'application/epub+zip', cors=False)
+            return
         if path.startswith("/protected/") and self.headers.get("Authorization") != BASIC_AUTH:
             self.respond(401, "Fixture credentials required.", WWW_Authenticate='Basic realm="OPDS fixture"')
             return
@@ -226,7 +233,12 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self.respond(404, "Unknown XML fixture route.")
 
     def serve_json(self, resource, query):
-        if resource == "cover.png":
+        if resource == 'blocked.json':
+            publication = json_publication()
+            publication['links'] = [{'rel': 'download', 'type': 'application/epub+zip',
+                                     'href': '/no-cors/redirect'}]
+            self.json_response({'metadata': {'title': 'Browser-restricted downloads'}, 'publications': [publication]})
+        elif resource == "cover.png":
             self.respond(200, cover_png(), "image/png")
         elif resource == "showcase.json":
             titles = [("Pride and Prejudice", "Jane Austen"), ("Crime and Punishment", "Fyodor Dostoyevsky"),

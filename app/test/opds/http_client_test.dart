@@ -36,6 +36,20 @@ void main() {
     );
   });
 
+  test('distinguishes browser-opaque network failures from HTTP failures', () async {
+    final gateway = OpdsHttpClient(
+      clientFactory: () => MockClient((_) async {
+        throw http.ClientException('Failed to fetch');
+      }),
+    );
+    await expectLater(gateway.get(catalog, catalog.uri), throwsA(isA<OpdsConnectionException>()));
+    final denied = OpdsHttpClient(clientFactory: () => MockClient((_) async => http.Response('', 403)));
+    await expectLater(
+      denied.get(catalog, catalog.uri),
+      throwsA(isA<OpdsException>().having((error) => error is OpdsConnectionException, 'connection failure', isFalse)),
+    );
+  });
+
   test('rejects unsafe and credential-bearing resource URLs', () async {
     final gateway = OpdsHttpClient();
     for (final url in ['file:///etc/passwd', 'https://reader:secret@books.test/opds']) {
