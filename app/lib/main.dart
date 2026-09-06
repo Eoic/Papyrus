@@ -14,6 +14,10 @@ import 'package:papyrus/media/media_cache_service.dart';
 import 'package:papyrus/media/media_models.dart';
 import 'package:papyrus/media/media_storage_scope.dart';
 import 'package:papyrus/media/media_upload_queue.dart';
+import 'package:papyrus/opds/opds_catalog_store.dart';
+import 'package:papyrus/opds/opds_catalogs.dart';
+import 'package:papyrus/opds/opds_downloads.dart';
+import 'package:papyrus/services/book_import_session.dart';
 import 'package:papyrus/platform/book_import_drop_registration.dart';
 import 'package:papyrus/platform/hot_restart_cleanup.dart';
 import 'package:papyrus/powersync/powersync_service.dart';
@@ -163,6 +167,8 @@ class _PapyrusState extends State<Papyrus> {
   late final SyncSettingsProvider _syncSettingsProvider;
   late final MediaUploadQueue _mediaUploadQueue;
   late final BookImportService _bookImportService;
+  late final OpdsCatalogs _opdsCatalogs;
+  late final OpdsDownloads _opdsDownloads;
   late final PapyrusPowerSyncService _powerSyncService;
   late final BookStorageStatusController _bookStorageStatusController;
   late final PapyrusApiConfig _officialApiConfig;
@@ -218,6 +224,17 @@ class _PapyrusState extends State<Papyrus> {
       mediaUploadQueue: _mediaUploadQueue,
       hasBookFile: _bookImportService.hasBookFile,
     );
+    _opdsCatalogs = OpdsCatalogs(OpdsCatalogStore(widget.prefs));
+    _opdsDownloads = OpdsDownloads(
+      captureImport: () => BookImportSession.capture(
+        dataStore: _dataStore,
+        queue: _mediaUploadQueue,
+        importService: _bookImportService,
+        authProvider: _authProvider,
+        powerSyncService: _powerSyncService,
+      ),
+    );
+    _opdsCatalogs.addListener(_opdsDownloads.reset);
     registerHotRestartCleanup(_disposeDataServices);
     unawaited(_dataStore.attachBookRepository(_powerSyncService));
     _appRouter = AppRouter(
@@ -237,6 +254,9 @@ class _PapyrusState extends State<Papyrus> {
     _syncSettingsProvider.removeListener(_handleSyncSettingsChanged);
     unawaited(_disposeDataServices());
     _bookStorageStatusController.dispose();
+    _opdsCatalogs.removeListener(_opdsDownloads.reset);
+    _opdsDownloads.dispose();
+    _opdsCatalogs.dispose();
     _bookImportService.dispose();
     _acquisitionDownloadsComposition.dispose();
     _acquisitionAvailabilityProvider.dispose();
@@ -255,11 +275,13 @@ class _PapyrusState extends State<Papyrus> {
   }
 
   Future<void> _disposeDataServices() async {
+    _opdsDownloads.reset();
     await _dataStore.disposeBookRepository();
     await _powerSyncService.close();
   }
 
   void _syncPowerSyncAuthState() {
+    _updateOpdsScope();
     if (_authStateOperation != null) {
       _authStateUpdateQueued = true;
       return;
@@ -287,10 +309,20 @@ class _PapyrusState extends State<Papyrus> {
 
   Future<void> _applyPowerSyncAuthState() async {
     final user = _authProvider.user;
+    final profileKey = _activeProfileKey;
     if (user != null && !_authProvider.isOfflineMode) {
       final userId = user.userId;
-      await _mediaUploadQueue.activateScope(MediaStorageScope(profileKey: _activeProfileKey, userId: userId));
-      await _powerSyncService.activateAuthenticated(userId, profileKey: _activeProfileKey);
+      final scope = MediaStorageScope(profileKey: profileKey, userId: userId);
+      await _mediaUploadQueue.activateScope(scope);
+      await _powerSyncService.activateAuthenticated(userId, profileKey: profileKey);
+      if (!_switchingSyncProfile &&
+          _activeProfileKey == profileKey &&
+          _syncSettingsProvider.activeProfileKey == profileKey &&
+          _authProvider.isSignedIn &&
+          _authProvider.user?.userId == userId &&
+          !_authProvider.isOfflineMode) {
+        _opdsCatalogs.setScope(scope.persistenceKey);
+      }
       await _refreshMediaUsage();
       await _processMediaUploads();
       return;
@@ -299,6 +331,12 @@ class _PapyrusState extends State<Papyrus> {
     if (_authProvider.isOfflineMode) {
       await _mediaUploadQueue.activateScope(null);
       await _powerSyncService.activateGuest();
+      if (_authProvider.isOfflineMode &&
+          !_switchingSyncProfile &&
+          _activeProfileKey == profileKey &&
+          _syncSettingsProvider.activeProfileKey == profileKey) {
+        _opdsCatalogs.setScope(MediaStorageScope.localGuest.persistenceKey);
+      }
       return;
     }
 
@@ -321,6 +359,7 @@ class _PapyrusState extends State<Papyrus> {
     _acquisitionDownloadsComposition.handleServerChanged();
     final nextProfileKey = _syncSettingsProvider.activeProfileKey;
     final nextConfig = _syncSettingsProvider.activeApiConfig;
+    if (nextProfileKey != _activeProfileKey) _opdsCatalogs.setScope(null);
     _profileSwitchQueue.request(nextProfileKey, () => _switchActiveSyncProfile(nextProfileKey, nextConfig));
   }
 
@@ -337,6 +376,24 @@ class _PapyrusState extends State<Papyrus> {
     } finally {
       _switchingSyncProfile = false;
       _syncPowerSyncAuthState();
+    }
+  }
+
+  void _updateOpdsScope() {
+    if (_switchingSyncProfile ||
+        _activeProfileKey != _syncSettingsProvider.activeProfileKey ||
+        _authProvider.isBootstrapping) {
+      _opdsCatalogs.setScope(null);
+    } else if (_authProvider.isOfflineMode) {
+      if (_opdsCatalogs.scope != MediaStorageScope.localGuest.persistenceKey) _opdsCatalogs.setScope(null);
+    } else if (_authProvider.isSignedIn && _authProvider.user != null) {
+      final expected = MediaStorageScope(
+        profileKey: _activeProfileKey,
+        userId: _authProvider.user!.userId,
+      ).persistenceKey;
+      if (_opdsCatalogs.scope != expected) _opdsCatalogs.setScope(null);
+    } else {
+      _opdsCatalogs.setScope(null);
     }
   }
 
@@ -404,6 +461,8 @@ class _PapyrusState extends State<Papyrus> {
         ChangeNotifierProvider.value(value: _bookStorageStatusController),
         Provider.value(value: _powerSyncService),
         Provider.value(value: _bookImportService),
+        ChangeNotifierProvider.value(value: _opdsCatalogs),
+        ChangeNotifierProvider.value(value: _opdsDownloads),
         Provider(create: _createBookDownloadService),
         Provider(create: _createMediaCacheService),
         StreamProvider<SyncState>.value(value: _powerSyncService.syncStates, initialData: _powerSyncService.syncState),

@@ -2,13 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:papyrus/data/data_store.dart';
-import 'package:papyrus/media/media_upload_queue.dart';
 import 'package:papyrus/models/book.dart';
-import 'package:papyrus/powersync/powersync_service.dart';
-import 'package:papyrus/powersync/sync_state.dart';
-import 'package:papyrus/providers/auth_provider.dart';
-import 'package:papyrus/services/book_import_commit_service.dart';
+import 'package:papyrus/services/book_import_session.dart';
 import 'package:papyrus/services/book_import_service_stub.dart'
     if (dart.library.js_interop) 'package:papyrus/services/book_import_service.dart';
 import 'package:papyrus/themes/design_tokens.dart';
@@ -44,45 +39,7 @@ class BookImportResultsSheet extends StatefulWidget {
   final ScrollController? scrollController;
 
   static Future<Book> _commitResult(BuildContext context, BookImportResult result, String sourceFilename) async {
-    final dataStore = context.read<DataStore>();
-    final bookRepository = dataStore.requireBookRepository();
-    final queue = context.read<MediaUploadQueue>();
-    final importService = context.read<BookImportService>();
-    final authProvider = context.read<AuthProvider>();
-    final powerSyncService = context.read<PapyrusPowerSyncService>();
-    final isOnlineAccount = authProvider.isSignedIn && powerSyncService.mode == LibraryDatabaseMode.authenticated;
-    final accountScope = isOnlineAccount ? queue.activeScope : null;
-    if (isOnlineAccount && accountScope == null) {
-      throw StateError('Cannot import account media without an active media storage scope');
-    }
-
-    final extension = result.fileExtension;
-    final filePath = kIsWeb
-        ? 'opfs://books/${result.bookId}.$extension'
-        : result.bookId; // Native resolves via BookImportService.getBookFile.
-    final commitService = BookImportCommitService(
-      storePendingCover: importService.storePendingCoverFile,
-      storeGuestCover: importService.storeGuestCoverFile,
-      deletePendingCover: importService.deletePendingCoverFile,
-      deleteGuestCover: importService.deleteGuestCoverFile,
-      addBook: (book) => dataStore.addBookToRepositoryAndWait(bookRepository, book),
-      deleteBook: (bookId) => dataStore.deleteBookFromRepositoryAndWait(bookRepository, bookId),
-      enqueueImportedBookMedia: queue.enqueueImportedBookMedia,
-      isLibraryContextCurrent: () {
-        final currentIsOnlineAccount =
-            authProvider.isSignedIn && powerSyncService.mode == LibraryDatabaseMode.authenticated;
-        return dataStore.isBookRepositoryCurrent(bookRepository) &&
-            currentIsOnlineAccount == isOnlineAccount &&
-            queue.activeScope == accountScope;
-      },
-    );
-    return commitService.commit(
-      result: result,
-      sourceFilename: sourceFilename,
-      addedAt: DateTime.now(),
-      localFilePath: filePath,
-      accountScope: accountScope,
-    );
+    return BookImportSession.fromContext(context).commit(result, sourceFilename);
   }
 
   /// Opens the processing step as its own root-level modal sheet.

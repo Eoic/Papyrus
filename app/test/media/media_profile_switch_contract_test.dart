@@ -3,6 +3,21 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('OPDS catalogs become available only after the target database activates', () {
+    final source = File('lib/main.dart').readAsStringSync();
+    final activation = source.substring(
+      source.indexOf('Future<void> _applyPowerSyncAuthState()'),
+      source.indexOf('void _clearAuthStateOperation'),
+    );
+    expect(
+      activation.indexOf('_opdsCatalogs.setScope(scope.persistenceKey)'),
+      greaterThan(activation.indexOf('await _powerSyncService.activateAuthenticated')),
+    );
+    expect(
+      activation.indexOf('_opdsCatalogs.setScope(MediaStorageScope.localGuest.persistenceKey)'),
+      greaterThan(activation.indexOf('await _powerSyncService.activateGuest')),
+    );
+  });
   test('profile switch publishes its key with the replacement repository', () {
     final source = File('lib/main.dart').readAsStringSync();
     final handler = source.substring(
@@ -52,21 +67,23 @@ void main() {
       commitStart,
       importSource.indexOf('/// Opens the processing step', commitStart),
     );
-    expect(commit, contains('final accountScope = isOnlineAccount ? queue.activeScope : null;'));
-    expect(commit, contains("throw StateError('Cannot import account media without an active media storage scope')"));
-    expect(commit, contains('storePendingCover: importService.storePendingCoverFile'));
-    expect(commit, contains('storeGuestCover: importService.storeGuestCoverFile'));
-    expect(commit, contains('deletePendingCover: importService.deletePendingCoverFile'));
-    expect(commit, contains('deleteGuestCover: importService.deleteGuestCoverFile'));
-    expect(commit, contains('final bookRepository = dataStore.requireBookRepository();'));
-    expect(commit, contains('dataStore.addBookToRepositoryAndWait(bookRepository, book)'));
-    expect(commit, contains('dataStore.deleteBookFromRepositoryAndWait(bookRepository, bookId)'));
-    expect(commit, contains('enqueueImportedBookMedia: queue.enqueueImportedBookMedia'));
-    expect(commit, contains('isLibraryContextCurrent: ()'));
-    expect(commit, contains('dataStore.isBookRepositoryCurrent(bookRepository)'));
-    expect(commit, contains('queue.activeScope == accountScope'));
-    expect(commit, contains('accountScope: accountScope'));
-    expect(commit, isNot(contains('bytesToDataUri')));
+    expect(commit, contains('BookImportSession.fromContext(context).commit(result, sourceFilename)'));
+    final session = File('lib/services/book_import_session.dart').readAsStringSync();
+    expect(session, contains('final scope = authenticated ? queue.activeScope : null;'));
+    expect(session, contains("throw StateError('Cannot import account media without an active media storage scope')"));
+    expect(session, contains('storePendingCover: importService.storePendingCoverFile'));
+    expect(session, contains('storeGuestCover: importService.storeGuestCoverFile'));
+    expect(session, contains('deletePendingCover: importService.deletePendingCoverFile'));
+    expect(session, contains('deleteGuestCover: importService.deleteGuestCoverFile'));
+    expect(session, contains('final repository = dataStore.requireBookRepository();'));
+    expect(session, contains('dataStore.addBookToRepositoryAndWait(repository, book)'));
+    expect(session, contains('dataStore.deleteBookFromRepositoryAndWait(repository, id)'));
+    expect(session, contains('enqueueImportedBookMedia: queue.enqueueImportedBookMedia'));
+    expect(session, contains('isLibraryContextCurrent: isCurrent'));
+    expect(session, contains('dataStore.isBookRepositoryCurrent(repository)'));
+    expect(session, contains('queue.activeScope == scope'));
+    expect(session, contains('accountScope: scope'));
+    expect(session, isNot(contains('bytesToDataUri')));
   });
 
   test('import commit guard prevents repeat commits and disables mutable actions', () {

@@ -11,6 +11,7 @@ import 'package:papyrus/pages/dashboard_page.dart';
 import 'package:papyrus/pages/developer_options_page.dart';
 import 'package:papyrus/pages/goals_page.dart';
 import 'package:papyrus/pages/library_page.dart';
+import 'package:papyrus/pages/catalogs_page.dart';
 import 'package:papyrus/pages/forgot_password_page.dart';
 import 'package:papyrus/pages/login_page.dart';
 import 'package:papyrus/pages/edit_profile_page.dart';
@@ -120,6 +121,27 @@ class AppRouter {
                 name: 'BOOKS',
                 path: 'books',
                 pageBuilder: (context, state) => NoTransitionPage(key: state.pageKey, child: const LibraryPage()),
+              ),
+              GoRoute(
+                name: 'CATALOGS',
+                path: 'catalogs',
+                pageBuilder: (context, state) => NoTransitionPage(key: state.pageKey, child: const CatalogsPage()),
+                routes: [
+                  GoRoute(
+                    name: 'CATALOG',
+                    path: ':catalogId',
+                    pageBuilder: (context, state) => NoTransitionPage(
+                      key: state.pageKey,
+                      child: CatalogsPage(
+                        catalogId: state.pathParameters['catalogId'],
+                        feedUri: Uri.tryParse(state.uri.queryParameters['feed'] ?? '')?.hasScheme == true
+                            ? Uri.tryParse(state.uri.queryParameters['feed']!)
+                            : null,
+                        query: state.uri.queryParameters['q'] ?? '',
+                      ),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 name: 'SHELVES',
